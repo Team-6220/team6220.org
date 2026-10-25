@@ -11,7 +11,7 @@ export const SEASONS = {
     id: 'steamworks2017', name: 'STEAMWORKS', year: 2017, weightCap: 120, heightLimit: 48, extension: 12, cycleMul: 1.6, bench: 220,
     blurb: 'Deliver gears to the airship pegs, shoot fuel into the boiler, then climb the rope before the match ends.',
     pieceName: 'gear', videoId: 'EMiNmJW7enI', video: yt('EMiNmJW7enI'),
-    opt: { best: 'endgame', why: 'The 50-point rope climb was worth more than a dozen gears, and every alliance needed climbers to hit the rotor bonus. Reliability of the climb in every match decided rankings.', labels: { endgame: ['Climb reliability', 'Make the 50-point rope climb a sure thing every match.'], cycle: ['Gear cycle time', 'Gears per minute onto the airship pegs.'] } },
+    opt: { best: 'cycle', why: 'Gears were the engine of the match: every rotor needed gears, so the alliance that cycled gears from loading station or floor to the peg fastest won. The rope climb was a reliable bonus on top of a fast gear cycle.', labels: { cycle: ['Gear cycle time', 'Seconds per gear from pickup to the airship peg.'] } },
     real: 'Top robots had a reliable floor or loading-station gear mechanism, a fast high-goal hopper and shooter, and a rope climber that worked every match.',
     defaultTasks: ['taxi', 'gear', 'climb'],
     tasks: [
