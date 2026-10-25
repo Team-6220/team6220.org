@@ -1,15 +1,15 @@
 // Simplified master sketch: drag the pivot, set the arm length so the tip path passes through the scoring target.
 import { h, C, canvasPos } from '../ui.js';
 
-const SX = 7, X0 = 20; // world x range -20..80 in, y 0..60 in
+const SX = 6, X0 = 20, CW = 640, CH = 380; // world x range -20..80 in, y 0..60 in
 const sx = (x) => (x + X0) * SX;
-const sy = (y) => 430 - y * SX;
+const sy = (y) => 372 - y * SX;
 
 export function createArmSketch(season, reach) {
   const target = { x: 28 + reach.x, y: reach.h };
   const st = { px: 14, py: 20, L: 20, motorAtEnd: false, parametric: false, polish: 0, polishSteps: 0 };
   const TOL = 3.5;
-  const cv = h('canvas', { width: 700, height: 440 });
+  const cv = h('canvas', { width: CW, height: CH });
   const listeners = [];
 
   function check() {
@@ -22,14 +22,14 @@ export function createArmSketch(season, reach) {
 
   function draw() {
     const ctx = cv.getContext('2d'), r = check();
-    ctx.fillStyle = C.black; ctx.fillRect(0, 0, 700, 440);
-    ctx.strokeStyle = C.g4; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, sy(0)); ctx.lineTo(700, sy(0)); ctx.stroke();
+    ctx.fillStyle = C.black; ctx.fillRect(0, 0, CW, CH);
+    ctx.strokeStyle = C.g4; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, sy(0)); ctx.lineTo(CW, sy(0)); ctx.stroke();
     ctx.fillStyle = C.g4; ctx.fillRect(sx(0), sy(6), 28 * SX, 6 * SX);
     ctx.strokeStyle = C.white; ctx.strokeRect(sx(0), sy(6), 28 * SX, 6 * SX);
     ctx.setLineDash([6, 5]); ctx.strokeStyle = C.gold;
-    ctx.beginPath(); ctx.moveTo(0, sy(season.heightLimit)); ctx.lineTo(700, sy(season.heightLimit)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx(28 + season.extension), 0); ctx.lineTo(sx(28 + season.extension), 440); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx(-season.extension), 0); ctx.lineTo(sx(-season.extension), 440); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, sy(season.heightLimit)); ctx.lineTo(CW, sy(season.heightLimit)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(28 + season.extension), 0); ctx.lineTo(sx(28 + season.extension), CH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(-season.extension), 0); ctx.lineTo(sx(-season.extension), CH); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = C.gold; ctx.font = '11px sans-serif';
     ctx.fillText(`height limit ${season.heightLimit}"`, 6, sy(season.heightLimit) - 4);
@@ -66,7 +66,7 @@ export function createArmSketch(season, reach) {
     if (!drag) return;
     const p = canvasPos(cv, e);
     st.px = Math.round(Math.max(2, Math.min(26, p.x / SX - X0)) * 2) / 2;
-    st.py = Math.round(Math.max(4, Math.min(season.heightLimit - 2, (430 - p.y) / SX)) * 2) / 2;
+    st.py = Math.round(Math.max(4, Math.min(season.heightLimit - 2, (372 - p.y) / SX)) * 2) / 2;
     if (st.parametric) st.py = Math.round(season.heightLimit * 0.4);
     update();
   });

@@ -25,11 +25,11 @@ html, body { margin: 0; height: 100%; background: var(--black); color: var(--whi
 #season-name { margin-left: 24px; color: var(--gray-5); flex: 1; }
 #top-buttons { display: flex; gap: 8px; }
 #hud { flex: none; display: none; padding: 6px 12px; background: var(--gray-2); border-bottom: 2px solid var(--gray-4); }
-#main { flex: 1; min-height: 0; padding: 12px; overflow: auto; }
+#main { flex: 1; min-height: 0; padding: 10px 12px; overflow: auto; }
 #toast { position: absolute; left: 0; right: 0; bottom: 0; background: var(--gold); color: var(--black);
   padding: 8px 14px; font-weight: 700; display: none; }
 
-h1, h2, h3 { margin: 0 0 8px 0; }
+h1, h2, h3 { margin: 0 0 6px 0; }
 h1 { font-size: 28px; } h2 { font-size: 20px; color: var(--gold); } h3 { font-size: 16px; }
 p { margin: 0 0 8px 0; line-height: 1.4; }
 .muted { color: var(--gray-5); }
@@ -51,7 +51,8 @@ p { margin: 0 0 8px 0; line-height: 1.4; }
 .panel { background: var(--gray-2); border: 2px solid var(--gray-4); padding: 12px; }
 .panel.sel { border-color: var(--gold); }
 .row { display: flex; gap: 12px; align-items: flex-start; }
-.col { display: flex; flex-direction: column; gap: 8px; }
+.col { display: flex; flex-direction: column; gap: 6px; }
+.hint { padding: 6px 10px; font-size: 13px; border-color: var(--gold-dark); }
 .grow { flex: 1; min-width: 0; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }

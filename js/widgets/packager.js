@@ -2,7 +2,7 @@
 import { h, C, canvasPos } from '../ui.js';
 import { picks } from '../sim/robotModel.js';
 
-const OX = 70, OY = 60, S = 14, FRAME = 28;
+const OX = 56, OY = 44, S = 12, FRAME = 28;
 export const CG_LIMIT = 12;
 
 export function createPackager(run) {
@@ -12,8 +12,8 @@ export function createPackager(run) {
   const tallEnd = hasEnd && ['traversal', 'elevatorTrap'].includes(P.endgame.id);
 
   const blocks = [
-    { id: 'driveT', name: 'Drive motors/gearbox (L)', w: 8, h: 4, x: 10, y: 1, color: C.g5, solid: true, wt: (P.drivetrain ? P.drivetrain.wt : 40) / 2, z: 3 },
-    { id: 'driveB', name: 'Drive motors/gearbox (R)', w: 8, h: 4, x: 10, y: 23, color: C.g5, solid: true, wt: (P.drivetrain ? P.drivetrain.wt : 40) / 2, z: 3 },
+    { id: 'driveT', name: 'Drive L', w: 8, h: 4, x: 10, y: 1, color: C.g5, solid: true, wt: (P.drivetrain ? P.drivetrain.wt : 40) / 2, z: 3 },
+    { id: 'driveB', name: 'Drive R', w: 8, h: 4, x: 10, y: 23, color: C.g5, solid: true, wt: (P.drivetrain ? P.drivetrain.wt : 40) / 2, z: 3 },
     { id: 'battery', name: 'Battery', w: 7, h: 3, x: 0.5, y: 12, color: C.white, solid: true, elec: true, wt: 13, z: 2 },
     { id: 'rio', name: 'roboRIO', w: 6, h: 5, x: 0.5, y: 2, color: C.white, solid: true, elec: true, wt: 3, z: 4 },
     { id: 'pdh', name: 'PDH', w: 6, h: 5, x: 0.5, y: 20, color: C.white, solid: true, elec: true, wt: 5, z: 4 },
@@ -23,7 +23,7 @@ export function createPackager(run) {
   if (hasEnd) blocks.push({ id: 'endgame', name: 'Endgame', w: 8, h: 8, x: 10, y: 10, color: C.g4, solid: true, zone: 3, wt: P.endgame.wt, z: tallEnd ? 24 : 12 });
   const st = { batteryHigh: false };
   const listeners = [];
-  const cv = h('canvas', { width: 520, height: 520 });
+  const cv = h('canvas', { width: 460, height: 420 });
 
   const ov = (a, b) => a.x < b.x + b.w - 1e-6 && a.x + a.w > b.x + 1e-6 && a.y < b.y + b.h - 1e-6 && a.y + a.h > b.y + 1e-6;
   const zoneOf = (b) => ({ x: b.x - b.zone, y: b.y - b.zone, w: b.w + 2 * b.zone, h: b.h + 2 * b.zone });
@@ -60,7 +60,7 @@ export function createPackager(run) {
 
   function draw() {
     const ctx = cv.getContext('2d'), r = check();
-    ctx.fillStyle = C.black; ctx.fillRect(0, 0, 520, 520);
+    ctx.fillStyle = C.black; ctx.fillRect(0, 0, 460, 420);
     ctx.strokeStyle = C.g3; ctx.lineWidth = 1;
     for (let i = 0; i <= FRAME; i += 4) { ctx.beginPath(); ctx.moveTo(OX + i * S, OY); ctx.lineTo(OX + i * S, OY + FRAME * S); ctx.moveTo(OX, OY + i * S); ctx.lineTo(OX + FRAME * S, OY + i * S); ctx.stroke(); }
     ctx.strokeStyle = C.white; ctx.lineWidth = 3; ctx.strokeRect(OX, OY, FRAME * S, FRAME * S);
