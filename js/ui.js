@@ -1,6 +1,7 @@
 // Small DOM helpers, achievement cards, HUD.
 import { derive, TOTAL_HOURS, MAX_COMPLEXITY } from './sim/robotModel.js';
 import { SEASONS } from './data/seasons.js';
+import { meta, saveMeta } from './state.js';
 
 export const C = { gold: '#ffa300', white: '#ffffff', black: '#000000', g1: '#111111', g2: '#1c1c1c', g3: '#2a2a2a', g4: '#444444', g5: '#8a8a8a', blue: '#4054e4', red: '#e0443a', green: '#52b86a' };
 
@@ -23,22 +24,51 @@ export function h(tag, attrs, ...kids) {
 export function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); return el; }
 export const $ = (sel) => document.querySelector(sel);
 
-// ---- Achievement / notification cards: stay until dismissed ----
+// ---- Sound (small synthesized effects; can be muted) ----
 let audio = null;
-export function chime() {
+const SFX = {
+  chime: [[660, 0, 0.3, 'triangle', 0.15], [880, 0.12, 0.3, 'triangle', 0.15], [1320, 0.24, 0.3, 'triangle', 0.15]],
+  blip: [[880, 0, 0.07, 'triangle', 0.07]],
+  buzz: [[110, 0, 0.4, 'sawtooth', 0.09], [90, 0.15, 0.3, 'sawtooth', 0.09]],
+  start: [[440, 0, 0.18, 'square', 0.06], [440, 0.45, 0.18, 'square', 0.06], [880, 0.9, 0.4, 'square', 0.06]],
+  end: [[220, 0, 0.9, 'square', 0.07]],
+  win: [[523, 0, 0.25, 'triangle', 0.14], [659, 0.14, 0.25, 'triangle', 0.14], [784, 0.28, 0.25, 'triangle', 0.14], [1047, 0.44, 0.5, 'triangle', 0.14]],
+  lose: [[330, 0, 0.3, 'sawtooth', 0.07], [262, 0.22, 0.3, 'sawtooth', 0.07], [196, 0.44, 0.5, 'sawtooth', 0.07]],
+  click: [[600, 0, 0.05, 'triangle', 0.05]],
+};
+export function soundOn() { return !meta.mute; }
+export function setSound(on) { meta.mute = !on; saveMeta(); }
+export function sfx(kind) {
+  if (meta.mute || !SFX[kind]) return;
   try {
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
     const t = audio.currentTime;
-    [[660, 0], [880, 0.12], [1320, 0.24]].forEach(([f, d]) => {
+    SFX[kind].forEach(([f, d, len, type, vol]) => {
       const o = audio.createOscillator(), g = audio.createGain();
-      o.type = 'triangle'; o.frequency.value = f;
+      o.type = type; o.frequency.value = f;
       g.gain.setValueAtTime(0.0001, t + d);
-      g.gain.exponentialRampToValueAtTime(0.15, t + d + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.32);
-      o.connect(g); g.connect(audio.destination); o.start(t + d); o.stop(t + d + 0.34);
+      g.gain.exponentialRampToValueAtTime(vol, t + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + len + 0.02);
+      o.connect(g); g.connect(audio.destination); o.start(t + d); o.stop(t + d + len + 0.04);
     });
   } catch (e) { /* audio unavailable */ }
 }
+export const chime = () => sfx('chime');
+
+// ---- Embedded YouTube player in an overlay ----
+export function openVideo(videoId, title) {
+  const m = $('#modal');
+  const close = () => { clear(m); m.style.display = 'none'; document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  clear(m); m.style.display = 'flex';
+  m.append(h('div', { class: 'modal-box' },
+    h('div', { class: 'row', style: 'align-items:center;margin-bottom:6px' }, h('b', { class: 'grow' }, title), h('button', { class: 'ach-x', title: 'Close', onclick: close }, '×')),
+    h('iframe', { width: 854, height: 480, src: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`, title, allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen: true, referrerpolicy: 'strict-origin-when-cross-origin', style: 'border:2px solid #444;display:block;background:#000' }),
+    h('div', { class: 'small muted', style: 'margin-top:6px' }, 'Press Esc or × to close.')));
+}
+
 function card(title, text, sub, sound) {
   const el = h('div', { class: 'ach' },
     h('div', { class: 'grow' }, h('b', {}, title), text ? h('div', { class: 'small' }, text) : null, sub ? h('div', { class: 'small', style: 'font-weight:700' }, sub) : null),

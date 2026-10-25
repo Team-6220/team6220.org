@@ -57,7 +57,7 @@ export function derive(run) {
   const turnT = needsTurn ? 1.6 : 0;
   const driveT = 4.2 * (dt ? dt.cycleMod : 1.2);
   let cycle = driveT + (it ? it.time : 2.5) + (sc ? sc.time : 2.5) + turnT + (r.sketch && r.sketch.motorAtEnd ? 0.4 : 0) - (r.sketch ? r.sketch.polish || 0 : 0);
-  cycle *= 1 - BREAKTHROUGH_GAIN * breakthroughs;
+  cycle *= (season.cycleMul || 1) * (1 - BREAKTHROUGH_GAIN * breakthroughs);
 
   const budget = timeBudget(run, complexity, needSensors.size, scratch);
   const easeAvg = easeN ? easeSum / easeN : 0.6;

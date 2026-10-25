@@ -1,5 +1,5 @@
 // WingIt: screen router.
-import { h, clear, $, achievement, notify, setHud, fit } from './ui.js';
+import { h, clear, $, achievement, notify, setHud, fit, soundOn, setSound, sfx } from './ui.js';
 import { SEASONS, SEASON_IDS } from './data/seasons.js';
 import { PRINCIPLES, SLICE_IDS } from './data/principles.js';
 import { archetype, SLOT_NAMES } from './data/archetypes.js';
@@ -45,16 +45,18 @@ function showMenu() {
   const root = clear(main());
   const saved = hasSavedRun();
   const seedInput = h('input', { type: 'text', placeholder: 'seed (optional)', style: 'width:140px' });
+  const seasonPick = h('select', {}, h('option', { value: 'random' }, 'Random season'), ...SEASON_IDS.map((id) => h('option', { value: id }, `${SEASONS[id].year} ${SEASONS[id].name}`)));
   root.append(h('div', { class: 'col', style: 'max-width:760px;margin:30px auto' },
     wordmark('font-size:56px;letter-spacing:3px'),
     h('p', {}, 'Run a build season. Analyze the game, steal the best ideas, design against the clock, and test early. Every choice trades weight, complexity and hours.'),
-    h('p', { class: 'muted small' }, 'A Team 6220 Golden Griffins project that teaches our design standards. Each run is a random real FRC game (this early build has Rapid React and Crescendo).'),
+    h('p', { class: 'muted small' }, `A Team 6220 Golden Griffins project that teaches our design standards. Every run is a real FRC game from ${SEASON_IDS.length} recent seasons (${SEASON_IDS.map((id) => SEASONS[id].year).join(', ')}).`),
     h('hr'),
     saved ? h('button', { class: 'btn primary', onclick: continueSeason }, 'Continue your season') : null,
     h('button', { class: 'btn' + (saved ? '' : ' primary'), onclick: () => startRun('rapidreact2022', 6220, true) }, 'Tutorial season: 2022 Rapid React (guided, about 30 minutes)'),
-    h('div', { class: 'row' },
-      h('button', { class: 'btn', onclick: () => { const seed = parseInt(seedInput.value, 10) || Math.floor(Math.random() * 1e9); startRun(rngFor(seed, 'season').pick(SEASON_IDS), seed, false); } }, 'Random season'),
-      seedInput)));
+    h('div', { class: 'row', style: 'align-items:center' },
+      h('button', { class: 'btn', onclick: () => { const seed = parseInt(seedInput.value, 10) || Math.floor(Math.random() * 1e9); startRun(seasonPick.value === 'random' ? rngFor(seed, 'season').pick(SEASON_IDS) : seasonPick.value, seed, false); } }, 'Start a season'),
+      seasonPick, seedInput),
+    meta.runsDone ? h('div', { class: 'small muted' }, `Seasons finished: ${meta.runsDone}. Best scores: ` + (Object.entries(meta.best).map(([id, b]) => `${SEASONS[id] ? SEASONS[id].year : id}: ${b}`).join(', ') || 'none yet')) : null));
 }
 
 function continueSeason() { if (!getRun()) loadSavedRun(); if (getRun()) showHub(); else showMenu(); }
@@ -155,6 +157,10 @@ function showResult() {
   result.mount(root, run, () => startRun(rngFor(Date.now() % 1e9, 'season').pick(SEASON_IDS), Math.floor(Math.random() * 1e9), false), showMenu);
 }
 
+const soundBtn = $('#btn-sound');
+const syncSound = () => { soundBtn.textContent = soundOn() ? 'Sound on' : 'Sound off'; };
+soundBtn.addEventListener('click', () => { setSound(!soundOn()); syncSound(); sfx('click'); });
+syncSound();
 window.addEventListener('resize', fit);
 fit();
 showMenu();

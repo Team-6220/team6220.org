@@ -26,7 +26,7 @@ html, body { margin: 0; height: 100%; background: var(--black); color: var(--whi
 #top-buttons { display: flex; gap: 8px; }
 #hud { flex: none; display: none; padding: 6px 12px; background: var(--gray-2); border-bottom: 2px solid var(--gray-4); }
 #main { flex: 1; min-height: 0; padding: 10px 12px; overflow: auto; }
-#toast { position: absolute; right: 12px; top: 50px; width: 380px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+#toast { position: absolute; right: 12px; top: 50px; width: 340px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
 .ach { display: flex; gap: 8px; align-items: flex-start; background: var(--gold); color: var(--black); padding: 8px 10px; border: 2px solid var(--black); }
 .ach b { font-size: 15px; }
 .ach-x { background: var(--black); color: var(--white); border: 0; width: 26px; height: 26px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
@@ -111,3 +111,17 @@ a { color: var(--gold); }
 .principle.locked { border-left-color: var(--gray-4); color: var(--gray-5); }
 .checkrow { display: flex; gap: 8px; align-items: center; margin: 3px 0; }
 .dragitem { cursor: grab; }
+
+/* modal video */
+#modal { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 20; background: rgba(0,0,0,0.88);
+  align-items: center; justify-content: center; }
+.modal-box { background: var(--gray-2); border: 2px solid var(--gold); padding: 12px; }
+.video-thumb { position: relative; width: 320px; height: 180px; border: 2px solid var(--gray-4); background: var(--black) center/cover no-repeat; cursor: pointer; flex: none; }
+.video-thumb:hover { border-color: var(--gold); }
+.video-thumb .play { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; background: var(--gold); }
+.video-thumb .play::after { content: ""; position: absolute; left: 21px; top: 15px; border-left: 20px solid var(--black); border-top: 13px solid transparent; border-bottom: 13px solid transparent; }
+.video-thumb .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 8px; background: rgba(0,0,0,0.75); font-size: 12px; }
+.feed { max-height: 118px; min-height: 118px; overflow: auto; display: flex; flex-direction: column; gap: 2px; }
+.feed .gold { color: var(--gold); } .feed .blue { color: #8f9cf5; }
+.ach .small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ach { padding: 6px 8px; }

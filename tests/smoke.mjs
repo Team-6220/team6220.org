@@ -4,6 +4,8 @@ import { simulateEvent, eventScore } from '../js/sim/match.js';
 import { applySkips } from '../js/sim/skips.js';
 import { buildPlan } from '../js/plan.js';
 import { SLICE_IDS } from '../js/data/principles.js';
+import { SEASONS, SEASON_IDS } from '../js/data/seasons.js';
+import { archList, ALL_SENSORS } from '../js/data/archetypes.js';
 
 // plan checks
 for (const tutorial of [true, false]) for (let seed = 1; seed <= 50; seed++) {
@@ -14,6 +16,34 @@ for (const tutorial of [true, false]) for (let seed = 1; seed <= 50; seed++) {
   if (!plan[1].items.some((i) => i.key === 'inspire-a' && i.required)) throw new Error('inspire required');
 }
 console.log('plans ok');
+
+// season data checks: every task id, sensor and reach used by a mechanism must exist and fit the sketch widget
+for (const sid of SEASON_IDS) {
+  const se = SEASONS[sid];
+  if (!se.videoId || !se.bench || !se.defaultTasks.length) throw new Error(sid + ': missing videoId/bench/defaultTasks');
+  const taskIds = se.tasks.map((t) => t.id);
+  se.defaultTasks.forEach((t) => { if (!taskIds.includes(t)) throw new Error(sid + ': bad default task ' + t); });
+  for (const slot of ['drivetrain', 'intake', 'scorer', 'endgame']) {
+    const list = archList(sid, slot);
+    if (list.length < 2) throw new Error(sid + ': too few ' + slot);
+    for (const a of list) {
+      (a.tasks || []).forEach((t) => { if (!taskIds.includes(t)) throw new Error(`${sid}/${a.id}: unknown task ${t}`); });
+      (a.sensors || []).forEach((x) => { if (!ALL_SENSORS.includes(x)) throw new Error(`${sid}/${a.id}: unknown sensor ${x}`); });
+      if (a.reach && (a.reach.h > 56 || a.reach.x + 28 > 76 || a.reach.x + 28 < 2)) throw new Error(`${sid}/${a.id}: reach outside sketch`);
+    }
+  }
+}
+// the master sketch must be solvable (reach the target AND stow inside the frame) for every scorer
+for (const sid of SEASON_IDS) for (const a of archList(sid, 'scorer')) {
+  const se = SEASONS[sid], tx = 28 + a.reach.x, ty = a.reach.h;
+  let ok = false;
+  for (let px = 0; px <= 60 && !ok; px += 0.5) for (let py = 4; py <= se.heightLimit - 2 && !ok; py += 0.5) for (let L = 8; L <= 44 && !ok; L++) {
+    const d = Math.hypot(tx - px, ty - py), ang = (Math.atan2(ty - py, tx - px) * 180) / Math.PI;
+    if (Math.abs(d - L) <= 3.5 && ang >= -30 && ang <= 180 && px - L >= 0) ok = true;
+  }
+  if (!ok) throw new Error(`${sid}/${a.id}: master sketch has no solution`);
+}
+console.log('season data ok:', SEASON_IDS.length, 'seasons');
 
 function build(seed, sid, dt, it, sc, eg, src, skip) {
   const run = newRun(sid, seed, false); setRun(run);

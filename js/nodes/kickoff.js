@@ -1,5 +1,5 @@
 // Kickoff: read the game, analyze it, pick what to optimize and what to build for.
-import { h, clear } from '../ui.js';
+import { h, clear, openVideo } from '../ui.js';
 import { SEASONS } from '../data/seasons.js';
 import { spend, unlock, save } from '../state.js';
 import { TOTAL_HOURS } from '../sim/robotModel.js';
@@ -15,7 +15,7 @@ const OPT_VARS = [
 export function mount(root, run, done) {
   const season = SEASONS[run.seasonId];
   let opt = 'cycle';
-  const chosen = new Set(season.tasks.filter((t) => ['taxi', 'low', 'high', 'speaker', 'climbLow', 'climb'].includes(t.id)).map((t) => t.id));
+  const chosen = new Set(season.defaultTasks);
 
   function render() {
     clear(root);
@@ -24,13 +24,17 @@ export function mount(root, run, done) {
       h('td', {}, t.name + (t.endgame ? ' (endgame)' : '')), h('td', { class: 'gold mono' }, t.pts + ' pt'), h('td', { class: 'muted small' }, t.note)));
     const bestEnd = chosen.size;
     const left = h('div', { class: 'panel grow' },
-      h('h3', {}, `${season.year} ${season.name}`), h('p', {}, season.blurb),
-      h('p', {}, h('a', { href: season.video, target: '_blank', rel: 'noopener' }, 'Watch the official game animation (FIRST kickoff playlist, opens YouTube)')),
-      h('p', { class: 'small muted' }, `Weight cap ${season.weightCap} lb · frame perimeter ${season.perimeter}" · height ${season.heightLimit}" · extension ${season.extension}" (approximate; verify in the game manual)`),
+      h('h3', {}, `${season.year} ${season.name}`),
+      h('div', { class: 'row' },
+        h('div', { class: 'video-thumb', title: 'Play the official game animation', style: `background-image:url(https://img.youtube.com/vi/${season.videoId}/mqdefault.jpg)`, onclick: () => openVideo(season.videoId, `${season.year} ${season.name}: official game animation`) },
+          h('div', { class: 'play' }), h('div', { class: 'cap' }, 'Official game animation (click to watch)')),
+        h('div', { class: 'grow' }, h('p', {}, season.blurb),
+          h('p', { class: 'small muted' }, `Weight cap ${season.weightCap} lb · frame perimeter ${season.perimeter}" · height ${season.heightLimit}" · extension ${season.extension}" (approximate; verify in the game manual)`),
+          h('p', { class: 'small muted' }, season.tip))),
       h('h3', {}, 'Game analysis: what is worth building for?'),
       h('p', { class: 'small' }, 'Tick the scoring actions you will build for. Everything else is skipped. Mechanisms for actions you did not choose are feature creep and cost hours.'),
       h('table', {}, rows),
-      h('p', { class: 'small muted' }, season.tip));
+      null);
     const right = h('div', { class: 'col', style: 'width:420px' },
       h('div', { class: 'panel' }, h('h3', {}, 'What will you optimize?'),
         ...OPT_VARS.map((o) => h('div', { class: 'card' + (opt === o.id ? ' sel' : ''), style: 'margin-bottom:6px', onclick: () => { opt = o.id; render(); } }, h('b', {}, o.name), h('div', { class: 'small muted' }, o.text)))),
