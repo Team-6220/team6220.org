@@ -124,7 +124,7 @@ export function createEvent(run, evIdx) {
   // One match. Random draws keep the order they always had so balance and seeds stay stable.
   function runMatch(n, stage, partnerMean, partnerSd, oppMean, oppSd, planId, styleId) {
     const plan = PLANS[planId] || PLANS.balanced, style = STYLES[styleId] || STYLES.balanced;
-    const open = run.flaws.filter((f) => !f.fixed);
+    const open = run.flaws.filter((f) => !f.fixed && f.kind !== 'part'); // missing-part problems cost hours at weigh-in, not matches
     const moments = [];
     let loss = 0, autoLost = false, endLost = false, repair = 0, dtFailed = false;
     const apply = (kind, text, flaw) => {

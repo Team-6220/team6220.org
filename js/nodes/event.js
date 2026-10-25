@@ -37,6 +37,7 @@ export function mount(root, run, done, node) {
   for (const slot of ['drivetrain', 'intake', 'scorer']) if (!run.design[slot]) setSlot(slot, archList(run.seasonId, slot)[0].id, 'scratch', true);
   if (!run.design.endgame) setSlot('endgame', 'none', 'scratch', false);
   const fixCost = (f) => Math.ceil(f.fixHours * 1.5);
+  const partCost = (f) => Math.ceil(f.fixHours * 0.75);
   const skipMsgs = run.skipsApplied ? [] : applySkips(run);
   const stop = () => { if (viewer) { viewer.stop(); viewer = null; } };
   const res = () => ev.result();
@@ -44,8 +45,9 @@ export function mount(root, run, done, node) {
   function prep() {
     stop(); clear(root);
     const s = derive(run);
-    const rows = run.flaws.filter((f) => f.found && !f.fixed);
-    const unknown = run.flaws.some((f) => !f.found && !f.fixed);
+    const rows = run.flaws.filter((f) => f.found && !f.fixed && f.kind !== 'part');
+    const unknown = run.flaws.some((f) => !f.found && !f.fixed && f.kind !== 'part');
+    const parts = run.flaws.filter((f) => f.kind === 'part' && !f.fixed);
     root.append(shell(idx === 1 ? 'Regional event: pit and weigh-in' : 'Championship: pit and weigh-in', 'Inspection comes before the first match.',
       hint(run, 'You are over the weight limit? That is a late-season scramble. Plan weight early instead.'),
       skipMsgs.length ? h('div', { class: 'panel' }, h('h3', { class: 'gold' }, 'Skipped steps catch up with you'), ...skipMsgs.map((m) => h('div', { class: 'small' }, m))) : null,
@@ -58,7 +60,10 @@ export function mount(root, run, done, node) {
         rows.length ? h('table', {}, ...rows.map((f) => h('tr', {}, h('td', {}, f.name), h('td', {}, h('button', { class: 'btn', onclick: () => { f.fixed = true; spend(fixCost(f)); sfx('drill'); save(); prep(); } }, `Fix (${fixCost(f)} h)`)))))
           : h('p', { class: 'muted' }, 'None known.'),
         unknown ? h('p', { class: 'small gold' }, 'There may be issues you have not found yet.') : null),
-      h('button', { class: 'btn primary', disabled: s.over ? true : null, onclick: () => { ev = createEvent(run, idx); prepMatch('q', 0); } }, 'Start qualification matches')));
+      parts.length ? h('div', { class: 'panel' }, h('h3', { class: 'gold' }, 'Missing and duplicate parts'),
+        h('div', { class: 'small' }, 'These cost time, not matches: the team spends hours remaking and re-ordering parts before inspection.'),
+        ...parts.map((f) => h('div', { class: 'small' }, `${f.name}: ${partCost(f)} h`)), h('div', { class: 'small gold' }, `Total: ${parts.reduce((a, f) => a + partCost(f), 0)} h from the season clock.`)) : null,
+      h('button', { class: 'btn primary', disabled: s.over ? true : null, onclick: () => { parts.forEach((f) => { f.fixed = true; f.found = true; spend(partCost(f)); }); if (parts.length) { unlock('duplicates-bom'); sfx('drill'); } ev = createEvent(run, idx); prepMatch('q', 0); } }, 'Start qualification matches')));
   }
 
   // ---- Before every match: pit repairs, scouting report, match plan ----
