@@ -74,7 +74,7 @@ export function mount(root, run, done, node) {
       }
       r.cotsApplied = true;
     }
-    unlock('cots-stock'); unlock('sensors-plan');
+    unlock('cots-stock'); unlock('sensors-plan'); if (rework) unlock('pocket-last');
     save(); done();
   }
   render();
