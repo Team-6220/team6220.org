@@ -39,8 +39,8 @@ export function mount(root, run, done, node) {
       'Teams publish their designs (Open Alliance threads, Ri3D builds, Behind the Bumpers, released CAD). Steal from the best, then innovate the rest.',
       hint(run, 'Adopting a proven design is cheap and its flaws are already known. A scratch design takes more hours, hides interface flaws, but is about 3% faster if you can afford the time.'),
       h('p', { class: 'small muted' }, `${season.name}: goal is to score ${season.tasks.filter((t) => run.req && run.req.tasks.includes(t.id)).map((t) => t.name).join(', ') || 'your chosen tasks'}.`),
-      ...sections,
-      h('button', { class: 'btn primary', disabled: ready ? null : true, onclick: finish }, `Lock in choices (${hours} h)`)));
+      h('button', { class: 'btn primary', disabled: ready ? null : true, onclick: finish }, `Lock in choices (${hours} h)`),
+      ...sections));
   }
 
   function finish() {

@@ -67,6 +67,7 @@ p { margin: 0 0 8px 0; line-height: 1.4; }
 hr { border: 0; border-top: 2px solid var(--gray-4); margin: 10px 0; }
 canvas { background: var(--black); border: 2px solid var(--gray-4); display: block; }
 input[type=range] { width: 100%; accent-color: var(--gold); }
+input[type=checkbox] { accent-color: var(--gold); width: 16px; height: 16px; }
 select, input[type=text], input[type=number] { background: var(--gray-3); color: var(--white); border: 2px solid var(--gray-4);
   padding: 5px 8px; font: inherit; }
 table { border-collapse: collapse; width: 100%; }
