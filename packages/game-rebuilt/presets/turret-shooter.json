@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "OTB intake + turret",
+  "description": "Swerve, over-the-bumper intake, 30-Fuel hopper, turreted shooter that auto-aims at its own Hub, Level 2 climber.",
+  "chassis": {
+    "frame": { "type": "rect", "length": 0.686, "width": 0.686 },
+    "height": 0.55,
+    "bumpers": { "thickness": 0.0889, "mass": 4.5 },
+    "mass": 56.0,
+    "momentOfInertia": "auto",
+    "drivetrain": { "type": "swerve", "maxSpeed": 4.3, "maxAccel": 7.5, "maxAngularSpeed": 8.0, "traction": 1.1 }
+  },
+  "mechanisms": [
+    { "id": "intake1", "type": "otbIntake", "mount": { "x": 0.43, "y": 0.0, "theta": 0.0 },
+      "params": { "width": 0.6, "rollerDepth": 0.25, "deployTime": 0.35, "rate": 9 } },
+    { "id": "hopper1", "type": "storage", "mount": { "x": 0.0, "y": 0.0, "theta": 0.0 }, "params": { "capacity": 30 } },
+    { "id": "feed1", "type": "transfer", "mount": { "x": 0.0, "y": 0.0, "theta": 0.0 }, "params": { "delay": 0.2 } },
+    { "id": "turret1", "type": "turretShooter", "mount": { "x": -0.12, "y": 0.0, "theta": 0.0 },
+      "params": { "exitSpeed": 9.0, "ballsPerSecond": 6.0, "spread": 0.04, "spinUpTime": 0.8, "rangeMin": 1.0, "rangeMax": 6.0, "turretRange": 3.14159, "turretSpeed": 6 } },
+    { "id": "climber1", "type": "climber", "mount": { "x": 0.0, "y": -0.2, "theta": 0.0 },
+      "params": { "maxLevel": 2, "level1Time": 2.5, "level2Time": 5.0, "descendTime": 2.0 } }
+  ],
+  "preload": 8
+}

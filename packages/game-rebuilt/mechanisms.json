@@ -1,0 +1,16 @@
+{
+  "types": [
+    {
+      "id": "turretShooter",
+      "base": "shooter",
+      "label": "Turreted shooter",
+      "defaults": { "turretRange": 3.14159, "turretSpeed": 6 }
+    },
+    {
+      "id": "otbIntake",
+      "base": "intake",
+      "label": "Over-the-bumper intake",
+      "defaults": { "width": 0.6, "rollerDepth": 0.25, "deployTime": 0.35 }
+    }
+  ]
+}

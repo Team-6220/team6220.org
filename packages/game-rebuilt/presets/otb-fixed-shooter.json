@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "OTB intake + fixed rear shooter",
+  "description": "Swerve, over-the-bumper intake in front, 40-Fuel hopper, fixed shooter facing backward. Must turn its back to the Hub to shoot.",
+  "chassis": {
+    "frame": { "type": "rect", "length": 0.686, "width": 0.686 },
+    "height": 0.55,
+    "bumpers": { "thickness": 0.0889, "mass": 4.5 },
+    "mass": 52.0,
+    "momentOfInertia": "auto",
+    "drivetrain": { "type": "swerve", "maxSpeed": 4.5, "maxAccel": 8.0, "maxAngularSpeed": 9.0, "traction": 1.1 }
+  },
+  "mechanisms": [
+    { "id": "intake1", "type": "otbIntake", "mount": { "x": 0.43, "y": 0.0, "theta": 0.0 },
+      "params": { "width": 0.6, "rollerDepth": 0.25, "deployTime": 0.35, "rate": 10 }, "stateMachine": "intake.default" },
+    { "id": "hopper1", "type": "storage", "mount": { "x": 0.0, "y": 0.0, "theta": 0.0 }, "params": { "capacity": 40 } },
+    { "id": "feed1", "type": "transfer", "mount": { "x": -0.05, "y": 0.0, "theta": 0.0 }, "params": { "delay": 0.15 } },
+    { "id": "shooter1", "type": "shooter", "mount": { "x": -0.1, "y": 0.0, "theta": 3.14159 },
+      "params": { "exitSpeed": 9.0, "ballsPerSecond": 8.0, "spread": 0.05, "spinUpTime": 0.8, "rangeMin": 1.0, "rangeMax": 5.5 } },
+    { "id": "climber1", "type": "climber", "mount": { "x": 0.0, "y": 0.2, "theta": 0.0 },
+      "params": { "maxLevel": 1, "level1Time": 2.5, "descendTime": 1.5 } }
+  ],
+  "preload": 8
+}

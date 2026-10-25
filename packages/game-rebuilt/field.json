@@ -1,0 +1,76 @@
+{
+  "length": 16.54,
+  "width": 8.07,
+  "mirror": "rotational",
+  "centerLineX": 8.27,
+  "elements": [
+    { "id": "guardrailNear", "kind": "wall", "label": "Guardrail", "shape": { "type": "rect", "x": 8.27, "y": -0.1, "length": 16.94, "width": 0.2 } },
+    { "id": "guardrailFar", "kind": "wall", "label": "Guardrail", "shape": { "type": "rect", "x": 8.27, "y": 8.17, "length": 16.94, "width": 0.2 } },
+    { "id": "allianceWallBlue", "kind": "wall", "label": "Alliance Wall", "alliance": "blue", "shape": { "type": "rect", "x": -0.1, "y": 4.035, "length": 0.2, "width": 8.07 } },
+    { "id": "allianceWallRed", "kind": "wall", "label": "Alliance Wall", "alliance": "red", "shape": { "type": "rect", "x": 16.64, "y": 4.035, "length": 0.2, "width": 8.07 } },
+
+    { "id": "allianceZone", "kind": "zone", "label": "Alliance Zone", "mirror": true, "tags": ["alliance"],
+      "shape": { "type": "rect", "x": 2.014, "y": 4.035, "length": 4.028, "width": 8.07 } },
+    { "id": "neutralZone", "kind": "zone", "label": "Neutral Zone", "tags": ["neutral"],
+      "shape": { "type": "rect", "x": 8.27, "y": 4.035, "length": 7.188, "width": 8.07 } },
+    { "id": "outpostArea", "kind": "zone", "label": "Outpost Area", "mirror": true,
+      "shape": { "type": "rect", "x": 0.902, "y": 1.702, "length": 1.803, "width": 3.404 } },
+
+    { "id": "hub", "kind": "sink", "label": "Hub", "mirror": true, "solid": true, "scoresFor": "blue",
+      "shape": { "type": "rect", "x": 4.625, "y": 4.035, "length": 1.194, "width": 1.194 },
+      "target": { "shape": { "type": "circle", "x": 4.625, "y": 4.035, "radius": 0.53 },
+                  "description": "Hexagonal top opening, 41.7 in across, front edge 72 in above the carpet" },
+      "emit": { "delay": 1.5, "spread": 0.35, "exits": [
+        { "x": 5.36, "y": 3.65, "theta": 0, "speed": 1.8 },
+        { "x": 5.36, "y": 3.9, "theta": 0, "speed": 1.8 },
+        { "x": 5.36, "y": 4.17, "theta": 0, "speed": 1.8 },
+        { "x": 5.36, "y": 4.42, "theta": 0, "speed": 1.8 } ] } },
+
+    { "id": "bumpLeft", "kind": "terrain", "label": "Bump", "mirror": true, "speedFactor": 0.55, "accelFactor": 0.6,
+      "shape": { "type": "rect", "x": 4.625, "y": 5.559, "length": 1.128, "width": 1.854 } },
+    { "id": "bumpRight", "kind": "terrain", "label": "Bump", "mirror": true, "speedFactor": 0.55, "accelFactor": 0.6,
+      "shape": { "type": "rect", "x": 4.625, "y": 2.511, "length": 1.128, "width": 1.854 } },
+
+    { "id": "trenchLeft", "kind": "gate", "label": "Trench", "mirror": true, "clearance": 0.565,
+      "shape": { "type": "rect", "x": 4.625, "y": 7.2775, "length": 1.194, "width": 1.279 } },
+    { "id": "trenchLeftPostInner", "kind": "wall", "label": "Trench post", "mirror": true,
+      "shape": { "type": "rect", "x": 4.625, "y": 6.562, "length": 1.194, "width": 0.152 } },
+    { "id": "trenchLeftPostOuter", "kind": "wall", "label": "Trench post", "mirror": true,
+      "shape": { "type": "rect", "x": 4.625, "y": 7.9935, "length": 1.194, "width": 0.153 } },
+    { "id": "trenchRight", "kind": "gate", "label": "Trench", "mirror": true, "clearance": 0.565,
+      "shape": { "type": "rect", "x": 4.625, "y": 0.7925, "length": 1.194, "width": 1.279 } },
+    { "id": "trenchRightPostInner", "kind": "wall", "label": "Trench post", "mirror": true,
+      "shape": { "type": "rect", "x": 4.625, "y": 1.508, "length": 1.194, "width": 0.152 } },
+    { "id": "trenchRightPostOuter", "kind": "wall", "label": "Trench post", "mirror": true,
+      "shape": { "type": "rect", "x": 4.625, "y": 0.0765, "length": 1.194, "width": 0.153 } },
+
+    { "id": "tower", "kind": "climbStructure", "label": "Tower", "mirror": true, "solid": true,
+      "shape": { "type": "rect", "x": 0.5715, "y": 4.6, "length": 1.143, "width": 1.251 },
+      "engageZone": { "type": "rect", "x": 1.493, "y": 4.6, "length": 0.7, "width": 1.3 },
+      "levels": [ { "level": 1, "label": "Level 1" }, { "level": 2, "label": "Level 2" }, { "level": 3, "label": "Level 3" } ] },
+
+    { "id": "outpost", "kind": "feeder", "label": "Outpost", "mirror": true,
+      "shape": { "type": "rect", "x": 0.05, "y": 0.6, "length": 0.1, "width": 0.808 },
+      "exit": { "x": 0.18, "y": 0.6, "theta": 0 }, "speed": 2.0, "stock": 24, "capacity": 40, "rate": 3,
+      "accuracy": 0.25, "mode": "onDemand", "enabledInAuto": false,
+      "triggerZone": { "type": "rect", "x": 0.902, "y": 1.702, "length": 1.803, "width": 3.404 } },
+
+    { "id": "depot", "kind": "pieceSource", "label": "Depot", "mirror": true, "piece": "fuel", "count": 24, "layout": "grid",
+      "shape": { "type": "rect", "x": 0.343, "y": 6.8, "length": 0.686, "width": 1.067 } },
+    { "id": "neutralFuel", "kind": "pieceSource", "label": "Neutral Zone Fuel", "piece": "fuel", "count": "remainder",
+      "layout": "grid", "gapAlongX": 0.051,
+      "shape": { "type": "rect", "x": 8.27, "y": 4.035, "length": 1.829, "width": 5.232 } }
+  ],
+  "startPositions": [
+    { "x": 3.4, "y": 1.2, "theta": 0 },
+    { "x": 3.4, "y": 4.035, "theta": 0 },
+    { "x": 3.4, "y": 6.9, "theta": 0 }
+  ],
+  "objectives": [
+    { "id": "hubShot", "pose": { "x": 2.4, "y": 4.035, "theta": 0 }, "mirror": true, "description": "Shooting pose facing the Hub, 2.2 m from its center" },
+    { "id": "depot", "pose": { "x": 1.15, "y": 6.8, "theta": 3.14159 }, "mirror": true, "description": "In front of the Depot, intake facing it" },
+    { "id": "outpost", "pose": { "x": 0.9, "y": 0.6, "theta": 3.14159 }, "mirror": true, "description": "In front of the Outpost chute" },
+    { "id": "towerClimb", "pose": { "x": 1.75, "y": 4.6, "theta": 3.14159 }, "mirror": true, "description": "Tower engagement position" },
+    { "id": "neutralFuel", "pose": { "x": 7.2, "y": 4.035, "theta": 0 }, "mirror": true, "description": "Edge of the Neutral Zone Fuel block" }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "Climb-focused",
+  "description": "Swerve, small fixed intake, 15-Fuel storage, forward shooter, Level 3 climber. Tall while climbing.",
+  "chassis": {
+    "frame": { "type": "rect", "length": 0.66, "width": 0.66 },
+    "height": 0.55,
+    "bumpers": { "thickness": 0.0889, "mass": 4.5 },
+    "mass": 54.0,
+    "momentOfInertia": "auto",
+    "drivetrain": { "type": "swerve", "maxSpeed": 4.6, "maxAccel": 8.5, "maxAngularSpeed": 9.0, "traction": 1.1 }
+  },
+  "mechanisms": [
+    { "id": "intake1", "type": "intake", "mount": { "x": 0.41, "y": 0.0, "theta": 0.0 },
+      "params": { "width": 0.5, "rollerDepth": 0.08, "deployTime": 0, "rate": 6 } },
+    { "id": "storage1", "type": "storage", "mount": { "x": 0.0, "y": 0.0, "theta": 0.0 }, "params": { "capacity": 15 } },
+    { "id": "shooter1", "type": "shooter", "mount": { "x": 0.15, "y": 0.0, "theta": 0.0 },
+      "params": { "exitSpeed": 8.0, "ballsPerSecond": 4.0, "spread": 0.05, "spinUpTime": 0.6, "rangeMin": 1.2, "rangeMax": 4.5 } },
+    { "id": "climber1", "type": "climber", "mount": { "x": 0.0, "y": 0.0, "theta": 3.14159 },
+      "params": { "maxLevel": 3, "level1Time": 2.5, "level2Time": 5.0, "level3Time": 8.0, "descendTime": 2.5, "extendedHeight": 1.6 } }
+  ],
+  "preload": 8
+}

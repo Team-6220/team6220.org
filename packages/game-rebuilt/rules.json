@@ -1,0 +1,62 @@
+{
+  "rules": [
+    {
+      "id": "G403",
+      "topic": "Do not completely cross the Center Line in AUTO",
+      "status": "implemented",
+      "penalty": "MAJOR",
+      "reason": "The extra MAJOR FOUL per contact with an opponent is not counted.",
+      "detector": { "type": "crossLine", "lineX": 8.27, "periods": ["auto"], "completely": true }
+    },
+    {
+      "id": "G407",
+      "topic": "Launch Fuel into your Hub only while bumpers are at least partly in your Alliance Zone",
+      "status": "approximated",
+      "penalty": "MAJOR",
+      "reason": "One MAJOR FOUL per continuous launch sequence aimed at the robot's own Hub; per-instance counting in the manual is not modeled.",
+      "detector": { "type": "launchOutsideZone", "zone": "allianceZone", "target": "hub" }
+    },
+    {
+      "id": "G405",
+      "topic": "Do not eject Fuel from the field",
+      "status": "approximated",
+      "penalty": "MINOR",
+      "reason": "A launched Fuel landing outside the field is a MINOR FOUL; escalation to MAJOR for repeats is not modeled.",
+      "detector": { "type": "pieceOutOfField" }
+    },
+    {
+      "id": "G418",
+      "topic": "3-second pin count",
+      "status": "not_implemented",
+      "reason": "Stretch goal. Pinning is simulated physically but not penalized yet."
+    },
+    {
+      "id": "G420",
+      "topic": "Tower protection in the last 30 seconds",
+      "status": "not_implemented",
+      "reason": "Stretch goal."
+    },
+    {
+      "id": "G427",
+      "topic": "Outpost storage limit",
+      "status": "approximated",
+      "reason": "The Outpost feeder has a fixed stock capacity; no foul is assessed."
+    },
+    {
+      "id": "G408",
+      "topic": "Do not catch Fuel released by the Hub",
+      "status": "not_implemented",
+      "reason": "Not in v1."
+    },
+    {
+      "id": "G414",
+      "topic": "No climbing on alliance partners",
+      "status": "not_implemented",
+      "reason": "Not in v1. Robots cannot climb on each other in the sim."
+    },
+    { "id": "G415", "topic": "Opponent damage", "status": "not_implemented", "reason": "Referee judgment." },
+    { "id": "G416", "topic": "Intent", "status": "not_implemented", "reason": "Referee judgment." },
+    { "id": "G417", "topic": "Tipping", "status": "not_implemented", "reason": "Referee judgment." },
+    { "id": "G419", "topic": "Collusion", "status": "not_implemented", "reason": "Referee judgment." }
+  ]
+}

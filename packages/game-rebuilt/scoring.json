@@ -1,0 +1,93 @@
+{
+  "fouls": { "MINOR": 5, "MAJOR": 15 },
+  "rules": [
+    {
+      "id": "fuel-active",
+      "label": "Fuel in an active Hub",
+      "on": "piece_scored",
+      "when": [
+        { "field": "targetBase", "op": "eq", "value": "hub" },
+        { "field": "active", "op": "eq", "value": true }
+      ],
+      "effects": [{ "points": 1, "counter": "fuelActive" }],
+      "source": "§6.5.1, Table 6-4"
+    },
+    {
+      "id": "fuel-auto",
+      "label": "AUTO Fuel (decides shift order)",
+      "on": "piece_scored",
+      "when": [
+        { "field": "targetBase", "op": "eq", "value": "hub" },
+        { "field": "active", "op": "eq", "value": true },
+        { "field": "period", "op": "eq", "value": "auto" }
+      ],
+      "effects": [{ "counter": "autoFuel" }],
+      "source": "§6.4.1"
+    },
+    {
+      "id": "fuel-inactive",
+      "label": "Fuel in an inactive Hub (no points)",
+      "on": "piece_scored",
+      "when": [
+        { "field": "targetBase", "op": "eq", "value": "hub" },
+        { "field": "active", "op": "eq", "value": false }
+      ],
+      "effects": [{ "counter": "fuelInactive" }],
+      "source": "§6.5.1"
+    },
+    {
+      "id": "tower-auto-l1",
+      "label": "Tower Level 1 in AUTO",
+      "on": "climb_assessed",
+      "when": [
+        { "field": "period", "op": "eq", "value": "auto" },
+        { "field": "level", "op": "gte", "value": 1 }
+      ],
+      "effects": [{ "points": 15, "counter": "towerPoints", "by": 15 }],
+      "limitPerAlliance": 2,
+      "source": "§6.5.2, Table 6-4"
+    },
+    {
+      "id": "tower-teleop-l1",
+      "label": "Tower Level 1",
+      "on": "climb_assessed",
+      "when": [
+        { "field": "period", "op": "eq", "value": "teleop" },
+        { "field": "level", "op": "eq", "value": 1 }
+      ],
+      "effects": [{ "points": 10, "counter": "towerPoints", "by": 10, "category": "endgame" }],
+      "source": "§6.5.2, Table 6-4"
+    },
+    {
+      "id": "tower-teleop-l2",
+      "label": "Tower Level 2",
+      "on": "climb_assessed",
+      "when": [
+        { "field": "period", "op": "eq", "value": "teleop" },
+        { "field": "level", "op": "eq", "value": 2 }
+      ],
+      "effects": [{ "points": 20, "counter": "towerPoints", "by": 20, "category": "endgame" }],
+      "source": "§6.5.2, Table 6-4"
+    },
+    {
+      "id": "tower-teleop-l3",
+      "label": "Tower Level 3",
+      "on": "climb_assessed",
+      "when": [
+        { "field": "period", "op": "eq", "value": "teleop" },
+        { "field": "level", "op": "eq", "value": 3 }
+      ],
+      "effects": [{ "points": 30, "counter": "towerPoints", "by": 30, "category": "endgame" }],
+      "source": "§6.5.2, Table 6-4"
+    }
+  ],
+  "rankingPoints": {
+    "win": 3,
+    "tie": 1,
+    "bonus": [
+      { "id": "ENERGIZED", "label": "Energized", "counter": "fuelActive", "thresholdKey": "energized" },
+      { "id": "SUPERCHARGED", "label": "Supercharged", "counter": "fuelActive", "thresholdKey": "supercharged" },
+      { "id": "TRAVERSAL", "label": "Traversal", "counter": "towerPoints", "thresholdKey": "traversal" }
+    ]
+  }
+}
