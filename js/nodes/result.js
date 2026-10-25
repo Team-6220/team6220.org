@@ -67,13 +67,18 @@ export function mount(root, run, onNew, onMenu) {
     run.done = true; run.score = total;
     meta.runsDone++; if (run.tutorial) meta.tutorialDone = true;
     if (!meta.best[run.seasonId] || total > meta.best[run.seasonId]) meta.best[run.seasonId] = total;
+    run.earned = Math.round(total * 0.4) + (run.events.some((e) => e.playoff.result === 'Winner') ? 20 : 0) + run.events.reduce((a, e) => a + (e.awards ? e.awards.length * 3 : 0), 0);
+    meta.points = (meta.points || 0) + run.earned;
     saveMeta(); clearRun();
   }
   const best = meta.best[run.seasonId];
   const champ = run.events.find((e) => e.idx === 2), regional = run.events.find((e) => e.idx === 1);
   const verdict = champ ? VERDICT[champ.playoff.result] : 'Season complete';
   const regionalLine = regional ? (regional.playoff.result === 'Winner' ? 'Regional winners' : regional.playoff.result === 'Not selected' ? 'Not picked at the Regional' : `Regional ${regional.playoff.result.toLowerCase()}`) : '';
-  const opt = { cycle: 'cycle time ' + s.effCycle.toFixed(1) + ' s', auto: 'autonomous', endgame: 'endgame reliability', defense: 'defense' }[run.req ? run.req.optVar : 'cycle'];
+  const optNames = { cycle: 'cycle time ' + s.effCycle.toFixed(1) + ' s', throughput: s.throughput.toFixed(1) + ' points per second of throughput', auto: 'autonomous', endgame: 'endgame reliability', defense: 'defense' };
+  const opt = optNames[run.req ? run.req.optVar : 'cycle'];
+  const lab = (id) => { const l = season.opt && season.opt.labels && season.opt.labels[id]; return l ? l[0] : optNames[id]; };
+  const optRight = run.req && season.opt && run.req.optVar === season.opt.best;
 
   // What went wrong most often
   const counts = {};
@@ -98,10 +103,15 @@ export function mount(root, run, onNew, onMenu) {
         regionalLine ? h('div', { class: 'small' }, regionalLine) : null,
         h('div', { style: 'font-size:34px', class: 'gold mono' }, total + ' pts'),
         h('div', { class: 'small muted' }, 'Best on this season: ' + best + (total >= best ? ' (new best)' : '')),
+        h('div', { class: 'small gold' }, `Team points earned: +${run.earned || 0} (you now have ${meta.points}). Spend them on upgrades from the menu.`),
         h('div', { class: 'small' }, `Optimized for ${opt}. Hours: design ${Math.round(s.budget.design)}, build ${Math.round(s.budget.mfgNeed)}, code ${Math.round(s.budget.progNeed)}, practice ${Math.max(0, Math.round(s.budget.practice))}.`),
         h('div', { class: 'row', style: 'margin-top:6px' }, copyBtn)),
       yearbook(run, s)),
     h('div', { class: 'row' }, ...run.events.map(eventCard)),
+    season.opt ? h('div', { class: 'panel col' }, h('h3', {}, 'What decided this game'),
+      h('div', { class: 'small' }, `The variable that mattered most in ${season.year}: `, h('b', { class: 'gold' }, lab(season.opt.best)), '. You chose ', h('b', {}, run.req ? lab(run.req.optVar) : 'nothing'), optRight ? ' (right call: your robot got a focus bonus).' : '.'),
+      h('div', { class: 'small muted' }, season.opt.why),
+      season.real ? h('div', { class: 'small' }, h('b', {}, 'In the real season: '), season.real, h('span', { class: 'muted' }, ' (from our notes; the team should verify)')) : null) : null,
     h('div', { class: 'row' },
       h('div', { class: 'panel col grow' }, h('h3', {}, 'What cost you the most'),
         top.length ? top.map(([id, c]) => h('div', { class: 'small' }, h('b', { class: 'red' }, `${c.n}x ${c.title}`), PRINCIPLE_MAP[id] ? h('div', { class: 'gold' }, 'Lesson: ' + PRINCIPLE_MAP[id].title + '. ' + PRINCIPLE_MAP[id].text) : null))

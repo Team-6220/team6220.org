@@ -51,7 +51,7 @@ export function playMatchView(canvas, match, opts = {}) {
   tl.opp.forEach((e, i) => evs.push({ t: e.t, side: 'blue', pts: e.pts, who: i % 3 }));
   if (!tl.auto.ok) evs.push({ t: tl.auto.t, side: 'none', pts: 0, text: 'Auto: your robot scores nothing.', cls: 'red' });
   else evs.push({ t: tl.auto.t + 0.01, side: 'none', pts: 0, text: `Auto: your robot scores ${Math.round(tl.auto.pts)}.`, cls: 'green' });
-  for (const mo of match.moments) if (mo.t !== undefined && mo.kind !== 'auto' && mo.kind !== 'endgame') evs.push({ t: mo.t, side: 'none', pts: 0, text: `${mo.title}: your robot is out of action.`, cls: 'red', sound: 'buzz' });
+  for (const mo of match.moments) if (mo.t !== undefined && mo.kind !== 'auto' && mo.kind !== 'endgame') evs.push({ t: mo.t, side: 'none', pts: 0, text: `${mo.title}: your robot is out of action.`, cls: 'red', sound: mo.kind === 'tip' ? 'thud' : mo.kind === 'brownout' || mo.kind === 'dead' ? 'zap' : 'buzz' });
   for (const mo of match.moments) if (mo.kind === 'auto') evs.push({ t: 10, side: 'none', pts: 0, text: mo.title, cls: 'red' });
   for (const mo of match.moments) if (mo.kind === 'endgame') evs.push({ t: 142, side: 'none', pts: 0, text: mo.title + ': no endgame points.', cls: 'red', sound: 'buzz' });
   for (const w of tl.down) evs.push({ t: w.to, side: 'none', pts: 0, text: 'Your robot is back in the match.', cls: 'muted' });
@@ -103,6 +103,12 @@ export function playMatchView(canvas, match, opts = {}) {
     ctx.strokeStyle = C.gold; ctx.strokeRect(10, TOP + 30, 28, H - TOP - 70); ctx.strokeStyle = C.blue; ctx.strokeRect(W - 38, TOP + 30, 28, H - TOP - 70);
     ctx.fillStyle = C.g3; ctx.fillRect(GOLD_LOAD + 22, TOP + 60, 14, H - TOP - 130); ctx.fillRect(BLUE_LOAD - 36, TOP + 60, 14, H - TOP - 130);
     ctx.strokeStyle = C.g4; ctx.strokeRect(GOLD_LOAD + 22, TOP + 60, 14, H - TOP - 130); ctx.strokeRect(BLUE_LOAD - 36, TOP + 60, 14, H - TOP - 130);
+    if (match.hubShifts && tt >= 15) { // alternating hub shifts: only one hub is active at a time
+      const ourActive = Math.floor((tt - 15) / 25) % 2 === 0 && tt < 120;
+      const lit = (x, on, col) => { ctx.fillStyle = on ? col : C.g2; ctx.fillRect(x, TOP + 30, 28, H - TOP - 70); ctx.fillStyle = on ? C.black : C.g5; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(on ? 'ON' : 'OFF', x + 14, TOP + 46); };
+      const endAll = tt >= 120;
+      lit(10, endAll || ourActive, C.gold); lit(W - 38, endAll || !ourActive, C.blue);
+    }
     ctx.fillStyle = C.g4; ctx.font = '11px sans-serif';
     ctx.fillText('GOAL', 24, H - 20); ctx.fillText('GOAL', W - 24, H - 20); ctx.fillText('LOADING', GOLD_LOAD + 29, H - 20); ctx.fillText('LOADING', BLUE_LOAD - 29, H - 20);
     // endgame structure
@@ -159,6 +165,7 @@ export function playMatchView(canvas, match, opts = {}) {
     t = MATCH_SEC; goldScore = match.alliance; blueScore = match.opp; ei = evs.length; done = true; popups.length = 0;
     draw(); sfx('end');
     setTimeout(() => sfx(match.win ? 'win' : match.tie ? 'click' : 'lose'), 700);
+    if (match.win) setTimeout(() => sfx('cheer'), 900);
     if (opts.onDone) opts.onDone();
   }
 

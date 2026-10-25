@@ -26,6 +26,7 @@ export const $ = (sel) => document.querySelector(sel);
 
 // ---- Sound (small synthesized effects; can be muted) ----
 let audio = null;
+// [frequency or filter centre, start, length, wave ('noise' = filtered noise), volume, optional slide-to frequency]
 const SFX = {
   chime: [[660, 0, 0.3, 'triangle', 0.15], [880, 0.12, 0.3, 'triangle', 0.15], [1320, 0.24, 0.3, 'triangle', 0.15]],
   blip: [[880, 0, 0.07, 'triangle', 0.07]],
@@ -35,22 +36,49 @@ const SFX = {
   win: [[523, 0, 0.25, 'triangle', 0.14], [659, 0.14, 0.25, 'triangle', 0.14], [784, 0.28, 0.25, 'triangle', 0.14], [1047, 0.44, 0.5, 'triangle', 0.14]],
   lose: [[330, 0, 0.3, 'sawtooth', 0.07], [262, 0.22, 0.3, 'sawtooth', 0.07], [196, 0.44, 0.5, 'sawtooth', 0.07]],
   click: [[600, 0, 0.05, 'triangle', 0.05]],
+  pop: [[420, 0, 0.09, 'triangle', 0.09, 760]],
+  confirm: [[520, 0, 0.07, 'triangle', 0.09], [780, 0.07, 0.12, 'triangle', 0.09]],
+  deny: [[200, 0, 0.12, 'square', 0.06], [150, 0.1, 0.18, 'square', 0.06]],
+  coin: [[988, 0, 0.07, 'square', 0.05], [1319, 0.07, 0.25, 'square', 0.05]],
+  whoosh: [[900, 0, 0.35, 'noise', 0.1, 2400]],
+  drill: [[140, 0, 0.5, 'sawtooth', 0.05, 220], [2200, 0, 0.5, 'noise', 0.05]],
+  rivet: [[1700, 0, 0.04, 'noise', 0.12], [900, 0.05, 0.12, 'triangle', 0.08, 500]],
+  snap: [[300, 0, 0.05, 'square', 0.07, 120]],
+  tick: [[1200, 0, 0.03, 'square', 0.04]],
+  zap: [[1800, 0, 0.25, 'sawtooth', 0.05, 90], [3000, 0, 0.2, 'noise', 0.05]],
+  thud: [[90, 0, 0.3, 'sine', 0.2, 40], [300, 0, 0.12, 'noise', 0.08]],
+  cheer: [[1400, 0, 1.1, 'noise', 0.08, 2200], [900, 0.1, 0.9, 'noise', 0.06, 1400]],
+  whistle: [[2100, 0, 0.35, 'sine', 0.06, 2600]],
+  ding: [[1568, 0, 0.5, 'sine', 0.09]],
+  perk: [[392, 0, 0.12, 'triangle', 0.1], [523, 0.1, 0.12, 'triangle', 0.1], [659, 0.2, 0.12, 'triangle', 0.1], [784, 0.3, 0.4, 'triangle', 0.1]],
 };
 export function soundOn() { return !meta.mute; }
 export function setSound(on) { meta.mute = !on; saveMeta(); }
+let noiseBuf = null;
 export function sfx(kind) {
   if (meta.mute || !SFX[kind]) return;
   try {
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
     if (audio.state === 'suspended') audio.resume();
     const t = audio.currentTime;
-    SFX[kind].forEach(([f, d, len, type, vol]) => {
-      const o = audio.createOscillator(), g = audio.createGain();
-      o.type = type; o.frequency.value = f;
+    SFX[kind].forEach(([f, d, len, type, vol, to]) => {
+      const g = audio.createGain();
       g.gain.setValueAtTime(0.0001, t + d);
       g.gain.exponentialRampToValueAtTime(vol, t + d + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d + len + 0.02);
-      o.connect(g); g.connect(audio.destination); o.start(t + d); o.stop(t + d + len + 0.04);
+      let src;
+      if (type === 'noise') {
+        if (!noiseBuf) { noiseBuf = audio.createBuffer(1, audio.sampleRate * 1.5, audio.sampleRate); const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; }
+        src = audio.createBufferSource(); src.buffer = noiseBuf;
+        const bp = audio.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8; bp.frequency.setValueAtTime(f, t + d);
+        if (to) bp.frequency.exponentialRampToValueAtTime(to, t + d + len);
+        src.connect(bp); bp.connect(g);
+      } else {
+        src = audio.createOscillator(); src.type = type; src.frequency.setValueAtTime(f, t + d);
+        if (to) src.frequency.exponentialRampToValueAtTime(to, t + d + len);
+        src.connect(g);
+      }
+      g.connect(audio.destination); src.start(t + d); src.stop(t + d + len + 0.04);
     });
   } catch (e) { /* audio unavailable */ }
 }
@@ -95,12 +123,18 @@ function meter(label, value, max, text, bad) {
     h('div', { class: 'bar' }, h('div', { style: `width:${pct}%` })));
 }
 
+function optName(run, id, fallback) {
+  const l = SEASONS[run.seasonId].opt && SEASONS[run.seasonId].opt.labels[id];
+  return l ? l[0] : fallback;
+}
+
 function goalText(run, s) {
   const v = run.req ? run.req.optVar : null;
   if (!v) return null;
   const have = s.picks.drivetrain && s.picks.intake && s.picks.scorer;
   switch (v) {
-    case 'cycle': return 'Cycle time' + (have ? ` (now ${s.effCycle.toFixed(1)} s)` : '');
+    case 'cycle': return optName(run, 'cycle', 'Cycle time') + (have ? ` (now ${s.effCycle.toFixed(1)} s)` : '');
+    case 'throughput': return optName(run, 'throughput', 'Throughput') + (have ? ` (now ${s.throughput.toFixed(1)} points per second)` : '');
     case 'auto': return `Autonomous points (auto reliability ${Math.round(s.autoRel * 100)}%)`;
     case 'endgame': return `Endgame reliability (${s.picks.endgame && s.picks.endgame.id !== 'none' ? Math.round(s.endgameRel * 100) + '%' : 'no endgame mechanism yet'})`;
     default: return `Defense resilience (drivetrain reliability ${Math.round(s.dtRel * 100)}%, ${Math.round(s.weight)} lb)`;
@@ -131,7 +165,7 @@ export function setHud(run) {
     h('div', { style: 'flex:1' }, h('div', { class: 'small muted' }, `SEASON CLOCK (${TOTAL_HOURS} hours)`), clock, legend),
     meter('Weight', s.weight, s.cap, `${Math.round(s.weight)} / ${s.cap} lb`, s.over),
     meter('Complexity', s.complexity, MAX_COMPLEXITY, `${s.complexity.toFixed(1)} / ${MAX_COMPLEXITY}`, s.complexity > 22),
-    h('div', { class: 'meter' }, h('div', { class: 'lbl' }, h('span', {}, 'Cycle time')), h('div', { class: 'mono' }, s.picks.drivetrain && s.picks.intake && s.picks.scorer ? s.effCycle.toFixed(1) + ' s' : '--'))));
+    h('div', { class: 'meter' }, h('div', { class: 'lbl' }, h('span', {}, s.bulk ? 'Points / s' : 'Cycle time')), h('div', { class: 'mono' }, s.picks.drivetrain && s.picks.intake && s.picks.scorer ? (s.bulk ? s.throughput.toFixed(1) : s.effCycle.toFixed(1) + ' s') : '--'))));
   const goal = goalText(run, s);
   if (goal) {
     const season = SEASONS[run.seasonId];

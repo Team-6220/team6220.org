@@ -1,5 +1,5 @@
 // Gears & Belts: ratio selection, center distance, belt length = teeth x 5 mm, tensioning.
-import { h, clear } from '../ui.js';
+import { h, clear, sfx } from '../ui.js';
 import { spend, unlock, addFlaw, save } from '../state.js';
 import { ratio, driveSpeed, rollerSpeed, center, round3, beltTeeth, PINIONS, GEARS, INTAKE_RATIOS, BELT_STOCK } from '../widgets/gearTrain.js';
 import { rngFor } from '../rng.js';
@@ -48,6 +48,7 @@ export function mount(root, run, done) {
   }
 
   function finish(speedOk, v, exact) {
+    sfx(speedOk ? 'coin' : 'deny');
     const beltOk = Math.abs(s.belt - need) <= 2.6;
     run.results.gears = { speedOk, driveSpeed: v, centerOk: s.holes === exact, beltOk, tension: s.tension };
     spend(5);

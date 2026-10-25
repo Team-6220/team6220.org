@@ -2,7 +2,7 @@
 export const MENTOR_CARDS = {
   rivet: {
     title: 'Mentor Bruce: rivet layout',
-    intro: 'You are riveting a 1/8" aluminum plate with 3/16" rivets (D = 0.1875"). Which layout follows our rivet guide?',
+    intro: 'You are riveting an aluminum plate. Pick the rivet and set the edge distance and spacing so it follows the rivet guide in our Design Standards, then rivet it.',
     // edge distance A = 2.5D = 0.47", pitch B = 4D..8D = 0.75"..1.5"
     options: [
       { text: 'Edge 0.47", pitch 1.0". Plenty of holes, but not too many.', good: true },

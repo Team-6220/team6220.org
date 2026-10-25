@@ -22,6 +22,23 @@ Add `?debug` to the URL to see which principles a run has not met yet.
 ## Status
 Nine seasons: 2017 STEAMWORKS, 2018 POWER UP, 2019 Deep Space, 2020 INFINITE RECHARGE, 2022 Rapid React, 2023 CHARGED UP,
 2024 Crescendo, 2025 REEFSCAPE and 2026 REBUILT (2020 and 2021 count once). Each kickoff embeds that season's official game animation.
-An event is six animated qualification matches, alliance selection, best-of-three playoffs and awards.
+
+**Core loop:** decide (inspiration, prototype, sketch, gearing, review) -> the HUD and a "last step" panel show what it did to the robot's numbers
+-> test (scrimmages) -> watch it play (animated matches) -> scout, pick a match plan and repair in the pit between matches -> alliance selection,
+playoffs and awards -> a debrief, team points, and upgrades to carry into the next season. Random encounters (Open Alliance posts, sponsors,
+coopertition, outages) add choices with visible costs and risks.
+
+**Per-season strategy:** each game defines what to optimize (cycle time in most games, fuel/cell throughput in REBUILT and INFINITE RECHARGE, climb
+reliability in STEAMWORKS). Picking the right variable gives a focus bonus, and the result screen says what actually decided the game.
+
+**Pictures:** `assets/img/` holds figures cropped from the NASA RAP Design Guide and the 6220 Design Standards (credited on screen);
+`js/widgets/figures.js` maps every mechanism to a photo or a drawn pictogram, and `js/widgets/diagrams.js` draws the teaching diagrams.
+
 Season numbers are approximate: the team should verify weight caps, limits and scoring against each game manual (see `js/data/seasons.js`).
-`node tests/balance.mjs [seasonId]` prints the balance table; a careful simple build should rank about 3-5 at the regional.
+REBUILT scoring and timing come from the official cheat sheet.
+
+## Tests
+- `node tests/smoke.mjs`: data consistency (tasks, sensors, reach, pictures) and a few reference builds.
+- `node tests/balance.mjs [seasonId]`: a careful simple build should rank about 3-6 at the regional; skipping everything ranks far worse.
+- `node tests/meta.mjs [seasonId]`: brute-forces every legal mechanism combination and prints the best three, so the real-world best design
+  can be checked against the game's scoring.

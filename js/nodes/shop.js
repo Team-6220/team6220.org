@@ -1,5 +1,5 @@
 // Shop: COTS stock, sensor planning for programming, and weight reduction decisions.
-import { h, clear } from '../ui.js';
+import { h, clear, sfx } from '../ui.js';
 import { rngFor } from '../rng.js';
 import { ALL_SENSORS } from '../data/archetypes.js';
 import { derive } from '../sim/robotModel.js';
@@ -25,7 +25,7 @@ export function mount(root, run, done, node) {
 
   function applyWeight(id, label, delta, hours, extra) {
     if (r.applied[id]) return;
-    r.applied[id] = true; r.weightDelta += delta; spend(hours);
+    r.applied[id] = true; r.weightDelta += delta; spend(hours); sfx('drill');
     if (extra) extra();
     save(); render();
   }

@@ -6,6 +6,8 @@ import { buildPlan } from '../js/plan.js';
 import { SLICE_IDS } from '../js/data/principles.js';
 import { SEASONS, SEASON_IDS } from '../js/data/seasons.js';
 import { archList, ALL_SENSORS } from '../js/data/archetypes.js';
+import { ART, FIG } from '../js/widgets/figures.js';
+import { existsSync } from 'node:fs';
 
 // plan checks
 for (const tutorial of [true, false]) for (let seed = 1; seed <= 50; seed++) {
@@ -43,6 +45,13 @@ for (const sid of SEASON_IDS) for (const a of archList(sid, 'scorer')) {
   }
   if (!ok) throw new Error(`${sid}/${a.id}: master sketch has no solution`);
 }
+// every mechanism has a picture, and every picture exists
+for (const sid of SEASON_IDS) for (const slot of ['drivetrain', 'intake', 'scorer', 'endgame']) for (const a of archList(sid, slot)) {
+  if (a.id === 'none') continue;
+  if (!ART[a.id]) throw new Error(`${sid}/${a.id}: no picture`);
+  if (ART[a.id].startsWith('fig:') && !FIG[ART[a.id].slice(4)]) throw new Error(`${a.id}: unknown figure`);
+}
+for (const id of Object.keys(FIG)) if (!existsSync(new URL('../assets/img/' + id + '.jpg', import.meta.url))) throw new Error('missing image ' + id);
 console.log('season data ok:', SEASON_IDS.length, 'seasons');
 
 function build(seed, sid, dt, it, sc, eg, src, skip) {

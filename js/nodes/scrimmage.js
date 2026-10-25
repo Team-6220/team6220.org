@@ -1,5 +1,5 @@
 // Test / Scrimmage: building a rough version and testing it reveals flaws that design alone can't find.
-import { h, clear } from '../ui.js';
+import { h, clear, sfx } from '../ui.js';
 import { rngFor } from '../rng.js';
 import { derive } from '../sim/robotModel.js';
 import { playCycle } from '../sim/cycleSim.js';
@@ -17,7 +17,7 @@ export function mount(root, run, done, node) {
     spend(thorough ? 10 : 4);
     let n = 0;
     for (const f of run.flaws) if (!f.found && !f.fixed && rng.chance(p)) { f.found = true; n++; }
-    last = { n, thorough };
+    last = { n, thorough }; sfx(n ? 'zap' : 'blip');
     unlock('test-early');
     save(); render();
   }

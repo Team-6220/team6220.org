@@ -1,5 +1,5 @@
 // Krayon CAD packaging widget (top-down). Drag colored blocks inside the 28"x28" frame.
-import { h, C, canvasPos } from '../ui.js';
+import { h, C, canvasPos, sfx } from '../ui.js';
 import { picks } from '../sim/robotModel.js';
 
 const OX = 56, OY = 44, S = 12, FRAME = 28;
@@ -99,7 +99,7 @@ export function createPackager(run) {
     drag.b.y = Math.round(Math.max(0, Math.min(FRAME - drag.b.h, y)) * 2) / 2;
     update();
   });
-  cv.addEventListener('pointerup', () => { drag = null; });
+  cv.addEventListener('pointerup', () => { if (drag) sfx('snap'); drag = null; });
 
   function update() { draw(); listeners.forEach((f) => f(check())); }
   return { canvas: cv, state: st, check, update, onChange: (f) => listeners.push(f) };

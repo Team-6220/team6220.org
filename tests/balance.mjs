@@ -15,7 +15,7 @@ const combos = {
   chargedup2023: { simple: ['tank6', 'cubeRoller', 'pivotArm', 'autoBalance'], big: ['swerve', 'pneuClaw', 'telescopeArm', 'dockWedge'], minimal: ['kit', 'cubeRoller', 'lowSpit', 'none'] },
   crescendo2024: { simple: ['tank6', 'underBumper', 'fixedShooter', 'hookClimb'], big: ['swerve', 'overBumper', 'pivotShooter', 'elevatorTrap'], minimal: ['kit', 'claw', 'ampArm', 'none'] },
   reefscape2025: { simple: ['tank6', 'stationFunnel', 'elevCoral', 'shallowHook'], big: ['swerve', 'floorCoral', 'coralAlgae', 'deepWinch'], minimal: ['kit', 'stationFunnel', 'troughRoller', 'none'] },
-  rebuilt2026: { simple: ['tank6', 'fuelWide', 'fuelShooter2', 'towerHook'], big: ['swerve', 'fuelHopper', 'fuelTurret', 'towerClimb'], minimal: ['kit', 'underFuel', 'fuelDump', 'none'] },
+  rebuilt2026: { simple: ['tank6', 'fixedRoller', 'singleShooter', 'towerHook'], meta: ['tank6', 'slapdownHopper', 'rapidShooter', 'towerHook'], big: ['swerve', 'slapdownHopper', 'turretShooter2', 'towerClimb'], minimal: ['kit', 'underFuel', 'hubDumper', 'none'] },
 };
 
 function build(seed, sid, c, mode) {

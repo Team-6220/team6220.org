@@ -5,11 +5,14 @@ import { SEASONS } from '../data/seasons.js';
 import { spend, unlock, setSlot, save, BREAKTHROUGH_CHANCE, BREAKTHROUGH_GAIN } from '../state.js';
 import { notify } from '../ui.js';
 import { shell, hint, tags } from './common.js';
+import { artFor } from '../widgets/figures.js';
+import { hasPerk } from '../sim/robotModel.js';
 
-const BORROW_HOURS = 2, SCRATCH_HOURS = 6;
+const SCRATCH_HOURS = 6;
 
 export function mount(root, run, done, node) {
   const slots = node.params.slots;
+  const BORROW_HOURS = hasPerk(run, 'open-alliance') ? 1 : 2;
   const season = SEASONS[run.seasonId];
   const sel = {};
   slots.forEach((s) => { sel[s] = run.design[s] ? { id: run.design[s].id, source: run.design[s].source } : null; });
@@ -19,9 +22,10 @@ export function mount(root, run, done, node) {
     const picked = cur && cur.id === a.id;
     const known = a.flaws.length ? a.flaws.map((f) => f.name) : ['None known'];
     return h('div', { class: 'card' + (picked ? ' sel' : ''), onclick: () => { sel[slot] = { id: a.id, source: cur && cur.id === a.id ? cur.source : 'borrowed' }; render(); } },
+      artFor(a.id),
       h('b', {}, a.name),
       h('div', { class: 'small muted', style: 'margin:4px 0' }, a.note),
-      h('div', {}, tags([`${a.wt} lb`, `complexity ${a.cx}`, `reliability ${Math.round(a.rel * 100)}%`, `driver ease ${Math.round(a.ease * 100)}%`])),
+      h('div', {}, tags([`${a.wt} lb`, `complexity ${a.cx}`, `reliability ${Math.round(a.rel * 100)}%`, `driver ease ${Math.round(a.ease * 100)}%`].concat(a.cap && a.cap < 900 ? [`holds ${a.cap}`] : [], a.rate ? [`${a.rate} per s`] : []))),
       a.sensors && a.sensors.length ? h('div', {}, h('span', { class: 'small muted' }, 'Sensors needed: '), tags(a.sensors)) : null,
       h('div', { class: 'small' }, h('span', { class: 'muted' }, 'Known issues if borrowed: '), picked && cur.source === 'scratch' ? h('span', { class: 'gold' }, 'unknown if built from scratch') : known.join('; ')),
       picked ? h('div', { style: 'margin-top:6px', class: 'row' },

@@ -1,5 +1,5 @@
 // Prototype: cheap wood-and-drill tests vs. costly high-fidelity tests. Teaches touch it/own it, rollers, test early.
-import { h, clear, C } from '../ui.js';
+import { h, clear, C, sfx } from '../ui.js';
 import { SEASONS } from '../data/seasons.js';
 import { rngFor } from '../rng.js';
 import { spend, unlock, removeFlaw, bump, save } from '../state.js';
@@ -33,6 +33,7 @@ export function mount(root, run, done) {
     const seen = Math.max(0, Math.min(1, t + rng.normal(0, FIDELITY[fid].noise)));
     tests.push({ fid, wheel, comp, seen, sd: FIDELITY[fid].noise });
     spend(FIDELITY[fid].hours);
+    sfx(seen > 0.8 ? 'coin' : seen > 0.4 ? 'blip' : 'deny');
     if (fid === 'wood') unlock('test-early');
     render();
   }

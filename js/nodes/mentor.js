@@ -1,5 +1,8 @@
 // Mentor / event cards: rivet quiz, rule change, out-of-stock supplier.
-import { h, clear } from '../ui.js';
+import { h, clear, sfx } from '../ui.js';
+import { rngFor } from '../rng.js';
+import { createRivetWidget } from '../widgets/rivetLayout.js';
+import { figure } from '../widgets/figures.js';
 import { MENTOR_CARDS } from '../data/events.js';
 import { spend, unlock, addFlaw, save } from '../state.js';
 import { shell, hint } from './common.js';
@@ -14,13 +17,26 @@ export function mount(root, run, done, node) {
   }
 
   if (id === 'rivet') {
-    card.options.forEach((o) => {
-      body.append(h('div', { class: 'card', onclick: () => {
-        spend(card.hours); unlock('rivets');
-        if (!o.good) addFlaw({ id: 'weakJoint', name: 'Weak riveted joint (bad layout)', sev: 0.3, kind: 'cycles', fixHours: 3, onlyTesting: true, hint: 'Edge about 2.5D, pitch 4D to 8D.', found: false });
-        finishWith(o.good ? 'Correct. Edge distance about 2.5D (0.47") and pitch 4D to 8D (0.75" to 1.5"). Too many holes make parts shear like a zipper.' : 'Not quite. ' + o.why + ' Rule of thumb: edge about 2.5D, pitch 4D to 8D.', o.good ? '' : 'sel');
-      } }, o.text));
+    const thickness = rngFor(run.seed, 'rivetsheet').pick([0.0625, 0.125, 0.125, 0.1875]);
+    const checks = h('div', { class: 'col' });
+    const row = (ok, text) => h('div', { class: 'small' }, h('span', { class: ok ? 'green' : 'red' }, ok ? '✔ ' : '✘ '), text);
+    const w = createRivetWidget(thickness, (r) => {
+      clear(checks);
+      checks.append(row(r.sheetOk, `Rivet size suits a ${thickness}" sheet`), row(r.edgeOk && !r.edgeBad, 'Edge distance A is about 2.5 D'), row(r.pitchOk, 'Spacing B is between 4 D and 8 D'));
     });
+    const submit = h('button', { class: 'btn primary', onclick: () => {
+      const r = w.check(); spend(card.hours); unlock('rivets'); sfx('rivet');
+      if (!r.ok) addFlaw({ id: 'weakJoint', name: 'Weak riveted joint (bad layout)', sev: 0.3, kind: 'cycles', fixHours: 3, onlyTesting: true, hint: 'Edge about 2.5D, pitch 4D to 8D.', found: false });
+      else sfx('coin');
+      const why = [];
+      if (!r.sheetOk) why.push(`A ${w.state.size}" rivet is not rated for a ${thickness}" sheet.`);
+      if (r.edgeBad || !r.edgeOk) why.push('The edge distance was off: too close and the edge tears out, too far wastes the plate.');
+      if (!r.pitchOk) why.push(w.state.B < r.R.B[0] ? 'Holes too close together: the part can shear like a zipper.' : 'Holes too far apart: the plate flexes between rivets.');
+      finishWith(r.ok ? 'Correct. Edge distance about 2.5D and pitch 4D to 8D. Too many holes make parts shear like a zipper, so fewer well-placed rivets beat a row of closely spaced ones.' : 'Not quite. ' + why.join(' ') + ' Rule of thumb: edge about 2.5D, pitch 4D to 8D.', r.ok ? '' : 'sel');
+    } }, `Rivet it (${card.hours} h)`);
+    body.append(h('div', { class: 'row' },
+      h('div', { class: 'col' }, w.cv, figure('std-rivet-guide')),
+      h('div', { class: 'col grow' }, w.controls, h('div', { class: 'panel col' }, h('b', {}, 'Rivet guide checks'), checks), submit)));
   } else if (id === 'rule') {
     const sk = run.results.sketch, cad = run.results.cad, shop = run.results.shop;
     let hours = 1; const notes = [];

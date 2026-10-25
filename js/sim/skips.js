@@ -20,6 +20,21 @@ export function applySkips(run) {
     addFlaw({ id: 'noTensioner', name: 'No tensioner: belt or chain jumps under load', sev: 0.5, kind: 'chain', fixHours: 4, onlyTesting: true, hint: 'Add slotted holes or a tensioner so the belt or chain can be tightened.', found: false });
     msgs.push('You skipped gears and belts: speeds and belt tension were never checked.');
   }
+  if (!r.dtGear) {
+    addFlaw({ id: 'noGearing', name: 'Drivetrain gearing was a guess: slow, or easy to push around', sev: 0.4, kind: 'cycles', fixHours: 4, onlyTesting: true, hint: 'Pick the wheel, motors and ratio so you are fast enough but still hard to push.', found: false });
+    msgs.push('You skipped drivetrain gearing: the ratio was a guess.');
+  }
+  if (!r.review) {
+    const pool = [
+      { id: 'rev-elec', name: 'Electronics buried under the arm pivot', kind: 'brownout', sev: 0.45, fixHours: 8, onlyTesting: false, hint: 'Move the RoboRIO and PDH out from under the mechanism.' },
+      { id: 'rev-adj', name: 'Shooter cannot be tuned (no adjustability)', kind: 'cycles', sev: 0.35, fixHours: 5, onlyTesting: true, hint: 'Add slots and multiple mounting points where accuracy matters.' },
+      { id: 'rev-chain', name: 'Chain run without a tensioner', kind: 'chain', sev: 0.4, fixHours: 5, onlyTesting: false, hint: 'Add a tensioner or make one side easy to detach.' },
+      { id: 'rev-access', name: 'Fasteners that cannot be reached with a tool', kind: 'part', sev: 0.3, fixHours: 4, onlyTesting: false, hint: 'Leave room for the screwdriver and rivet gun.' },
+    ];
+    const pick = pool.slice().sort((a, b) => (a.id.charCodeAt(4) * 7 + run.seed) % 5 - (b.id.charCodeAt(4) * 7 + run.seed) % 5).slice(0, 2);
+    pick.forEach((f) => addFlaw(Object.assign({ found: false }, f)));
+    msgs.push('You skipped the design review: problems a fresh pair of eyes would have caught are still in the design.');
+  }
   run.skipsApplied = true; save();
   return msgs;
 }

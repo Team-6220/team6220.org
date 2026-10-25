@@ -15,7 +15,7 @@ function read(key, fallback) {
 }
 function write(key, val) { try { if (store) store.setItem(key, JSON.stringify(val)); } catch (e) { /* ignore */ } }
 
-export const meta = Object.assign({ codex: {}, best: {}, runsDone: 0, tutorialDone: false }, read(META_KEY, {}));
+export const meta = Object.assign({ codex: {}, best: {}, runsDone: 0, tutorialDone: false, points: 0, perks: {}, equipped: [], mute: false }, read(META_KEY, {}));
 export function saveMeta() { write(META_KEY, meta); }
 export function principleCount() { return SLICE_IDS.filter((id) => meta.codex[id]).length; }
 
@@ -34,6 +34,7 @@ export function newRun(seasonId, seed, tutorial) {
     design: { drivetrain: null, intake: null, scorer: null, endgame: null },
     results: {}, flaws: [], plan: null, phase: 0, completed: {},
     triggered: [], log: [], events: [], done: false, score: null, counters: {}, skipsApplied: false,
+    bonus: { cycle: 0, practice: 0, mfg: 0, prog: 0, pit: 0, scout: 0 }, perks: (meta.equipped || []).slice(0, 2), lastDelta: null,
   };
 }
 

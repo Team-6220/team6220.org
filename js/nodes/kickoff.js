@@ -5,16 +5,22 @@ import { spend, unlock, save } from '../state.js';
 import { TOTAL_HOURS } from '../sim/robotModel.js';
 import { shell, hint } from './common.js';
 
-const OPT_VARS = [
-  { id: 'cycle', name: 'Cycle time', text: 'Points per second of your main scoring loop. In most games this decides matches.' },
-  { id: 'auto', name: 'Autonomous points', text: 'Win the first 15 seconds. Strong, but only worth it if the match is close.' },
-  { id: 'endgame', name: 'Endgame reliability', text: 'Make the endgame a sure thing every match.' },
-  { id: 'defense', name: 'Defense resilience', text: 'Be hard to push around and hard to disable.' },
-];
+const BASE_OPTS = {
+  cycle: { name: 'Cycle time', text: 'Points per second of your main scoring loop: how fast you can fetch and score one trip.' },
+  throughput: { name: 'Throughput', text: 'How many game pieces you can score per second: how much you carry per trip and how fast you load and unload.' },
+  auto: { name: 'Autonomous points', text: 'Win the first seconds of the match. Strong, but only worth it if the match is close.' },
+  endgame: { name: 'Endgame reliability', text: 'Make the endgame a sure thing every match.' },
+  defense: { name: 'Defense resilience', text: 'Be hard to push around and hard to disable.' },
+};
+export function optList(season) {
+  const ids = [season.bulk ? 'throughput' : 'cycle', 'auto', 'endgame', 'defense'];
+  return ids.map((id) => { const l = season.opt && season.opt.labels && season.opt.labels[id]; return { id, name: l ? l[0] : BASE_OPTS[id].name, text: l ? l[1] : BASE_OPTS[id].text }; });
+}
 
 export function mount(root, run, done) {
   const season = SEASONS[run.seasonId];
-  let opt = 'cycle';
+  const OPT_VARS = optList(season);
+  let opt = OPT_VARS[0].id;
   const chosen = new Set(season.defaultTasks);
 
   function render() {
@@ -40,7 +46,7 @@ export function mount(root, run, done) {
         ...OPT_VARS.map((o) => h('div', { class: 'card' + (opt === o.id ? ' sel' : ''), style: 'margin-bottom:6px', onclick: () => { opt = o.id; render(); } }, h('b', {}, o.name), h('div', { class: 'small muted' }, o.text)))),
       h('div', { class: 'panel' }, h('h3', {}, 'Season clock'),
         h('p', { class: 'small' }, `You have ${TOTAL_HOURS} hours. Design, building, programming and driver practice all draw from the same clock. Every hour spent in design is an hour not spent on the others.`)),
-      hint(run, 'Pick the one variable that matters most and 3 or so scoring actions. Do not try to do everything.'),
+      hint(run, 'Which variable decides this game? Look at the scoring table and the match timing, not just the cheapest points. Pick the one variable that matters most and 3 or so scoring actions.'),
       h('button', { class: 'btn primary', disabled: bestEnd === 0 ? true : null, onclick: finish }, 'Commit requirements (4 h)'));
     root.append(shell('Kickoff', 'Strategic design starts before any CAD.', h('div', { class: 'row' }, left, right)));
   }

@@ -41,6 +41,9 @@ const ARCH = {
       none,
       { id: 'lowRung', name: 'Hook climber (low rung)', wt: 10, cx: 3, rel: 0.92, ease: 0.9, time: 0, tasks: ['climbLow'], ppc: 0, sensors: ['limit switch'], flaws: [],
         note: 'Light and dependable endgame points.' },
+      { id: 'hookMidHigh', name: 'Telescoping hook climber (mid and high rung)', wt: 18, cx: 6, rel: 0.78, ease: 0.8, time: 0, tasks: ['climbHigh'], ppc: 0, sensors: ['limit switch', 'arm encoder'],
+        flaws: [{ id: 'climbSync', name: 'Hooks catch the rung unevenly', sev: 0.4, kind: 'endgame', fixHours: 6, onlyTesting: true, hint: 'Mechanical sync and a tuned climb sequence.' }],
+        note: 'The climber most strong teams built: ten points from the high rung.' },
       { id: 'traversal', name: 'Telescoping traversal climber', wt: 34, cx: 9, rel: 0.62, ease: 0.5, time: 0, tasks: ['climbTrav'], ppc: 0, sensors: ['arm encoder', 'limit switch'],
         flaws: [{ id: 'climbSync', name: 'Hooks desync and the robot swings', sev: 0.55, kind: 'endgame', fixHours: 8, onlyTesting: true, hint: 'Mechanical sync and a tuned climb sequence.' }],
         note: '15 points if it works. Heavy, tall, and complicated.' },
@@ -137,18 +140,18 @@ Object.assign(ARCH, {
   infiniterecharge2020: {
     drivetrain: DRIVETRAINS,
     intake: [
-      I('wideRoller', 'Wide over-bumper roller', 9, 3, 0.93, 0.9, 1.1, ['beam break'], 'Wide and forgiving. Touch it, own it.', { flaws: [intakeFlaw], tunable: true }),
-      I('hopperIntake', 'Intake plus 5-ball hopper', 16, 6, 0.86, 0.8, 1.2, ['beam break'], 'Stores five cells to speed up shooting, but more parts to jam.', { flaws: [intakeFlaw, F('hopperJam', 'Cells jam in the hopper corners', 0.4, 'cycles', 5, 'Smooth the path and add compliant guides.')], tunable: true }),
-      I('funnelIntake', 'Funnel intake', 11, 4, 0.9, 0.85, 1.3, ['beam break'], 'A funnel centers cells into a narrow path.', { flaws: [intakeFlaw], tunable: true }),
+      I('wideRoller', 'Wide over-bumper roller (3 cells)', 9, 3, 0.93, 0.9, 0, ['beam break'], 'Wide and forgiving, but only holds three cells. Touch it, own it.', { cap: 3, rate: 5, flaws: [intakeFlaw], tunable: true }),
+      I('hopperIntake', 'Wide intake plus 5-cell hopper', 13, 6, 0.88, 0.85, 0, ['beam break'], 'Holds the full five cells so each trip scores more. More parts to jam.', { cap: 5, rate: 5, flaws: [intakeFlaw, F('hopperJam', 'Cells jam in the hopper corners', 0.35, 'cycles', 5, 'Smooth the path and add compliant guides.')], tunable: true }),
+      I('funnelIntake', 'Funnel intake (4 cells)', 11, 4, 0.9, 0.85, 0, ['beam break'], 'A funnel centers cells into a narrow path.', { cap: 4, rate: 5.5, flaws: [intakeFlaw], tunable: true }),
     ],
     scorer: [
-      S('bottomDump', 'Bottom-port dumper', 8, 2, 0.95, 0.9, 1.0, ['low'], 5, { x: 8, h: 16 }, [], 'Simple and reliable, but one point per cell.'),
-      S('hoodShooter', 'Flywheel shooter with hood', 24, 6, 0.88, 0.8, 1.8, ['low', 'outer'], 3, { x: 0, h: 34 }, ['flywheel encoder', 'vision'], 'The standard solution. Needs vision for aiming.', { flaws: [dips(0.4)] }),
-      S('turretShooter', 'Turret shooter', 32, 9, 0.8, 0.9, 1.6, ['low', 'outer', 'inner'], 3, { x: 0, h: 38 }, ['flywheel encoder', 'vision', 'arm encoder'], 'Aims while driving and hits the inner port. Heavy and complex.', { flaws: [turretWobble] }),
+      S('bottomDump', 'Bottom-port dumper', 8, 2, 0.95, 0.9, 0, ['low'], 0, { x: 8, h: 16 }, [], 'Simple and reliable, but one point per cell.', { rate: 3, cap: 999 }),
+      S('hoodShooter', 'Flywheel shooter with hood', 24, 6, 0.88, 0.8, 0, ['low', 'outer'], 0, { x: 0, h: 34 }, ['flywheel encoder', 'vision'], 'The standard solution. Needs vision for aiming.', { rate: 3, cap: 999, flaws: [dips(0.4)] }),
+      S('turretShooter', 'Turret shooter', 26, 8, 0.82, 0.9, 0, ['low', 'outer', 'inner'], 0, { x: 0, h: 38 }, ['flywheel encoder', 'vision', 'arm encoder'], 'Aims while driving and hits the inner port. Heavy and complex.', { rate: 3.3, cap: 999, flaws: [turretWobble] }),
     ],
     endgame: [none,
-      E('hangHook', 'Winch hook climber', 14, 4, 0.9, ['climb'], ['limit switch'], 'Hang from the generator switch. Dependable.'),
-      E('levelClimb', 'Climber with leveling', 26, 8, 0.65, ['climb', 'climbLevel'], ['arm encoder', 'limit switch'], 'Bonus for leveling the switch. Hard to tune.', { flaws: [climbFail('Climber swings and will not level')] })],
+      E('hangHook', 'Winch hook climber', 11, 4, 0.9, ['climb'], ['limit switch'], 'Hang from the generator switch. Dependable.'),
+      E('levelClimb', 'Climber with leveling', 22, 7, 0.65, ['climb', 'climbLevel'], ['arm encoder', 'limit switch'], 'Bonus for leveling the switch. Hard to tune.', { flaws: [climbFail('Climber swings and will not level')] })],
   },
   chargedup2023: {
     drivetrain: DRIVETRAINS,
@@ -185,20 +188,38 @@ Object.assign(ARCH, {
   rebuilt2026: {
     drivetrain: DRIVETRAINS,
     intake: [
-      I('fuelWide', 'Wide over-bumper roller', 9, 3, 0.93, 0.9, 1.1, ['beam break'], 'Fuel is a ball: a wide roller scoops it up. Touch it, own it.', { flaws: [intakeFlaw], tunable: true }),
-      I('underFuel', 'Under-bumper intake (trench legal)', 8, 4, 0.9, 0.9, 1.0, ['beam break'], 'Stays low so you can drive under the trench.', { flaws: [intakeFlaw], tunable: true }),
-      I('fuelHopper', 'Intake with hopper', 15, 6, 0.85, 0.85, 1.2, ['beam break'], 'Stores many Fuel, but more parts that can jam.', { flaws: [intakeFlaw, F('hopperJam', 'Fuel bridges and jams the hopper', 0.4, 'cycles', 5, 'Round the corners and add agitating rollers.')], tunable: true }),
+      I('slapdownHopper', 'Wide slapdown intake + expanding hopper', 15, 6, 0.9, 0.95, 0, ['beam break'], 'The meta design: a full-width intake drops outside the frame to scoop Fuel from the neutral zone, and the hopper expands outside the stowed frame to hold a huge load. Everything stows inside the perimeter.', { cap: 45, rate: 12, tunable: true, flaws: [intakeFlaw, F('slapdownDeploy', 'Slapdown deploys late or fails to stow before the trench', 0.35, 'cycles', 5, 'Add a hard stop, a stow sensor and a retry in code.')] }),
+      I('slapdownPlain', 'Wide slapdown intake + fixed hopper', 13, 5, 0.92, 0.95, 0, ['beam break'], 'Fast pickup, but the hopper is limited to what fits inside the frame.', { cap: 22, rate: 12, tunable: true, flaws: [intakeFlaw] }),
+      I('fixedRoller', 'Fixed over-bumper roller + small hopper', 9, 3, 0.93, 0.9, 0, ['beam break'], 'Simple and reliable, but slow to fill and small. Touch it, own it still holds.', { cap: 12, rate: 6, tunable: true, flaws: [intakeFlaw] }),
+      I('underFuel', 'Narrow under-bumper intake, no hopper', 8, 4, 0.9, 0.9, 0, ['beam break'], 'Trench-friendly but narrow and tiny. Fine for a defense bot.', { cap: 5, rate: 4.5, tunable: true, flaws: [intakeFlaw] }),
     ],
     scorer: [
-      S('fuelDump', 'Fixed dumper', 10, 3, 0.94, 0.9, 1.0, ['fuel'], 4, { x: 8, h: 26 }, [], 'Simple. Needs to be close to the hub.'),
-      S('fuelShooter2', 'Flywheel shooter with hood', 24, 6, 0.88, 0.8, 1.7, ['fuel'], 8, { x: 0, h: 36 }, ['flywheel encoder', 'vision'], 'The standard solution. Needs vision for aiming.', { flaws: [dips(0.4)] }),
-      S('fuelTurret', 'Turret shooter', 32, 9, 0.8, 0.9, 1.5, ['fuel'], 8, { x: 0, h: 38 }, ['flywheel encoder', 'vision', 'arm encoder'], 'Shoot on the move; heavy and complicated.', { flaws: [turretWobble] }),
+      S('rapidShooter', 'Dual-flywheel rapid-fire shooter', 24, 7, 0.88, 0.8, 0, ['fuel'], 0, { x: 0, h: 20 }, ['flywheel encoder', 'vision'], 'Empties a full hopper in seconds. Needs vision and tuning, and must clear the low trench when stowed.', { rate: 11, cap: 999, flaws: [dips(0.4)] }),
+      S('turretShooter2', 'Turret shooter', 32, 9, 0.88, 0.9, 0, ['fuel'], 0, { x: 0, h: 20 }, ['flywheel encoder', 'vision', 'arm encoder'], 'Aims while driving, but heavier, more complex, and a bit slower to empty the hopper.', { rate: 9, cap: 999, flaws: [turretWobble] }),
+      S('singleShooter', 'Single-flywheel shooter', 20, 5, 0.9, 0.85, 0, ['fuel'], 0, { x: 0, h: 20 }, ['flywheel encoder', 'vision'], 'Light and simple, but slow to unload a big hopper.', { rate: 5, cap: 999, flaws: [dips(0.35)] }),
+      S('hubDumper', 'Hub dumper', 10, 3, 0.94, 0.9, 0, ['fuel'], 0, { x: 6, h: 20 }, [], 'Very simple, but you have to drive up to the hub, and it is slow.', { rate: 6, cap: 999 }),
     ],
     endgame: [none,
-      E('towerHook', 'Level 1 hook', 8, 3, 0.9, ['climb1'], ['limit switch'], 'A hook and a winch for the first rung.'),
+      E('towerHook', 'Level 1 hook', 8, 3, 0.9, ['climb1'], ['limit switch'], 'A hook and a winch for the first rung. Also worth 15 points in autonomous.', { autoBonus: 15 }),
+      E('towerMid', 'Level 2 climber', 15, 5, 0.8, ['climb2'], ['limit switch', 'arm encoder'], 'Twenty points, a real climbing mechanism.', { flaws: [climbFail('Climber catches the rung unevenly')] }),
       E('towerClimb', 'Level 3 climber', 24, 8, 0.62, ['climb3'], ['arm encoder', 'limit switch'], 'Thirty points when it works. Tall, heavy, hard to tune.', { flaws: [climbFail('Climber binds between rungs')] })],
   },
 });
+
+
+// Games with more than one kind of game piece: an intake only helps with the pieces it can pick up.
+const PIECES = {
+  floorGear: ['gear'], stationCatch: ['gear'], fuelRoller: ['fuel'], gearPeg: ['gear'], fuelShooter: ['fuel'], gearFuel: ['gear', 'fuel'],
+  cargoRoller: ['cargo'], hatchScoop: ['hatch'], comboClaw: ['hatch', 'cargo'], lowManip: ['hatch', 'cargo'], elevManip: ['hatch', 'cargo'], shipDump: ['cargo'],
+  cubeRoller: ['cube'], pneuClaw: ['cone', 'cube'], coneTipper: ['cone'], lowSpit: ['cone', 'cube'], telescopeArm: ['cone', 'cube'], pivotArm: ['cone', 'cube'],
+  stationFunnel: ['coral'], floorCoral: ['coral'], algaeRoller: ['algae'], troughRoller: ['coral'], elevCoral: ['coral'], coralAlgae: ['coral', 'algae'],
+};
+// Scorers that shoot from further away or on the move spend less time driving each cycle.
+const DRIVE_FACTOR = { pivotShooter: 0.82, turretShooter: 0.9, turretShooter2: 0.9, rapidShooter: 0.95, fuelShooter: 0.95, flywheel: 0.95, hoodShooter: 0.95 };
+for (const sId of Object.keys(ARCH)) for (const list of Object.values(ARCH[sId])) for (const a of list) {
+  if (PIECES[a.id] && ['steamworks2017', 'deepspace2019', 'chargedup2023', 'reefscape2025'].includes(sId)) a.pieces = PIECES[a.id];
+  if (DRIVE_FACTOR[a.id]) a.driveFactor = DRIVE_FACTOR[a.id];
+}
 
 for (const s of Object.values(ARCH)) for (const [slot, list] of Object.entries(s)) for (const a of list) a.slot = slot;
 
