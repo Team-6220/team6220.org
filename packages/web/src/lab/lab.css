@@ -1,0 +1,20 @@
+/* Lab screens (batch, dashboard, calibration, PathPlanner). Square corners and theme tokens only. */
+.lab { display: flex; flex-direction: column; gap: 12px; max-width: 1400px; margin: 0 auto; }
+.lab h2 { margin-top: 4px; }
+.lab-field { display: flex; flex-direction: column; gap: 2px; }
+.lab-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; align-items: end; }
+.lab-form input[type=number], .lab-form input[type=text], .lab-form select { width: 100%; }
+.lab-param { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 2px solid var(--gray-4); background: var(--gray-1); }
+.lab-param select { width: 100%; }
+.lab-table h3 { margin: 0; }
+.lab-scroll { overflow-x: auto; margin-top: 6px; }
+.lab-scroll table { font-size: 13px; }
+.lab-chart { width: 100%; height: auto; display: block; }
+.lab-runbar select { max-width: 360px; }
+.lab-drop.drag { border-color: var(--gold); border-style: dashed; }
+.lab-pp { display: grid; grid-template-columns: 280px 1fr; gap: 12px; align-items: start; }
+canvas.lab-field { display: block; width: 100%; background: var(--gray-1); }
+.lab-log { max-height: 220px; overflow: auto; }
+.btn.small { padding: 3px 8px; font-size: 13px; }
+.slot .who.blue { color: var(--blue); }
+.slot .who.red { color: var(--red); }

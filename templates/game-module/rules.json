@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "id": "G000",
+      "topic": "TODO: replace with the manual's in-match rules",
+      "status": "not_implemented",
+      "reason": "Template placeholder."
+    }
+  ]
+}

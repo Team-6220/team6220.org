@@ -19,6 +19,8 @@
     "format": "prettier --write .",
     "validate-game": "tsx packages/schema/src/cli/validate-game.ts",
     "spike": "tsx packages/core/spike/run.ts",
+    "export-schemas": "tsx packages/schema/src/cli/export-schemas.ts",
+    "new-game": "tsx scripts/new-game.ts",
     "check": "npm run lint && npm run typecheck && npm test"
   },
   "engines": {

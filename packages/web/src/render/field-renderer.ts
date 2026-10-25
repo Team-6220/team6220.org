@@ -36,6 +36,19 @@ export interface RenderOptions {
   highlight?: Set<number>;
   showShooterRange?: boolean;
   showZones?: boolean;
+  /** Camera: center (field meters) and zoom (1 = whole field). Omit to fit the field. */
+  view?: { cx: number; cy: number; zoom: number };
+  /** Short-lived markers (replay event overlays). */
+  overlays?: Overlay[];
+}
+
+export interface Overlay {
+  x: number;
+  y: number;
+  kind: "shot" | "score" | "foul" | "pickup" | "climb";
+  label?: string;
+  /** 0 = just happened, 1 = about to disappear. */
+  age: number;
 }
 
 /** Top-down Canvas 2D view of a match. Colors come from the theme tokens. */
@@ -59,7 +72,7 @@ export class FieldRenderer {
     this.pal = readPalette();
   }
 
-  private fit(): void {
+  private fit(view?: RenderOptions["view"]): void {
     const rect = this.canvas.getBoundingClientRect();
     this.dpr = window.devicePixelRatio || 1;
     const w = Math.max(1, Math.round(rect.width * this.dpr));
@@ -72,6 +85,11 @@ export class FieldRenderer {
     this.scale = Math.min((w - 2 * pad) / (this.fieldLength + 0.4), (hgt - 2 * pad) / (this.fieldWidth + 0.4));
     this.ox = (w - this.fieldLength * this.scale) / 2;
     this.oy = (hgt - this.fieldWidth * this.scale) / 2;
+    if (view && view.zoom > 1) {
+      this.scale *= view.zoom;
+      this.ox = w / 2 - view.cx * this.scale;
+      this.oy = hgt / 2 - (this.fieldWidth - view.cy) * this.scale;
+    }
   }
 
   /** Field meters -> canvas pixels (+y is up on screen). */
@@ -103,7 +121,7 @@ export class FieldRenderer {
   }
 
   render(match: Match, opts: RenderOptions = {}): void {
-    this.fit();
+    this.fit(opts.view);
     const c = this.ctx;
     const p = this.pal;
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -114,7 +132,7 @@ export class FieldRenderer {
     const [x0, y0] = this.px(0, this.fieldWidth);
     c.fillRect(x0, y0, this.fieldLength * this.scale, this.fieldWidth * this.scale);
 
-    for (const el of match.elements) this.drawElementBase(el, match, opts);
+    for (const el of match.elements) this.drawElementBase(el, opts);
 
     // Center line
     const cl = match.game.field.centerLineX;
@@ -162,9 +180,48 @@ export class FieldRenderer {
       c.arc(bx, by, rad * lift, 0, Math.PI * 2);
       c.fill();
     }
+
+    for (const o of opts.overlays ?? []) this.drawOverlay(o);
   }
 
-  private drawElementBase(el: ResolvedElement, match: Match, opts: RenderOptions): void {
+  private drawOverlay(o: Overlay): void {
+    const c = this.ctx;
+    const p = this.pal;
+    const [x, y] = this.px(o.x, o.y);
+    const color = o.kind === "foul" ? p.red : o.kind === "climb" ? p.green : o.kind === "pickup" ? p.text : p.gold;
+    const r = (8 + 18 * o.age) * this.dpr;
+    c.globalAlpha = Math.max(0, 1 - o.age);
+    c.strokeStyle = color;
+    c.lineWidth = (o.kind === "score" || o.kind === "foul" ? 3 : 2) * this.dpr;
+    c.beginPath();
+    if (o.kind === "foul") {
+      c.moveTo(x - r * 0.7, y - r * 0.7);
+      c.lineTo(x + r * 0.7, y + r * 0.7);
+      c.moveTo(x + r * 0.7, y - r * 0.7);
+      c.lineTo(x - r * 0.7, y + r * 0.7);
+    } else if (o.kind === "pickup") {
+      c.rect(x - r * 0.5, y - r * 0.5, r, r);
+    } else c.arc(x, y, r, 0, Math.PI * 2);
+    c.stroke();
+    if (o.label) {
+      c.fillStyle = color;
+      c.font = `${12 * this.dpr}px ${cssVar("--font-title")}`;
+      c.textAlign = "center";
+      c.textBaseline = "bottom";
+      c.fillText(o.label, x, y - r - 2 * this.dpr);
+    }
+    c.globalAlpha = 1;
+  }
+
+  /** Canvas pixel -> field meters (for pointer input). */
+  toField(clientX: number, clientY: number): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const px = (clientX - rect.left) * this.dpr;
+    const py = (clientY - rect.top) * this.dpr;
+    return { x: (px - this.ox) / this.scale, y: this.fieldWidth - (py - this.oy) / this.scale };
+  }
+
+  private drawElementBase(el: ResolvedElement, opts: RenderOptions): void {
     const c = this.ctx;
     const p = this.pal;
     switch (el.kind) {
@@ -226,7 +283,6 @@ export class FieldRenderer {
       default:
         break;
     }
-    void match;
   }
 
   private drawElementTop(el: ResolvedElement, match: Match): void {

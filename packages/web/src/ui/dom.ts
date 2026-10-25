@@ -25,6 +25,11 @@ function append(el: Node, children: Child[]): void {
   }
 }
 
+/** Appends children, skipping null/false and flattening arrays. */
+export function appendAll(el: Node, ...children: Child[]): void {
+  append(el, children);
+}
+
 export function clear(el: Element): void {
   while (el.firstChild) el.removeChild(el.firstChild);
 }

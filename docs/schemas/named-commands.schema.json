@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: named-commands.json",
+  "description": "named-commands.json: PathPlanner named command -> sim action.",
+  "type": "object",
+  "required": [
+    "namedCommands"
+  ],
+  "properties": {
+    "namedCommands": {
+      "type": "object",
+      "patternProperties": {
+        "^(.*)$": {
+          "type": "object",
+          "required": [
+            "action"
+          ],
+          "properties": {
+            "action": {
+              "description": "Driver action name, e.g. shoot, intake, climb.",
+              "type": "string"
+            },
+            "mechanism": {
+              "type": "string"
+            },
+            "state": {
+              "anyOf": [
+                {
+                  "const": "on",
+                  "type": "string"
+                },
+                {
+                  "const": "off",
+                  "type": "string"
+                }
+              ]
+            },
+            "durationSeconds": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "level": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

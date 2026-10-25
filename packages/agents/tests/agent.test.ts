@@ -17,7 +17,7 @@ describe("agents", () => {
     const m = await agentMatch([{ design: TURRET!, alliance: "blue", station: 1 }], 4);
     const r = m.runToEnd();
     expect(r.robots[0]!.acquired).toBeGreaterThan(20);
-    expect(r.robots[0]!.scoredActive).toBeGreaterThan(20);
+    expect(r.robots[0]!.scoredActive).toBeGreaterThanOrEqual(40);
     expect(r.robots[0]!.fouls).toBe(0);
     console.log("solo turret:", r.score.blue, "acquired", r.robots[0]!.acquired, "scored", r.robots[0]!.scoredActive, "wasted", r.robots[0]!.scoredInactive, "climb", r.robots[0]!.climbLevel);
     m.dispose();
@@ -51,7 +51,12 @@ describe("agents", () => {
     const b = await run();
     expect(JSON.stringify(a.r)).toBe(JSON.stringify(b.r));
     expect(a.r.score.blue.total).toBeGreaterThan(30);
-    expect(a.r.score.red.total).toBeGreaterThan(10);
+    expect(a.r.score.red.total).toBeGreaterThan(30);
+    expect(a.r.robots.every((x) => x.fouls === 0)).toBe(true);
+    // Climbers reach their max level: OTB L1, turret L2, climb-focused L3.
+    expect(a.r.robots.slice(0, 3).map((x) => x.climbLevel)).toEqual([1, 2, 3]);
+    // Regression guard only: ~27x standalone on a Ryzen AI 9 laptop; shared/CI machines are slower.
+    expect(166 / (a.ms / 1000)).toBeGreaterThan(5);
     console.log(
       `3v3 agents: blue ${a.r.score.blue.total} red ${a.r.score.red.total} | fouls ${JSON.stringify(a.r.fouls)} | ` +
         `x${(166 / (a.ms / 1000)).toFixed(1)} real time`,

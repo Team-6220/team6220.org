@@ -1,4 +1,4 @@
-import type { RobotDesign, Alliance } from "@goldsim/schema";
+import type { RobotDesign, Alliance, Replay } from "@goldsim/schema";
 import { rebuilt, rebuiltPresets } from "@goldsim/game-rebuilt";
 import type { GameModule } from "@goldsim/core";
 
@@ -24,6 +24,12 @@ export const session = {
   presets: rebuiltPresets,
   customDesigns: [] as RobotDesign[],
   setup: null as MatchSetup | null,
+  /** Replay handed to the replay viewer (from a finished match or an imported file). */
+  replay: null as Replay | null,
+  /** Design open in the editor (a working copy). */
+  editorDesign: null as RobotDesign | null,
+  /** Index into customDesigns that the editor's design was opened from, if any. */
+  editorIndex: null as number | null,
 };
 
 export function allDesigns(): RobotDesign[] {

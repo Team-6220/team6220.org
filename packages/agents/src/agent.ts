@@ -1,3 +1,19 @@
+/**
+ * Simulated drivers (PRD §11).
+ *
+ * OBJECTIVE NAMING CONVENTION (Stay Gold: follow this in every future game module so agents work unchanged)
+ * Agents never hard-code a season. They find what they need in the game module by these names:
+ *   - field.json objective "towerClimb" (mirrored): pose where a robot stands to climb, facing the climb structure.
+ *     Agents use it and two side slots ~0.95 m to either side.
+ *   - field.json objective "outpost" (mirrored): pose to receive pieces from the human-player feeder, facing away
+ *     from the feeder exit (the intake faces the feeder).
+ *   - field.json objective "hubShot" (mirrored): a known-good shooting pose (informational; agents compute their own).
+ *   - pieceSource element "depot" (mirrored): the alliance's own piece store (for the "depot" pickup preference).
+ *   - zone tag "alliance" on each alliance's home zone (the zone shots must be taken from), tag "neutral" on the
+ *     neutral zone (for the "neutral" pickup preference).
+ *   - sink elements with scoresFor = alliance are that alliance's scoring targets.
+ * If a module lacks one of these, the related behavior is skipped rather than failing.
+ */
 import {
   pointInShape,
   resolveMechanisms,
@@ -26,6 +42,16 @@ export interface AgentContext {
   index: number;
   seed: number;
 }
+
+/** Names agents look up in game modules (see the convention above). */
+export const OBJ = {
+  climb: "towerClimb",
+  feeder: "outpost",
+  shot: "hubShot",
+  depot: "depot",
+  allianceZoneTag: "alliance",
+  neutralZoneTag: "neutral",
+} as const;
 
 type Mode = "idle" | "collect" | "shoot" | "wait" | "climb" | "autoClimb" | "descend" | "defend" | "feed";
 
@@ -62,6 +88,8 @@ export class Agent implements Driver {
   private stuckSince = -1;
   private blacklist = new Map<string, number>();
   private pieceKey = "";
+  private shotJitter = 0;
+  private aimStallSince = -1;
 
   constructor(ctx: AgentContext, profile: DriverProfile = DEFAULT_PROFILE) {
     this.ctx = ctx;
@@ -78,7 +106,7 @@ export class Agent implements Driver {
       this.hubRadius = this.hub.target.shape.type === "circle" ? this.hub.target.shape.radius : 0.5;
     }
     this.zone = ctx.elements.find(
-      (e): e is Extract<ResolvedElement, { kind: "zone" }> => e.kind === "zone" && e.alliance === this.alliance && (e.tags ?? []).includes("alliance"),
+      (e): e is Extract<ResolvedElement, { kind: "zone" }> => e.kind === "zone" && e.alliance === this.alliance && (e.tags ?? []).includes(OBJ.allianceZoneTag),
     );
   }
 
@@ -130,6 +158,7 @@ export class Agent implements Driver {
       return;
     }
     if (me.climbState !== "idle") return;
+    this.lockedSlot = null;
 
     if (this.role === "defender") {
       this.mode = teleop ? "defend" : "idle";
@@ -165,19 +194,35 @@ export class Agent implements Driver {
   private timeToClimb(obs: Observation, level: number): number {
     const slot = this.climbSlot(obs);
     if (!slot || !this.climber) return 0;
-    const d = Math.hypot(slot.x - obs.self.x, slot.y - obs.self.y) * 1.3;
-    const speed = obs.self.design.chassis.drivetrain.maxSpeed * this.profile.speedScale * 0.6;
+    const d = Math.hypot(slot.x - obs.self.x, slot.y - obs.self.y) * 1.5;
+    const speed = obs.self.design.chassis.drivetrain.maxSpeed * this.profile.speedScale * 0.5;
     const times = [this.climber.p.level1Time!, this.climber.p.level2Time!, this.climber.p.level3Time!];
-    return d / speed + times[Math.max(0, Math.min(2, level - 1))]! + this.profile.endgameBuffer;
+    // Teammates already at the structure make the last approach slower.
+    const o = obs.objectives.find((x) => x.baseId === OBJ.climb && x.alliance === this.alliance);
+    const crowd = o ? obs.robots.filter((r) => r.index !== obs.self.index && r.alliance === this.alliance && Math.hypot(r.x - o.pose.x, r.y - o.pose.y) < 2).length : 0;
+    // Travel + staging/turning + climb + the driver's reserve.
+    return d / speed + 2 + crowd * 1.5 + times[Math.max(0, Math.min(2, level - 1))]! + this.profile.endgameBuffer;
   }
 
+  private lockedSlot: { x: number; y: number; theta: number } | null = null;
+
+  /** Climb positions beside the climb objective; picks the nearest one no other robot is using. */
   private climbSlot(obs: Observation): { x: number; y: number; theta: number } | null {
-    const o = obs.objectives.find((x) => x.baseId === "towerClimb" && x.alliance === this.alliance);
+    if (this.lockedSlot) return this.lockedSlot;
+    const o = obs.objectives.find((x) => x.baseId === OBJ.climb && x.alliance === this.alliance);
     if (!o) return null;
-    const offsets = [0, -0.85, 0.85];
-    const off = offsets[this.ctx.robot.station % 3]!;
-    // Offset sideways relative to the climb heading.
-    return { x: o.pose.x - Math.sin(o.pose.theta) * off, y: o.pose.y + Math.cos(o.pose.theta) * off, theta: o.pose.theta };
+    const slots = [0, -0.95, 0.95].map((off) => ({
+      x: o.pose.x - Math.sin(o.pose.theta) * off,
+      y: o.pose.y + Math.cos(o.pose.theta) * off,
+      theta: o.pose.theta,
+    }));
+    const me = obs.self;
+    const free = slots.filter((s) => !obs.robots.some((r) => r.index !== me.index && Math.hypot(r.x - s.x, r.y - s.y) < 0.6));
+    const pool = free.length ? free : slots;
+    // Outer slots first when equally close, so a late climber can still reach the middle.
+    const pick = pool.reduce((a, b) => (Math.hypot(a.x - me.x, a.y - me.y) - (a === slots[0] ? 0 : 0.3) <= Math.hypot(b.x - me.x, b.y - me.y) - (b === slots[0] ? 0 : 0.3) ? a : b));
+    if (Math.hypot(pick.x - me.x, pick.y - me.y) < 1.5) this.lockedSlot = pick;
+    return pick;
   }
 
   /** Shooting pose inside the own Alliance Zone, within the shooter's range window, facing the target. */
@@ -191,7 +236,9 @@ export class Agent implements Driver {
     // Keep to the own side of the target.
     const homeAngle = this.alliance === "blue" ? Math.PI : 0;
     const maxOff = 1.1;
-    const off = wrapAngle(ang - homeAngle);
+    // Teammates spread out around the target by station so they don't park in each other's way.
+    const spread = [0, -0.5, 0.5][this.ctx.robot.station % 3]!;
+    const off = wrapAngle(ang - homeAngle) * 0.5 + spread + this.shotJitter;
     ang = homeAngle + Math.max(-maxOff, Math.min(maxOff, off));
     let p = { x: this.hubCenter.x + Math.cos(ang) * D, y: this.hubCenter.y + Math.sin(ang) * D };
     if (this.zone && !pointInShape(p.x, p.y, this.zone.shape)) {
@@ -224,7 +271,8 @@ export class Agent implements Driver {
     const teleop = obs.phase.period === "teleop";
     const cl = this.ctx.game.field.centerLineX;
     const ownSide = (x: number) => (this.alliance === "blue" ? x < cl - me.radius - 0.1 : x > cl + me.radius + 0.1);
-    const depot = this.ctx.elements.find((e) => e.baseId === "depot" && e.alliance === this.alliance);
+    const depot = this.ctx.elements.find((e) => e.baseId === OBJ.depot && e.alliance === this.alliance);
+    const neutral = this.ctx.elements.find((e) => e.kind === "zone" && (e.tags ?? []).includes(OBJ.neutralZoneTag));
     let best: { p: Vec2; cost: number } | null = null;
     const now = obs.tick;
     for (const piece of obs.pieces) {
@@ -238,7 +286,7 @@ export class Agent implements Driver {
       if (!this.grid!.isFree(approach)) continue;
       let cost = d;
       if (this.profile.pickup === "depot" && depot && pointInShape(piece.x, piece.y, depot.shape)) cost -= 3;
-      if (this.profile.pickup === "neutral" && Math.abs(piece.x - cl) < 3.6) cost -= 1.5;
+      if (this.profile.pickup === "neutral" && neutral && pointInShape(piece.x, piece.y, neutral.shape)) cost -= 1.5;
       // Robots nearby make a piece less attractive.
       for (const r of obs.robots) if (r.index !== me.index && Math.hypot(r.x - piece.x, r.y - piece.y) < r.radius + 0.3) cost += 2;
       if (!best || cost < best.cost) best = { p: piece, cost };
@@ -254,7 +302,7 @@ export class Agent implements Driver {
   }
 
   private planFeed(obs: Observation): boolean {
-    const o = obs.objectives.find((x) => x.baseId === "outpost" && x.alliance === this.alliance);
+    const o = obs.objectives.find((x) => x.baseId === OBJ.feeder && x.alliance === this.alliance);
     if (!o || !obs.phase.robotsEnabled || obs.phase.period === "auto") return false;
     this.mode = "feed";
     this.target = o.pose;
@@ -287,13 +335,28 @@ export class Agent implements Driver {
       case "wait": {
         const out = this.navigate(obs, this.target, this.heading, true);
         const posErr = Math.hypot(this.target.x - me.x, this.target.y - me.y);
-        const turret = this.shooter!.p.turretRange! >= Math.PI - 0.01;
-        const aimErr = Math.abs(wrapAngle(this.aimHeading({ x: me.x, y: me.y }) - me.theta));
+        const s = this.shooter!;
+        const turret = s.p.turretRange! > 0;
+        const origin = toWorld({ x: me.x, y: me.y, theta: me.theta }, s.mount.x, s.mount.y);
+        const toTarget = Math.atan2(this.hubCenter.y - origin.y, this.hubCenter.x - origin.x);
+        const turretAngle = me.mechanisms.find((m) => m.id === s.id)?.turret ?? 0;
+        const aimErr = Math.abs(wrapAngle(toTarget + this.aimBias - (me.theta + s.mount.theta + turretAngle)));
+        const range = Math.hypot(this.hubCenter.x - origin.x, this.hubCenter.y - origin.y) - this.hubRadius;
+        const inRange = range > s.p.rangeMin! + 0.1 && range < s.p.rangeMax! - 0.1;
         const inZone = !this.zone || pointInShape(me.x, me.y, this.zone.shape);
-        const aimed = turret || aimErr < this.profile.aimTolerance;
-        // Spin up on the way in; release once lined up.
-        out.actions.shoot = this.mode === "shoot" && inZone && posErr < 0.6 && aimed;
-        if (out.actions.shoot && !turret) out.omega = Math.max(-1, Math.min(1, (wrapAngle(this.aimHeading({ x: me.x, y: me.y }) - me.theta) * 5) / me.design.chassis.drivetrain.maxAngularSpeed));
+        const aimed = aimErr < (turret ? this.profile.aimTolerance * 1.5 : this.profile.aimTolerance);
+        // Fire whenever a shot is legal and lined up, even if pushed off the planned pose.
+        out.actions.shoot = this.mode === "shoot" && inZone && inRange && aimed;
+        // Lined up but unable to fire (blocked, pushed, out of zone): pick a different spot.
+        if (this.mode === "shoot" && !out.actions.shoot && posErr < 0.8) {
+          if (this.aimStallSince < 0) this.aimStallSince = obs.tick;
+          else if (obs.tick - this.aimStallSince > obs.hz * 2) {
+            this.shotJitter = (this.rng.next() - 0.5) * 1.2;
+            this.aimStallSince = -1;
+            this.planShot(obs);
+          }
+        } else this.aimStallSince = -1;
+        if (posErr < 0.8 && !turret) out.omega = Math.max(-1, Math.min(1, (wrapAngle(this.aimHeading({ x: me.x, y: me.y }) - me.theta) * 5) / me.design.chassis.drivetrain.maxAngularSpeed));
         out.actions.intake = this.mode === "wait" ? false : me.stored < me.capacity;
         return out;
       }
@@ -302,8 +365,16 @@ export class Agent implements Driver {
         const slot = this.climbSlot(obs);
         if (!slot) return idle;
         if (me.climbState !== "idle") return { ...idle, actions: { climbLevel: this.mode === "autoClimb" ? 1 : this.climber!.p.maxLevel! } };
-        const out = this.navigate(obs, slot, slot.theta, true);
-        const close = Math.hypot(slot.x - me.x, slot.y - me.y) < 0.15 && Math.abs(wrapAngle(slot.theta - me.theta)) < 0.15;
+        // Line up on a staging point straight out from the slot, then drive straight in.
+        const fx = Math.cos(slot.theta);
+        const fy = Math.sin(slot.theta);
+        const along = (slot.x - me.x) * fx + (slot.y - me.y) * fy;
+        const lateral = Math.abs(-(slot.x - me.x) * fy + (slot.y - me.y) * fx);
+        const staged = lateral < 0.15 || along < 0.25;
+        const goal = staged ? slot : { x: slot.x - fx * 1.0, y: slot.y - fy * 1.0, theta: slot.theta };
+        const finalApproach = staged && Math.hypot(slot.x - me.x, slot.y - me.y) < 1.1;
+        const out = this.navigate(obs, goal, slot.theta, true, finalApproach);
+        const close = Math.hypot(slot.x - me.x, slot.y - me.y) < 0.2 && Math.abs(wrapAngle(slot.theta - me.theta)) < 0.2;
         if (close && obs.tick - this.climbPressTick > obs.hz * 0.5) {
           this.climbPressTick = obs.tick;
           return { vx: 0, vy: 0, omega: 0, actions: { climb: true, climbLevel: this.mode === "autoClimb" ? 1 : this.climber!.p.maxLevel! } };
@@ -327,7 +398,11 @@ export class Agent implements Driver {
 
   private defend(obs: Observation): DriverInput {
     const me = obs.self;
-    const opponents = obs.robots.filter((r) => r.alliance !== this.alliance);
+    // Late in the match, leave opponents at their climb position alone (Tower-protection style rules, e.g. REBUILT G420).
+    const theirClimb = obs.objectives.find((o) => o.baseId === OBJ.climb && o.alliance !== this.alliance);
+    const protectedNow = (r: { x: number; y: number }) =>
+      obs.phase.period === "teleop" && obs.matchTimeLeft < 30 && !!theirClimb && Math.hypot(r.x - theirClimb.pose.x, r.y - theirClimb.pose.y) < 2.2;
+    const opponents = obs.robots.filter((r) => r.alliance !== this.alliance && !protectedNow(r));
     const theirHub = this.ctx.elements.find((e): e is Sink => e.kind === "sink" && e.scoresFor !== this.alliance && e.scoresFor !== undefined);
     if (!opponents.length || !theirHub) return { vx: 0, vy: 0, omega: 0, actions: {} };
     const hc = shapeCenter(theirHub.target.shape);
@@ -364,10 +439,29 @@ export class Agent implements Driver {
     const replan =
       !this.pathGoal ||
       Math.hypot(goal.x - this.pathGoal.x, goal.y - this.pathGoal.y) > 0.3 ||
-      obs.tick - this.pathTick > obs.hz * 0.6 ||
+      obs.tick - this.pathTick > obs.hz * 0.4 ||
       this.path.length === 0;
-    if (replan) {
-      this.path = grid.plan(pos, goal) ?? [goal];
+    const robotOnLine = obs.robots.some((r) => {
+      if (r.index === me.index) return false;
+      const dx = goal.x - pos.x;
+      const dy = goal.y - pos.y;
+      const len2 = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((r.x - pos.x) * dx + (r.y - pos.y) * dy) / len2));
+      return Math.hypot(r.x - (pos.x + t * dx), r.y - (pos.y + t * dy)) < (me.radius + r.radius) * 0.75;
+    });
+    if (Math.hypot(goal.x - pos.x, goal.y - pos.y) < 1.2 && !robotOnLine) {
+      // Final approach: go straight in. Goals may sit against structure (e.g. a climb pose touching the Tower),
+      // inside the grid's conservative margin; physics stops the robot at contact.
+      this.path = [goal];
+      this.pathGoal = goal;
+    } else if (replan) {
+      // Slow robots nearby are planned around; moving ones are handled by local avoidance.
+      const parked = ignoreRobots
+        ? []
+        : obs.robots
+            .filter((r) => r.index !== me.index && Math.hypot(r.vx, r.vy) < 0.6 && Math.hypot(r.x - pos.x, r.y - pos.y) < 6)
+            .map((r) => ({ x: r.x, y: r.y, r: r.radius }));
+      this.path = grid.plan(pos, goal, parked) ?? grid.plan(pos, goal) ?? [goal];
       this.pathGoal = goal;
       this.pathTick = obs.tick;
     }
@@ -390,14 +484,25 @@ export class Agent implements Driver {
     if (!ignoreRobots)
       for (const r of obs.robots) {
         if (r.index === me.index) continue;
-        const rx = pos.x - r.x;
-        const ry = pos.y - r.y;
-        const rd = Math.hypot(rx, ry);
-        const clear = me.radius + r.radius + 0.35;
-        if (rd < clear && rd > 1e-6) {
-          const push = ((clear - rd) / clear) * vmax * 0.8;
-          vx += (rx / rd) * push;
-          vy += (ry / rd) * push;
+        const ax = r.x - pos.x;
+        const ay = r.y - pos.y;
+        const rd = Math.hypot(ax, ay);
+        // Bounding radii overstate square robots; use a tighter clearance.
+        const clear = (me.radius + r.radius) * 0.8 + 0.25;
+        if (rd >= clear || rd < 1e-6) continue;
+        const ux = ax / rd;
+        const uy = ay / rd;
+        const toward = vx * ux + vy * uy;
+        if (toward > 0) {
+          // Replace the approach component with a sidestep (always to the same side, so two robots pass cleanly).
+          vx -= ux * toward;
+          vy -= uy * toward;
+          vx += -uy * toward * 0.8;
+          vy += ux * toward * 0.8;
+        }
+        if (rd < me.radius + r.radius + 0.05) {
+          vx -= ux * 0.4;
+          vy -= uy * 0.4;
         }
       }
 

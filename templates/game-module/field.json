@@ -1,0 +1,30 @@
+{
+  "length": 16.54,
+  "width": 8.07,
+  "mirror": "rotational",
+  "centerLineX": 8.27,
+  "elements": [
+    { "id": "guardrailNear", "kind": "wall", "label": "Guardrail", "shape": { "type": "rect", "x": 8.27, "y": -0.1, "length": 16.94, "width": 0.2 } },
+    { "id": "guardrailFar", "kind": "wall", "label": "Guardrail", "shape": { "type": "rect", "x": 8.27, "y": 8.17, "length": 16.94, "width": 0.2 } },
+    { "id": "allianceWallBlue", "kind": "wall", "label": "Alliance Wall", "alliance": "blue", "shape": { "type": "rect", "x": -0.1, "y": 4.035, "length": 0.2, "width": 8.07 } },
+    { "id": "allianceWallRed", "kind": "wall", "label": "Alliance Wall", "alliance": "red", "shape": { "type": "rect", "x": 16.64, "y": 4.035, "length": 0.2, "width": 8.07 } },
+
+    { "id": "allianceZone", "kind": "zone", "label": "TODO: Alliance Zone (size from manual)", "mirror": true, "tags": ["alliance"],
+      "shape": { "type": "rect", "x": 2.0, "y": 4.035, "length": 4.0, "width": 8.07 } },
+
+    { "id": "goal", "kind": "sink", "label": "TODO: scoring goal", "mirror": true, "solid": true, "scoresFor": "blue",
+      "shape": { "type": "rect", "x": 4.5, "y": 4.035, "length": 1.0, "width": 1.0 },
+      "target": { "shape": { "type": "circle", "x": 4.5, "y": 4.035, "radius": 0.45 }, "description": "TODO: opening the shot must pass through" } },
+
+    { "id": "fieldPieces", "kind": "pieceSource", "label": "TODO: initial piece staging", "piece": "piece", "count": "remainder", "layout": "grid",
+      "shape": { "type": "rect", "x": 8.27, "y": 4.035, "length": 1.0, "width": 3.0 } }
+  ],
+  "startPositions": [
+    { "x": 3.0, "y": 1.5, "theta": 0 },
+    { "x": 3.0, "y": 4.035, "theta": 0 },
+    { "x": 3.0, "y": 6.5, "theta": 0 }
+  ],
+  "objectives": [
+    { "id": "goalShot", "pose": { "x": 2.4, "y": 4.035, "theta": 0 }, "mirror": true, "description": "TODO: typical scoring pose facing the goal" }
+  ]
+}

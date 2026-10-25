@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: stats.json",
+  "description": "stats.json",
+  "type": "object",
+  "required": [
+    "stats"
+  ],
+  "properties": {
+    "stats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "event",
+          "per"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "event": {
+            "description": "Event type to count.",
+            "type": "string"
+          },
+          "when": {
+            "type": "array",
+            "items": {
+              "description": "Condition on an event field. All conditions of a rule must hold.",
+              "type": "object",
+              "required": [
+                "field",
+                "op",
+                "value"
+              ],
+              "properties": {
+                "field": {
+                  "description": "Event field, e.g. target, active, period, phase, level, alliance.",
+                  "type": "string"
+                },
+                "op": {
+                  "anyOf": [
+                    {
+                      "const": "eq",
+                      "type": "string"
+                    },
+                    {
+                      "const": "neq",
+                      "type": "string"
+                    },
+                    {
+                      "const": "in",
+                      "type": "string"
+                    },
+                    {
+                      "const": "gte",
+                      "type": "string"
+                    },
+                    {
+                      "const": "lte",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "sumField": {
+            "description": "Sum this numeric event field instead of counting.",
+            "type": "string"
+          },
+          "per": {
+            "anyOf": [
+              {
+                "const": "robot",
+                "type": "string"
+              },
+              {
+                "const": "alliance",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

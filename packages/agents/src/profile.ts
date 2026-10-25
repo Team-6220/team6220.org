@@ -41,7 +41,7 @@ export const DEFAULT_PROFILE: DriverProfile = {
   shootWhenInactive: false,
   pickup: "nearest",
   defenseAggression: 0.5,
-  endgameBuffer: 3,
+  endgameBuffer: 4,
   climb: true,
   autoClimb: false,
 };

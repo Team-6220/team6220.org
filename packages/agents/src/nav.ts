@@ -57,9 +57,35 @@ export class NavGrid {
     ];
   }
 
+  /** Temporary obstacles (e.g. parked robots) used during one plan() call. */
+  private dyn: Uint8Array | null = null;
+
+  private isBlocked(i: number): boolean {
+    return !!this.blocked[i] || (this.dyn !== null && !!this.dyn[i]);
+  }
+
   isFree(p: Vec2): boolean {
     const [c, r] = this.cellOf(p);
-    return !this.blocked[r * this.cols + c];
+    return !this.isBlocked(r * this.cols + c);
+  }
+
+  private markObstacles(obstacles: { x: number; y: number; r: number }[]): void {
+    if (!obstacles.length) {
+      this.dyn = null;
+      return;
+    }
+    const dyn = new Uint8Array(this.cols * this.rows);
+    for (const o of obstacles) {
+      const rr = o.r + this.radius;
+      const [c0, r0] = this.cellOf({ x: o.x - rr, y: o.y - rr });
+      const [c1, r1] = this.cellOf({ x: o.x + rr, y: o.y + rr });
+      for (let r = r0; r <= r1; r++)
+        for (let c = c0; c <= c1; c++) {
+          const p = this.center(c, r);
+          if ((p.x - o.x) ** 2 + (p.y - o.y) ** 2 < rr * rr) dyn[r * this.cols + c] = 1;
+        }
+    }
+    this.dyn = dyn;
   }
 
   /** Nearest free cell center to p (spiral search). */
@@ -74,7 +100,7 @@ export class NavGrid {
             [c0 + dr, r0 + dc],
           ] as const) {
             if (c < 0 || r < 0 || c >= this.cols || r >= this.rows) continue;
-            if (!this.blocked[r * this.cols + c]) return this.center(c, r);
+            if (!this.isBlocked(r * this.cols + c)) return this.center(c, r);
           }
         }
     return p;
@@ -92,7 +118,16 @@ export class NavGrid {
   }
 
   /** A* over the grid, then line-of-sight smoothing. Returns waypoints from start (exclusive) to goal. */
-  plan(start: Vec2, goal: Vec2): Vec2[] | null {
+  plan(start: Vec2, goal: Vec2, obstacles: { x: number; y: number; r: number }[] = []): Vec2[] | null {
+    this.markObstacles(obstacles);
+    try {
+      return this.search(start, goal);
+    } finally {
+      this.dyn = null;
+    }
+  }
+
+  private search(start: Vec2, goal: Vec2): Vec2[] | null {
     const g = this.nearestFree(goal);
     const s = this.isFree(start) ? start : this.nearestFree(start);
     if (this.lineFree(s, g)) return [g];
@@ -138,8 +173,8 @@ export class NavGrid {
         const nr = r + dr;
         if (nc < 0 || nr < 0 || nc >= this.cols || nr >= this.rows) continue;
         const ni = nr * this.cols + nc;
-        if (this.blocked[ni] || closed[ni]) continue;
-        if (dc && dr && (this.blocked[r * this.cols + nc] || this.blocked[nr * this.cols + c])) continue;
+        if (this.isBlocked(ni) || closed[ni]) continue;
+        if (dc && dr && (this.isBlocked(r * this.cols + nc) || this.isBlocked(nr * this.cols + c))) continue;
         const tentative = gScore[cur]! + w * this.cost[ni]!;
         if (tentative < gScore[ni]!) {
           gScore[ni] = tentative;
