@@ -12,11 +12,11 @@ export function availableNodes(run) {
 
 export function renderMap(run, onPick) {
   const layers = run.map.layers, N = layers.length;
-  const W = 1230, H = 370;
+  const W = 1230, H = 320;
   const step = Math.min(120, (W - 80) / Math.max(1, N - 1));
   const pos = (l, i) => {
     const k = layers[l].length;
-    return { x: 20 + l * step, y: H / 2 - 30 + (i - (k - 1) / 2) * 110 };
+    return { x: 20 + l * step, y: H / 2 - 50 + (i - (k - 1) / 2) * 90 };
   };
   const avail = availableNodes(run);
   const isAvail = (l, i) => avail.some((a) => a.l === l && a.i === i);
@@ -41,7 +41,8 @@ export function renderMap(run, onPick) {
     const cls = 'node' + (av ? ' avail' : '') + (onPath ? ' done' : '') + (!av && !onPath ? ' locked' : '');
     const el = h('div', { class: cls, style: `left:${p.x}px;top:${p.y}px`, title: nodeLabel(nd), onclick: av ? () => onPick(nd, l, i) : null }, NODE_INFO[nd.type].letter);
     wrap.appendChild(el);
-    wrap.appendChild(h('div', { class: 'node-label', style: `left:${p.x - 15}px;top:${p.y + 64}px` }, nodeLabel(nd)));
+    const lw = Math.min(step - 2, 104);
+    wrap.appendChild(h('div', { class: 'node-label', style: `width:${lw}px;left:${p.x + 30 - lw / 2}px;top:${p.y + 64}px` }, nodeLabel(nd)));
   }));
   return wrap;
 }

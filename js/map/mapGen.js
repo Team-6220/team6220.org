@@ -9,7 +9,7 @@ export const NODE_INFO = {
   cad: { letter: 'D', label: 'Organized CAD' },
   shop: { letter: '$', label: 'Shop' },
   mentor: { letter: 'M', label: 'Mentor' },
-  scrimmage: { letter: 'T', label: 'Test / Scrimmage' },
+  scrimmage: { letter: 'T', label: 'Scrimmage' },
   event: { letter: 'E', label: 'Event' },
 };
 
@@ -18,7 +18,7 @@ const key = (x) => x.type + JSON.stringify(x.params);
 
 export function nodeLabel(node) {
   const base = NODE_INFO[node.type].label;
-  if (node.type === 'inspire') return base + ': ' + node.params.slots.join(' + ');
+  if (node.type === 'inspire') return 'Inspire: ' + node.params.slots.map((s) => ({ drivetrain: 'drive', intake: 'intake', scorer: 'scorer', endgame: 'endgame' })[s]).join(' + ');
   if (node.type === 'mentor') return 'Mentor: ' + ({ rivet: 'rivets', rule: 'rule change', stock: 'out of stock' })[node.params.card];
   if (node.type === 'event') return node.params.idx === 1 ? 'Regional event' : 'Championship';
   if (node.type === 'scrimmage' && node.params.early) return 'Early test';
