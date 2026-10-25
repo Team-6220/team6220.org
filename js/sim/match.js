@@ -118,7 +118,7 @@ export function createEvent(run, evIdx) {
     let x = r.range(0, 100), id = 'balanced';
     for (const [k, p] of w) { if (x < p) { id = k; break; } x -= p; }
     const st = STYLES[id];
-    return { id, name: st.name, text: st.text, detail: exactScout ? `Expect them to score about ${Math.round(season.bench * (0.92 + 0.2 * (evIdx - 1)) * st.oppMul)} points.` : null };
+    return { id, name: st.name, text: st.text, detail: exactScout ? `Expect them to score about ${Math.round(season.bench * (0.88 + 0.15 * (evIdx - 1)) * st.oppMul)} points.` : null };
   }
 
   // One match. Random draws keep the order they always had so balance and seeds stay stable.
@@ -137,7 +137,7 @@ export function createEvent(run, evIdx) {
     if (n === 0 && stage.startsWith('Qualification') && inspect) { loss = 1; repair += 1; moments.push({ kind: 'inspect', clip: 'jam', title: 'Failed inspection', text: inspect.name + '. You spend the first match fixing it.', principle: 'packaging-tools' }); }
     for (const f of open) {
       if (f.kind === 'inspect') continue;
-      if (rng.chance(f.sev * 0.4 * plan.risk)) apply(f.kind, f.name + (f.found ? ' (a known issue you left unfixed)' : ' (never found before the event)'), f);
+      if (rng.chance(f.sev * 0.36 * plan.risk)) apply(f.kind, f.name + (f.found ? ' (a known issue you left unfixed)' : ' (never found before the event)'), f);
     }
     if (rng.chance(stats.complexity * 0.008 * plan.risk)) apply('cycles', 'A complicated mechanism fails mid-match. The more parts, the more things break.', { onlyTesting: false, found: true });
     if (moments.length && moments[moments.length - 1].text.startsWith('A complicated')) moments[moments.length - 1].principle = 'simplicity';
@@ -186,7 +186,7 @@ export function createEvent(run, evIdx) {
     clearCarry() { carry = 0; },
     playQual(k, planId, styleId) {
       const base = season.bench;
-      const m = runMatch(k, `Qualification ${k + 1} of ${MATCHES_PER_EVENT}`, base * 0.55, base * 0.12, base * (0.92 + 0.2 * (evIdx - 1)), base * 0.15, planId, styleId || scout('q' + k).id);
+      const m = runMatch(k, `Qualification ${k + 1} of ${MATCHES_PER_EVENT}`, base * 0.58, base * 0.12, base * (0.88 + 0.15 * (evIdx - 1)), base * 0.15, planId, styleId || scout('q' + k).id);
       matches[k] = m;
       return m;
     },
@@ -205,7 +205,7 @@ export function createEvent(run, evIdx) {
     const strength = res.avg / season.bench;
     let role = 'captain', seed = rank;
     if (rank > 8) {
-      const pickProb = Math.max(0.05, Math.min(0.97, 0.3 + (strength - 0.25) * 2.2)) * (rank > 18 ? 0.5 : 1);
+      const pickProb = Math.max(0.05, Math.min(0.97, 0.45 + (strength - 0.2) * 2.4)) * (rank > 18 ? 0.5 : 1);
       if (prog.chance(pickProb)) { role = 'picked'; seed = Math.min(8, Math.max(1, 9 - Math.ceil((rank - 8) / 3))); } else role = 'none';
     }
     po.role = role; po.seed = role === 'none' ? null : seed;
@@ -232,7 +232,7 @@ export function createEvent(run, evIdx) {
       po.rounds.push(curRound.rd); firstOfRound = true;
     }
     const rd = curRound.rd;
-    const oppBase = base * (0.92 + 0.2 * (evIdx - 1)), oppMean = oppBase * (1.55 - 0.1 * (rd.oppSeed - 1));
+    const oppBase = base * (0.88 + 0.15 * (evIdx - 1)), oppMean = oppBase * (1.45 - 0.09 * (rd.oppSeed - 1));
     const pMean = base * (po.role === 'captain' ? 0.58 : 0.46);
     const m = runMatch(rd.matches.length, `${rd.name}: match ${rd.matches.length + 1}`, pMean, base * 0.1, oppMean, oppBase * 0.2, planId, scout(`p${curRound.round}${rd.matches.length}`).id);
     rd.matches.push(m);
