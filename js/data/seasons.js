@@ -6,6 +6,7 @@ export const SEASONS = {
     blurb: 'Collect 9.5" cargo balls and shoot them into the hub, then climb the hangar.',
     pieceName: 'cargo', weightCap: 125, perimeter: 120, heightLimit: 48, extension: 16,
     teleopSec: 135, autoSec: 15, layout: 'opposed', bench: 72,
+    video: 'https://youtube.com/playlist?list=PLZT9pIgNOV6ZZ0Nlwte7ZaE-_DGoAFPQF',
     tasks: [
       { id: 'taxi', name: 'Taxi (autonomous)', pts: 2, note: 'Cheap points: drivetrain + programming.' },
       { id: 'low', name: 'Low hub', pts: 1, note: 'Easy to score, low value.' },
@@ -20,6 +21,7 @@ export const SEASONS = {
     blurb: 'Collect foam rings (notes) and score them in the speaker and amp, then climb and trap.',
     pieceName: 'note', weightCap: 125, perimeter: 120, heightLimit: 54, extension: 12,
     teleopSec: 135, autoSec: 15, layout: 'opposed', bench: 52,
+    video: 'https://youtube.com/playlist?list=PLZT9pIgNOV6ai8nBeeLlC1PnDIhhVHV3k',
     tasks: [
       { id: 'taxi', name: 'Leave (autonomous)', pts: 2, note: 'Cheap points.' },
       { id: 'speaker', name: 'Speaker', pts: 3, note: 'The main scoring loop (amplified notes are worth more).' },

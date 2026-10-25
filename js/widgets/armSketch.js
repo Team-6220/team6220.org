@@ -7,7 +7,7 @@ const sy = (y) => 372 - y * SX;
 
 export function createArmSketch(season, reach) {
   const target = { x: 28 + reach.x, y: reach.h };
-  const st = { px: 14, py: 20, L: 20, motorAtEnd: false, parametric: false, polish: 0, polishSteps: 0 };
+  const st = { px: 22, py: 22, L: 16, motorAtEnd: false, parametric: false, polish: 0, polishSteps: 0 };
   const TOL = 3.5;
   const cv = h('canvas', { width: CW, height: CH });
   const listeners = [];
@@ -16,7 +16,7 @@ export function createArmSketch(season, reach) {
     const dx = target.x - st.px, dy = target.y - st.py;
     const d = Math.hypot(dx, dy), ang = (Math.atan2(dy, dx) * 180) / Math.PI;
     const reachOk = Math.abs(d - st.L) <= TOL && ang >= -30 && ang <= 180;
-    const stowOk = st.px - st.L >= -season.extension && st.py <= season.heightLimit;
+    const stowOk = st.px - st.L >= 0 && st.py <= season.heightLimit; // folded arm must fit inside the frame perimeter
     return { reachOk, stowOk, d, ang, dims: st.parametric ? 3 : 4 };
   }
 
@@ -29,12 +29,12 @@ export function createArmSketch(season, reach) {
     ctx.setLineDash([6, 5]); ctx.strokeStyle = C.gold;
     ctx.beginPath(); ctx.moveTo(0, sy(season.heightLimit)); ctx.lineTo(CW, sy(season.heightLimit)); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sx(28 + season.extension), 0); ctx.lineTo(sx(28 + season.extension), CH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx(-season.extension), 0); ctx.lineTo(sx(-season.extension), CH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(0), 0); ctx.lineTo(sx(0), CH); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = C.gold; ctx.font = '11px sans-serif';
     ctx.fillText(`height limit ${season.heightLimit}"`, 6, sy(season.heightLimit) - 4);
     ctx.fillText('extension limit', sx(28 + season.extension) + 4, 14);
-    ctx.fillText('rear limit', sx(-season.extension) + 4, 14);
+    ctx.fillText('rear of perimeter', sx(0) + 4, 14);
     // tip path (circle)
     ctx.setLineDash([3, 4]); ctx.strokeStyle = C.g5;
     ctx.beginPath(); ctx.arc(sx(st.px), sy(st.py), st.L * SX, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);

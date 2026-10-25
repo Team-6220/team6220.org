@@ -39,8 +39,8 @@ export function mount(root, run, done, node) {
       ready ? h('div', { class: 'col' }, cv, h('div', { class: 'small muted' }, `Cycle time ${s.effCycle.toFixed(1)} s · ${s.needsTurn ? 'the robot has to turn around between intake and scoring' : 'no turn-around needed'} · driver skill ${Math.round(s.driverSkill * 100)}%`))
         : h('div', { class: 'panel muted' }, 'Not all mechanisms are chosen yet, so there is only a partial rough build to test.'),
       h('div', { class: 'row' },
-        h('button', { class: 'btn', onclick: () => test(false) }, 'Quick test (4 h)'),
-        h('button', { class: 'btn', onclick: () => test(true) }, 'Thorough test (10 h)'),
+        h('button', { class: 'btn', style: 'text-align:left', onclick: () => test(false) }, h('b', {}, 'Quick test (4 h)'), h('div', { class: 'small' }, 'Finds about 45% of the hidden issues.')),
+        h('button', { class: 'btn', style: 'text-align:left', onclick: () => test(true) }, h('b', {}, 'Thorough test (10 h)'), h('div', { class: 'small' }, 'Finds about 80% of the hidden issues.')),
         last ? h('span', { class: last.n ? 'gold' : 'muted' }, last.n ? `The test revealed ${last.n} new issue${last.n > 1 ? 's' : ''}.` : 'No new issues turned up this time (but some may remain).') : null),
       h('div', { class: 'panel' }, h('h3', {}, 'Known issues'), flaws),
       h('button', { class: 'btn primary', onclick: () => { save(); done(); } }, 'Finish testing')));

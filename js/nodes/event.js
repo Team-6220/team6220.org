@@ -4,6 +4,7 @@ import { archList } from '../data/archetypes.js';
 import { derive } from '../sim/robotModel.js';
 import { simulateEvent, eventScore, MATCHES_PER_EVENT } from '../sim/match.js';
 import { playClip } from '../sim/cycleSim.js';
+import { applySkips } from '../sim/skips.js';
 import { spend, unlock, setSlot, addFlaw, save } from '../state.js';
 import { shell, hint } from './common.js';
 
@@ -13,6 +14,7 @@ export function mount(root, run, done, node) {
   for (const slot of ['drivetrain', 'intake', 'scorer']) if (!run.design[slot]) setSlot(slot, archList(run.seasonId, slot)[0].id, 'scratch', true);
   if (!run.design.endgame) setSlot('endgame', 'none', 'scratch', false);
   const fixCost = (f) => Math.ceil(f.fixHours * 1.5);
+  const skipMsgs = run.skipsApplied ? [] : applySkips(run);
 
   function prep() {
     clear(root);
@@ -21,6 +23,7 @@ export function mount(root, run, done, node) {
     const unknown = run.flaws.some((f) => !f.found && !f.fixed);
     root.append(shell(idx === 1 ? 'Regional event: pit and weigh-in' : 'Championship: pit and weigh-in', 'Inspection comes before the first match.',
       hint(run, 'You are over the weight limit? That is a late-season scramble. Plan weight early instead.'),
+      skipMsgs.length ? h('div', { class: 'panel' }, h('h3', { class: 'gold' }, 'Skipped steps catch up with you'), ...skipMsgs.map((m) => h('div', { class: 'small' }, m))) : null,
       s.over ? h('div', { class: 'panel col' }, h('h3', { class: 'red' }, `Overweight: ${Math.round(s.weight)} / ${s.cap} lb`),
         h('p', {}, 'You cannot compete until you are under the limit. Late fixes are expensive.'),
         h('button', { class: 'btn', onclick: () => { run.results.shop = run.results.shop || { weightDelta: 0, sensors: null, applied: {}, progExtra: 0 }; run.results.shop.weightDelta -= 8; spend(10); addFlaw({ id: 'drilled' + Math.round(s.weight), name: 'Holes drilled in a rush weaken a part', sev: 0.3, kind: 'cycles', fixHours: 5, onlyTesting: true, hint: 'Lightening should be planned, not panicked.', found: false }); unlock('pocket-last'); prep(); } }, 'Drill lightening holes in a hurry (-8 lb, 10 h, weakens parts)'),

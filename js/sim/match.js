@@ -49,7 +49,7 @@ export function simulateEvent(run, evIdx) {
       if (rng.chance(f.sev * 0.4)) apply(f.kind, f.name + (f.found ? ' (a known issue you left unfixed)' : ' (never found before the event)'), f);
     }
     if (rng.chance(stats.complexity * 0.008)) apply('cycles', 'A complicated mechanism fails mid-match. The more parts, the more things break.', { onlyTesting: false, found: true });
-    if (moments.length && moments[moments.length - 1].text.startsWith('A complicated')) moments[moments.length - 1].principle = 'kiss';
+    if (moments.length && moments[moments.length - 1].text.startsWith('A complicated')) moments[moments.length - 1].principle = 'simplicity';
     if (rng.chance((1 - stats.dtRel) * 0.4)) { dtFail++; loss += 0.5; repair += 1.5 * rm; moments.push({ kind: 'dead', clip: 'brownout', title: 'Drivetrain trouble', text: 'Without a working drivetrain, nothing else matters.', principle: 'drivetrain-king' }); }
     if (carry > 0) { loss += Math.min(0.4, carry * 0.2); moments.push({ kind: 'carry', clip: null, title: 'Rushed pit repair', text: 'The pit crew did not finish repairs last match.', principle: 'consistency' }); carry = 0; }
     loss = Math.min(1, loss);

@@ -11,7 +11,10 @@ const WHEELS = [
   { id: 'mecanum', name: 'Mecanum wheel', fit: 0.8, opt: 12 },
   { id: 'colson', name: 'Colson wheel 65A', fit: 0.7, opt: 8 },
 ];
-const FIDELITY = { wood: { name: 'Wood + hand drills', hours: 1, noise: 0.13 }, hifi: { name: 'High-fidelity prototype', hours: 3, noise: 0.03 } };
+const FIDELITY = {
+  wood: { name: 'Wood + hand drills', hours: 1, noise: 0.13, note: 'Quick and cheap, but results vary by about ±13%.' },
+  hifi: { name: 'High-fidelity prototype', hours: 3, noise: 0.03, note: 'Three times the hours, but accurate to about ±3%.' },
+};
 
 export function trueSuccess(wheel, comp) {
   const w = WHEELS.find((x) => x.id === wheel);
@@ -28,7 +31,7 @@ export function mount(root, run, done) {
     const rng = rngFor(run.seed, 'proto' + n);
     const t = trueSuccess(wheel, comp);
     const seen = Math.max(0, Math.min(1, t + rng.normal(0, FIDELITY[fid].noise)));
-    tests.push({ fid, wheel, comp, seen });
+    tests.push({ fid, wheel, comp, seen, sd: FIDELITY[fid].noise });
     spend(FIDELITY[fid].hours);
     if (fid === 'wood') unlock('test-early');
     render();
@@ -41,21 +44,24 @@ export function mount(root, run, done) {
     const ctx = cv.getContext('2d');
     ctx.fillStyle = C.black; ctx.fillRect(0, 0, 520, 220);
     ctx.strokeStyle = C.g4; ctx.beginPath(); ctx.moveTo(30, 190); ctx.lineTo(500, 190); ctx.moveTo(30, 190); ctx.lineTo(30, 10); ctx.stroke();
-    ctx.fillStyle = C.g5; ctx.font = '11px sans-serif'; ctx.fillText('compression % →', 400, 208); ctx.fillText('pickup %', 34, 14);
+    ctx.fillStyle = C.g5; ctx.font = '11px sans-serif'; ctx.fillText('compression % →', 400, 208); ctx.fillText('pickup %   (bars: ±1 standard deviation of test noise)', 34, 14);
     tests.forEach((t) => {
-      const x = 30 + (t.comp / 40) * 470, y = 190 - t.seen * 170;
-      ctx.fillStyle = t.wheel === wheel ? C.gold : C.g5; ctx.fillRect(x - 3, y - 3, 6, 6);
+      const x = 30 + (t.comp / 40) * 470, y = 190 - t.seen * 170, e = t.sd * 170;
+      const col = t.wheel === wheel ? C.gold : C.g5;
+      ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, y - e); ctx.lineTo(x, y + e); ctx.moveTo(x - 5, y - e); ctx.lineTo(x + 5, y - e); ctx.moveTo(x - 5, y + e); ctx.lineTo(x + 5, y + e); ctx.stroke();
+      ctx.fillStyle = col; ctx.fillRect(x - 3, y - 3, 6, 6);
     });
     const ctrl = h('div', { class: 'panel col', style: 'width:420px' },
       h('h3', {}, 'Test setup'),
       h('div', {}, h('span', { class: 'small muted' }, 'Fidelity: '),
-        ...Object.entries(FIDELITY).map(([k, v]) => h('button', { class: 'btn' + (fid === k ? ' sel' : ''), onclick: () => { fid = k; render(); } }, `${v.name} (${v.hours} h)`))),
+        ...Object.entries(FIDELITY).map(([k, v]) => h('button', { class: 'btn' + (fid === k ? ' sel' : ''), style: 'display:block;width:100%;text-align:left;margin:3px 0', onclick: () => { fid = k; render(); } }, h('b', {}, `${v.name} (${v.hours} h per test)`), h('div', { class: 'small' }, v.note)))),
       h('div', {}, h('div', { class: 'small muted' }, 'Roller wheel'),
         ...WHEELS.map((w) => h('button', { class: 'btn' + (wheel === w.id ? ' sel' : ''), style: 'margin:2px', onclick: () => { wheel = w.id; render(); } }, w.name))),
       h('div', {}, h('div', { class: 'small muted' }, `Compression: ${comp}%`),
         h('input', { type: 'range', min: 0, max: 40, value: comp, oninput: (e) => { comp = +e.target.value; e.target.previousSibling.textContent = `Compression: ${comp}%`; } })),
       h('button', { class: 'btn primary', onclick: runTest }, `Run test (${FIDELITY[fid].hours} h)`),
-      h('p', { class: 'small muted' }, `Roller speed should be at least faster than drive speed. Wood tests are quick but noisy (±${Math.round(FIDELITY.wood.noise * 100)}%); high-fidelity tests are accurate but cost three times as much.`));
+      h('p', { class: 'small muted' }, 'Roller speed should be faster than drive speed. Look for where tests cluster high, then confirm with a more accurate test.'));
     const log = h('div', { class: 'panel grow' },
       h('h3', {}, 'Test log'),
       tests.length ? h('table', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Fidelity'), h('th', {}, 'Wheel'), h('th', {}, 'Comp.'), h('th', {}, 'Pickup')),

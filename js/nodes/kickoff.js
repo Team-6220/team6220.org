@@ -2,6 +2,7 @@
 import { h, clear } from '../ui.js';
 import { SEASONS } from '../data/seasons.js';
 import { spend, unlock, save } from '../state.js';
+import { TOTAL_HOURS } from '../sim/robotModel.js';
 import { shell, hint } from './common.js';
 
 const OPT_VARS = [
@@ -24,6 +25,7 @@ export function mount(root, run, done) {
     const bestEnd = chosen.size;
     const left = h('div', { class: 'panel grow' },
       h('h3', {}, `${season.year} ${season.name}`), h('p', {}, season.blurb),
+      h('p', {}, h('a', { href: season.video, target: '_blank', rel: 'noopener' }, 'Watch the official game animation (FIRST kickoff playlist, opens YouTube)')),
       h('p', { class: 'small muted' }, `Weight cap ${season.weightCap} lb · frame perimeter ${season.perimeter}" · height ${season.heightLimit}" · extension ${season.extension}" (approximate; verify in the game manual)`),
       h('h3', {}, 'Game analysis: what is worth building for?'),
       h('p', { class: 'small' }, 'Tick the scoring actions you will build for. Everything else is skipped. Mechanisms for actions you did not choose are feature creep and cost hours.'),
@@ -33,7 +35,7 @@ export function mount(root, run, done) {
       h('div', { class: 'panel' }, h('h3', {}, 'What will you optimize?'),
         ...OPT_VARS.map((o) => h('div', { class: 'card' + (opt === o.id ? ' sel' : ''), style: 'margin-bottom:6px', onclick: () => { opt = o.id; render(); } }, h('b', {}, o.name), h('div', { class: 'small muted' }, o.text)))),
       h('div', { class: 'panel' }, h('h3', {}, 'Season clock'),
-        h('p', { class: 'small' }, 'You have 200 hours. Design, building, programming and driver practice all draw from the same clock. Every hour spent in design is an hour not spent on the others.')),
+        h('p', { class: 'small' }, `You have ${TOTAL_HOURS} hours. Design, building, programming and driver practice all draw from the same clock. Every hour spent in design is an hour not spent on the others.`)),
       hint(run, 'Pick the one variable that matters most and 3 or so scoring actions. Do not try to do everything.'),
       h('button', { class: 'btn primary', disabled: bestEnd === 0 ? true : null, onclick: finish }, 'Commit requirements (4 h)'));
     root.append(shell('Kickoff', 'Strategic design starts before any CAD.', h('div', { class: 'row' }, left, right)));

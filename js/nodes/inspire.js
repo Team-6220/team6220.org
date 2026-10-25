@@ -2,7 +2,8 @@
 import { h, clear } from '../ui.js';
 import { archList, SLOT_NAMES } from '../data/archetypes.js';
 import { SEASONS } from '../data/seasons.js';
-import { spend, unlock, setSlot, save } from '../state.js';
+import { spend, unlock, setSlot, save, BREAKTHROUGH_CHANCE, BREAKTHROUGH_GAIN } from '../state.js';
+import { notify } from '../ui.js';
 import { shell, hint, tags } from './common.js';
 
 const BORROW_HOURS = 2, SCRATCH_HOURS = 6;
@@ -24,8 +25,10 @@ export function mount(root, run, done, node) {
       a.sensors && a.sensors.length ? h('div', {}, h('span', { class: 'small muted' }, 'Sensors needed: '), tags(a.sensors)) : null,
       h('div', { class: 'small' }, h('span', { class: 'muted' }, 'Known issues if borrowed: '), picked && cur.source === 'scratch' ? h('span', { class: 'gold' }, 'unknown if built from scratch') : known.join('; ')),
       picked ? h('div', { style: 'margin-top:6px', class: 'row' },
-        h('button', { class: 'btn' + (cur.source === 'borrowed' ? ' sel' : ''), onclick: (e) => { e.stopPropagation(); cur.source = 'borrowed'; render(); } }, `Adopt published design (${BORROW_HOURS} h)`),
-        h('button', { class: 'btn' + (cur.source === 'scratch' ? ' sel' : ''), onclick: (e) => { e.stopPropagation(); cur.source = 'scratch'; render(); } }, `Build from scratch (${SCRATCH_HOURS} h)`)) : null);
+        h('button', { class: 'btn' + (cur.source === 'borrowed' ? ' sel' : ''), style: 'text-align:left', onclick: (e) => { e.stopPropagation(); cur.source = 'borrowed'; render(); } },
+          h('b', {}, `Adopt published design (${BORROW_HOURS} h)`), h('div', { class: 'small' }, 'Known issues are listed above, so no surprises. Leaves more hours for building and practice.')),
+        h('button', { class: 'btn' + (cur.source === 'scratch' ? ' sel' : ''), style: 'text-align:left', onclick: (e) => { e.stopPropagation(); cur.source = 'scratch'; render(); } },
+          h('b', {}, `Build from scratch (${SCRATCH_HOURS} h)`), h('div', { class: 'small' }, `Costs ${SCRATCH_HOURS - BORROW_HOURS} more hours and adds a hidden interface flaw, but ${Math.round(BREAKTHROUGH_CHANCE * 100)}% of the time you find a breakthrough: ${Math.round(BREAKTHROUGH_GAIN * 100)}% faster cycle time.`))) : null);
   }
 
   function render() {
@@ -37,17 +40,19 @@ export function mount(root, run, done, node) {
       h('div', { class: 'grid3' }, archList(run.seasonId, slot).map((a) => card(slot, a)))));
     root.append(shell('Inspiration: ' + slots.map((s) => SLOT_NAMES[s]).join(' + '),
       'Teams publish their designs (Open Alliance threads, Ri3D builds, Behind the Bumpers, released CAD). Steal from the best, then innovate the rest.',
-      hint(run, 'Adopting a proven design is cheap and its flaws are already known. A scratch design takes more hours, hides interface flaws, but is about 3% faster if you can afford the time.'),
+      hint(run, 'Adopting a proven design is cheap and its flaws are already known. A scratch design costs more hours and hides a flaw, but has a chance of a breakthrough that makes it faster.'),
       h('p', { class: 'small muted' }, `${season.name}: goal is to score ${season.tasks.filter((t) => run.req && run.req.tasks.includes(t.id)).map((t) => t.name).join(', ') || 'your chosen tasks'}.`),
       h('button', { class: 'btn primary', disabled: ready ? null : true, onclick: finish }, `Lock in choices (${hours} h)`),
       ...sections));
   }
 
   function finish() {
-    for (const s of slots) { setSlot(s, sel[s].id, sel[s].source, false); }
+    for (const s of slots) {
+      const bt = setSlot(s, sel[s].id, sel[s].source, false);
+      if (sel[s].source === 'scratch' && sel[s].id !== 'none') notify(bt ? `Breakthrough on your ${SLOT_NAMES[s].toLowerCase()}: ${Math.round(BREAKTHROUGH_GAIN * 100)}% faster cycle time!` : `Your from-scratch ${SLOT_NAMES[s].toLowerCase()} works, but no breakthrough this time. Its hidden interface flaw remains.`);
+    }
     spend(slots.reduce((t, s) => t + (sel[s].source === 'scratch' ? SCRATCH_HOURS : BORROW_HOURS), 0));
     unlock('steal-innovate'); unlock('simplicity');
-    if (slots.includes('scorer')) { const sc = sel.scorer; if (run.design.scorer && ['lowGoal', 'fixedShooter'].includes(sc.id)) unlock('kiss'); }
     save(); done();
   }
   render();

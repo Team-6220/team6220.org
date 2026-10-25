@@ -36,5 +36,5 @@ export function mount(root, run, done, node) {
       h('button', { class: 'btn', onclick: () => { spend(6); unlock('cots-stock'); finishWith('You wait three weeks for the part: 6 hours of schedule gone.'); } }, 'Wait for the backordered part (6 h)'),
       h('button', { class: 'btn', onclick: () => { spend(2); run.results.shop = run.results.shop || { weightDelta: 0, sensors: null, applied: {}, progExtra: 0 }; run.results.shop.weightDelta += 2; unlock('cots-stock'); finishWith('You use the in-stock substitute: slightly heavier, but you keep moving (2 h, +2 lb).'); } }, 'Use the in-stock substitute (2 h, +2 lb)'));
   }
-  root.append(shell(card.title, null, hint(run, 'Mentors and random events show up on the map. Handle them and move on.'), h('div', { class: 'panel' }, card.intro), body));
+  root.append(shell(card.title, null, hint(run, 'Mentors and random events happen whether you are ready or not. Handle them and move on.'), h('div', { class: 'panel' }, card.intro), body));
 }
