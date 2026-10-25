@@ -1,0 +1,54 @@
+// Inspiration: adopt a published design (cheap, known flaws) or design from scratch (costly, hidden flaws, innovation bonus).
+import { h, clear } from '../ui.js';
+import { archList, SLOT_NAMES } from '../data/archetypes.js';
+import { SEASONS } from '../data/seasons.js';
+import { spend, unlock, setSlot, save } from '../state.js';
+import { shell, hint, tags } from './common.js';
+
+const BORROW_HOURS = 2, SCRATCH_HOURS = 6;
+
+export function mount(root, run, done, node) {
+  const slots = node.params.slots;
+  const season = SEASONS[run.seasonId];
+  const sel = {};
+  slots.forEach((s) => { sel[s] = run.design[s] ? { id: run.design[s].id, source: run.design[s].source } : null; });
+
+  function card(slot, a) {
+    const cur = sel[slot];
+    const picked = cur && cur.id === a.id;
+    const known = a.flaws.length ? a.flaws.map((f) => f.name) : ['None known'];
+    return h('div', { class: 'card' + (picked ? ' sel' : ''), onclick: () => { sel[slot] = { id: a.id, source: cur && cur.id === a.id ? cur.source : 'borrowed' }; render(); } },
+      h('b', {}, a.name),
+      h('div', { class: 'small muted', style: 'margin:4px 0' }, a.note),
+      h('div', {}, tags([`${a.wt} lb`, `complexity ${a.cx}`, `reliability ${Math.round(a.rel * 100)}%`, `driver ease ${Math.round(a.ease * 100)}%`])),
+      a.sensors && a.sensors.length ? h('div', {}, h('span', { class: 'small muted' }, 'Sensors needed: '), tags(a.sensors)) : null,
+      h('div', { class: 'small' }, h('span', { class: 'muted' }, 'Known issues if borrowed: '), picked && cur.source === 'scratch' ? h('span', { class: 'gold' }, 'unknown if built from scratch') : known.join('; ')),
+      picked ? h('div', { style: 'margin-top:6px', class: 'row' },
+        h('button', { class: 'btn' + (cur.source === 'borrowed' ? ' sel' : ''), onclick: (e) => { e.stopPropagation(); cur.source = 'borrowed'; render(); } }, `Adopt published design (${BORROW_HOURS} h)`),
+        h('button', { class: 'btn' + (cur.source === 'scratch' ? ' sel' : ''), onclick: (e) => { e.stopPropagation(); cur.source = 'scratch'; render(); } }, `Build from scratch (${SCRATCH_HOURS} h)`)) : null);
+  }
+
+  function render() {
+    clear(root);
+    const ready = slots.every((s) => sel[s]);
+    const hours = slots.reduce((t, s) => t + (sel[s] ? (sel[s].source === 'scratch' ? SCRATCH_HOURS : BORROW_HOURS) : 0), 0);
+    const sections = slots.map((slot) => h('div', { class: 'panel' },
+      h('h3', {}, SLOT_NAMES[slot]),
+      h('div', { class: 'grid3' }, archList(run.seasonId, slot).map((a) => card(slot, a)))));
+    root.append(shell('Inspiration: ' + slots.map((s) => SLOT_NAMES[s]).join(' + '),
+      'Teams publish their designs (Open Alliance threads, Ri3D builds, Behind the Bumpers, released CAD). Steal from the best, then innovate the rest.',
+      hint(run, 'Adopting a proven design is cheap and its flaws are already known. A scratch design takes more hours, hides interface flaws, but is about 3% faster if you can afford the time.'),
+      h('p', { class: 'small muted' }, `${season.name}: goal is to score ${season.tasks.filter((t) => run.req && run.req.tasks.includes(t.id)).map((t) => t.name).join(', ') || 'your chosen tasks'}.`),
+      ...sections,
+      h('button', { class: 'btn primary', disabled: ready ? null : true, onclick: finish }, `Lock in choices (${hours} h)`)));
+  }
+
+  function finish() {
+    for (const s of slots) { setSlot(s, sel[s].id, sel[s].source, false); }
+    spend(slots.reduce((t, s) => t + (sel[s].source === 'scratch' ? SCRATCH_HOURS : BORROW_HOURS), 0));
+    unlock('steal-innovate'); unlock('simplicity');
+    if (slots.includes('scorer')) { const sc = sel.scorer; if (run.design.scorer && ['lowGoal', 'fixedShooter'].includes(sc.id)) unlock('kiss'); }
+    save(); done();
+  }
+  render();
+}
