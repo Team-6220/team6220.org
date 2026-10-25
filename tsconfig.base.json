@@ -14,12 +14,17 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "baseUrl": ".",
     "paths": {
       "@goldsim/core": ["packages/core/src/index.ts"],
       "@goldsim/schema": ["packages/schema/src/index.ts"],
-      "@goldsim/game-rebuilt": ["packages/game-rebuilt/src/index.ts"]
+      "@goldsim/game-rebuilt": ["packages/game-rebuilt/src/index.ts"],
+      "@goldsim/agents": ["packages/agents/src/index.ts"],
+      "@goldsim/pathplan": ["packages/pathplan/src/index.ts"],
+      "@goldsim/batch": ["packages/batch/src/index.ts"],
+      "@goldsim/analytics": ["packages/analytics/src/index.ts"],
+      "@goldsim/data-layer": ["packages/data-layer/src/index.ts"]
     }
   }
 }

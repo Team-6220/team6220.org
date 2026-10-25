@@ -25,7 +25,7 @@ import { clamp, G, pointInShape, polygonOverlapsShape, rayCircle, rotate, shapeP
 import type { ResolvedMechanism } from "./mechanisms/specs.js";
 import { COLLIDE, initPhysics, RAPIER } from "./physics.js";
 import { Rng } from "./rng.js";
-import { bumperPolygon, checkDesignRunnable, mechanismFootprint, resolveMechanisms } from "./robot.js";
+import { bumperPolygon, checkDesignRunnable, framePolygon, mechanismFootprint, resolveMechanisms } from "./robot.js";
 import { applyScoring, computeGameStats, newScoringState, rankingPoints, type RankingResult, type ScoreBreakdown, type ScoringState } from "./scoring.js";
 import { ENGINE_VERSION } from "./version.js";
 
@@ -100,6 +100,7 @@ export interface RobotView {
   name: string;
   pose: Pose;
   bumper: Vec2[];
+  frame: Vec2[];
   mechanisms: { id: string; base: string; polygon: Vec2[]; active: boolean }[];
   stored: number;
   height: number;
@@ -171,6 +172,9 @@ interface RobotState {
 
 interface InFlight {
   type: string;
+  launchTick: number;
+  ox: number;
+  oy: number;
   landTick: number;
   x: number;
   y: number;
@@ -238,6 +242,7 @@ export class Match {
   private mirror: Mirror;
   private mechs: ResolvedMechanism[][];
   private bumpers: Vec2[][];
+  private frames: Vec2[][];
   private phaseStartTicks: number[];
   private matchEndTick: number;
   private bodyToRobot = new Map<number, number>();
@@ -265,6 +270,7 @@ export class Match {
     this.pieceTypes = new Map(cfg.game.pieces.types.map((p) => [p.id, p]));
     this.mechs = cfg.robots.map((r) => resolveMechanisms(r.design, cfg.game.mechanisms));
     this.bumpers = cfg.robots.map((r) => bumperPolygon(r.design));
+    this.frames = cfg.robots.map((r) => framePolygon(r.design));
 
     let acc = 0;
     this.phaseStartTicks = cfg.game.game.timeline.phases.map((p) => {
@@ -900,6 +906,9 @@ export class Match {
 
     this.s.inFlight.push({
       type,
+      launchTick: this.s.tick,
+      ox: origin.x,
+      oy: origin.y,
       landTick: this.s.tick + Math.max(1, Math.round(tof * this.hz)),
       x: landX,
       y: landY,
@@ -1234,8 +1243,16 @@ export class Match {
     return out;
   }
 
-  inFlightPieces(): { x: number; y: number; progress: number; fromX: number; fromY: number }[] {
-    return this.s.inFlight.map((f) => ({ x: f.x, y: f.y, progress: 0, fromX: f.x, fromY: f.y }));
+  /** Pieces in the air: launch point, landing point, and flight progress 0..1 (for drawing). */
+  inFlightPieces(): { fromX: number; fromY: number; toX: number; toY: number; progress: number; scoring: boolean }[] {
+    return this.s.inFlight.map((f) => ({
+      fromX: f.ox,
+      fromY: f.oy,
+      toX: f.x,
+      toY: f.y,
+      progress: clamp((this.s.tick - f.launchTick) / Math.max(1, f.landTick - f.launchTick), 0, 1),
+      scoring: f.target !== null,
+    }));
   }
 
   robotViews(): RobotView[] {
@@ -1249,6 +1266,7 @@ export class Match {
         name: robot.design.name,
         pose,
         bumper: this.worldBumper(i, pose),
+        frame: this.frames[i]!.map((p) => toWorld(pose, p.x, p.y)),
         mechanisms: this.mechs[i]!.map((m, k) => ({
           id: m.id,
           base: m.base,

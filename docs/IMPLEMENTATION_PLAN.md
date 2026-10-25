@@ -6,6 +6,8 @@
 | **Source** | [PRD.md](PRD.md) v0.2 |
 | **Repository** | `HossHarman/GoldSim` |
 
+> **Stay Gold.** GoldSim should stay useful season after season, not just for REBUILT. Every design choice favors the next kickoff: year-specific logic lives only in a game module (data plus small reviewed hooks), the core is never edited at kickoff, a blank game-module template and the authoring guide make a new season a fill-in-the-blanks job, and tests and docs are written so a new student (or Claude) can pick it up cold. When a change would make next season harder, it doesn't ship.
+
 This plan turns the PRD into ordered, buildable phases. Phases are ordered, not dated. Per PRD §5, Phases 0–5 must be usable before kickoff. Every phase ships something runnable. Section references (§) point to the PRD.
 
 ---

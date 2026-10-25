@@ -9,6 +9,11 @@ export default defineConfig({
       "@goldsim/core": pkg("core"),
       "@goldsim/schema": pkg("schema"),
       "@goldsim/game-rebuilt": pkg("game-rebuilt"),
+      "@goldsim/agents": pkg("agents"),
+      "@goldsim/pathplan": pkg("pathplan"),
+      "@goldsim/batch": pkg("batch"),
+      "@goldsim/analytics": pkg("analytics"),
+      "@goldsim/data-layer": pkg("data-layer"),
     },
   },
   test: {
