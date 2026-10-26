@@ -6,7 +6,8 @@ import type { RobotDesign } from "@goldsim/schema";
 import { allDesigns, session } from "../app-state.js";
 import { clear, h, title, toast } from "../ui/dom.js";
 import { isBatchRunning, startBatch } from "./batch.js";
-import { downloadText, dropZone, fmt, labeled, numberInput, pickFiles, put, readFiles, tableView } from "./util.js";
+import { saveNotice } from "./help.js";
+import { downloadText, dropZone, fmt, labeled, numberInput, pickFiles, put, readFiles, shortDate, tableView } from "./util.js";
 
 interface CalState {
   measurements: Measurement[];
@@ -104,7 +105,7 @@ export function calibrationScreen(root: HTMLElement): void {
     };
     const executor = typeof Worker !== "undefined" ? new WorkerPoolExecutor() : new InProcessExecutor();
     startBatch({
-      name: `Calibration: ${design.name}`,
+      name: `Calibration: ${design.name} · ${shortDate()}`,
       base,
       params: [],
       configs: [{ id: "c0", values: {} }],
@@ -125,7 +126,8 @@ export function calibrationScreen(root: HTMLElement): void {
     put(
       body,
       title("h1", "Calibration"),
-      h("p", { class: "muted" }, "Compare the sim with what your real robot does. Fill in the template after a practice session, import it, and run the matching design solo. The ±15% tolerance is provisional until the first real calibration (PRD §2.3)."),
+      h("p", { class: "lab-intro muted" }, "Check the sim against your real robot. After a practice session, fill in the template with what you measured (cycle time, top speed, and so on), import it, and run the matching design alone in the sim. The page then shows how far off the sim is for each number. The ±15% limit is a first guess until your team has calibrated once."),
+      saveNotice(),
     );
     const drop = h(
       "div",
@@ -158,10 +160,10 @@ export function calibrationScreen(root: HTMLElement): void {
         "div",
         { class: "lab-form" },
         labeled("Design", h("select", { onchange: (e: Event) => (state.designIndex = Number((e.target as HTMLSelectElement).value)) }, designs.map((d, i) => h("option", { value: String(i), selected: i === state.designIndex }, d.name)))),
-        labeled("Driver profile", h("select", { onchange: (e: Event) => (state.profile = (e.target as HTMLSelectElement).value) }, PROFILE_PRESETS.map((p) => h("option", { value: p.id, selected: p.id === state.profile }, p.label)))),
-        labeled("Matches", numberInput(state.matches, (v) => (state.matches = Math.max(1, Math.round(v))), { min: 1, max: 500 })),
-        labeled("Seed", numberInput(state.seed, (v) => (state.seed = Math.round(v)))),
-        labeled("Tolerance (±)", numberInput(state.tolerance, (v) => ((state.tolerance = Math.max(0.01, v)), render()), { step: 0.01, min: 0.01, max: 1 }), "0.15 = ±15%"),
+        labeled("How the computer drives", h("select", { onchange: (e: Event) => (state.profile = (e.target as HTMLSelectElement).value) }, PROFILE_PRESETS.map((p) => h("option", { value: p.id, selected: p.id === state.profile }, p.label)))),
+        labeled("Matches", numberInput(state.matches, (v) => (state.matches = Math.max(1, Math.round(v))), { min: 1, max: 500 }), undefined, "How many solo matches to simulate. More matches give steadier averages."),
+        labeled("Random seed", numberInput(state.seed, (v) => (state.seed = Math.round(v))), undefined, "A number that decides every random thing in the matches. The same seed gives the same results."),
+        labeled("How close counts as a match (±)", numberInput(state.tolerance, (v) => ((state.tolerance = Math.max(0.01, v)), render()), { step: 0.01, min: 0.01, max: 1 }), "0.15 = within 15%", "A sim value is \"within\" if it is no more than this fraction away from what you measured."),
       ),
       h("button", { class: "btn primary", disabled: state.running, onclick: run }, state.running ? "Running… (progress on the Batch page)" : "Run sim matches"),
       h("p", { class: "small muted" }, "The design plays alone against an empty field, so its numbers are not affected by defense. Design metrics (top speed, shooter rate, climb time) come straight from the design."),

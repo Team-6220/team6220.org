@@ -40,7 +40,7 @@ export function homeScreen(main: HTMLElement): void {
       "footer",
       { style: "text-align:center; margin: 24px 0 8px;" },
       title("div", `FRC Team ${TEAM_NUMBER}`, { class: "gold", style: "font-size:20px" }),
-      h("div", { class: "muted small" }, h("a", { href: REPO_URL, target: "_blank", rel: "noopener" }, "Source on GitHub"), " · MIT license · Not affiliated with HighTide (Team 4414)"),
+      h("div", { class: "muted small" }, h("a", { href: REPO_URL, target: "_blank", rel: "noopener" }, "Source on GitHub"), " · MIT license"),
     ),
   );
 }

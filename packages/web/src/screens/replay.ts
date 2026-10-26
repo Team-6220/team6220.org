@@ -2,6 +2,7 @@ import { matchFromReplay, ReplayDriver, shapeCenter, type Match, type MatchEvent
 import { Replay, validate, formatIssues, type Alliance } from "@goldsim/schema";
 import { session } from "../app-state.js";
 import { FieldRenderer, type Overlay } from "../render/field-renderer.js";
+import { getRotation, rotateView, rotationLabel } from "../render/view-rotation.js";
 import { navigate } from "../router.js";
 import { clear, fmtTime, h, title, toast } from "../ui/dom.js";
 import { download, pickJsonFile } from "../ui/files.js";
@@ -59,6 +60,12 @@ export function replayScreen(main: HTMLElement): () => void {
   const markers = h("div", { style: "position:relative; height:10px; background:#000; border:1px solid var(--gray-4)" });
   const scrubTime = h("div", { class: "small muted mono" }, "");
   const playBtn = h("button", { class: "btn primary", disabled: true, onclick: () => setPlaying(!playing) }, "Play");
+  const rotateBtn = h("button", { class: "btn", title: "Rotate the field view 90° (R, or Shift+R for the other way)", onclick: () => doRotate(1) }, `Rotate ${rotationLabel()}`);
+  const doRotate = (direction: 1 | -1) => {
+    rotateView(direction);
+    rotateBtn.textContent = `Rotate ${rotationLabel()}`;
+    draw();
+  };
   const speedBtns = SPEEDS.map((s) => h("button", { class: `btn${s === speed ? " sel" : ""}`, onclick: () => setSpeed(s) }, `${s}x`));
   const followSel = h("select", { onchange: (e: Event) => (follow = Number((e.target as HTMLSelectElement).value)) }, h("option", { value: "-1" }, "Whole field"));
   const zoomInput = h("input", { type: "range", min: "1.5", max: "5", step: "0.25", value: String(zoom), oninput: (e: Event) => (zoom = Number((e.target as HTMLInputElement).value)) });
@@ -95,7 +102,7 @@ export function replayScreen(main: HTMLElement): () => void {
         info,
         status,
         h("div", { class: "col" }, markers, scrub, scrubTime),
-        h("div", { class: "controls" }, playBtn, ...speedBtns),
+        h("div", { class: "controls" }, playBtn, ...speedBtns, rotateBtn),
         h("label", { class: "small muted" }, "Camera"),
         h("div", { class: "row center" }, followSel, h("div", { class: "grow" }, zoomInput)),
         h("h3", null, "Events"),
@@ -318,7 +325,7 @@ export function replayScreen(main: HTMLElement): () => void {
       const p = match.robotPose(follow);
       return { cx: p.x, cy: p.y, zoom };
     })() : undefined;
-    renderer.render(match, { view, overlays: ready ? overlays(match) : [], showShooterRange: follow >= 0 });
+    renderer.render(match, { view, overlays: ready ? overlays(match) : [], showShooterRange: follow >= 0, rotation: getRotation() });
     scoreEl.blue.textContent = String(match.score.blue.total);
     scoreEl.red.textContent = String(match.score.red.total);
     const clock = matchClock(match);
@@ -374,6 +381,7 @@ export function replayScreen(main: HTMLElement): () => void {
       e.preventDefault();
       setPlaying(!playing);
     }
+    if (e.code === "KeyR" && !e.ctrlKey && !e.metaKey) doRotate(e.shiftKey ? -1 : 1);
     if (match && e.code === "ArrowLeft") seek(match.tick - match.hz * 2);
     if (match && e.code === "ArrowRight") seek(match.tick + match.hz * 2);
   };

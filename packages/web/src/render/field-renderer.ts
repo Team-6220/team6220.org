@@ -38,6 +38,8 @@ export interface RenderOptions {
   showZones?: boolean;
   /** Camera: center (field meters) and zoom (1 = whole field). Omit to fit the field. */
   view?: { cx: number; cy: number; zoom: number };
+  /** Quarter turns counter-clockwise applied to the whole field view (0-3). Text stays upright. */
+  rotation?: number;
   /** Short-lived markers (replay event overlays). */
   overlays?: Overlay[];
 }
@@ -56,8 +58,14 @@ export class FieldRenderer {
   private ctx: CanvasRenderingContext2D;
   private pal: Palette = readPalette();
   private scale = 1;
-  private ox = 0;
-  private oy = 0;
+  /** Quarter turns of view rotation (0-3). */
+  private rot = 0;
+  /** Field point shown at the canvas center (meters). */
+  private centerX = 0;
+  private centerY = 0;
+  /** Canvas center in pixels. */
+  private halfW = 0;
+  private halfH = 0;
   private dpr = 1;
 
   constructor(
@@ -72,7 +80,7 @@ export class FieldRenderer {
     this.pal = readPalette();
   }
 
-  private fit(view?: RenderOptions["view"]): void {
+  private fit(view?: RenderOptions["view"], rotation = 0): void {
     const rect = this.canvas.getBoundingClientRect();
     this.dpr = window.devicePixelRatio || 1;
     const w = Math.max(1, Math.round(rect.width * this.dpr));
@@ -81,20 +89,33 @@ export class FieldRenderer {
       this.canvas.width = w;
       this.canvas.height = hgt;
     }
+    this.rot = ((Math.round(rotation) % 4) + 4) % 4;
+    const turned = this.rot % 2 === 1;
+    const spanX = turned ? this.fieldWidth : this.fieldLength;
+    const spanY = turned ? this.fieldLength : this.fieldWidth;
     const pad = 16 * this.dpr;
-    this.scale = Math.min((w - 2 * pad) / (this.fieldLength + 0.4), (hgt - 2 * pad) / (this.fieldWidth + 0.4));
-    this.ox = (w - this.fieldLength * this.scale) / 2;
-    this.oy = (hgt - this.fieldWidth * this.scale) / 2;
+    this.scale = Math.min((w - 2 * pad) / (spanX + 0.4), (hgt - 2 * pad) / (spanY + 0.4));
+    this.halfW = w / 2;
+    this.halfH = hgt / 2;
+    this.centerX = this.fieldLength / 2;
+    this.centerY = this.fieldWidth / 2;
     if (view && view.zoom > 1) {
       this.scale *= view.zoom;
-      this.ox = w / 2 - view.cx * this.scale;
-      this.oy = hgt / 2 - (this.fieldWidth - view.cy) * this.scale;
+      this.centerX = view.cx;
+      this.centerY = view.cy;
     }
   }
 
-  /** Field meters -> canvas pixels (+y is up on screen). */
+  /** Field meters -> canvas pixels (+y is up on screen at rotation 0). */
   private px(x: number, y: number): [number, number] {
-    return [this.ox + x * this.scale, this.oy + (this.fieldWidth - y) * this.scale];
+    const fx = x - this.centerX;
+    const fy = y - this.centerY;
+    let rx = fx;
+    let ry = fy;
+    if (this.rot === 1) [rx, ry] = [-fy, fx];
+    else if (this.rot === 2) [rx, ry] = [-fx, -fy];
+    else if (this.rot === 3) [rx, ry] = [fy, -fx];
+    return [this.halfW + rx * this.scale, this.halfH - ry * this.scale];
   }
 
   private path(pts: Vec2[]): void {
@@ -121,7 +142,7 @@ export class FieldRenderer {
   }
 
   render(match: Match, opts: RenderOptions = {}): void {
-    this.fit(opts.view);
+    this.fit(opts.view, opts.rotation ?? 0);
     const c = this.ctx;
     const p = this.pal;
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -129,8 +150,13 @@ export class FieldRenderer {
 
     // Carpet
     c.fillStyle = p.carpet;
-    const [x0, y0] = this.px(0, this.fieldWidth);
-    c.fillRect(x0, y0, this.fieldLength * this.scale, this.fieldWidth * this.scale);
+    this.path([
+      { x: 0, y: 0 },
+      { x: this.fieldLength, y: 0 },
+      { x: this.fieldLength, y: this.fieldWidth },
+      { x: 0, y: this.fieldWidth },
+    ]);
+    c.fill();
 
     for (const el of match.elements) this.drawElementBase(el, opts);
 
@@ -213,12 +239,19 @@ export class FieldRenderer {
     c.globalAlpha = 1;
   }
 
-  /** Canvas pixel -> field meters (for pointer input). */
+  /** Canvas pixel -> field meters (for pointer input). Valid after the most recent render. */
   toField(clientX: number, clientY: number): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
-    const px = (clientX - rect.left) * this.dpr;
-    const py = (clientY - rect.top) * this.dpr;
-    return { x: (px - this.ox) / this.scale, y: this.fieldWidth - (py - this.oy) / this.scale };
+    const sx = (clientX - rect.left) * this.dpr;
+    const sy = (clientY - rect.top) * this.dpr;
+    const rx = (sx - this.halfW) / this.scale;
+    const ry = -(sy - this.halfH) / this.scale;
+    let fx = rx;
+    let fy = ry;
+    if (this.rot === 1) [fx, fy] = [ry, -rx];
+    else if (this.rot === 2) [fx, fy] = [-rx, -ry];
+    else if (this.rot === 3) [fx, fy] = [-ry, rx];
+    return { x: fx + this.centerX, y: fy + this.centerY };
   }
 
   private drawElementBase(el: ResolvedElement, opts: RenderOptions): void {

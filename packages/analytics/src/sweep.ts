@@ -1,4 +1,4 @@
-import { correlation, mean, meanCI, std, type Interval } from "./stats.js";
+import { correlation, mean, meanCI, std, t95, type Interval } from "./stats.js";
 import { ols } from "./regression.js";
 import type { Table } from "./table.js";
 
@@ -22,6 +22,71 @@ export function responseCurve(samples: Sample[], param: string): ResponsePoint[]
     groups.get(v)!.push(s.outcome);
   }
   return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([value, ys]) => ({ value, ...meanCI(ys) }));
+}
+
+export interface BinnedPoint extends ResponsePoint {
+  /** Range of parameter values in this group. */
+  from: number;
+  to: number;
+}
+
+/**
+ * Response curve that also works for continuous sweeps (e.g. Latin hypercube, where every match has a different value):
+ * up to `maxDistinct` distinct values are kept as-is; otherwise values are grouped into `bins` equal-width ranges.
+ * Samples with a non-finite outcome are skipped.
+ */
+export function binnedResponse(samples: Sample[], param: string, bins = 8, maxDistinct = 12): BinnedPoint[] {
+  const valid = samples.filter((s) => s.params[param] !== undefined && Number.isFinite(s.outcome));
+  const values = [...new Set(valid.map((s) => s.params[param]!))].sort((a, b) => a - b);
+  if (!values.length) return [];
+  if (values.length <= maxDistinct) return responseCurve(valid, param).map((p) => ({ ...p, from: p.value, to: p.value }));
+  const min = values[0]!;
+  const max = values[values.length - 1]!;
+  const w = (max - min) / bins || 1;
+  const groups: number[][] = Array.from({ length: bins }, () => []);
+  for (const s of valid) groups[Math.min(bins - 1, Math.floor((s.params[param]! - min) / w))]!.push(s.outcome);
+  return groups.flatMap((ys, b) => (ys.length ? [{ value: min + (b + 0.5) * w, from: min + b * w, to: min + (b + 1) * w, ...meanCI(ys) }] : []));
+}
+
+export interface ParameterEffect {
+  param: string;
+  /** Lowest and highest tested values. */
+  from: number;
+  to: number;
+  /** Estimated change in the outcome going from `from` to `to` (linear fit). */
+  change: number;
+  /** 95% interval for `change`. */
+  lo: number;
+  hi: number;
+  /** Outcome units per parameter unit. */
+  slope: number;
+  n: number;
+  /** True when the 95% interval excludes zero. */
+  clear: boolean;
+  /** Share of outcome variation explained by this parameter (0–1). */
+  r2: number;
+}
+
+/** Linear effect of one parameter on the outcome, with a 95% interval: "raising X from a to b changed Y by c (lo to hi)". */
+export function parameterEffect(samples: Sample[], param: string): ParameterEffect | null {
+  const valid = samples.filter((s) => s.params[param] !== undefined && Number.isFinite(s.outcome));
+  const xs = valid.map((s) => s.params[param]!);
+  if (valid.length < 3 || std(xs) === 0) return null;
+  const from = Math.min(...xs);
+  const to = Math.max(...xs);
+  const fit = ols(
+    valid.map((s) => [1, s.params[param]!]),
+    valid.map((s) => s.outcome),
+  );
+  const slope = fit.coefficients[1]!;
+  const se = fit.standardErrors[1]!;
+  const t = t95(Math.max(1, valid.length - 2));
+  const span = to - from;
+  const change = slope * span;
+  const half = t * se * span;
+  const lo = change - half;
+  const hi = change + half;
+  return { param, from, to, change, lo, hi, slope, n: valid.length, clear: lo > 0 || hi < 0, r2: Number.isFinite(fit.r2) ? fit.r2 : 0 };
 }
 
 export function responseTable(points: ResponsePoint[], param: string, outcome = "Outcome"): Table {

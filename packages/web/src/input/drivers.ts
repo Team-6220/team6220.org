@@ -72,7 +72,7 @@ function attachKeyboard(): void {
   window.addEventListener("blur", () => held.clear());
 }
 
-/** Keyboard input for development and debugging only (not a supported driver input, PRD §10). */
+/** Keyboard driver, for testing archetypes without a controller. */
 export class KeyboardDriver implements Driver {
   private level = 0;
   constructor(

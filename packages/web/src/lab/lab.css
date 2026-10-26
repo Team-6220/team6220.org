@@ -18,3 +18,30 @@ canvas.lab-field { display: block; width: 100%; background: var(--gray-1); }
 .btn.small { padding: 3px 8px; font-size: 13px; }
 .slot .who.blue { color: var(--blue); }
 .slot .who.red { color: var(--red); }
+
+/* Help popovers, notices, glossary */
+.help { display: inline-block; position: relative; }
+.help summary { list-style: none; cursor: pointer; width: 18px; height: 18px; line-height: 14px; text-align: center; border: 2px solid var(--gray-4); color: var(--gray-5); font-size: 12px; font-weight: 700; user-select: none; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary:hover, .help[open] summary { border-color: var(--gold); color: var(--gold); }
+.help-pop { position: absolute; z-index: 15; left: 0; top: 24px; width: 300px; max-width: 70vw; padding: 8px 10px; background: var(--gray-2); border: 2px solid var(--gold); font-size: 13px; line-height: 1.4; font-weight: 400; color: var(--text); white-space: normal; }
+.notice { border-left: 4px solid var(--gold); padding: 4px 8px; background: var(--gray-2); margin: 0; }
+.glossary summary { cursor: pointer; font-weight: 700; color: var(--gold); }
+.glossary dt { font-weight: 700; margin-top: 8px; }
+.glossary dd { margin: 2px 0 0 0; color: var(--gray-5); line-height: 1.4; }
+.lab-intro { max-width: 900px; line-height: 1.5; }
+.lab-seg { display: inline-flex; border: 2px solid var(--gray-4); }
+.lab-seg button { background: var(--gray-3); color: var(--text); border: 0; padding: 7px 14px; font: inherit; cursor: pointer; }
+.lab-seg button.sel { background: var(--gold); color: #000; font-weight: 700; }
+.lab-seg button + button { border-left: 2px solid var(--gray-4); }
+.lab-check { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.lab-pick { max-height: 220px; overflow: auto; border: 2px solid var(--gray-4); background: var(--gray-1); padding: 4px 8px; }
+.lab-headline { font-size: 16px; line-height: 1.45; border-left: 4px solid var(--gold); padding: 6px 10px; background: var(--gray-2); margin: 0; }
+.lab-headline.warn { border-left-color: var(--gray-5); }
+.lab-rank { display: grid; grid-template-columns: minmax(180px, 1.2fr) 2fr; gap: 6px 12px; align-items: center; }
+.lab-rank .bar { height: 12px; background: var(--gray-3); border: 1px solid var(--gray-4); }
+.lab-rank .bar div { height: 100%; background: var(--gold); }
+.lab-rank .bar.none div { background: var(--gray-5); }
+.lab-name { background: transparent; border: 2px solid transparent; padding: 2px 4px; font: inherit; color: var(--text); min-width: 160px; }
+.lab-name:hover, .lab-name:focus { border-color: var(--gold); background: var(--gray-3); }
+.lab-chart.big { max-height: 520px; }

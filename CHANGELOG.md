@@ -18,3 +18,9 @@ All notable changes to GoldSim are documented here. Format: [Keep a Changelog](h
 - `data-layer`: `DataLayer` interface, in-memory and Supabase implementations, outbox; `supabase/` migrations, RLS policies, pgTAP tests; `docs/SELF-HOSTING.md`.
 - `web`: WingIt-style UI (gold #ffa300, square corners, Karnivore titles, light/dark), Xbox controller play, match HUD and results, robot editor, replay viewer, browser benchmark, Lab (batch/sweeps, dashboard, calibration, PathPlanner).
 - Stay Gold kit: `templates/game-module/`, `npm run new-game`, `docs/AUTHORING.md`, `docs/SCHEMAS.md`.
+
+### Changed (feedback round 1)
+- `core` 0.2.0: physical shot model (launch height, exit speed vs reach, top-entry Hub opening at 72 in, heading and speed error, robot motion carried into the shot); `shotEnvelope` helpers. Exit speed no longer "free" accuracy.
+- `agents`: human-like variability (per-match form, per-shot aim error, impatience, decision noise, mishaps), Rookie/Average/Experienced/Elite skill presets, `randomProfile`, fix for robots idling with a full hopper.
+- Lab: plain-language help and glossary (incl. Latin hypercube), readable parameter names, named runs list, "Test an archetype" random-alliance mode, EPA-style contribution reports "not enough variety" instead of absurd estimates, new parameter-to-outcome results view with plain-English headline.
+- Web: synthesized sound effects, field rotation in 90 degree steps, editor pan/zoom, "Test autos" in the editor, local-save (Export) reminder, scrollable editor side panels, keyboard input no longer labeled dev-only, shooter fire rate vs exit speed explained.

@@ -8,10 +8,21 @@
     "bumpers": { "thickness": 0.0889, "mass": 5.0 },
     "mass": 56.0,
     "momentOfInertia": "auto",
-    "drivetrain": { "type": "tank", "maxSpeed": 4.0, "maxAccel": 9.0, "maxAngularSpeed": 7.0, "traction": 1.3 }
+    "drivetrain": {
+      "type": "tank",
+      "maxSpeed": 4.0,
+      "maxAccel": 9.0,
+      "maxAngularSpeed": 7.0,
+      "traction": 1.3
+    }
   },
   "mechanisms": [
-    { "id": "plow1", "type": "blocker", "mount": { "x": 0.47, "y": 0.0, "theta": 0.0 }, "params": { "width": 0.75, "depth": 0.08 } }
+    {
+      "id": "plow1",
+      "type": "blocker",
+      "mount": { "x": 0.47, "y": 0.0, "theta": 0.0 },
+      "params": { "width": 0.75, "depth": 0.08 }
+    }
   ],
   "preload": 0
 }

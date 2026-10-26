@@ -135,6 +135,15 @@ export const SinkElement = Type.Object(
     target: Type.Object({
       shape: Shape,
       description: Type.Optional(Type.String()),
+      height: Type.Optional(
+        Num("height of the scoring opening above the carpet, meters (default 0 = a floor-level goal)", { minimum: 0 }),
+      ),
+      entry: Type.Optional(
+        Type.Union([Type.Literal("top"), Type.Literal("front")], {
+          description:
+            "top: pieces must be falling when they pass through the opening (e.g. a funnel). front: any crossing of the opening height counts (e.g. a wall slot). Default top.",
+        }),
+      ),
     }),
     scoresFor: Type.Optional(Alliance),
     emit: Type.Optional(

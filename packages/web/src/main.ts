@@ -12,6 +12,7 @@ import { editorScreen } from "./screens/editor.js";
 import { replayScreen } from "./screens/replay.js";
 import { benchmarkScreen } from "./screens/benchmark.js";
 import { setRerouter, type Screen } from "./router.js";
+import { sfx } from "./audio/sound.js";
 import { labRoutes } from "./lab/index.js";
 
 const routes: Record<string, { screen: Screen; nav?: string; flush?: boolean }> = {
@@ -49,6 +50,9 @@ function renderTopbar(): void {
   const half = Math.ceil(APP_NAME.length / 2);
   const path = currentPath();
   const themeBtn = h("button", { class: "btn", title: "Toggle light / dark", onclick: () => toggleTheme() }, currentTheme() === "dark" ? "Light" : "Dark");
+  const soundLabel = () => (sfx.enabled ? "Sound on" : "Sound off");
+  const soundBtn = h("button", { class: "btn", title: "Turn sound effects on or off", onclick: () => sfx.setEnabled(!sfx.enabled) }, soundLabel());
+  const unSound = sfx.onChange(() => (soundBtn.isConnected ? (soundBtn.textContent = soundLabel()) : unSound()));
   unTheme?.();
   unTheme = onThemeChange((t) => (themeBtn.textContent = t === "dark" ? "Light" : "Dark"));
   bar.append(
@@ -63,6 +67,7 @@ function renderTopbar(): void {
       { id: "nav" },
       NAV.map((n) => h("a", { href: `#${n.path}`, class: routes[path]?.nav === n.path ? "sel" : "" }, n.label)),
     ),
+    soundBtn,
     themeBtn,
   );
 }

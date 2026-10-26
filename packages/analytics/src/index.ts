@@ -6,3 +6,4 @@ export * from "./regression.js";
 export * from "./sweep.js";
 export * from "./contribution.js";
 export * from "./calibration.js";
+export * from "./outcomes.js";

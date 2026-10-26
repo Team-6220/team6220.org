@@ -29,7 +29,7 @@ export function driverLabel(d: DriverChoice): string {
     case "idle":
       return "Idle";
     case "keyboard":
-      return "Keyboard (dev)";
+      return "Keyboard";
     case "gamepad":
       return `Controller ${d.index + 1}`;
     case "agent":

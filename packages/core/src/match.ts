@@ -21,7 +21,8 @@ import {
   type DriverInput,
   type QuantizedInput,
 } from "./input.js";
-import { clamp, G, pointInShape, polygonOverlapsShape, rayCircle, rotate, shapePoints, toWorld, wrapAngle, type Pose, type Vec2 } from "./math.js";
+import { clamp, G, pointInShape, polygonOverlapsShape, rayClosest, rotate, shapeCenter, shapePoints, toWorld, wrapAngle, type Pose, type Vec2 } from "./math.js";
+import { commandedSpeed, crossingDistance, flightTime, groundDistance, type Entry, type ShotParams } from "./ballistics.js";
 import type { ResolvedMechanism } from "./mechanisms/specs.js";
 import { COLLIDE, initPhysics, RAPIER } from "./physics.js";
 import { Rng } from "./rng.js";
@@ -877,51 +878,85 @@ export class Match {
     }
   }
 
-  /** Parametric ballistics (PRD §7.6): resolves a shot to a scoring target or a landing point. */
+  /**
+   * Projectile ballistics (PRD §7.6, equations in ballistics.ts). The shooter's flywheel picks the speed for the
+   * distance to the goal it is pointed at (capped by exit speed and its aim window); heading spread, speed error,
+   * and the robot's own velocity then decide where the piece actually comes down.
+   */
   private launch(i: number, r: RobotState, m: ResolvedMechanism, st: MechState, type: string, origin: Vec2, aim: number): void {
     const alliance = this.robots[i]!.alliance;
-    const heading = aim + m.p.spread! * this.rng.normal();
-    const dx = Math.cos(heading);
-    const dy = Math.sin(heading);
-    const vh = Math.max(0.1, m.p.exitSpeed! * Math.cos(m.p.launchAngle!));
-    const rangeMin = m.p.rangeMin!;
-    const rangeMax = Math.max(m.p.rangeMax!, rangeMin);
+    const p: ShotParams = {
+      exitSpeed: m.p.exitSpeed!,
+      launchAngle: m.p.launchAngle!,
+      launchHeight: m.p.launchHeight!,
+      rangeMin: m.p.rangeMin!,
+      rangeMax: Math.max(m.p.rangeMax!, m.p.rangeMin!),
+    };
+    const pieceRadius = this.pieceTypes.get(type)?.radius ?? 0;
 
-    let hit: { el: Extract<ResolvedElement, { kind: "sink" }>; d: number } | null = null;
+    // The goal the shooter is pointed at (closest along the aim line, within a generous cone).
+    const ax = Math.cos(aim);
+    const ay = Math.sin(aim);
+    let aimed: { el: Extract<ResolvedElement, { kind: "sink" }>; along: number; center: Vec2; radius: number; height: number; entry: Entry } | null = null;
     for (const el of this.elements) {
       if (el.kind !== "sink") continue;
       const ts = el.target.shape;
-      if (ts.type !== "circle") continue;
-      const d = rayCircle(origin.x, origin.y, dx, dy, ts.x, ts.y, ts.radius);
-      if (d !== null && (!hit || d < hit.d)) hit = { el, d };
+      const center = shapeCenter(ts);
+      const radius = ts.type === "circle" ? ts.radius : Math.max(...shapePoints(ts).map((q) => Math.hypot(q.x - center.x, q.y - center.y)));
+      const { along, perp } = rayClosest(origin.x, origin.y, ax, ay, center.x, center.y);
+      if (along <= 0 || perp > radius + Math.max(0.3, along * 0.12)) continue;
+      if (!aimed || along < aimed.along)
+        aimed = { el, along, center, radius, height: el.target.height ?? 0, entry: el.target.entry ?? "top" };
     }
 
-    const inWindow = hit !== null && hit.d >= rangeMin && hit.d <= rangeMax;
-    let landD = rangeMax;
-    if (hit && !inWindow) landD = clamp(hit.d, rangeMin, rangeMax);
-    const scoredTarget = inWindow ? hit!.el.id : null;
-    const landX = inWindow ? origin.x + dx * hit!.d : origin.x + dx * landD;
-    const landY = inWindow ? origin.y + dy * hit!.d : origin.y + dy * landD;
-    const tof = (inWindow ? hit!.d : landD) / vh;
+    const command = aimed ? commandedSpeed(aimed.along, aimed.height, p, aimed.entry) : commandedSpeed(p.rangeMax, 0, p, "front");
+    const heading = aim + m.p.spread! * this.rng.normal();
+    const speed = Math.max(0.1, command * (1 + m.p.speedError! * this.rng.normal()));
+    const dx = Math.cos(heading);
+    const dy = Math.sin(heading);
+    const rv = this.body(i).linvel();
+    const at = (x: number) => {
+      const t = flightTime(x, speed, p.launchAngle);
+      return { x: origin.x + dx * x + rv.x * t, y: origin.y + dy * x + rv.y * t, t };
+    };
 
+    let scored: { el: Extract<ResolvedElement, { kind: "sink" }>; t: number } | null = null;
+    if (aimed) {
+      const crossings = aimed.entry === "top" ? (["descending"] as const) : (["ascending", "descending"] as const);
+      for (const which of crossings) {
+        const x = crossingDistance(speed, aimed.height, p, which);
+        if (x === null) continue;
+        const q = at(x);
+        const ts = aimed.el.target.shape;
+        const inside =
+          ts.type === "circle" ? Math.hypot(q.x - ts.x, q.y - ts.y) <= Math.max(0, ts.radius - pieceRadius) : pointInShape(q.x, q.y, ts);
+        if (inside) {
+          scored = { el: aimed.el, t: q.t };
+          break;
+        }
+      }
+    }
+
+    const ground = at(groundDistance(speed, p));
+    const landing = scored ? { x: scored.el.target.shape.type === "circle" ? scored.el.target.shape.x : ground.x, y: scored.el.target.shape.type === "circle" ? scored.el.target.shape.y : ground.y, t: scored.t } : ground;
     this.s.inFlight.push({
       type,
       launchTick: this.s.tick,
       ox: origin.x,
       oy: origin.y,
-      landTick: this.s.tick + Math.max(1, Math.round(tof * this.hz)),
-      x: landX,
-      y: landY,
+      landTick: this.s.tick + Math.max(1, Math.round(landing.t * this.hz)),
+      x: landing.x,
+      y: landing.y,
       dx,
       dy,
-      roll: vh * 0.25,
+      roll: speed * Math.cos(p.launchAngle) * 0.25,
       robot: i,
-      target: scoredTarget,
+      target: scored ? scored.el.id : null,
     });
-    this.emit({ type: "shot_launched", robot: i, alliance, x: origin.x, y: origin.y, heading, target: hit?.el.id ?? null, hit: inWindow });
+    this.emit({ type: "shot_launched", robot: i, alliance, x: origin.x, y: origin.y, heading, target: aimed?.el.id ?? null, hit: scored !== null });
 
     // G407-style detector: launching at your own target while not partly in the required zone
-    if (hit && hit.el.alliance === alliance) this.checkLaunchZone(i, r, hit.el.baseId);
+    if (aimed && aimed.el.alliance === alliance) this.checkLaunchZone(i, r, aimed.el.baseId);
     st.burstTick = this.s.tick;
   }
 

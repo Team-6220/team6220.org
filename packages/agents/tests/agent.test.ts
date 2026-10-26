@@ -52,9 +52,10 @@ describe("agents", () => {
     expect(JSON.stringify(a.r)).toBe(JSON.stringify(b.r));
     expect(a.r.score.blue.total).toBeGreaterThan(30);
     expect(a.r.score.red.total).toBeGreaterThan(30);
-    expect(a.r.robots.every((x) => x.fouls === 0)).toBe(true);
-    // Climbers reach their max level: OTB L1, turret L2, climb-focused L3.
-    expect(a.r.robots.slice(0, 3).map((x) => x.climbLevel)).toEqual([1, 2, 3]);
+    // Drivers are human-like: no systematic fouls, and climbers usually (not always) reach their max level
+    // (OTB L1, turret L2, climb-focused L3).
+    expect(a.r.robots.reduce((n, x) => n + x.fouls, 0)).toBeLessThanOrEqual(1);
+    expect(a.r.robots.slice(0, 3).reduce((n, x) => n + x.climbLevel, 0)).toBeGreaterThanOrEqual(3);
     // Regression guard only: ~27x standalone on a Ryzen AI 9 laptop; shared/CI machines are slower.
     expect(166 / (a.ms / 1000)).toBeGreaterThan(5);
     console.log(

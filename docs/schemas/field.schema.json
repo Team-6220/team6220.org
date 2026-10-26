@@ -1000,6 +1000,24 @@
                   },
                   "description": {
                     "type": "string"
+                  },
+                  "height": {
+                    "description": "height of the scoring opening above the carpet, meters (default 0 = a floor-level goal)",
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "entry": {
+                    "description": "top: pieces must be falling when they pass through the opening (e.g. a funnel). front: any crossing of the opening height counts (e.g. a wall slot). Default top.",
+                    "anyOf": [
+                      {
+                        "const": "top",
+                        "type": "string"
+                      },
+                      {
+                        "const": "front",
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               },

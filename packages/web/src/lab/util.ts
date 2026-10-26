@@ -1,12 +1,32 @@
 import { toCSV, toJSON, type Cell, type Table } from "@goldsim/analytics";
 import type { BatchResultsFile } from "@goldsim/batch";
 import { h } from "../ui/dom.js";
+import { help } from "./help.js";
 
 /** Runs finished (or imported) this session. Nothing is saved until team workspaces arrive in Phase 2. */
 export const labState = {
   runs: [] as BatchResultsFile[],
   selectedRun: -1,
 };
+
+/** Hooks set by the screens, so shared panels can reach them without circular imports. */
+export const labHooks: { duplicateSettings?: (file: BatchResultsFile) => void; testArchetype?: (designNames: string[]) => void } = {};
+
+export function renameRun(file: BatchResultsFile, name: string): void {
+  file.name = name.trim() || file.name;
+}
+
+export function deleteRun(file: BatchResultsFile): void {
+  const i = labState.runs.indexOf(file);
+  if (i < 0) return;
+  labState.runs.splice(i, 1);
+  labState.selectedRun = Math.min(labState.selectedRun, labState.runs.length - 1);
+}
+
+/** "Oct 25" style date for default run names. */
+export function shortDate(d = new Date()): string {
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export function addRun(file: BatchResultsFile): number {
   labState.runs.push(file);
@@ -95,8 +115,8 @@ export function tableView(t: Table, opts: { hide?: (key: string) => boolean; cel
       "div",
       { class: "row center" },
       h("h3", { class: "grow" }, t.title),
-      h("button", { class: "btn small", onclick: () => downloadText(`${base}.csv`, toCSV(t), "text/csv") }, "CSV"),
-      h("button", { class: "btn small", onclick: () => downloadText(`${base}.json`, toJSON(t)) }, "JSON"),
+      h("button", { class: "btn small", title: "Download to your computer (the safest way to keep results)", onclick: () => downloadText(`${base}.csv`, toCSV(t), "text/csv") }, "CSV"),
+      h("button", { class: "btn small", title: "Download to your computer (the safest way to keep results)", onclick: () => downloadText(`${base}.json`, toJSON(t)) }, "JSON"),
     ),
     t.rows.length
       ? h(
@@ -134,8 +154,15 @@ export function ciText(mean: Cell | undefined, lo: Cell | undefined, hi: Cell | 
   return `${fmt(mean)} [${fmt(lo)}, ${fmt(hi)}]`;
 }
 
-export function labeled(label: string, control: Node, hint?: string): HTMLElement {
-  return h("label", { class: "lab-field" }, h("span", { class: "small muted" }, label), control, hint ? h("span", { class: "small muted" }, hint) : null);
+/** A form field with a label, an optional hint line, and an optional "?" explanation. */
+export function labeled(label: string, control: Node, hint?: string, helpText?: string): HTMLElement {
+  return h(
+    "label",
+    { class: "lab-field" },
+    h("span", { class: "small muted row center", style: "gap:6px" }, label, helpText ? help(helpText) : null),
+    control,
+    hint ? h("span", { class: "small muted" }, hint) : null,
+  );
 }
 
 export function numberInput(value: number, onChange: (v: number) => void, attrs: Record<string, unknown> = {}): HTMLInputElement {

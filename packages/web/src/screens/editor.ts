@@ -2,11 +2,13 @@ import { bumperPolygon, checkDesignRunnable, CORE_TYPES, MECHANISM_SPECS, resolv
 import { formatIssues, RobotDesign, validate, type Mechanism } from "@goldsim/schema";
 import { allDesigns, randomSeed, session, type DriverChoice } from "../app-state.js";
 import { EditorCanvas } from "../editor/editor-canvas.js";
+import { openTestAutos } from "../editor/test-autos.js";
 import { fmt, fromDisplay, loadUnits, saveUnits, toDisplay, unitLabel, type Unit, type UnitSystem } from "../editor/units.js";
 import { connectedPads } from "../input/drivers.js";
 import { navigate } from "../router.js";
 import { appendAll, clear, h, title, toast } from "../ui/dom.js";
 import { download, pickJsonFile } from "../ui/files.js";
+import { localSaveNotice } from "../ui/notice.js";
 import { onThemeChange } from "../ui/theme.js";
 
 function blankDesign(): RobotDesign {
@@ -53,6 +55,16 @@ export function editorScreen(main: HTMLElement): () => void {
   const unitsBtn = h("button", { class: "btn", title: "Display units (designs are stored in SI)", onclick: () => setUnits(units === "si" ? "imperial" : "si") }, "");
 
   const view = new EditorCanvas(canvas, () => design, custom, () => renderProps(), () => edited());
+  const zoomLabel = h("span", { class: "small muted", style: "min-width:44px; text-align:center" }, "100%");
+  view.onViewChange = () => (zoomLabel.textContent = `${view.zoomPercent}%`);
+  const zoomControls = h(
+    "div",
+    { class: "row center", style: "gap:4px", title: "Zoom: mouse wheel or + / -.  Pan: Ctrl+drag, middle-mouse drag, or Space+drag." },
+    h("button", { class: "btn", style: "padding:4px 10px", "aria-label": "Zoom out", onclick: () => view.zoomBy(1 / 1.25) }, "−"),
+    zoomLabel,
+    h("button", { class: "btn", style: "padding:4px 10px", "aria-label": "Zoom in", onclick: () => view.zoomBy(1.25) }, "+"),
+    h("button", { class: "btn", style: "padding:4px 10px", onclick: () => view.resetView() }, "Reset view"),
+  );
   deployInput.addEventListener("input", () => {
     view.deploy = Number(deployInput.value);
     view.render();
@@ -68,10 +80,10 @@ export function editorScreen(main: HTMLElement): () => void {
   main.append(
     h(
       "div",
-      { class: "row", style: "height:100%; gap:0; align-items:stretch" },
+      { class: "row", style: "height:100%; min-height:0; gap:0; align-items:stretch" },
       h(
         "aside",
-        { class: "side", style: "width:240px; border-left:0; border-right:2px solid var(--gray-4)" },
+        { class: "side", style: "width:240px; flex:none; min-height:0; overflow-y:auto; overflow-x:hidden; background:var(--gray-2); padding:10px; display:flex; flex-direction:column; gap:10px; border-right:2px solid var(--gray-4)" },
         title("h2", "Designs"),
         h(
           "div",
@@ -87,31 +99,38 @@ export function editorScreen(main: HTMLElement): () => void {
         { class: "grow col", style: "gap:0; min-width:0" },
         h(
           "div",
-          { class: "hud", style: "grid-template-columns: 1fr auto; gap:8px" },
-          h("div", { class: "col", style: "gap:4px" }, palette),
+          { class: "hud", style: "display:flex; flex-direction:column; align-items:stretch; gap:8px" },
+          palette,
           h(
             "div",
-            { class: "row center" },
-            h("label", { class: "small muted" }, "Deploy preview"),
-            h("div", { style: "width:120px" }, deployInput),
+            { class: "row center", style: "flex-wrap:wrap; gap:10px" },
+            h("button", { class: "btn", title: "Run a PathPlanner auto with this robot", onclick: () => testAutos() }, "Test autos"),
+            zoomControls,
+            h("div", { class: "row center", style: "gap:6px" }, h("label", { class: "small muted" }, "Deploy preview"), h("div", { style: "width:120px" }, deployInput)),
             unitsBtn,
           ),
         ),
         h("div", { class: "stage-canvas" }, canvas),
         h(
           "div",
-          { class: "hud", style: "grid-template-columns: 1fr auto" },
-          h("div", { class: "small muted" }, "Drag a mount to move it; drag the round handle to rotate (Shift: 15° steps, Alt: free). Keys: arrows move, Q/E rotate, Del delete, Ctrl+C/V/D copy, paste, duplicate."),
+          { class: "hud", style: "display:flex; flex-direction:column; align-items:stretch; gap:8px" },
           h(
             "div",
-            { class: "row center" },
-            h("button", { class: "btn", onclick: () => save(false) }, "Save"),
+            { class: "row center", style: "flex-wrap:wrap" },
+            h("button", { class: "btn primary", title: "Download this design as a file on your computer", onclick: () => download(`${slug(design.name)}.robot.json`, design) }, "Export (save to computer)"),
+            h("button", { class: "btn", title: "Keeps the design for this browser tab only", onclick: () => save(false) }, "Save to session"),
             h("button", { class: "btn", onclick: () => save(true) }, "Save as copy (A/B)"),
-            h("button", { class: "btn primary", onclick: () => testDrive() }, "Test drive"),
+            h("button", { class: "btn", onclick: () => testDrive() }, "Test drive"),
+          ),
+          h(
+            "div",
+            { style: "display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start" },
+            h("div", { class: "small muted", style: "flex:1 1 320px; min-width:0" }, "Drag a mount to move it; drag the round handle to rotate (Shift: 15° steps, Alt: free). Keys: arrows move, Q/E rotate, Del delete, Ctrl+C/V/D copy, paste, duplicate. View: scroll to zoom, Ctrl+drag / middle-drag / Space+drag to pan, + / - / 0 keys."),
+            h("div", { style: "flex:1 1 320px; min-width:0" }, localSaveNotice()),
           ),
         ),
       ),
-      h("aside", { class: "side", style: "width:340px" }, propsBox, h("hr"), checkBox),
+      h("aside", { class: "side", style: "width:340px; flex:none; min-height:0; overflow-y:auto; overflow-x:hidden; background:var(--gray-2); padding:10px; display:flex; flex-direction:column; gap:10px; border-left:2px solid var(--gray-4)" }, propsBox, h("hr"), checkBox),
     ),
   );
 
@@ -202,6 +221,7 @@ export function editorScreen(main: HTMLElement): () => void {
       { class: "col", style: "gap:2px", title: s.help ?? "" },
       h("div", { class: "row center small", style: "justify-content:space-between" }, h("span", null, s.label), h("span", { class: "row center", style: "gap:4px" }, num, h("span", { class: "muted", style: "width:42px" }, unitLabel(s.unit, units)))),
       range,
+      s.help ? h("div", { class: "help-line" }, s.help) : null,
     );
   }
 
@@ -506,6 +526,13 @@ export function editorScreen(main: HTMLElement): () => void {
     }
   }
 
+  function testAutos() {
+    const schema = validate(RobotDesign, design);
+    const issues = schema.ok ? checkDesignRunnable(design, custom) : schema.issues;
+    if (issues.length) return toast(`This design cannot run yet: ${issues[0]!.path}: ${issues[0]!.message}`, 7000);
+    openTestAutos(() => design);
+  }
+
   function testDrive() {
     const schema = validate(RobotDesign, design);
     const issues = schema.ok ? checkDesignRunnable(design, custom) : schema.issues;
@@ -533,6 +560,9 @@ export function editorScreen(main: HTMLElement): () => void {
     const mech = design.mechanisms[view.selected];
     const ctrl = e.ctrlKey || e.metaKey;
     if (ctrl && e.code === "KeyV") return (e.preventDefault(), paste(clipboard));
+    if (!ctrl && (e.code === "Equal" || e.code === "NumpadAdd")) return (e.preventDefault(), view.zoomBy(1.25));
+    if (!ctrl && (e.code === "Minus" || e.code === "NumpadSubtract")) return (e.preventDefault(), view.zoomBy(1 / 1.25));
+    if (!ctrl && (e.code === "Digit0" || e.code === "Numpad0")) return (e.preventDefault(), view.resetView());
     if (!mech) return;
     const step = e.shiftKey ? 0.025 : 0.005;
     const rot = ((e.shiftKey ? 15 : 5) * Math.PI) / 180;
@@ -572,6 +602,7 @@ export function editorScreen(main: HTMLElement): () => void {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("resize", onResize);
     unTheme();
+    view.dispose();
   };
 }
 

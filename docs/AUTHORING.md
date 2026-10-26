@@ -89,7 +89,7 @@ Field names below are the real schema fields. Full tables: [`docs/SCHEMAS.md`](S
 | `zone`           | Named areas used by rules and agents                | `tags` (use `"alliance"` for alliance zones)                                                                                                                   |
 | `terrain`        | Ramps, bumps: slow robots                           | `speedFactor`, `accelFactor` (0–1), `blocksPieces`                                                                                                             |
 | `gate`           | Passages with a height limit                        | `clearance` (m) — taller robots are blocked                                                                                                                    |
-| `sink`           | Goals                                               | `solid`, `target.shape` (the opening a shot must pass through), `scoresFor`, optional `emit` (`delay`, `exits[]`, `spread`) to send pieces back onto the field |
+| `sink`           | Goals                                               | `solid`, `target.shape` (the opening a shot must pass through), `target.height` (m above the carpet; shots must reach it, default 0), `target.entry` (`top` = piece must be falling through the opening, `front` = any crossing counts), `scoresFor`, optional `emit` (`delay`, `exits[]`, `spread`) to send pieces back onto the field |
 | `feeder`         | Human-player stations                               | `exit` pose, `speed`, `stock`, `capacity`, `rate`, `accuracy`, `mode` (`onDemand` needs a robot in `triggerZone`), `enabledInAuto`, optional `absorbZone`      |
 | `climbStructure` | Endgame structures                                  | `solid`, `engageZone` (robot bumpers must overlap it), `levels[]`                                                                                              |
 | `pieceSource`    | Initial piece staging                               | `piece`, `count` (number or `"remainder"`), `layout` (`grid`/`random`), `gapAlongX`                                                                            |
@@ -147,6 +147,21 @@ One entry per in-match rule: `id` (rule number), `topic`, `status`, `reason`, op
 ## 6. Robot presets
 
 Add 3–5 archetype designs in `presets/` (robot schema, see [`docs/SCHEMAS.md`](SCHEMAS.md)) and export them from `src/index.ts`. Copy from `packages/game-rebuilt/presets/` and adjust. Designs are never checked against robot rules.
+
+### Shooter glossary (plain language)
+
+Shooter settings are easy to mix up. This is what each one means; the editor shows the same wording.
+
+| Setting | What it means | What it does *not* do |
+| --- | --- | --- |
+| **Exit speed** (`exitSpeed`, m/s) | How hard each ball is thrown. Decides how far it can reach and how flat it flies. | Does not change how many balls are shot per second. |
+| **Fire rate** (`ballsPerSecond`) | How many balls leave the shooter each second once it is spun up. Decides how fast the hopper empties. | Does not add range. |
+| **Launch angle / launch height** | How steeply and from how high balls leave the robot. A top-opening goal needs a falling ball, so very steep or very shallow shooters work from different distances. | |
+| **Aim spread** (`spread`) | Random left/right error per shot. | |
+| **Speed consistency** (`speedError`) | Random variation in launch speed, which makes shots land long or short. | |
+| **Closest / farthest aim distance** (`rangeMin`, `rangeMax`) | The distances the shooter is set up to hit. Physics can narrow this (a slow shooter cannot reach a tall goal far away). | |
+
+More speed does not increase fire rate, and more fire rate does not increase range. The shooter's flywheel slows down for closer shots on its own, so a higher *maximum* exit speed adds reach without making close shots less accurate. `shotEnvelope()` in `@goldsim/core` returns the distances from which a given shooter can score on a given goal.
 
 ## 7. Hooks (only when JSON can't express it)
 

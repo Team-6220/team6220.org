@@ -6,9 +6,13 @@ const ROTATE_HANDLE = 0.22; // meters from the mount
 
 type Drag = { kind: "move"; index: number; dx: number; dy: number } | { kind: "rotate"; index: number } | null;
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 14;
+
 /**
  * Top-down chassis view for the robot editor. Chassis frame: +x forward (screen right), +y left (screen up).
  * Mount handles drag to move; the outer handle rotates. Alt disables snapping, Shift snaps rotation to 15°.
+ * View: pan with Ctrl+drag, middle-mouse drag, or Space+drag; zoom with the mouse wheel, + / - keys, or the buttons.
  */
 export class EditorCanvas {
   selected = -1;
@@ -20,6 +24,14 @@ export class EditorCanvas {
   private dpr = 1;
   private drag: Drag = null;
   private resolved: (ResolvedMechanism | null)[] = [];
+  /** View zoom (1 = fit the robot) and pan in CSS pixels. */
+  private zoom = 1;
+  private panX = 0;
+  private panY = 0;
+  private panning: { startX: number; startY: number; panX: number; panY: number } | null = null;
+  private spaceHeld = false;
+  /** Called when the view zoom changes (for the zoom label). */
+  onViewChange: (() => void) | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -33,6 +45,72 @@ export class EditorCanvas {
     canvas.addEventListener("pointermove", (e) => this.move(e));
     canvas.addEventListener("pointerup", (e) => this.up(e));
     canvas.addEventListener("pointercancel", (e) => this.up(e));
+    // Non-passive so the wheel zooms the canvas instead of scrolling the page.
+    canvas.addEventListener("wheel", this.onWheel, { passive: false });
+    canvas.addEventListener("auxclick", (e) => e.preventDefault());
+    window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("keyup", this.onKeyUp);
+  }
+
+  dispose(): void {
+    this.canvas.removeEventListener("wheel", this.onWheel);
+    window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("keyup", this.onKeyUp);
+  }
+
+  private onKeyDown = (e: KeyboardEvent) => {
+    if (e.code !== "Space" || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement) return;
+    this.spaceHeld = true;
+    if (!this.drag) this.canvas.style.cursor = "grab";
+    e.preventDefault();
+  };
+
+  private onKeyUp = (e: KeyboardEvent) => {
+    if (e.code !== "Space") return;
+    this.spaceHeld = false;
+    if (!this.panning) this.canvas.style.cursor = "default";
+  };
+
+  private onWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    // Normalize line / page deltas, then zoom about the cursor.
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
+    const r = this.canvas.getBoundingClientRect();
+    this.zoomAt(Math.exp(-dy * 0.0015), (e.clientX - r.left) * (window.devicePixelRatio || 1), (e.clientY - r.top) * (window.devicePixelRatio || 1));
+  };
+
+  /** Zooms by `factor`, keeping the point under (mx, my) (device pixels) fixed. Omit the point to zoom about the center. */
+  zoomBy(factor: number, mx?: number, my?: number): void {
+    this.resolve();
+    this.fit();
+    this.zoomAt(factor, mx ?? this.canvas.width / 2, my ?? this.canvas.height / 2);
+  }
+
+  private zoomAt(factor: number, mx: number, my: number): void {
+    this.resolve();
+    this.fit();
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, this.zoom * factor));
+    const f = next / this.zoom;
+    if (f === 1) return;
+    const ncx = mx - (mx - this.cx) * f;
+    const ncy = my - (my - this.cy) * f;
+    this.panX = (ncx - this.canvas.width / 2) / this.dpr;
+    this.panY = (ncy - this.canvas.height / 2) / this.dpr;
+    this.zoom = next;
+    this.render();
+    this.onViewChange?.();
+  }
+
+  resetView(): void {
+    this.zoom = 1;
+    this.panX = 0;
+    this.panY = 0;
+    this.render();
+    this.onViewChange?.();
+  }
+
+  get zoomPercent(): number {
+    return Math.round(this.zoom * 100);
   }
 
   private resolve(): void {
@@ -62,9 +140,9 @@ export class EditorCanvas {
       // invalid frame while typing; keep the default view
     }
     for (const m of this.resolved) if (m) reach = Math.max(reach, Math.hypot(m.mount.x, m.mount.y) + 0.4);
-    this.scale = Math.min(w, h) / (2 * reach * 1.25);
-    this.cx = w / 2;
-    this.cy = h / 2;
+    this.scale = (Math.min(w, h) / (2 * reach * 1.25)) * this.zoom;
+    this.cx = w / 2 + this.panX * this.dpr;
+    this.cy = h / 2 + this.panY * this.dpr;
   }
 
   private px(x: number, y: number): [number, number] {
@@ -104,8 +182,11 @@ export class EditorCanvas {
     c.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Grid: 0.1 m minor, 0.5 m major
-    const half = Math.max(this.canvas.width, this.canvas.height) / this.scale / 2 + 0.5;
-    for (let g = -Math.ceil(half * 10); g <= Math.ceil(half * 10); g++) {
+    // Cover the whole visible area, including after panning.
+    const panMeters = Math.max(Math.abs(this.cx - this.canvas.width / 2), Math.abs(this.cy - this.canvas.height / 2)) / this.scale;
+    const half = Math.max(this.canvas.width, this.canvas.height) / this.scale / 2 + 0.5 + panMeters;
+    const lines = Math.min(Math.ceil(half * 10), 400);
+    for (let g = -lines; g <= lines; g++) {
       const v = g / 10;
       c.strokeStyle = g % 5 === 0 ? col.axis : col.grid;
       c.lineWidth = (g === 0 ? 2 : 1) * this.dpr;
@@ -253,6 +334,15 @@ export class EditorCanvas {
   }
 
   private down(e: PointerEvent): void {
+    // Pan: middle mouse, Ctrl+drag, or Space+drag. Never selects or drags a mount.
+    if (e.button === 1 || (e.button === 0 && (e.ctrlKey || this.spaceHeld))) {
+      e.preventDefault();
+      this.panning = { startX: e.clientX, startY: e.clientY, panX: this.panX, panY: this.panY };
+      this.canvas.setPointerCapture(e.pointerId);
+      this.canvas.style.cursor = "grabbing";
+      return;
+    }
+    if (e.button !== 0) return;
     const p = this.toLocal(e);
     this.drag = this.hit(p);
     const idx = this.drag ? this.drag.index : -1;
@@ -265,10 +355,16 @@ export class EditorCanvas {
   }
 
   private move(e: PointerEvent): void {
+    if (this.panning) {
+      this.panX = this.panning.panX + (e.clientX - this.panning.startX);
+      this.panY = this.panning.panY + (e.clientY - this.panning.startY);
+      this.render();
+      return;
+    }
     const p = this.toLocal(e);
     if (!this.drag) {
       const over = this.hit(p);
-      this.canvas.style.cursor = over ? (over.kind === "rotate" ? "crosshair" : "grab") : "default";
+      this.canvas.style.cursor = e.ctrlKey || this.spaceHeld ? "grab" : over ? (over.kind === "rotate" ? "crosshair" : "grab") : "default";
       return;
     }
     const mech = this.getDesign().mechanisms[this.drag.index];
@@ -291,7 +387,11 @@ export class EditorCanvas {
   }
 
   private up(e: PointerEvent): void {
-    if (this.drag && this.canvas.hasPointerCapture(e.pointerId)) this.canvas.releasePointerCapture(e.pointerId);
+    if (this.panning) {
+      this.panning = null;
+      this.canvas.style.cursor = this.spaceHeld ? "grab" : "default";
+    }
+    if ((this.drag || this.canvas.hasPointerCapture(e.pointerId)) && this.canvas.hasPointerCapture(e.pointerId)) this.canvas.releasePointerCapture(e.pointerId);
     this.drag = null;
   }
 }

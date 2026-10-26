@@ -1,6 +1,7 @@
 export * from "./version.js";
 export * from "./rng.js";
 export * from "./math.js";
+export * from "./ballistics.js";
 export * from "./input.js";
 export * from "./events.js";
 export * from "./field.js";

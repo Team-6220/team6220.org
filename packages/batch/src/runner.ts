@@ -5,6 +5,8 @@ export interface JobResult {
   jobId: string;
   configId: string;
   values: Record<string, number>;
+  /** Index of the robot under test (random-alliance runs). */
+  subject?: number;
   output: MatchOutput;
 }
 
@@ -143,7 +145,7 @@ export class BatchRunner {
       try {
         const output = await this.executor.run(job);
         // A match that finished is a valid result even if the batch was cancelled meanwhile.
-        const r = { jobId: job.id, configId: job.configId, values: job.values, output };
+        const r: JobResult = { jobId: job.id, configId: job.configId, values: job.values, subject: job.subject, output };
         this.results.push(r);
         this.opts.onResult?.(r);
       } catch (e) {

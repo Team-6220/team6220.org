@@ -1,10 +1,13 @@
 import { createAgent, profileById } from "@goldsim/agents";
-import { Match, type Driver, type MatchResult } from "@goldsim/core";
+import { Match, type Driver, type DriverInput, type MatchResult, type Observation } from "@goldsim/core";
 import type { Alliance } from "@goldsim/schema";
 import { defaultSetup, session, type MatchSetup } from "../app-state.js";
 import { DEFAULT_BINDINGS, prettyButton, XboxButton } from "../input/bindings.js";
 import { GamepadDriver, KeyboardDriver } from "../input/drivers.js";
+import { soundControls } from "../audio/controls.js";
+import { attachMatchAudio, type MatchAudio } from "../audio/match-audio.js";
 import { FieldRenderer } from "../render/field-renderer.js";
+import { getRotation, rotateView, rotationLabel, screenToField } from "../render/view-rotation.js";
 import { navigate } from "../router.js";
 import { clear, fmtTime, h, openModal, title, toast } from "../ui/dom.js";
 import { onThemeChange } from "../ui/theme.js";
@@ -16,15 +19,32 @@ import { driverLabel } from "./setup.js";
 const SPEEDS = [0.5, 1, 2, 4];
 const ALLIANCES: Alliance[] = ["blue", "red"];
 
+/**
+ * Makes "up on the stick" mean "up on screen" however the field view is rotated.
+ * Only used for the screen drive frame; the driver-station frame is relative to the alliance wall and ignores the view.
+ */
+class ViewFrameDriver implements Driver {
+  constructor(private inner: Driver) {}
+  getInput(tick: number, obs: Observation): DriverInput {
+    const input = this.inner.getInput(tick, obs);
+    const { vx, vy } = screenToField(input.vx, input.vy);
+    return { ...input, vx, vy };
+  }
+}
+
 function buildDrivers(match: Match, setup: MatchSetup): (Driver | null)[] {
   return setup.slots.map((slot, i) => {
     switch (slot.driver.kind) {
       case "idle":
         return null;
-      case "keyboard":
-        return new KeyboardDriver(slot.alliance);
-      case "gamepad":
-        return new GamepadDriver(slot.driver.index, slot.alliance);
+      case "keyboard": {
+        const d = new KeyboardDriver(slot.alliance);
+        return d.frame === "screen" ? new ViewFrameDriver(d) : d;
+      }
+      case "gamepad": {
+        const d = new GamepadDriver(slot.driver.index, slot.alliance);
+        return d.bindings.driveFrame === "screen" ? new ViewFrameDriver(d) : d;
+      }
       case "agent":
         return createAgent(match, i, profileById(slot.driver.profile));
     }
@@ -45,6 +65,9 @@ export function matchScreen(main: HTMLElement): () => void {
   let resultsShown = false;
   let showRange = true;
   let startHeld = false;
+  let audio: MatchAudio | null = null;
+  /** Robot picked in the side panel; its launch, intake and climb sounds play at full volume. */
+  let selectedRobot = -1;
 
   // ---- Layout ----
   const canvas = h("canvas");
@@ -58,6 +81,7 @@ export function matchScreen(main: HTMLElement): () => void {
   const robotsEl = h("div");
   const speedBtns = SPEEDS.map((s) => h("button", { class: `btn${s === speed ? " sel" : ""}`, onclick: () => setSpeed(s) }, `${s}x`));
   const pauseBtn = h("button", { class: "btn", onclick: () => togglePause() }, "Pause");
+  const rotateBtn = h("button", { class: "btn", title: "Rotate the field view 90° (R, or Shift+R for the other way)", onclick: () => doRotate(1) }, `Rotate ${rotationLabel()}`);
 
   const scoreBox = (a: Alliance) =>
     h(
@@ -83,8 +107,8 @@ export function matchScreen(main: HTMLElement): () => void {
     h("div", null, h("span", { class: "kbd" }, prettyButton(b.climb)), " climb / come down"),
     h("div", null, "POV down/right/up: climb L1/L2/L3, left: max"),
     h("div", null, h("span", { class: "kbd" }, prettyButton(b.actions.deploy)), " deploy  ", h("span", { class: "kbd" }, prettyButton(b.actions.place)), " place  ", h("span", { class: "kbd" }, "Start"), " pause"),
-    h("h3", { style: "margin-top:6px" }, "Keyboard (dev only)"),
-    h("div", null, "WASD drive, Q/E rotate, Shift intake, Space shoot, C climb, 1-3 climb level, P pause"),
+    h("h3", { style: "margin-top:6px" }, "Keyboard"),
+    h("div", null, "WASD drive, Q/E rotate, Shift intake, Space shoot, C climb, 1-3 climb level, P pause, R rotate the field view"),
   );
 
   const rangeToggle = h("input", { type: "checkbox", checked: showRange, onchange: (e: Event) => (showRange = (e.target as HTMLInputElement).checked) });
@@ -105,8 +129,10 @@ export function matchScreen(main: HTMLElement): () => void {
           h("button", { class: "btn", onclick: () => match && download(`goldsim-replay-${match.seed}.json`, match.replay()) }, "Replay JSON"),
           h("button", { class: "btn", onclick: () => navigate("/play") }, "Setup"),
         ),
+        h("div", { class: "controls" }, rotateBtn),
         h("label", { class: "row center small" }, rangeToggle, "Show shooter range"),
-        h("div", null, h("h2", null, "Robots"), robotsEl),
+        soundControls(),
+        h("div", null, h("h2", null, "Robots"), h("p", { class: "help-line" }, "Click a robot to hear its shots and intake."), robotsEl),
         help,
       ),
     ),
@@ -122,16 +148,29 @@ export function matchScreen(main: HTMLElement): () => void {
     pauseBtn.textContent = paused ? "Resume" : "Pause";
     pauseBtn.classList.toggle("sel", paused);
   }
+  function doRotate(direction: 1 | -1) {
+    rotateView(direction);
+    rotateBtn.textContent = `Rotate ${rotationLabel()}`;
+    draw();
+  }
   const onKey = (e: KeyboardEvent) => {
-    if (e.code === "KeyP" && !(e.target instanceof HTMLInputElement)) togglePause();
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.code === "KeyP") togglePause();
+    else if (e.code === "KeyR" && !e.ctrlKey && !e.metaKey) doRotate(e.shiftKey ? -1 : 1);
   };
   window.addEventListener("keydown", onKey);
 
   const unTheme = onThemeChange(() => renderer?.refreshPalette());
-  const onResize = () => renderer && match && renderer.render(match, { showShooterRange: showRange, highlight: humanSet() });
+  const draw = () => renderer && match && renderer.render(match, { showShooterRange: showRange, highlight: humanSet(), rotation: getRotation() });
+  const onResize = () => draw();
   window.addEventListener("resize", onResize);
 
   const humanSet = () => new Set(setup.slots.flatMap((s, i) => (s.driver.kind === "keyboard" || s.driver.kind === "gamepad" ? [i] : [])));
+  const focusSet = () => {
+    const f = humanSet();
+    if (selectedRobot >= 0) f.add(selectedRobot);
+    return f;
+  };
 
   function buildTimeline(m: Match) {
     clear(timelineEl);
@@ -184,7 +223,15 @@ export function matchScreen(main: HTMLElement): () => void {
       robotsEl.append(
         h(
           "div",
-          { class: "robotrow" },
+          {
+            class: "robotrow",
+            style: `cursor:pointer;${v.index === selectedRobot ? " outline:2px solid var(--gold); outline-offset:-2px;" : ""}`,
+            title: "Click to follow this robot's sounds",
+            onclick: () => {
+              selectedRobot = selectedRobot === v.index ? -1 : v.index;
+              updateHud(m);
+            },
+          },
           h("div", { class: "sw", style: `background: var(--${v.alliance})` }),
           h(
             "div",
@@ -312,7 +359,8 @@ export function matchScreen(main: HTMLElement): () => void {
       }
       if (n >= maxSteps) acc = 0;
     }
-    renderer.render(match, { showShooterRange: showRange, highlight: humanSet() });
+    renderer.render(match, { showShooterRange: showRange, highlight: humanSet(), rotation: getRotation() });
+    audio?.update();
     if (now - lastHud > 100 || match.isOver) {
       lastHud = now;
       updateHud(match);
@@ -334,12 +382,16 @@ export function matchScreen(main: HTMLElement): () => void {
     renderer = new FieldRenderer(canvas, m.game.field.length, m.game.field.width);
     buildTimeline(m);
     updateHud(m);
+    audio?.dispose();
+    audio = attachMatchAudio(m, { focus: focusSet, active: () => !paused });
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
 
   function restart() {
     cancelAnimationFrame(raf);
+    audio?.dispose();
+    audio = null;
     match?.dispose();
     match = null;
     start().catch((e) => toast(`Could not start the match: ${(e as Error).message}`, 8000));
@@ -353,6 +405,7 @@ export function matchScreen(main: HTMLElement): () => void {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("resize", onResize);
     unTheme();
+    audio?.dispose();
     match?.dispose();
   };
 }

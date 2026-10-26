@@ -13,6 +13,10 @@ export type SweepTarget =
 export interface SweepParam {
   id: string;
   target: SweepTarget;
+  /** Human-readable name, e.g. "Blue 1 · Shooter 2 · Exit speed". Falls back to id. */
+  label?: string;
+  /** Display unit, e.g. "m/s". */
+  unit?: string;
   /** Grid values. */
   values?: number[];
   /** Latin hypercube range. */
@@ -31,6 +35,8 @@ export interface Job {
   values: Record<string, number>;
   seed: number;
   spec: MatchSpec;
+  /** Index of the robot under test (random-alliance runs). */
+  subject?: number;
 }
 
 /** Writes value at a JSON-pointer-like path in a deep copy of obj. */

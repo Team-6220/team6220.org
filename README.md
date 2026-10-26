@@ -2,7 +2,7 @@
 
 An open-source, browser-based 2D FRC strategy and design simulator by **FRC Team 6220**.
 
-A team defines real 2D robot designs, drops them into a game-specific field, drives them with Xbox-type controllers or simulated drivers, and runs hundreds of matches to rank robot archetypes. Robot geometry actually matters: where the intake and shooter sit changes cycle times through physics, not through hand-tuned numbers.
+A team defines real 2D robot designs, drops them into a game-specific field, drives them with Xbox-type controllers, the keyboard, or simulated drivers, and runs hundreds of matches to rank robot archetypes. Robot geometry actually matters: where the intake and shooter sit changes cycle times through physics, not through hand-tuned numbers.
 
 ## Stay Gold
 
@@ -60,4 +60,4 @@ scripts/         repo tooling (new-game)
 
 Code is [MIT](LICENSE). **Not covered by the MIT license:** the Team 6220 logos and the Karnivore font in `packages/web/public/` — see [`packages/web/public/brand/README.md`](packages/web/public/brand/README.md). Forks should use their own logos.
 
-GoldSim is independent work inspired by publicly available descriptions of HighTide's TideSim. It does not use any HighTide code, data or assets and is not affiliated with HighTide (Team 4414).
+GoldSim is independent work inspired by publicly available descriptions of HighTide's TideSim; it uses none of their code, data or assets.

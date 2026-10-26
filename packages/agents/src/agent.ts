@@ -19,6 +19,7 @@ import {
   resolveMechanisms,
   Rng,
   shapeCenter,
+  shotEnvelope,
   toWorld,
   wrapAngle,
   type Driver,
@@ -53,7 +54,7 @@ export const OBJ = {
   neutralZoneTag: "neutral",
 } as const;
 
-type Mode = "idle" | "collect" | "shoot" | "wait" | "climb" | "autoClimb" | "descend" | "defend" | "feed";
+type Mode = "idle" | "collect" | "shoot" | "wait" | "harass" | "climb" | "autoClimb" | "descend" | "defend" | "feed";
 
 type Sink = Extract<ResolvedElement, { kind: "sink" }>;
 
@@ -63,6 +64,8 @@ type Sink = Extract<ResolvedElement, { kind: "sink" }>;
  */
 export class Agent implements Driver {
   readonly profile: DriverProfile;
+  /** This match's form: the profile's knobs with per-match variation applied (see sampleForm). */
+  readonly eff: DriverProfile;
   mode: Mode = "idle";
   private ctx: AgentContext;
   private rng: Rng;
@@ -90,12 +93,31 @@ export class Agent implements Driver {
   private pieceKey = "";
   private shotJitter = 0;
   private aimStallSince = -1;
+  /** Slowly drifting aim error (rad), updated every tick. */
+  private wobble = 0;
+  private hesitateUntil = -1;
+  /** Where in the shooting window this driver likes to shoot from (0 = close, 1 = far); fixed per match. */
+  private distPref = 0.2;
+  private nextJockey = -1;
+  /** Sideways nudge (m) applied to the staging spot; flips sign each time so the robot really moves. */
+  private stageOffset = 0;
+  /** Match times (s) when a mishap starts, drawn once per match, and when the current one ends. */
+  private mishapTimes: { at: number; len: number }[] = [];
+  private mishapUntil = -1;
+  private nextWeave = -1;
+  private weaveOffset = 0;
+  private cachedWindow?: { min: number; max: number };
 
   constructor(ctx: AgentContext, profile: DriverProfile = DEFAULT_PROFILE) {
     this.ctx = ctx;
     this.profile = profile;
     this.alliance = ctx.robot.alliance;
     this.rng = new Rng((ctx.seed ^ Math.imul(ctx.index + 1, 0x9e3779b9)) >>> 0);
+    // Separate stream, so a driver's form doesn't depend on how the match plays out.
+    const formRng = new Rng((ctx.seed ^ Math.imul(ctx.index + 7, 0x85ebca6b) ^ 0x5bd1e995) >>> 0);
+    this.eff = sampleForm(profile, formRng);
+    this.distPref = 0.05 + 0.45 * formRng.next();
+    this.mishapTimes = drawMishaps(this.eff.mishaps, ctx.game.game.timeline.phases.reduce((t, ph) => t + ph.duration, 0), formRng);
     this.mechs = resolveMechanisms(ctx.robot.design, ctx.game.mechanisms);
     this.shooter = this.mechs.find((m) => m.base === "shooter");
     this.intake = this.mechs.find((m) => m.base === "intake");
@@ -111,8 +133,8 @@ export class Agent implements Driver {
   }
 
   get role(): DriverProfile["role"] {
-    if (this.profile.role !== "auto") return this.profile.role;
-    if (this.shooter && this.intake) return this.profile.pickup === "outpost" ? "feeder" : "scorer";
+    if (this.eff.role !== "auto") return this.eff.role;
+    if (this.shooter && this.intake) return this.eff.pickup === "outpost" ? "feeder" : "scorer";
     return "defender";
   }
 
@@ -120,15 +142,113 @@ export class Agent implements Driver {
     const me = obs.self;
     this.grid ??= navGridFor(this.ctx.game.field, this.ctx.elements, me.radius, me.height);
     if (tick >= this.nextDecision) {
+      const before = this.mode;
       this.decide(obs);
-      this.nextDecision = tick + Math.max(1, Math.round(this.profile.reactionTime * obs.hz));
+      this.nextDecision = tick + Math.max(1, Math.round(this.eff.reactionTime * obs.hz * (0.6 + 0.8 * this.rng.next())));
+      // Humans sometimes pause between tasks (never during the endgame climb).
+      if (this.mode !== before && !this.isClimbing() && this.rng.next() < this.eff.hesitation * 0.6)
+        this.hesitateUntil = tick + Math.round(obs.hz * (0.3 + this.rng.next() * 1.2 * (0.3 + this.eff.hesitation)));
     }
+    this.updateWobble(obs);
+    if (this.inMishap(obs)) return { vx: 0, vy: 0, omega: 0, actions: {} };
+    if (tick < this.hesitateUntil && !this.isClimbing()) return { vx: 0, vy: 0, omega: 0, actions: {} };
     const out = this.act(obs);
     // Climb is a press: keep the button edge-triggered.
     const climbNow = !!out.actions.climb;
     if (climbNow && this.lastClimbButton) out.actions.climb = false;
     this.lastClimbButton = !!out.actions.climb;
     return out;
+  }
+
+  /** True while the robot is stopped by a mistake or minor breakdown. Never starts mid-climb. */
+  private inMishap(obs: Observation): boolean {
+    if (obs.t < this.mishapUntil) return true;
+    const next = this.mishapTimes[0];
+    if (!next || obs.t < next.at || !obs.phase.robotsEnabled) return false;
+    this.mishapTimes.shift();
+    if (obs.self.climbState !== "idle" || this.isClimbing()) return false;
+    this.mishapUntil = obs.t + next.len;
+    return true;
+  }
+
+  private isClimbing(): boolean {
+    return this.mode === "climb" || this.mode === "autoClimb" || this.mode === "descend";
+  }
+
+  /** Ornstein-Uhlenbeck aim drift: each shot in a volley points a little differently. */
+  private updateWobble(obs: Observation): void {
+    const dt = 1 / obs.hz;
+    const tau = 0.35;
+    this.wobble += (-this.wobble / tau) * dt + this.eff.aimError * Math.sqrt((2 * dt) / tau) * this.rng.normal();
+  }
+
+  /** Total aim offset the driver is currently steering with. */
+  private get aimOffset(): number {
+    return this.aimBias + this.wobble;
+  }
+
+  /**
+   * Distances (m, from the shooter to the near edge of the target) where a shot can score.
+   * Uses the core's shot envelope when available so exit speed limits reach; otherwise the design's range window.
+   */
+  private shotWindow(): { min: number; max: number } {
+    if (this.cachedWindow) return this.cachedWindow;
+    const s = this.shooter!;
+    const aim = { min: s.p.rangeMin!, max: Math.max(s.p.rangeMax!, s.p.rangeMin!) };
+    let win = aim;
+    if (this.hub) {
+      const env = shotEnvelope(
+        { exitSpeed: s.p.exitSpeed!, launchAngle: s.p.launchAngle!, launchHeight: s.p.launchHeight!, rangeMin: aim.min, rangeMax: aim.max },
+        this.hub.target.height ?? 0,
+        this.hub.target.entry ?? "top",
+      );
+      // If nothing in the window can reach the goal, keep trying with the aim window (the sim will show the misses).
+      if (env.reachable) win = { min: env.minDistance, max: env.maxDistance };
+    }
+    this.cachedWindow = win;
+    return win;
+  }
+
+  /**
+   * Distance (to the target center) this driver likes to shoot from. Accuracy is only reliable from about 2.5 m out
+   * (closer shots are steep and fussy) up to about 5 m (farther shots are sensitive to speed error), inside whatever
+   * the shooter can physically reach. Each driver has a favorite spot in that band.
+   */
+  private shotDistance(): number {
+    const win = this.shotWindow();
+    let lo = Math.max(win.min + 0.3, 2.5);
+    let hi = Math.min(win.max - 0.4, 5);
+    if (hi < lo) {
+      lo = win.min + 0.3;
+      hi = Math.max(lo, win.max - 0.4);
+    }
+    return lo + this.distPref * (hi - lo);
+  }
+
+  /** Seconds until this robot's own scoring target is active again, from the static timeline. 0 if active now. */
+  private secondsUntilActive(obs: Observation): number {
+    if (!this.hub || obs.elementActive[this.hub.id] !== false) return 0;
+    const phases = this.ctx.game.game.timeline.phases;
+    const idx = phases.findIndex((ph) => ph.id === obs.phase.id);
+    if (idx < 0) return 0;
+    const cur = phases[idx]!.elementActive?.[this.hub.baseId];
+    // Inactive in a groupA phase means we are in group B, and the other way round.
+    const mine = cur === "groupA" ? "groupB" : cur === "groupB" ? "groupA" : null;
+    let t = obs.phase.timeLeft;
+    for (let k = idx + 1; k < phases.length; k++) {
+      const act = phases[k]!.elementActive?.[this.hub.baseId] ?? "both";
+      if (act === "both" || (mine ? act === mine : act === "groupA" || act === "groupB")) return t;
+      t += phases[k]!.duration;
+    }
+    return Infinity;
+  }
+
+  /** Seconds to get back to the shooting spot from here (plus a little margin). */
+  private returnTime(obs: Observation): number {
+    const speed = Math.max(0.5, obs.self.design.chassis.drivetrain.maxSpeed * this.eff.speedScale * 0.6);
+    const spot = this.hubCenter;
+    const d = Math.max(0, Math.hypot(spot.x - obs.self.x, spot.y - obs.self.y) - 2.5);
+    return d / speed + 1.5;
   }
 
   // -------------------------------------------------------------------------
@@ -149,11 +269,11 @@ export class Agent implements Driver {
       this.mode = "descend";
       return;
     }
-    if (this.climber && this.profile.climb && teleop && obs.matchTimeLeft <= this.timeToClimb(obs, this.climber.p.maxLevel!)) {
+    if (this.climber && this.eff.climb && teleop && obs.matchTimeLeft <= this.timeToClimb(obs, this.climber.p.maxLevel!)) {
       this.mode = "climb";
       return;
     }
-    if (this.climber && this.profile.autoClimb && !teleop && obs.phase.timeLeft <= this.timeToClimb(obs, 1) - this.profile.endgameBuffer + 0.7) {
+    if (this.climber && this.eff.autoClimb && !teleop && obs.phase.timeLeft <= this.timeToClimb(obs, 1) - this.eff.endgameBuffer + 0.7) {
       this.mode = "autoClimb";
       return;
     }
@@ -166,42 +286,80 @@ export class Agent implements Driver {
     }
 
     const hubActive = this.hub ? obs.elementActive[this.hub.id] !== false : false;
-    const threshold = Math.max(1, Math.ceil(me.capacity * this.profile.shootThreshold));
+    const threshold = Math.max(1, Math.ceil(me.capacity * this.eff.shootThreshold));
     const wantsShoot =
       !!this.shooter &&
       me.ready > 0 &&
       (me.stored >= threshold || (prev === "shoot" && me.stored > 0) || (!teleop && obs.phase.timeLeft < 9) || (!this.intake && me.stored > 0));
 
-    if (wantsShoot && (hubActive || this.profile.shootWhenInactive)) {
-      if (prev !== "shoot") this.aimBias = this.profile.aimError * this.rng.normal();
+    if (wantsShoot && (hubActive || this.eff.shootWhenInactive)) {
+      if (prev !== "shoot") this.aimBias = this.eff.aimError * 0.6 * this.rng.normal();
       this.mode = "shoot";
       this.planShot(obs);
       return;
     }
     if (me.stored >= me.capacity && this.shooter) {
-      this.mode = "wait";
-      this.planShot(obs);
+      // Full, but nothing legal to shoot at yet (own goal closed, or pieces still transferring): never just sit.
+      this.planWait(obs, hubActive, prev);
       return;
     }
     if (this.intake) {
       if (this.role === "feeder" && this.planFeed(obs)) return;
       if (this.planCollect(obs)) return;
     }
-    this.mode = this.shooter && me.stored > 0 ? "wait" : "idle";
-    if (this.mode === "wait") this.planShot(obs);
+    if (this.shooter && me.stored > 0) this.planWait(obs, hubActive, prev);
+    else this.mode = "idle";
+  }
+
+  /**
+   * Holding pieces with nothing legal to shoot at. In order of preference:
+   *  1. Goal opens soon (or we are only waiting for pieces to transfer): hold station at a legal shooting spot,
+   *     making small position adjustments instead of freezing.
+   *  2. Goal stays closed for a while and this driver likes defense: harass opponents, then head back in time.
+   * TODO(learned policy): this is where a policy learned from recorded human matches would plug in, e.g. shuttling
+   * pieces to a teammate or into the Alliance Zone while the goal is closed.
+   */
+  private planWait(obs: Observation, hubActive: boolean, prev: Mode): void {
+    const until = hubActive ? 0 : this.secondsUntilActive(obs);
+    const budget = this.returnTime(obs) + 2;
+    const teleop = obs.phase.period === "teleop";
+    const liking = this.eff.defenseAggression >= 0.6;
+    const staying = prev === "harass" ? until > budget : until > budget + 4;
+    const someoneToHarass = obs.robots.some((r) => r.alliance !== this.alliance);
+    if (!hubActive && teleop && liking && staying && someoneToHarass) {
+      this.mode = "harass";
+      return;
+    }
+    this.mode = "wait";
+    // Small adjustments every couple of seconds, so a staged robot is never frozen in place.
+    if (obs.tick >= this.nextJockey) {
+      const sign = this.stageOffset > 0 ? -1 : 1;
+      this.stageOffset = sign * (0.25 + 0.25 * this.rng.next());
+      this.nextJockey = obs.tick + Math.round(obs.hz * (1.5 + this.rng.next()));
+    }
+    this.planShot(obs);
+    // Slide the staging spot sideways (perpendicular to the line to the target), staying legal.
+    const dx = this.target.x - this.hubCenter.x;
+    const dy = this.target.y - this.hubCenter.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nudged = { x: this.target.x - (dy / len) * this.stageOffset, y: this.target.y + (dx / len) * this.stageOffset };
+    if (this.grid!.isFree(nudged) && (!this.zone || pointInShape(nudged.x, nudged.y, this.zone.shape))) {
+      this.target = nudged;
+      this.heading = this.aimHeading(nudged);
+    }
   }
 
   private timeToClimb(obs: Observation, level: number): number {
     const slot = this.climbSlot(obs);
     if (!slot || !this.climber) return 0;
     const d = Math.hypot(slot.x - obs.self.x, slot.y - obs.self.y) * 1.5;
-    const speed = obs.self.design.chassis.drivetrain.maxSpeed * this.profile.speedScale * 0.5;
+    const speed = obs.self.design.chassis.drivetrain.maxSpeed * this.eff.speedScale * 0.5;
     const times = [this.climber.p.level1Time!, this.climber.p.level2Time!, this.climber.p.level3Time!];
     // Teammates already at the structure make the last approach slower.
     const o = obs.objectives.find((x) => x.baseId === OBJ.climb && x.alliance === this.alliance);
     const crowd = o ? obs.robots.filter((r) => r.index !== obs.self.index && r.alliance === this.alliance && Math.hypot(r.x - o.pose.x, r.y - o.pose.y) < 2).length : 0;
     // Travel + staging/turning + climb + the driver's reserve.
-    return d / speed + 2 + crowd * 1.5 + times[Math.max(0, Math.min(2, level - 1))]! + this.profile.endgameBuffer;
+    return d / speed + 2 + crowd * 1.5 + times[Math.max(0, Math.min(2, level - 1))]! + this.eff.endgameBuffer;
   }
 
   private lockedSlot: { x: number; y: number; theta: number } | null = null;
@@ -228,10 +386,7 @@ export class Agent implements Driver {
   /** Shooting pose inside the own Alliance Zone, within the shooter's range window, facing the target. */
   private planShot(obs: Observation): void {
     const me = obs.self;
-    const s = this.shooter!;
-    const rMin = s.p.rangeMin! + this.hubRadius;
-    const rMax = s.p.rangeMax! + this.hubRadius;
-    const D = Math.min(rMax - 0.3, Math.max(rMin + 0.4, 2.2));
+    const D = this.shotDistance();
     let ang = Math.atan2(me.y - this.hubCenter.y, me.x - this.hubCenter.x);
     // Keep to the own side of the target.
     const homeAngle = this.alliance === "blue" ? Math.PI : 0;
@@ -261,7 +416,7 @@ export class Agent implements Driver {
       const o = toWorld({ ...p, theta }, s.mount.x, s.mount.y);
       theta = Math.atan2(this.hubCenter.y - o.y, this.hubCenter.x - o.x) - s.mount.theta;
     }
-    return wrapAngle(theta + this.aimBias);
+    return wrapAngle(theta + this.aimOffset);
   }
 
   private planCollect(obs: Observation): boolean {
@@ -273,7 +428,7 @@ export class Agent implements Driver {
     const ownSide = (x: number) => (this.alliance === "blue" ? x < cl - me.radius - 0.1 : x > cl + me.radius + 0.1);
     const depot = this.ctx.elements.find((e) => e.baseId === OBJ.depot && e.alliance === this.alliance);
     const neutral = this.ctx.elements.find((e) => e.kind === "zone" && (e.tags ?? []).includes(OBJ.neutralZoneTag));
-    let best: { p: Vec2; cost: number } | null = null;
+    const candidates: { p: Vec2; cost: number }[] = [];
     const now = obs.tick;
     for (const piece of obs.pieces) {
       if (!teleop && !ownSide(piece.x)) continue;
@@ -285,20 +440,43 @@ export class Agent implements Driver {
       const approach = { x: piece.x - Math.cos(dir) * reach, y: piece.y - Math.sin(dir) * reach };
       if (!this.grid!.isFree(approach)) continue;
       let cost = d;
-      if (this.profile.pickup === "depot" && depot && pointInShape(piece.x, piece.y, depot.shape)) cost -= 3;
-      if (this.profile.pickup === "neutral" && neutral && pointInShape(piece.x, piece.y, neutral.shape)) cost -= 1.5;
+      if (this.eff.pickup === "depot" && depot && pointInShape(piece.x, piece.y, depot.shape)) cost -= 3;
+      if (this.eff.pickup === "neutral" && neutral && pointInShape(piece.x, piece.y, neutral.shape)) cost -= 1.5;
       // Robots nearby make a piece less attractive.
       for (const r of obs.robots) if (r.index !== me.index && Math.hypot(r.x - piece.x, r.y - piece.y) < r.radius + 0.3) cost += 2;
-      if (!best || cost < best.cost) best = { p: piece, cost };
+      candidates.push({ p: piece, cost });
     }
+    const best = this.choose(candidates);
     if (!best) return false;
     this.mode = "collect";
     const dir = Math.atan2(best.p.y - me.y, best.p.x - me.x);
     // Aim through the piece so the roller sweeps it in.
-    this.target = { x: best.p.x + Math.cos(dir) * 0.15 - Math.cos(dir) * reach, y: best.p.y + Math.sin(dir) * 0.15 - Math.sin(dir) * reach };
+    // Line-up error: the driver aims a little to the side of the piece (sometimes enough to miss it).
+    const miss = this.eff.drivingError * this.rng.normal();
+    this.target = {
+      x: best.p.x + Math.cos(dir) * 0.15 - Math.cos(dir) * reach - Math.sin(dir) * miss,
+      y: best.p.y + Math.sin(dir) * 0.15 - Math.sin(dir) * reach + Math.cos(dir) * miss,
+    };
     this.heading = wrapAngle(dir - intake.mount.theta);
     this.pieceKey = `${best.p.x.toFixed(1)},${best.p.y.toFixed(1)}`;
     return true;
+  }
+
+  /** Picks the cheapest option most of the time; decisionNoise is a softmax temperature (in cost units, about meters). */
+  private choose<T extends { cost: number }>(options: T[]): T | null {
+    if (!options.length) return null;
+    options.sort((a, b) => a.cost - b.cost);
+    const temp = this.eff.decisionNoise;
+    if (temp <= 1e-6) return options[0]!;
+    const top = options.slice(0, 25);
+    const min = top[0]!.cost;
+    const w = top.map((o) => Math.exp(-(o.cost - min) / temp));
+    let r = this.rng.next() * w.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < top.length; i++) {
+      r -= w[i]!;
+      if (r <= 0) return top[i]!;
+    }
+    return top[top.length - 1]!;
   }
 
   private planFeed(obs: Observation): boolean {
@@ -340,15 +518,20 @@ export class Agent implements Driver {
         const origin = toWorld({ x: me.x, y: me.y, theta: me.theta }, s.mount.x, s.mount.y);
         const toTarget = Math.atan2(this.hubCenter.y - origin.y, this.hubCenter.x - origin.x);
         const turretAngle = me.mechanisms.find((m) => m.id === s.id)?.turret ?? 0;
-        const aimErr = Math.abs(wrapAngle(toTarget + this.aimBias - (me.theta + s.mount.theta + turretAngle)));
-        const range = Math.hypot(this.hubCenter.x - origin.x, this.hubCenter.y - origin.y) - this.hubRadius;
-        const inRange = range > s.p.rangeMin! + 0.1 && range < s.p.rangeMax! - 0.1;
+        const aimErr = Math.abs(wrapAngle(toTarget + this.aimOffset - (me.theta + s.mount.theta + turretAngle)));
+        const range = Math.hypot(this.hubCenter.x - origin.x, this.hubCenter.y - origin.y);
+        const win = this.shotWindow();
+        const inRange = range > win.min + 0.05 && range < win.max - 0.1;
         const inZone = !this.zone || pointInShape(me.x, me.y, this.zone.shape);
-        const aimed = aimErr < (turret ? this.profile.aimTolerance * 1.5 : this.profile.aimTolerance);
+        const impatience = this.eff.impatience;
+        const aimed = aimErr < (turret ? this.eff.aimTolerance * 1.5 : this.eff.aimTolerance) * (1 + impatience);
+        // Patient drivers wait until the robot has settled; impatient ones fire on the move.
+        const settled = Math.hypot(me.vx, me.vy) < 0.1 + 1.8 * impatience * impatience && Math.abs(me.omega) < 0.15 + 2 * impatience * impatience;
         // Fire whenever a shot is legal and lined up, even if pushed off the planned pose.
-        out.actions.shoot = this.mode === "shoot" && inZone && inRange && aimed;
+        out.actions.shoot = this.mode === "shoot" && inZone && inRange && aimed && settled;
         // Lined up but unable to fire (blocked, pushed, out of zone): pick a different spot.
-        if (this.mode === "shoot" && !out.actions.shoot && posErr < 0.8) {
+        const slow = Math.hypot(me.vx, me.vy) < 0.2;
+        if (this.mode === "shoot" && !out.actions.shoot && (posErr < 0.8 || slow)) {
           if (this.aimStallSince < 0) this.aimStallSince = obs.tick;
           else if (obs.tick - this.aimStallSince > obs.hz * 2) {
             this.shotJitter = (this.rng.next() - 0.5) * 1.2;
@@ -392,6 +575,7 @@ export class Agent implements Driver {
         return idle;
       }
       case "defend":
+      case "harass":
         return this.defend(obs);
     }
   }
@@ -409,8 +593,17 @@ export class Agent implements Driver {
     // Mark the opponent closest to their own goal (most likely about to score).
     const mark = opponents.reduce((a, b) => (Math.hypot(a.x - hc.x, a.y - hc.y) < Math.hypot(b.x - hc.x, b.y - hc.y) ? a : b));
     const toHub = Math.atan2(hc.y - mark.y, hc.x - mark.x);
-    const standoff = (1 - this.profile.defenseAggression) * 1.2 + me.radius + mark.radius - 0.1;
-    const goal = { x: mark.x + Math.cos(toHub) * standoff, y: mark.y + Math.sin(toHub) * standoff };
+    const standoff = (1 - this.eff.defenseAggression) * 1.2 + me.radius + mark.radius - 0.1;
+    // Real defenders weave across the shooting lane instead of freezing.
+    if (obs.tick >= this.nextWeave) {
+      const sign = this.weaveOffset > 0 ? -1 : 1;
+      this.weaveOffset = sign * (0.3 + 0.35 * this.eff.defenseAggression * this.rng.next() + 0.15 * this.rng.next());
+      this.nextWeave = obs.tick + Math.round(obs.hz * (1.5 + this.rng.next()));
+    }
+    const goal = {
+      x: mark.x + Math.cos(toHub) * standoff - Math.sin(toHub) * this.weaveOffset,
+      y: mark.y + Math.sin(toHub) * standoff + Math.cos(toHub) * this.weaveOffset,
+    };
     const face = Math.atan2(mark.y - goal.y, mark.x - goal.x);
     return this.navigate(obs, goal, face, false, true);
   }
@@ -469,7 +662,7 @@ export class Agent implements Driver {
     const wp = this.path[0] ?? goal;
     const distGoal = Math.hypot(goal.x - pos.x, goal.y - pos.y) + (this.path.length > 1 ? 0.5 : 0);
 
-    const vmax = dtv.maxSpeed * this.profile.speedScale;
+    const vmax = dtv.maxSpeed * this.eff.speedScale;
     let speed = Math.min(vmax, Math.sqrt(2 * dtv.maxAccel * 0.7 * Math.max(0, distGoal - 0.05)));
     if (!settle) speed = Math.max(speed, Math.min(vmax, 1.2));
     const dx = wp.x - pos.x;
@@ -529,4 +722,49 @@ export class Agent implements Driver {
 /** Creates an agent for robot `index` of a match, using only the match's public, static information. */
 export function createAgent(match: Match, index: number, profile: DriverProfile = DEFAULT_PROFILE): Agent {
   return new Agent({ game: match.game, elements: match.elements, robot: match.robots[index]!, index, seed: match.seed }, profile);
+}
+
+const clampTo = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/**
+ * Draws a driver's form for one match: each knob is the profile's typical value times a random factor
+ * (spread set by formVariation), plus endgame timing error. Deterministic for a given rng.
+ */
+export function sampleForm(p: DriverProfile, rng: Rng): DriverProfile {
+  const fv = Math.max(0, p.formVariation ?? 0);
+  const n = () => clampTo(rng.normal(), -2.5, 2.5);
+  const mult = () => Math.exp(fv * n());
+  // One shared good-day/bad-day factor plus per-knob noise, so a good day is good across the board.
+  const day = n();
+  const dayMult = (sign: number) => Math.exp(fv * 0.9 * day * sign) * mult();
+  return {
+    ...p,
+    speedScale: clampTo(p.speedScale * dayMult(1), 0.3, 1),
+    reactionTime: clampTo(p.reactionTime * dayMult(-1), 0.05, 1.5),
+    aimTolerance: clampTo(p.aimTolerance * dayMult(-1), 0.005, 0.3),
+    aimError: clampTo((p.aimError ?? 0) * dayMult(-1), 0, 0.3),
+    decisionNoise: clampTo((p.decisionNoise ?? 0) * dayMult(-1), 0, 5),
+    hesitation: clampTo((p.hesitation ?? 0) * dayMult(-1), 0, 1),
+    impatience: clampTo((p.impatience ?? 0) * mult(), 0, 1),
+    drivingError: clampTo((p.drivingError ?? 0) * dayMult(-1), 0, 0.6),
+    shootThreshold: clampTo(p.shootThreshold + 0.5 * fv * n(), 0.1, 1),
+    endgameBuffer: Math.max(-1.5, p.endgameBuffer + (p.endgameTiming ?? 0) * n()),
+    mishaps: clampTo((p.mishaps ?? 0) * dayMult(-1), 0, 6),
+  };
+}
+
+/**
+ * Draws this match's mishaps: a Poisson number of them (mean = rate), at random times, each lasting a few seconds
+ * (median about 5 s) with a long tail, so now and then a robot loses a big chunk of the match. Deterministic per rng.
+ */
+export function drawMishaps(rate: number, matchSeconds: number, rng: Rng): { at: number; len: number }[] {
+  if (rate <= 0) return [];
+  let k = 0;
+  const limit = Math.exp(-rate);
+  for (let prod = rng.next(); prod > limit && k < 12; prod *= rng.next()) k++;
+  const out = Array.from({ length: k }, () => ({
+    at: 4 + rng.next() * Math.max(1, matchSeconds - 14),
+    len: Math.min(60, 6 * Math.exp(1.0 * clampTo(rng.normal(), -2, 2.5))),
+  }));
+  return out.sort((a, b) => a.at - b.at);
 }

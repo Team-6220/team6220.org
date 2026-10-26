@@ -14,7 +14,7 @@
 
     { "id": "goal", "kind": "sink", "label": "TODO: scoring goal", "mirror": true, "solid": true, "scoresFor": "blue",
       "shape": { "type": "rect", "x": 4.5, "y": 4.035, "length": 1.0, "width": 1.0 },
-      "target": { "shape": { "type": "circle", "x": 4.5, "y": 4.035, "radius": 0.45 }, "description": "TODO: opening the shot must pass through" } },
+      "target": { "shape": { "type": "circle", "x": 4.5, "y": 4.035, "radius": 0.45 }, "description": "TODO: opening the shot must pass through", "height": 0, "entry": "top" } },
 
     { "id": "fieldPieces", "kind": "pieceSource", "label": "TODO: initial piece staging", "piece": "piece", "count": "remainder", "layout": "grid",
       "shape": { "type": "rect", "x": 8.27, "y": 4.035, "length": 1.0, "width": 3.0 } }

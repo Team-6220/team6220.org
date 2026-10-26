@@ -19,7 +19,8 @@
     { "id": "hub", "kind": "sink", "label": "Hub", "mirror": true, "solid": true, "scoresFor": "blue",
       "shape": { "type": "rect", "x": 4.625, "y": 4.035, "length": 1.194, "width": 1.194 },
       "target": { "shape": { "type": "circle", "x": 4.625, "y": 4.035, "radius": 0.53 },
-                  "description": "Hexagonal top opening, 41.7 in across, front edge 72 in above the carpet" },
+                  "description": "Hexagonal top opening, 41.7 in across, front edge 72 in above the carpet",
+                  "height": 1.829, "entry": "top" },
       "emit": { "delay": 1.5, "spread": 0.35, "exits": [
         { "x": 5.36, "y": 3.65, "theta": 0, "speed": 1.8 },
         { "x": 5.36, "y": 3.9, "theta": 0, "speed": 1.8 },
@@ -67,7 +68,7 @@
     { "x": 3.4, "y": 6.9, "theta": 0 }
   ],
   "objectives": [
-    { "id": "hubShot", "pose": { "x": 2.4, "y": 4.035, "theta": 0 }, "mirror": true, "description": "Shooting pose facing the Hub, 2.2 m from its center" },
+    { "id": "hubShot", "pose": { "x": 1.825, "y": 4.035, "theta": 0 }, "mirror": true, "description": "Shooting pose facing the Hub, 2.8 m from its center (inside the reliable range for a typical 9 m/s shooter)" },
     { "id": "depot", "pose": { "x": 1.15, "y": 6.8, "theta": 3.14159 }, "mirror": true, "description": "In front of the Depot, intake facing it" },
     { "id": "outpost", "pose": { "x": 0.9, "y": 0.6, "theta": 3.14159 }, "mirror": true, "description": "In front of the Outpost chute" },
     { "id": "towerClimb", "pose": { "x": 1.75, "y": 4.6, "theta": 3.14159 }, "mirror": true, "description": "Tower engagement position" },
