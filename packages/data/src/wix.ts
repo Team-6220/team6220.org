@@ -58,3 +58,17 @@ export function clearStoredTokens() {
     // ignore
   }
 }
+
+/**
+ * The signed-in member's current Wix access token (refreshed first if it expired), or null when signed out.
+ * Internal: only @team6220/data sends it, and only to our own backends (the attendance Apps Script), which
+ * check it with Wix. Apps never see it.
+ */
+export async function memberAccessToken(): Promise<string | null> {
+  const client = wix();
+  if (!client.auth.loggedIn()) return null;
+  const { headers } = await client.auth.getAuthHeaders();
+  // If the refresh failed, the SDK fell back to visitor tokens: that is "signed out".
+  if (!client.auth.loggedIn()) return null;
+  return headers.Authorization || null;
+}

@@ -28,11 +28,11 @@ export const APPS: AppEntry[] = [
   {
     id: "attendance",
     name: "Attendance",
-    description: "Check in and out at meetings.",
+    description: "Sign in at meetings and check who's here.",
     href: "/apps/attendance",
     status: "live",
     access: "team",
-    note: "Attendance Admins start and stop sessions",
+    note: "Attendance Admins open the sign-in kiosk",
   },
   {
     id: "inventory",

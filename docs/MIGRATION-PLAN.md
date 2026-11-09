@@ -70,7 +70,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | App | Address | What it does | Status | Who can use it | Data stored in |
 | --- | --- | --- | --- | --- | --- |
 | Apps dashboard | `/apps` | Home screen linking to every app | New | Team members | None |
-| Attendance | `/apps/attendance` | Members check in and out at meetings | Exists on Apps Script (source in `backend/apps-script/attendance`); the screen moves to our site | Everyone on the team can view; only Attendance Admins start or stop sessions | Same Google Sheet as today, through Apps Script |
+| Attendance | `/apps/attendance` | Members sign in at meetings (once a day, at a kiosk) | Exists on Apps Script (source in `backend/apps-script/attendance`); the new screen is built in `apps/attendance` and saves through a new, separate Apps Script (`backend/apps-script/attendance-api`, not deployed yet) | Team members view; only Attendance Admins open or close the sign-in kiosk | Same Google Sheet and row format as today, through Apps Script |
 | Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script (source in `backend/apps-script/inventory`); moves fully | Team members view; Inventory Managers edit | Wix database (moved from Google Sheets) |
 | GoldSim | `/apps/goldsim` | Open-source 2D FRC strategy and robot-design simulator | Imported into `apps/goldsim` with history; old repo archived | Anyone (public) | Local in the browser; cloud saves move from Supabase to Wix CMS (#66) |
 | WingIt | `/apps/wingit` | Small existing team app | Imported into `apps/wingit` with history; old repo archived | Team members | None |
@@ -199,7 +199,7 @@ team6220.org/                    (repo root = the Astro site)
 ├─ apps/
 │  └─ attendance/  inventory/  goldsim/  wingit/  … (one React package per app)
 ├─ backend/
-│  └─ apps-script/attendance/      (Apps Script source, pushed with clasp)
+│  └─ apps-script/attendance/, attendance-api/  (Apps Script source, pushed with clasp)
 ├─ .github/workflows/              (CI, Pages deploy, scheduled jobs)
 └─ package.json                    (workspaces)
 ```
@@ -242,7 +242,7 @@ Wix is the default backend. Attendance is the one exception: it keeps writing to
 | --- | --- | --- | --- |
 | Public pages | Wix CMS (bios, sponsors, subteams) + Media Manager | Read with a visitor token | Rendered on the server |
 | Forms | New Wix forms made for the redesign | Wix Forms submission API | Same |
-| Attendance | Google Sheets, written only by Apps Script | Apps Script web app; admin actions need a temporary lead passcode | `/api/attendance` checks the badge, then calls Apps Script with a server-only secret |
+| Attendance | Google Sheets, written only by Apps Script | Separate attendance-API Apps Script web app; it verifies the member's Wix token and badges with Wix on every request, and kiosk sign-ins need a kiosk token an Attendance Admin opened | `/api/attendance` checks the badge, then calls Apps Script with a server-only secret |
 | Inventory | Wix CMS (one-time CSV import from the current Sheet) | Member token; collections set to site-member access | `/api/inventory` with badge checks |
 | GoldSim, WingIt | None (static) | Static files | Static files |
 | Production Tracker | Wix CMS for parts and status; files stay in Google Drive as links | Member token | `/api/production` |
@@ -270,7 +270,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 | --- | --- | --- |
 | Public pages, forms | Anyone | Anyone can submit forms |
 | `/apps` dashboard | Team Member | n/a |
-| Attendance | Team Member (status, history) | Start or stop sessions: Attendance Admin only |
+| Attendance | Team Member (today's list, history, own sign-ins) | Open or close the sign-in kiosk: Attendance Admin only |
 | Inventory | Team Member | Edit items and audits: Inventory Manager |
 | GoldSim | Anyone | n/a |
 | WingIt | Team Member | n/a |
@@ -281,7 +281,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 
 **Enforcement differs by phase.**
 
-- **Phase 1:** only Wix CMS collection permissions ("site members") and the Apps Script passcode actually block anyone. Hiding a button from people without a badge is cosmetic, so prototype data shouldn't be sensitive.
+- **Phase 1:** only Wix CMS collection permissions ("site members") and the attendance Apps Script (which checks the member's Wix token and badges with Wix) actually block anyone. Hiding a button from people without a badge is cosmetic, so prototype data shouldn't be sensitive.
 - **Phase 2+:** every action is checked in an `/api` endpoint. The server reads the member's badges and refuses the request if the badge is missing. This is how "only Attendance Admins can start attendance" becomes a real rule.
 
 ## Forms
@@ -313,7 +313,7 @@ The repo is public, so assume anyone can read every file and every byte shipped 
 
 - **Safe to commit:** the Wix headless *client ID*. It identifies the site and isn't a password.
 - **Never commit or ship to the browser:** Wix API keys, the Nexus and The Blue Alliance keys, and the Apps Script shared secret. They live in Wix secret environment variables and are used only inside `/api` endpoints. Until Phase 2, nothing uses them.
-- **The Phase 1 Attendance passcode is temporary.** Keep it in Apps Script Script Properties, not the repo. Rotate it after the prototype and delete it at cutover.
+- **Attendance has no passcode.** The attendance-API Apps Script checks each member's Wix token with Wix itself; its Script Properties hold only the Sheet ID, settings and open kiosk sessions (stored as hashes). Nothing about it is secret in the repo.
 - **Wix CMS permissions are the real lock in Phase 1.** Set app collections to site-member read/write, never "Anyone."
 - **Admin access:** the three shared web admin accounts (losalfrc@gmail.com, operations@team6220.org, programming@team6220.org) are the GitHub org owners and Wix site admins, with 2FA on, so graduating seniors never lock the team out.
 - **Turn on secret scanning** and Dependabot on the repo.

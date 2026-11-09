@@ -1,6 +1,19 @@
-// Functions like auth.login() and inventory.listItems() live here.
-// Phase 1: they call Wix from the browser. Phase 2: they call /api/* or the @wix/astro integration.
+// Functions like auth.login() and attendance.today() live here.
+// Phase 1: they call Wix and Apps Script from the browser. Phase 2: they call /api/* or the @wix/astro integration.
 // App UIs never change between phases.
 export { WIX_CLIENT_ID, APPS_HOME_PATH, LOGIN_CALLBACK_PATH, BADGES, type BadgeName } from "./config";
 export * as auth from "./auth";
 export type { Member, MemberStatus } from "./auth";
+export * as attendance from "./attendance";
+export {
+  AttendanceError,
+  type AttendanceErrorCode,
+  type AttendanceStatus,
+  type DayEntry,
+  type DaySummary,
+  type KioskSession,
+  type LookupResult,
+  type SignInResult,
+  type SignInStatus,
+  type Viewer,
+} from "./attendance/types";

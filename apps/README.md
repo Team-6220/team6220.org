@@ -5,7 +5,7 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 | Folder | Route | Status |
 | --- | --- | --- |
 | `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
-| `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only) |
+| `apps/attendance` | `/apps/attendance` | **Built, waiting for its server.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; shows "Not connected yet" until that is deployed. Try it with `?demo=admin` |
 | `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
 | `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
@@ -51,6 +51,19 @@ import { MyApp } from "@team6220/my-app";
   <MyApp client:only="react" />
 </AppLayout>
 ```
+
+## Attendance
+
+- Screens: signed out → sign-in prompt; pending → "waiting for approval"; Team Member → today's list (names and
+  times), "Did I sign in?" (type your own student ID) and past meetings; Attendance Admin → also **Open kiosk**.
+- **Kiosk mode** is full screen on the device where an Attendance Admin opened it. Students scan their ID card with a
+  USB/Bluetooth scanner (it types the digits and Enter) or type the ID; big green/amber/red feedback, optional beep,
+  self-registration for unknown IDs (same as the old app). **Close kiosk…** (or the admin signing out) stops it.
+- Data goes through `attendance` in `@team6220/data` to the Apps Script in
+  [`backend/apps-script/attendance-api`](../backend/apps-script/attendance-api/README.md), which checks the Wix sign-in
+  and badges on every request. Student ID numbers are never shown to viewers.
+- **Demo mode:** open `/apps/attendance?demo=admin` (or `member`, `pending`, `signed-out`) to use every screen with
+  made-up data in this tab; `?demo=off` leaves it. It never touches Wix or the real Sheet.
 
 ## Folder layout for one app
 
