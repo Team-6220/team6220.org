@@ -1,0 +1,428 @@
+<script>
+/* ============================================================================
+   JsAudits.html — Golden Griffins Inventory
+   Inventory Audits page.
+     No audit running → explanation, "Start an audit", list of past audits.
+     Audit running     → progress, filters, and a row per item with
+                         Confirm / Different / Missing buttons.
+   Many members can count at once: each tap saves only that one item, and
+   everyone's counts appear on each other's screens within a few seconds.
+   ========================================================================== */
+'use strict';
+
+const AUDIT_SECTIONS_CLIENT = ['parts', 'rawMaterials', 'tools', 'wire'];
+const AUDIT_SECTION_LABELS = { parts: 'Parts', rawMaterials: 'Raw Materials', tools: 'Tools & Equipment', wire: 'Wire' };
+const AUDIT_STATUS_LABELS = { unchecked: 'Not checked', confirmed: 'Confirmed', different: 'Different', missing: 'Missing' };
+
+function activeAudit() {
+  return (App.tables.auditSessions || []).filter(function (s) { return s.status === 'active'; })[0] || null;
+}
+
+/** Current name of the audited item (falls back to the name saved when the audit started). */
+function auditLabel(ai) {
+  const rec = App.get(ai.itemTable, ai.itemId);
+  if (!rec || rec.archivedAt) return ai.nameSnapshot + ' (removed)';
+  if (ai.itemTable === 'rawMaterials') {
+    return [listVal(rec.materialTypeId), withUnit(rec.thickness, rec.thicknessUnitId), rawSize(rec)].filter(Boolean).join(' · ');
+  }
+  if (ai.itemTable === 'wire') return App.views.wire.cfg.primary(rec);
+  return rec.name;
+}
+
+function auditUnit(ai) {
+  const rec = App.get(ai.itemTable, ai.itemId);
+  return ai.itemTable === 'wire' && rec ? ' ' + listVal(rec.lengthUnitId) : '';
+}
+
+const AuditsView = {
+  title: 'Inventory Audits',
+  refs: null,
+  mode: null,          // 'idle' or the active audit's id
+  f: { q: '', section: '', status: 'unchecked', categoryId: '', tagId: '', locationId: '' },
+  limit: 100,
+  editing: null,       // audit item id whose "different" input is open
+  rows: {},
+
+  render: function (main) {
+    this.main = main;
+    this.mode = null;
+    this.refs = {};
+    this.draw();
+  },
+
+  leave: function () { this.refs = null; App.fastPoll = false; },
+
+  onData: function (keys) {
+    if (!this.refs) return;
+    this.draw();
+  },
+
+  draw: function () {
+    const a = activeAudit();
+    App.fastPoll = Boolean(a);
+    const mode = a ? a.id : 'idle';
+    if (mode !== this.mode) {
+      this.mode = mode;
+      this.rows = {};
+      this.editing = null;
+      clear(this.main);
+      if (a) this.buildActive(a); else this.buildIdle();
+    }
+    if (a) this.updateActive(a); else this.updateIdle();
+  },
+
+  // ───────────── no audit running ─────────────
+
+  buildIdle: function () {
+    const self = this, r = this.refs = {};
+    r.past = el('div');
+    const counts = AUDIT_SECTIONS_CLIENT.map(function (k) { return App.rows(k).length + ' ' + AUDIT_SECTION_LABELS[k].toLowerCase(); });
+    this.main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' }, el('div', null,
+        el('h1', { class: 'page-title', text: 'Inventory Audits' }),
+        el('div', { class: 'page-sub', text: 'Preseason and postseason counts.' }))),
+      el('div', { class: 'audit-intro' },
+        el('div', null,
+          el('h2', { text: 'Count everything, together' }),
+          el('ol', null,
+            el('li', { text: 'Start an audit. Every item in the sections you choose is marked “not checked”.' }),
+            el('li', { text: 'Split up. Anyone with the link can open this page and mark items Confirmed, Different (enter the real count) or Missing.' }),
+            el('li', { text: 'When you’re done, finalize. Quantities update; missing items keep their quantity and get a “Needs check” flag.' })),
+          el('p', { class: 'meta-line', text: 'Fastener Reference isn’t audited because it has no quantities. Currently: ' + counts.join(', ') + '.' })),
+        el('button', { class: 'btn primary', onClick: function () { self.startDialog(); } }, icon('audits'), 'Start an audit')),
+      el('h3', { class: 'section-title', text: 'Past audits' }),
+      r.past));
+  },
+
+  updateIdle: function () {
+    const box = clear(this.refs.past);
+    const past = (App.tables.auditSessions || []).filter(function (s) { return s.status !== 'active'; })
+      .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
+    if (!past.length) { box.appendChild(el('div', { class: 'group-card' }, el('div', { class: 'list-empty', text: 'No audits yet.' }))); return; }
+    box.appendChild(el('div', { class: 'group-card' }, past.slice(0, 30).map(function (s) {
+      const sm = s.summary || {};
+      const text = s.status === 'finalized'
+        ? [sm.updated + ' updated', sm.missing + ' missing', sm.confirmed + ' confirmed', sm.unchecked ? sm.unchecked + ' not checked' : null,
+          sm.keptCurrent ? sm.keptCurrent + ' kept current' : null].filter(Boolean).join(' · ')
+        : 'Cancelled — no changes made' + (sm.checked ? ' (' + sm.checked + ' had been checked)' : '');
+      return el('div', { class: 'list-row', style: { padding: '12px 14px' } },
+        el('div', { style: { flex: 1, minWidth: 0 } },
+          el('div', { class: 'item-name', text: s.name }),
+          el('div', { class: 'meta-line', text: new Date(s.createdAt).toLocaleDateString() + ' · ' +
+            (s.sections || []).map(function (k) { return AUDIT_SECTION_LABELS[k]; }).join(', ') + ' · ' + text })),
+        el('span', { class: 'badge ' + (s.status === 'finalized' ? 'ok' : 'archived'), text: s.status === 'finalized' ? 'Finalized' : 'Cancelled' }));
+    })));
+  },
+
+  startDialog: function () {
+    const self = this;
+    const month = new Date().getMonth();
+    const season = month >= 7 && month <= 11 ? 'Preseason' : (month <= 3 ? 'Build season' : 'Postseason');
+    const name = el('input', { class: 'input', type: 'text', maxlength: 80, value: season + ' audit ' + new Date().toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) });
+    const chosen = AUDIT_SECTIONS_CLIENT.slice();
+    const opts = el('div', { class: 'check-list' }, AUDIT_SECTIONS_CLIENT.map(function (k) {
+      return App.checkOpt(AUDIT_SECTION_LABELS[k] + ' (' + App.rows(k).length + ')', true, function (on) {
+        const i = chosen.indexOf(k);
+        if (on && i < 0) chosen.push(k);
+        if (!on && i >= 0) chosen.splice(i, 1);
+      });
+    }));
+    const nameField = App.field('Audit name', name, { required: true });
+    const secField = el('div', { class: 'field' }, el('div', { class: 'field-label', text: 'What to count' }), opts);
+    const start = el('button', { class: 'btn primary', type: 'button', text: 'Start audit' });
+    const m = App.modal({ title: 'Start an audit', body: [nameField, secField,
+      el('p', { class: 'meta-line', text: 'Nothing in the inventory changes until the audit is finalized. Items added after you start won’t be included.' })],
+      foot: [el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(true); } }), start] });
+    start.addEventListener('click', function () {
+      if (!name.value.trim()) { nameField.setError('Give the audit a name.'); return; }
+      if (!chosen.length) { App.toast('Choose at least one section.', { type: 'error' }); return; }
+      start.disabled = true; start.textContent = 'Starting…';
+      App.write('apiStartAudit', [name.value.trim(), AUDIT_SECTIONS_CLIENT.filter(function (k) { return chosen.indexOf(k) >= 0; })]).then(function (d) {
+        m.close(true);
+        App.toast('Audit started with ' + plural(d.count, 'item') + '.', { type: 'ok' });
+        self.f = { q: '', section: '', status: 'unchecked', categoryId: '', tagId: '', locationId: '' };
+        return App.poll();
+      }, function (err) {
+        start.disabled = false; start.textContent = 'Start audit';
+        App.toast(err.message, { type: 'error' });
+        if (err.code === 'AUDIT_ACTIVE') { m.close(true); App.poll(); }
+      });
+    });
+  },
+
+  // ───────────── audit running ─────────────
+
+  buildActive: function (a) {
+    const self = this, r = this.refs = {};
+    r.sub = el('div', { class: 'page-sub' });
+    r.progress = el('div', { class: 'audit-progress' });
+    r.filters = el('div', { class: 'filters audit-filters' });
+    r.list = el('div', { class: 'table' });
+    r.more = el('div');
+    r.search = el('input', { type: 'search', placeholder: 'Find an item…', value: this.f.q, 'aria-label': 'Find an item', autocomplete: 'off' });
+    r.search.addEventListener('input', debounce(function () { self.f.q = r.search.value; self.limit = 100; self.updateList(activeAudit()); }, 90));
+    this.main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' },
+        el('div', null, el('h1', { class: 'page-title', text: a.name }), r.sub),
+        el('div', { class: 'page-actions' },
+          el('button', { class: 'btn danger', type: 'button', onClick: function () { self.cancelAudit(); } }, el('span', { class: 'label', text: 'Cancel audit' })),
+          el('button', { class: 'btn primary wide', type: 'button', onClick: function () { self.finalize(); } }, icon('check'), el('span', { text: 'Finalize' })))),
+      r.progress,
+      el('div', { class: 'search' }, icon('search'), r.search),
+      r.filters, r.list, r.more));
+    this.buildFilters(a);
+  },
+
+  buildFilters: function (a) {
+    const self = this, f = this.f, box = clear(this.refs.filters);
+    const sel = function (label, options, value, onChange, emptyLabel) {
+      const s = App.selectEl(options, value, emptyLabel);
+      s.classList.add('sort');
+      s.setAttribute('aria-label', label);
+      s.addEventListener('change', function () { onChange(s.value); self.limit = 100; self.updateList(activeAudit()); });
+      return s;
+    };
+    box.appendChild(sel('Show', [{ value: 'unchecked', label: 'Show: Not checked' }, { value: 'all', label: 'Show: Everything' },
+      { value: 'confirmed', label: 'Show: Confirmed' }, { value: 'different', label: 'Show: Different' }, { value: 'missing', label: 'Show: Missing' }],
+    f.status, function (v) { f.status = v; }));
+    if ((a.sections || []).length > 1) {
+      box.appendChild(sel('Section', a.sections.map(function (k) { return { value: k, label: AUDIT_SECTION_LABELS[k] }; }), f.section, function (v) { f.section = v; }, 'All sections'));
+    }
+    box.appendChild(sel('Location', App.locationSelectOptions(), f.locationId, function (v) { f.locationId = v; }, 'All locations'));
+    if ((a.sections || []).indexOf('parts') >= 0) {
+      box.appendChild(sel('Category', App.sorted('categories').map(function (c) { return { value: c.id, label: c.name }; }), f.categoryId, function (v) { f.categoryId = v; }, 'All categories'));
+      box.appendChild(sel('Tag', App.sorted('tags').map(function (t) { return { value: t.id, label: t.name }; }), f.tagId, function (v) { f.tagId = v; }, 'All tags'));
+    }
+  },
+
+  items: function (a) {
+    return (App.tables.auditItems || []).filter(function (x) { return x.auditId === a.id; });
+  },
+
+  updateActive: function (a) {
+    const r = this.refs;
+    const items = this.items(a);
+    const n = { unchecked: 0, confirmed: 0, different: 0, missing: 0 };
+    items.forEach(function (x) { n[x.status] = (n[x.status] || 0) + 1; });
+    const total = items.length, done = total - n.unchecked;
+    clear(r.sub).append(el('b', { text: done + ' of ' + total + ' checked' }), ' · started ' + new Date(a.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      ' · ' + (a.sections || []).map(function (k) { return AUDIT_SECTION_LABELS[k]; }).join(', '));
+    const pct = function (x) { return total ? (x / total * 100) + '%' : '0%'; };
+    clear(r.progress).append(
+      el('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(done), 'aria-label': 'Audit progress' },
+        el('span', { class: 'seg confirmed', style: { width: pct(n.confirmed) } }),
+        el('span', { class: 'seg different', style: { width: pct(n.different) } }),
+        el('span', { class: 'seg missing', style: { width: pct(n.missing) } })),
+      el('div', { class: 'legend' },
+        el('span', null, el('i', { class: 'confirmed' }), n.confirmed + ' confirmed'),
+        el('span', null, el('i', { class: 'different' }), n.different + ' different'),
+        el('span', null, el('i', { class: 'missing' }), n.missing + ' missing'),
+        el('span', null, el('i', null), n.unchecked + ' left')));
+    this.updateList(a);
+  },
+
+  updateList: function (a) {
+    if (!a || !this.refs) return;
+    const self = this, f = this.f;
+    const nq = Search.normalize(f.q);
+    const locSet = f.locationId ? new Set([f.locationId].concat(App.rows('locations').filter(function (l) { return l.parentId === f.locationId; }).map(function (l) { return l.id; }))) : null;
+    let list = this.items(a).filter(function (ai) {
+      if (f.status !== 'all' && ai.status !== f.status && ai.id !== self.editing) return false;
+      if (f.section && ai.itemTable !== f.section) return false;
+      const rec = App.get(ai.itemTable, ai.itemId);
+      if (locSet && (!rec || !locSet.has(rec.locationId))) return false;
+      if (f.categoryId && (ai.itemTable !== 'parts' || !rec || rec.categoryId !== f.categoryId)) return false;
+      if (f.tagId && (ai.itemTable !== 'parts' || !rec || rec.tagIds.indexOf(f.tagId) < 0)) return false;
+      if (nq && Search.normalize(auditLabel(ai) + ' ' + (rec ? App.locationLabel(rec.locationId) : '')).indexOf(nq) < 0) return false;
+      return true;
+    });
+    // Walk the shop: group by location, then name.
+    const locOf = function (ai) { const rec = App.get(ai.itemTable, ai.itemId); return rec ? App.locationLabel(rec.locationId) : ''; };
+    list.sort(function (x, y) {
+      const lx = locOf(x), ly = locOf(y);
+      if (!lx !== !ly) return lx ? -1 : 1;
+      return lx.localeCompare(ly, undefined, { numeric: true }) || AUDIT_SECTIONS_CLIENT.indexOf(x.itemTable) - AUDIT_SECTIONS_CLIENT.indexOf(y.itemTable) ||
+        auditLabel(x).localeCompare(auditLabel(y), undefined, { numeric: true });
+    });
+    const box = this.refs.list;
+    clear(this.refs.more);
+    if (!list.length) {
+      const allDone = this.items(a).every(function (x) { return x.status !== 'unchecked'; });
+      clear(box).appendChild(el('div', { class: 'empty-state' },
+        el('div', { class: 'big', text: allDone && f.status === 'unchecked' ? 'Everything is checked' : 'Nothing to show' }),
+        el('p', { text: allDone && f.status === 'unchecked' ? 'Review anything marked Different or Missing, then press Finalize.' : 'Try a different filter.' })));
+      this.rows = {};
+      return;
+    }
+    const shown = list.slice(0, this.limit);
+    const keep = {};
+    const frag = document.createDocumentFragment();
+    let lastLoc = null;
+    shown.forEach(function (ai) {
+      const loc = locOf(ai) || 'No location';
+      if (loc !== lastLoc) { frag.appendChild(el('div', { class: 'audit-group', text: loc })); lastLoc = loc; }
+      const sig = [ai.status, ai.countedQty, auditLabel(ai), loc, self.editing === ai.id].join('\u0001');
+      const old = self.rows[ai.id];
+      const reuse = old && (old.sig === sig || (self.editing === ai.id && old.el.contains(document.activeElement)));
+      const row = reuse ? old.el : self.rowEl(ai);
+      keep[ai.id] = { el: row, sig: reuse ? old.sig : sig };
+      frag.appendChild(row);
+    });
+    this.rows = keep;
+    const focused = document.activeElement;
+    const hadFocus = focused && focused.tagName === 'INPUT' && box.contains(focused);
+    clear(box).appendChild(frag);
+    if (hadFocus && document.contains(focused)) focused.focus();
+    if (list.length > this.limit) {
+      this.refs.more.appendChild(el('div', { class: 'more-row' }, el('button', { class: 'btn', text: 'Show more (' + (list.length - this.limit) + ' more)',
+        onClick: function () { self.limit += 200; self.updateList(activeAudit()); } })));
+    }
+  },
+
+  rowEl: function (ai) {
+    const self = this;
+    const rec = App.get(ai.itemTable, ai.itemId);
+    const unit = auditUnit(ai);
+    const meta = [AUDIT_SECTION_LABELS[ai.itemTable], rec && ai.itemTable === 'parts' ? App.name('categories', rec.categoryId) : ''].filter(Boolean).join(' · ');
+    const status = el('div', { class: 'audit-status ' + ai.status },
+      ai.status === 'different' ? 'Counted ' + fmtQty(ai.countedQty) + unit : (ai.status === 'unchecked' ? '' : AUDIT_STATUS_LABELS[ai.status]));
+    let actions;
+    if (this.editing === ai.id) {
+      const decimal = ai.itemTable === 'wire';
+      const input = el('input', { class: 'input num', type: 'number', min: 0, step: decimal ? 'any' : 1, inputmode: decimal ? 'decimal' : 'numeric',
+        value: ai.status === 'different' ? ai.countedQty : '', placeholder: 'Count', 'aria-label': 'Counted amount' });
+      const save = function () {
+        const v = Number(input.value);
+        if (input.value === '' || !isFinite(v) || v < 0 || (!decimal && !Number.isInteger(v))) { App.toast(decimal ? 'Enter a number, 0 or more.' : 'Enter a whole number, 0 or more.', { type: 'error' }); input.focus(); return; }
+        self.editing = null;
+        self.mark(ai, 'different', v);
+      };
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { self.editing = null; self.updateList(activeAudit()); }
+      });
+      actions = el('div', { class: 'audit-actions editing' }, input,
+        el('button', { class: 'btn sm primary', type: 'button', text: 'Save', onClick: save }),
+        el('button', { class: 'btn sm ghost', type: 'button', text: 'Cancel', onClick: function () { self.editing = null; self.updateList(activeAudit()); } }));
+      setTimeout(function () { if (document.contains(input)) { input.focus(); input.select(); } }, 0);
+    } else {
+      const btn = function (st, label, cls, onClick) {
+        return el('button', { class: 'abtn ' + cls + (ai.status === st ? ' on' : ''), type: 'button', 'aria-pressed': String(ai.status === st), onClick: onClick }, label);
+      };
+      actions = el('div', { class: 'audit-actions' },
+        btn('confirmed', [icon('check'), el('span', { text: fmtQty(ai.baselineQty) + unit })], 'confirm', function () { self.mark(ai, ai.status === 'confirmed' ? 'unchecked' : 'confirmed'); }),
+        btn('different', 'Different', 'different', function () { self.editing = ai.id; self.updateList(activeAudit()); }),
+        btn('missing', 'Missing', 'missing', function () { self.mark(ai, ai.status === 'missing' ? 'unchecked' : 'missing'); }));
+    }
+    return el('div', { class: 'audit-row status-' + ai.status },
+      el('div', { class: 'name-wrap' },
+        el('div', { class: 'item-name', text: auditLabel(ai) }),
+        el('div', { class: 'meta-line', text: meta + ' · expected ' + fmtQty(ai.baselineQty) + unit })),
+      status, actions);
+  },
+
+  /** Saves one count. Shown immediately; undone if the save fails. */
+  mark: function (ai, status, qty) {
+    const before = Object.assign({}, App.get('auditItems', ai.id) || ai);
+    const optimistic = Object.assign({}, before, { status: status, countedQty: status === 'different' ? qty : null });
+    if (status === 'different' && qty === before.baselineQty) { optimistic.status = 'confirmed'; optimistic.countedQty = null; }
+    App.upsert('auditItems', optimistic);
+    this.draw();
+    App.queue(ai.id, function () {
+      return App.write('apiSetAuditCount', [ai.id, status, status === 'different' ? qty : null]).then(function (d) {
+        App.applyWrite('auditItems', d);
+      }, function (err) {
+        App.upsert('auditItems', before);
+        App.emit('data', ['auditItems']);
+        App.toast('Couldn’t save that count: ' + err.message, { type: 'error' });
+        if (err.code === 'AUDIT_CLOSED') App.poll();
+      });
+    });
+  },
+
+  cancelAudit: function () {
+    const a = activeAudit();
+    if (!a) return;
+    App.confirm({ title: 'Cancel this audit?', message: 'All counts from “' + a.name + '” will be thrown away and nothing in the inventory will change. This can’t be undone.',
+      confirmLabel: 'Cancel audit', cancelLabel: 'Keep counting', danger: true }).then(function (yes) {
+      if (!yes) return;
+      App.write('apiCancelAudit', [a.id]).then(function () { App.toast('Audit cancelled.'); return App.poll(); },
+        function (err) { App.toast(err.message, { type: 'error' }); App.poll(); });
+    });
+  },
+
+  finalize: function () {
+    const self = this, a = activeAudit();
+    if (!a) return;
+    const items = this.items(a);
+    const n = { unchecked: 0, confirmed: 0, different: 0, missing: 0 };
+    items.forEach(function (x) { n[x.status]++; });
+    const lines = el('ul', { class: 'summary-list' },
+      el('li', null, el('b', { text: n.different }), ' quantities will be updated to the counted amount'),
+      el('li', null, el('b', { text: n.missing }), ' missing items keep their quantity and get a “Needs check” flag'),
+      el('li', null, el('b', { text: n.confirmed }), ' confirmed items stay the same'),
+      n.unchecked ? el('li', { class: 'warn' }, el('b', { text: n.unchecked }), ' items were never checked and will stay the same') : null);
+    App.confirm({ title: 'Finalize “' + a.name + '”?', message: 'This applies the audit to the inventory:', extra: lines, confirmLabel: 'Finalize audit' }).then(function (yes) {
+      if (yes) self.sendFinalize(a, {});
+    });
+  },
+
+  sendFinalize: function (a, resolutions) {
+    const self = this;
+    App.write('apiFinalizeAudit', [a.id, resolutions]).then(function (d) {
+      const s = d.summary;
+      App.toast('Audit finalized: ' + s.updated + ' updated, ' + s.missing + ' flagged as missing.', { type: 'ok', timeout: 7000 });
+      return App.poll();
+    }, function (err) {
+      if (err.code === 'AUDIT_CONFLICTS') self.conflictDialog(a, err.details.conflicts, resolutions);
+      else { App.toast(err.message, { type: 'error' }); App.poll(); }
+    });
+  },
+
+  /** Items whose quantity changed after the audit started: choose per item. */
+  conflictDialog: function (a, conflicts, prior) {
+    const self = this;
+    const choice = Object.assign({}, prior);
+    const go = el('button', { class: 'btn primary', type: 'button', text: 'Finalize audit', disabled: true });
+    const refresh = function () { go.disabled = conflicts.some(function (c) { return !choice[c.auditItemId]; }); };
+    const rows = conflicts.map(function (c) {
+      const unit = c.itemTable === 'wire' ? '' : '';
+      const seg = el('div', { class: 'seg' });
+      const draw = function () {
+        clear(seg).append(
+          el('button', { type: 'button', class: choice[c.auditItemId] === 'counted' ? 'on' : '', text: 'Use counted (' + fmtQty(c.counted) + unit + ')',
+            onClick: function () { choice[c.auditItemId] = 'counted'; draw(); refresh(); } }),
+          el('button', { type: 'button', class: choice[c.auditItemId] === 'current' ? 'on' : '', text: 'Keep current (' + fmtQty(c.current) + unit + ')',
+            onClick: function () { choice[c.auditItemId] = 'current'; draw(); refresh(); } }));
+      };
+      draw();
+      return el('div', { class: 'conflict-row' },
+        el('div', { class: 'item-name', text: c.name }),
+        el('div', { class: 'meta-line', text: 'Was ' + fmtQty(c.baseline) + ' when the audit started · counted ' + fmtQty(c.counted) + ' · changed to ' + fmtQty(c.current) + ' since' }),
+        seg);
+    });
+    const all = function (v) { conflicts.forEach(function (c) { choice[c.auditItemId] = v; }); m.close(true); self.conflictDialog(a, conflicts, choice); };
+    const m = App.modal({
+      title: 'Some items changed during the audit',
+      body: [el('p', { text: 'These items were counted, but their quantity was also changed in the inventory after the audit started (for example, someone used some). Choose which number to keep for each.' }),
+        el('div', { style: { display: 'flex', gap: '12px' } },
+          el('button', { class: 'link-btn', type: 'button', text: 'Use counted for all', onClick: function () { all('counted'); } }),
+          el('button', { class: 'link-btn', type: 'button', text: 'Keep current for all', onClick: function () { all('current'); } })),
+        rows],
+      foot: [el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Back to audit', onClick: function () { m.close(true); } }), go]
+    });
+    refresh();
+    go.addEventListener('click', function () { m.close(true); self.sendFinalize(a, choice); });
+  }
+};
+
+/** Orange dot on the sidebar link while an audit is running. */
+function updateAuditNavDot() {
+  const link = document.querySelector('.nav a[data-view=audits]');
+  if (link) link.classList.toggle('live', Boolean(activeAudit()));
+}
+App.on('data', function (keys) { if (keys.indexOf('auditSessions') >= 0) updateAuditNavDot(); });
+App.on('started', updateAuditNavDot);
+
+App.views.audits = AuditsView;
+</script>

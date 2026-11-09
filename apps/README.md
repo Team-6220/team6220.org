@@ -16,3 +16,5 @@ Rules (from the migration plan):
 - Each app owns its folder, with its own line in `.github/CODEOWNERS`.
 - Brand colors and fonts come from `@team6220/ui`.
 - The Wix integration needs **React 18** (`@wix/astro` peers on `^18.3.1`), so don't use React 19 here.
+
+Apps that use Google Apps Script keep their server code in [`backend/apps-script/`](../backend/apps-script/README.md), unchanged.

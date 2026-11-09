@@ -1,0 +1,351 @@
+<script>
+/* ============================================================================
+   JsSettings.html — Golden Griffins Inventory
+   Settings: categories, tags, locations, suppliers, dropdown lists, archive.
+   Everyone can edit these. Renaming updates every item instantly (items
+   store IDs, not names). Removing something that is in use asks first.
+   ========================================================================== */
+'use strict';
+
+const LIST_LABELS = {
+  materialType: 'Material types', unit: 'Units', fastenerType: 'Fastener types', threadSize: 'Thread sizes',
+  threadPitch: 'Thread pitches', fastenerMaterial: 'Fastener materials', wireGauge: 'Wire gauges'
+};
+const LIST_USES = {   // which item fields use each dropdown list
+  materialType: [['rawMaterials', 'materialTypeId']],
+  unit: [['rawMaterials', 'thicknessUnitId'], ['rawMaterials', 'dimUnitId'], ['fasteners', 'lengthUnitId'], ['wire', 'lengthUnitId']],
+  fastenerType: [['fasteners', 'typeId']], threadSize: [['fasteners', 'threadSizeId']], threadPitch: [['fasteners', 'pitchId']],
+  fastenerMaterial: [['fasteners', 'materialId']], wireGauge: [['wire', 'gaugeId']]
+};
+const SECTION_NAMES = { parts: 'part', rawMaterials: 'raw material', tools: 'tool', fasteners: 'fastener', wire: 'wire', tags: 'tag', collections: 'collection', categories: 'category', locations: 'location' };
+
+const SETTINGS_TABS = [
+  { id: 'categories', label: 'Categories' },
+  { id: 'tags', label: 'Tags' },
+  { id: 'locations', label: 'Locations' },
+  { id: 'suppliers', label: 'Suppliers' },
+  { id: 'lists', label: 'Dropdown lists' },
+  { id: 'collections', label: 'Collections' },
+  { id: 'archive', label: 'Archive' }
+];
+
+const SETTINGS_HELP = {
+  categories: ['Main categories', 'Every part can have one main category. Renaming a category updates every part that uses it.'],
+  tags: ['Tags', 'Parts can have many tags. Groups are just for tidiness in menus; any tag can go on any part. Mechanism names (Swerve, Dead Axle, Intake…) work well as tags.'],
+  locations: ['Locations', 'Two levels: an area (Tool Chest, Main Storage) and labeled containers inside it (A1, B2). Items can point at a whole area or a specific container.'],
+  suppliers: ['Suppliers', 'Manufacturers and vendors you buy from.'],
+  lists: ['Dropdown lists', 'Choices used by Raw Materials, Fastener Reference and Wire Inventory. Add a value here and it appears in those forms.'],
+  collections: ['Collections', 'Saved searches and filters for the Parts page (e.g. Dead Axle Components). Create one from the Collections menu on the Parts page; rename, reorder or delete them here.'],
+  archive: ['Archive', 'Archived items are hidden from the inventory. Restore them here. They are permanently deleted automatically after 30 days.']
+};
+
+const SettingsView = {
+  title: 'Settings',
+  tab: 'categories',
+  listKey: 'materialType',
+  refs: null,
+
+  render: function (main) {
+    const r = this.refs = {};
+    r.tabs = el('div', { class: 'tabs', role: 'tablist' });
+    r.content = el('div');
+    r.help = el('aside', { class: 'settings-help' });
+    main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' }, el('div', null,
+        el('h1', { class: 'page-title', text: 'Settings' }),
+        el('div', { class: 'page-sub', text: 'Shared by the whole team. Changes apply to everyone immediately.' }))),
+      r.tabs,
+      el('div', { class: 'settings-grid' }, r.content, r.help)));
+    this.draw();
+  },
+
+  leave: function () { this.refs = null; },
+
+  onData: function () {
+    if (!this.refs) return;
+    const a = document.activeElement;
+    if (a && this.refs.content.contains(a) && a.tagName === 'INPUT' && a.closest('.list-row')) return;   // don't redraw under someone renaming
+    this.draw();
+  },
+
+  draw: function () {
+    const self = this, r = this.refs;
+    clear(r.tabs);
+    SETTINGS_TABS.forEach(function (t) {
+      r.tabs.appendChild(el('button', { class: self.tab === t.id ? 'on' : '', role: 'tab', 'aria-selected': String(self.tab === t.id), text: t.label,
+        onClick: function () { self.tab = t.id; self.draw(); } }));
+    });
+    const h = SETTINGS_HELP[this.tab];
+    clear(r.help).append(el('h3', { text: h[0] }), el('p', { text: h[1] }),
+      el('div', { class: 'credits' },
+        el('p', { text: 'Fonts: Karnivore by Apostrophic Laboratories (freeware). Jura by The Jura Project Authors (SIL Open Font License).' }),
+        el('p', { text: 'Azoft Sans © 2011 Sergiy S. Tkachenko / Azoft.com, used under CC BY-NC-ND 3.0.' })));
+    clear(r.content);
+    ({ categories: this.drawCategories, tags: this.drawTags, locations: this.drawLocations, suppliers: this.drawSuppliers,
+      lists: this.drawLists, collections: this.drawCollections, archive: this.drawArchive })[this.tab].call(this, r.content);
+  },
+
+  // ───── usage counts (shown next to each entry) ─────
+
+  uses: function (key, rec) {
+    const rows = App.rows;
+    switch (key) {
+      case 'categories': return rows('parts').filter(function (p) { return p.categoryId === rec.id; }).length;
+      case 'tags': return rows('parts').filter(function (p) { return p.tagIds.indexOf(rec.id) >= 0; }).length;
+      case 'suppliers': return rows('parts').filter(function (p) { return p.supplierId === rec.id; }).length;
+      case 'locations': {
+        const ids = new Set([rec.id]);
+        rows('locations').forEach(function (l) { if (l.parentId === rec.id) ids.add(l.id); });
+        return ['parts', 'rawMaterials', 'tools', 'wire'].reduce(function (n, k) {
+          return n + rows(k).filter(function (x) { return ids.has(x.locationId); }).length;
+        }, 0);
+      }
+      case 'lists':
+        return (LIST_USES[rec.listKey] || []).reduce(function (n, u) {
+          return n + rows(u[0]).filter(function (x) { return x[u[1]] === rec.id; }).length;
+        }, 0);
+    }
+    return 0;
+  },
+
+  // ───── generic pieces ─────
+
+  /** One editable row: name field, (extra), uses, ↑ ↓, delete. */
+  row: function (key, rec, groupIds, extra) {
+    const self = this;
+    const field = key === 'lists' ? 'value' : 'name';
+    const input = el('input', { class: 'input', type: 'text', value: rec[field], maxlength: 60, 'aria-label': 'Name' });
+    const commit = function () {
+      const v = input.value.trim();
+      if (v === rec[field]) return;
+      if (!v) { input.value = rec[field]; App.toast('Names can’t be empty. Use the delete button to remove it.', { type: 'error' }); return; }
+      const ch = {}; ch[field] = v;
+      App.write('apiUpdate', [key, rec.id, ch]).then(function (d) { App.applyWrite(key, d); App.toast('Renamed to “' + v + '”.', { type: 'ok' }); },
+        function (err) { input.value = rec[field]; App.toast(err.message, { type: 'error' }); });
+    };
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = rec[field]; input.blur(); }
+    });
+    input.addEventListener('blur', commit);
+    const i = groupIds.indexOf(rec.id);
+    const n = this.uses(key, rec);
+    return el('div', { class: 'list-row' },
+      input,
+      extra || null,
+      key !== 'collections' ? el('span', { class: 'uses', text: n ? n + ' item' + (n === 1 ? '' : 's') : '' }) : null,
+      el('button', { class: 'icon-btn', 'aria-label': 'Move up', disabled: i === 0, onClick: function () { self.move(key, groupIds, i, -1); } }, icon('arrowUp')),
+      el('button', { class: 'icon-btn', 'aria-label': 'Move down', disabled: i === groupIds.length - 1, onClick: function () { self.move(key, groupIds, i, 1); } }, icon('arrowDown')),
+      el('button', { class: 'icon-btn danger', 'aria-label': 'Delete ' + rec[field], onClick: function () { self.remove(key, rec); } }, icon('trash')));
+  },
+
+  move: function (key, ids, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= ids.length) return;
+    const next = ids.slice();
+    next[i] = ids[j]; next[j] = ids[i];
+    // Show the new order right away, then save.
+    const a = App.get(key, ids[i]), b = App.get(key, ids[j]);
+    const t = a.sortOrder; a.sortOrder = b.sortOrder; b.sortOrder = t;
+    if (a.sortOrder === b.sortOrder) { a.sortOrder += dir; }
+    this.draw();
+    App.write('apiReorder', [key, next]).then(function () { App.poll(); }, function (err) { App.toast(err.message, { type: 'error' }); App.poll(); });
+  },
+
+  remove: function (key, rec) {
+    const label = rec.name || rec.value;
+    const run = function (force) { return App.write('apiRemoveSetting', [key, rec.id, force]); };
+    const finish = function (d) {
+      (d.removedIds || [rec.id]).forEach(function (id) { App.removeLocal(key, id); });
+      App.emit('data', [key]);
+      App.poll();
+      App.toast('Deleted “' + label + '”.', { type: 'ok' });
+    };
+    App.confirm({ title: 'Delete “' + label + '”?', message: 'This can’t be undone.', confirmLabel: 'Delete', danger: true }).then(function (yes) {
+      if (!yes) return;
+      run(false).then(finish, function (err) {
+        if (err.code !== 'IN_USE') { App.toast(err.message, { type: 'error' }); return; }
+        const c = err.details.counts, parts = [];
+        Object.keys(c).forEach(function (k) { parts.push(c[k] + ' ' + (SECTION_NAMES[k] || k) + (c[k] === 1 ? '' : 's')); });
+        if (err.details.childCount) parts.push(err.details.childCount + ' container' + (err.details.childCount === 1 ? '' : 's') + ' inside it (also deleted)');
+        App.confirm({
+          title: '“' + label + '” is in use',
+          message: 'It’s used by ' + parts.join(', ') + '. Delete it anyway? Those items will keep everything else; this ' + (key === 'locations' ? 'location' : 'value') + ' will just be cleared from them.',
+          confirmLabel: 'Delete and clear', danger: true
+        }).then(function (sure) {
+          if (sure) run(true).then(finish, function (e2) { App.toast(e2.message, { type: 'error' }); });
+        });
+      });
+    });
+  },
+
+  /** "Add" row at the bottom of a card. makeRecord(name) → record for apiCreate. */
+  addRow: function (key, placeholder, makeRecord) {
+    const sample = makeRecord('x');
+    const addId = key + (sample.parentId || sample.listKey || sample.categoryId || '');
+    const input = el('input', { class: 'input', type: 'text', placeholder: placeholder, maxlength: 60, 'aria-label': placeholder });
+    const btn = el('button', { class: 'btn', type: 'button' }, icon('plus'), 'Add');
+    const go = function () {
+      const v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      btn.disabled = true;
+      App.write('apiCreate', [key, makeRecord(v)]).then(function (d) {
+        App.applyWrite(key, d);
+        App.toast('Added “' + v + '”.', { type: 'ok' });
+        input.value = '';
+        btn.disabled = false;
+        setTimeout(function () {
+          const again = document.querySelector('[data-add="' + addId + '"] input');
+          if (again) again.focus();
+        }, 30);
+      }, function (err) { btn.disabled = false; App.toast(err.message, { type: 'error' }); });
+    };
+    btn.addEventListener('click', go);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+    return el('div', { class: 'add-row', dataset: { add: addId } }, input, btn);
+  },
+
+  card: function (title, count, rows, addRow, headExtra) {
+    return el('div', { class: 'group-card' },
+      title ? el('div', { class: 'group-head' }, el('div', { class: 'title' }, title, count !== null ? el('small', { text: count }) : null), headExtra || null) : null,
+      el('div', null, rows.length ? rows : el('div', { class: 'list-empty', text: 'Nothing here yet.' })),
+      addRow);
+  },
+
+  simpleList: function (box, key, title, placeholder) {
+    const self = this;
+    const items = App.sorted(key);
+    const ids = items.map(function (x) { return x.id; });
+    box.appendChild(this.card(title, items.length, items.map(function (x) { return self.row(key, x, ids); }),
+      this.addRow(key, placeholder, function (name) { return { name: name }; })));
+  },
+
+  // ───── tabs ─────
+
+  drawCategories: function (box) { this.simpleList(box, 'categories', 'Main categories', 'New category name'); },
+  drawSuppliers: function (box) { this.simpleList(box, 'suppliers', 'Suppliers', 'New supplier name'); },
+
+  drawTags: function (box) {
+    const self = this;
+    const cats = App.sorted('categories');
+    const groups = cats.map(function (c) { return { id: c.id, name: c.name }; }).concat([{ id: '', name: 'No group' }]);
+    const groupOptions = cats.map(function (c) { return { value: c.id, label: c.name }; });
+    groups.forEach(function (g) {
+      const tags = App.sorted('tags', function (t) {
+        return (t.categoryId || '') === g.id || (g.id === '' && t.categoryId && !App.get('categories', t.categoryId));
+      });
+      const ids = tags.map(function (t) { return t.id; });
+      box.appendChild(self.card(g.name, tags.length, tags.map(function (t) {
+        const sel = App.selectEl(groupOptions, t.categoryId, 'No group');
+        sel.setAttribute('aria-label', 'Group for ' + t.name);
+        sel.addEventListener('change', function () {
+          App.write('apiUpdate', ['tags', t.id, { categoryId: sel.value }]).then(function (d) { App.applyWrite('tags', d); },
+            function (err) { App.toast(err.message, { type: 'error' }); self.draw(); });
+        });
+        return self.row('tags', t, ids, sel);
+      }), self.addRow('tags', 'New tag in ' + g.name, function (name) { return { name: name, categoryId: g.id }; })));
+    });
+  },
+
+  drawLocations: function (box) {
+    const self = this;
+    const tree = App.locationTree();
+    const areaIds = tree.map(function (n) { return n.area.id; });
+    tree.forEach(function (n) {
+      const childIds = n.children.map(function (c) { return c.id; });
+      const areaRow = self.row('locations', n.area, areaIds);
+      areaRow.style.background = 'var(--bg)';
+      areaRow.firstChild.style.fontWeight = '700';
+      box.appendChild(el('div', { class: 'group-card' },
+        areaRow,
+        el('div', { style: { borderTop: '1px solid var(--line)' } },
+          n.children.length ? n.children.map(function (c) {
+            const r = self.row('locations', c, childIds);
+            r.style.paddingLeft = '34px';
+            return r;
+          }) : el('div', { class: 'list-empty', style: { paddingLeft: '34px' }, text: 'No containers. Items can still be stored in “' + n.area.name + '” as a whole.' })),
+        self.addRow('locations', 'New container in ' + n.area.name + ' (e.g. A1)', function (name) { return { name: name, parentId: n.area.id }; })));
+    });
+    box.appendChild(el('div', { class: 'group-card' }, this.addRow('locations', 'New area (e.g. Tool Chest)', function (name) { return { name: name }; })));
+  },
+
+  drawLists: function (box) {
+    const self = this;
+    const sub = el('div', { class: 'subtabs' });
+    Object.keys(LIST_LABELS).forEach(function (k) {
+      sub.appendChild(el('button', { class: 'pill' + (self.listKey === k ? ' on' : ''), type: 'button', text: LIST_LABELS[k],
+        onClick: function () { self.listKey = k; self.draw(); } }));
+    });
+    box.appendChild(sub);
+    const items = App.listOptions(this.listKey);
+    const ids = items.map(function (x) { return x.id; });
+    box.appendChild(this.card(LIST_LABELS[this.listKey], items.length, items.map(function (x) { return self.row('lists', x, ids); }),
+      this.addRow('lists', 'New value', function (v) { return { listKey: self.listKey, value: v }; })));
+  },
+
+  drawCollections: function (box) {
+    const self = this;
+    const items = App.sorted('collections');
+    const ids = items.map(function (x) { return x.id; });
+    box.appendChild(this.card('Parts collections', items.length, items.map(function (c) {
+      return self.row('collections', c, ids, el('span', { class: 'col-summary', text: describeFilter(c.filter) }));
+    }), el('div', { class: 'add-row' }, el('span', { class: 'meta-line', style: { padding: '8px 4px' }, text: 'To add a collection, set filters on the Parts page and choose Collections → Save current filters.' }),
+      el('button', { class: 'btn', type: 'button', text: 'Go to Parts', onClick: function () { App.go('parts'); } }))));
+  },
+
+  drawArchive: function (box) {
+    const self = this;
+    const items = [];
+    Object.keys(TABLES_CLIENT).forEach(function (k) {
+      (App.tables[k] || []).forEach(function (r) { if (r.archivedAt) items.push({ key: k, rec: r }); });
+    });
+    items.sort(function (a, b) { return String(b.rec.archivedAt).localeCompare(String(a.rec.archivedAt)); });
+    const rows = items.map(function (it) {
+      const days = Math.max(0, 30 - Math.floor((Date.now() - Date.parse(it.rec.archivedAt)) / 864e5));
+      return el('div', { class: 'list-row' },
+        el('div', { style: { flex: 1, minWidth: 0, padding: '6px 0' } },
+          el('div', { class: 'item-name', text: archiveLabel(it.key, it.rec) }),
+          el('div', { class: 'meta-line', text: TABLES_CLIENT[it.key].label + ' · archived ' + new Date(it.rec.archivedAt).toLocaleDateString() + ' · deleted automatically in ' + days + ' day' + (days === 1 ? '' : 's') })),
+        el('button', { class: 'btn sm', type: 'button', onClick: function () {
+          App.write('apiRestore', [it.key, it.rec.id]).then(function (d) { App.applyWrite(it.key, d); App.toast('Restored.', { type: 'ok' }); },
+            function (err) { App.toast(err.message, { type: 'error' }); });
+        } }, icon('undo'), 'Restore'),
+        el('button', { class: 'icon-btn danger', 'aria-label': 'Delete forever', title: 'Delete forever', onClick: function () {
+          App.confirm({ title: 'Delete forever?', message: '“' + archiveLabel(it.key, it.rec) + '” will be permanently deleted. This can’t be undone.', confirmLabel: 'Delete forever', danger: true })
+            .then(function (yes) {
+              if (!yes) return;
+              App.write('apiDeletePermanently', [it.key, it.rec.id]).then(function () {
+                App.removeLocal(it.key, it.rec.id); App.poll(); self.draw(); App.toast('Deleted.', { type: 'ok' });
+              }, function (err) { App.toast(err.message, { type: 'error' }); });
+            });
+        } }, icon('trash')));
+    });
+    box.appendChild(el('div', { class: 'group-card' }, rows.length ? rows : el('div', { class: 'list-empty', text: 'The archive is empty.' })));
+  }
+};
+
+/** "Tags: Bearings, Swerve · Low stock" */
+function describeFilter(f) {
+  f = f || {};
+  const names = function (key, ids) { return (ids || []).map(function (id) { return App.name(key, id) || App.locationLabel(id); }).filter(Boolean).join(', '); };
+  const parts = [];
+  if (f.q) parts.push('Search “' + f.q + '”');
+  if ((f.categoryIds || []).length) parts.push('Category: ' + names('categories', f.categoryIds));
+  if ((f.tagIds || []).length) parts.push((f.tagMode === 'all' ? 'All tags: ' : 'Tags: ') + names('tags', f.tagIds));
+  if ((f.locationIds || []).length) parts.push('Location: ' + (f.locationIds || []).map(App.locationLabel).filter(Boolean).join(', '));
+  if ((f.supplierIds || []).length) parts.push('Supplier: ' + names('suppliers', f.supplierIds));
+  if (f.lowStock) parts.push('Low stock');
+  if (f.needsCheck) parts.push('Needs check');
+  return parts.join(' · ') || 'No filters';
+}
+
+function archiveLabel(key, r) {
+  if (r.name) return r.name;
+  if (key === 'rawMaterials') return [App.name('lists', r.materialTypeId), r.thickness, [r.length, r.width].filter(Boolean).join(' × ')].filter(Boolean).join(' · ');
+  if (key === 'fasteners') return [App.name('lists', r.threadSizeId), App.name('lists', r.typeId), r.length].filter(Boolean).join(' ');
+  if (key === 'wire') return [App.name('lists', r.gaugeId), r.typeColor].filter(Boolean).join(' ');
+  return r.id;
+}
+
+App.views.settings = SettingsView;
+</script>

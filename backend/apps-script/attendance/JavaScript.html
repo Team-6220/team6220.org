@@ -1,0 +1,404 @@
+<script>
+  window.addEventListener("load", functionInit, true); 
+
+  //Initialize functions onload
+  function functionInit(){
+    preventFormSubmit();
+    loadTodayAttendance();
+    document.getElementById('productCode').focus();
+
+    // Refocus input whenever the result modal fully closes
+    document.getElementById('resultModal').addEventListener('hidden.bs.modal', function () {
+      document.getElementById('productCode').focus();
+    });
+  };
+
+  // Prevent forms default behaviour (Prevent reloading the page)
+  function preventFormSubmit() {
+    var forms = document.querySelectorAll('form');
+    for (var i = 0; i < forms.length; i++) {
+      forms[i].addEventListener('submit', function(event) {
+      event.preventDefault();
+      });
+    }
+  } 
+
+  // Play success sound
+  function playSuccessSound() {
+    // Create a simple success beep using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800; // Higher frequency for success
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  }
+
+  // Play error sound
+  function playErrorSound() {
+    // Create a simple error beep using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 200; // Lower frequency for error
+    oscillator.type = 'sawtooth';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  }
+
+  // Play warning sound for duplicate sign-ins
+  function playWarningSound() {
+    // Create a double beep for warnings
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // First beep
+    const oscillator1 = audioContext.createOscillator();
+    const gainNode1 = audioContext.createGain();
+    
+    oscillator1.connect(gainNode1);
+    gainNode1.connect(audioContext.destination);
+    
+    oscillator1.frequency.value = 600;
+    oscillator1.type = 'sine';
+    
+    gainNode1.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    
+    oscillator1.start(audioContext.currentTime);
+    oscillator1.stop(audioContext.currentTime + 0.15);
+    
+    // Second beep
+    const oscillator2 = audioContext.createOscillator();
+    const gainNode2 = audioContext.createGain();
+    
+    oscillator2.connect(gainNode2);
+    gainNode2.connect(audioContext.destination);
+    
+    oscillator2.frequency.value = 600;
+    oscillator2.type = 'sine';
+    
+    gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime + 0.2);
+    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+    
+    oscillator2.start(audioContext.currentTime + 0.2);
+    oscillator2.stop(audioContext.currentTime + 0.35);
+  }
+
+  // Show popup modal
+  function showPopup(message, isSuccess) {
+    const modal = document.getElementById('resultModal');
+    const messageElement = document.getElementById('popupMessage');
+    const modalHeader = modal.querySelector('.modal-header');
+    
+    messageElement.textContent = message;
+    
+    // Change header color based on success/failure/warning
+    if (isSuccess === true) {
+      // Success - green
+      modalHeader.style.backgroundColor = '#28a745';
+      modalHeader.style.color = 'white';
+    } else if (isSuccess === 'warning') {
+      // Warning (duplicate) - orange/yellow
+      modalHeader.style.backgroundColor = '#ffa300';
+      modalHeader.style.color = '#000';
+    } else {
+      // Error - red
+      modalHeader.style.backgroundColor = '#dc3545';
+      modalHeader.style.color = 'white';
+    }
+    
+    // Show the modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Auto-close after 2 seconds (3 seconds for warnings to give more time to read)
+    const closeDelay = isSuccess === 'warning' ? 3000 : 2000;
+    setTimeout(() => {
+      bootstrapModal.hide();
+    }, closeDelay);
+  }
+
+  // Load today's attendance list
+  function loadTodayAttendance() {
+    google.script.run
+      .withSuccessHandler(updateAttendanceList)
+      .withFailureHandler((error) => {
+        console.error('Error loading attendance:', error);
+      })
+      .getTodayAttendance();
+  }
+
+  // Update the attendance list display
+  function updateAttendanceList(attendanceData) {
+    const listContainer = document.getElementById('todayAttendanceList');
+    const countElement = document.getElementById('attendanceCount');
+    
+    if (!attendanceData || attendanceData.length === 0) {
+      listContainer.innerHTML = '<li class="list-group-item text-light">No sign-ins yet today</li>';
+      countElement.textContent = '0';
+      return;
+    }
+    
+    countElement.textContent = attendanceData.length;
+    
+    // Reverse to show most recent first
+    const sortedData = attendanceData.reverse();
+    
+    listContainer.innerHTML = sortedData.map(entry => {
+      return `<li class="list-group-item d-flex justify-content-between align-items-center">
+        <span><strong>${entry.name}</strong></span>
+        <small class="text-light">${entry.time}</small>
+      </li>`;
+    }).join('');
+  }
+
+  /**
+   * The handleFormSubmit() function passes the formObject to the processForm 
+   * function in the Code.gs file
+   */
+  function handleFormSubmit(formObject) {
+    console.log('handleFormSubmit called');
+    console.log('formObject:', formObject);
+    
+    // Check if already processing
+    if (formObject.dataset.processing === 'true') {
+      console.log('Already processing, ignoring submission');
+      return false;
+    }
+    
+    // Get the product code value from the form element
+    const productCode = formObject.productCode.value.trim();
+    console.log('productCode:', productCode);
+    
+    // Client-side validation for 10 digits
+    if (!/^\d{10}$/.test(productCode)) {
+      console.log('Validation failed: not 10 digits');
+      playErrorSound();
+      showPopup('Invalid Student ID: Must be exactly 10 digits', false);
+      return;
+    }
+    
+    console.log('Validation passed, calling processForm');
+    
+    // Set processing state
+    setFormProcessing(true);
+    
+    // Create a simple object to pass to server
+    const formData = {
+      productCode: productCode
+    };
+    
+    // Process the form via Google Apps Script
+    google.script.run
+      .withSuccessHandler((result) => {
+        console.log('Success handler called', result);
+        
+        // Re-enable form
+        setFormProcessing(false);
+        
+        if (result.success) {
+          // Normal success - first sign-in of the day
+          playSuccessSound();
+          showPopup(result.message, true);
+          
+          // Reload today's attendance list
+          loadTodayAttendance();
+          
+          // Clear the form and QR reader results
+          const resultContainer = document.getElementById('qr-reader-results');
+          resultContainer.innerHTML = '';
+          document.getElementById("InventoryForm").reset();
+        } else if (result.needsRegistration) {
+          // Student not found - show registration modal
+          console.log('Showing registration modal');
+          
+          // Keep form disabled while registration modal is open
+          // It will be re-enabled when registration completes or is cancelled
+          
+          showRegistrationModal(result.studentId);
+          
+          // Clear the form
+          const resultContainer = document.getElementById('qr-reader-results');
+          resultContainer.innerHTML = '';
+          document.getElementById("InventoryForm").reset();
+        } else if (result.isDuplicate) {
+          // Duplicate sign-in blocked
+          playWarningSound();
+          showPopup(result.message, 'warning');
+          
+          // Clear the form for next student
+          const resultContainer = document.getElementById('qr-reader-results');
+          resultContainer.innerHTML = '';
+          document.getElementById("InventoryForm").reset();
+        } else {
+          // Other errors
+          playErrorSound();
+          showPopup(result.message, false);
+        }
+      })
+      .withFailureHandler((error) => {
+        console.error('Failure handler called', error);
+        
+        // Re-enable form
+        setFormProcessing(false);
+        
+        playErrorSound();
+        showPopup('Error processing attendance: ' + error.message, false);
+        console.error('Error:', error);
+      })
+      .processForm(formData);
+  }
+
+  /**
+   * Set form processing state to prevent duplicate submissions
+   */
+  function setFormProcessing(isProcessing) {
+    const form = document.getElementById('InventoryForm');
+    const submitButton = document.querySelector('#InventoryForm button[type="submit"]');
+    const inputField = document.getElementById('productCode');
+    
+    if (isProcessing) {
+      // Disable form
+      form.dataset.processing = 'true';
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+      inputField.disabled = true;
+      inputField.style.opacity = '0.6';
+    } else {
+      // Enable form
+      form.dataset.processing = 'false';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit';
+      inputField.disabled = false;
+      inputField.style.opacity = '1';
+    }
+  }
+
+  /**
+   * Show registration modal for new students
+   */
+  function showRegistrationModal(studentId) {
+    const modal = document.getElementById('registrationModal');
+    const studentIdDisplay = document.getElementById('registrationStudentId');
+    
+    studentIdDisplay.textContent = studentId;
+    
+    // Clear previous input
+    document.getElementById('firstNameInput').value = '';
+    document.getElementById('lastNameInput').value = '';
+    
+    // Store student ID for later use
+    modal.dataset.studentId = studentId;
+    
+    // Show the modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Focus on first name input
+    setTimeout(() => {
+      document.getElementById('firstNameInput').focus();
+    }, 500);
+  }
+
+  /**
+   * Handle registration form submission
+   */
+  function handleRegistration() {
+    const modal = document.getElementById('registrationModal');
+    const studentId = modal.dataset.studentId;
+    const firstName = document.getElementById('firstNameInput').value.trim();
+    const lastName = document.getElementById('lastNameInput').value.trim();
+    
+    // Validate inputs
+    if (!firstName || !lastName) {
+      alert('Please enter both first and last name');
+      return;
+    }
+    
+    // Disable submit button to prevent double submission
+    const submitButton = document.getElementById('registerSubmitBtn');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Registering...';
+    
+    // Call server-side registration function
+    google.script.run
+      .withSuccessHandler((result) => {
+        // Hide registration modal
+        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+        bootstrapModal.hide();
+        
+        // Re-enable button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Register & Sign In';
+        
+        if (result.success) {
+          playSuccessSound();
+          showPopup(result.message, true);
+          
+          // Reload today's attendance list
+          loadTodayAttendance();
+          
+          // Clear the main form
+          const resultContainer = document.getElementById('qr-reader-results');
+          resultContainer.innerHTML = '';
+          document.getElementById("InventoryForm").reset();
+          
+          // Re-enable the main form for next submission
+          setFormProcessing(false);
+        } else {
+          playErrorSound();
+          showPopup(result.message, false);
+          
+          // Re-enable the main form
+          setFormProcessing(false);
+        }
+      })
+      .withFailureHandler((error) => {
+        // Re-enable button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Register & Sign In';
+        
+        playErrorSound();
+        showPopup('Error registering student: ' + error.message, false);
+        console.error('Error:', error);
+        
+        // Hide registration modal
+        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+        bootstrapModal.hide();
+        
+        // Re-enable the main form
+        setFormProcessing(false);
+      })
+      .registerNewStudent(studentId, firstName, lastName);
+  }
+
+  /**
+   * Cancel registration
+   */
+  function cancelRegistration() {
+    // Re-enable the form (it was disabled during processing)
+    setFormProcessing(false);
+    
+    // Clear the main form
+    const resultContainer = document.getElementById('qr-reader-results');
+    resultContainer.innerHTML = '';
+    document.getElementById("InventoryForm").reset();
+  }
+</script>
