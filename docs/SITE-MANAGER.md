@@ -4,14 +4,14 @@ A Web Admin app at `/apps/site` where webmasters change the website's regular co
 It started as an idea at the end of issue #69 ("Maybe a new app dedicated to site management"). The more
 the backend grows, the more the team needs it, so it now has its own plan.
 
-**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** editor (#112) and the image uploader are built. Today the app runs in
+**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112) and **Merch** (#113) editors and the image uploader are built. Today the app runs in
 **demo mode**: it validates, shows what would change and says "demo: no pull request is opened". It starts opening real
 pull requests once the Phase 2 server (`output: "server"`) and the GitHub App exist (see "Turn on real pull requests").
-Merch and Resources follow (#113, #114): each is one more area (see "Add a new editable area").
+Resources follows (#114): each remaining area is one more area (see "Add a new editable area").
 
 | Piece | Where | Real or mocked today |
 | --- | --- | --- |
-| Content files | `sites/main/content/*.json` (`summer-camp.json`, `sponsors.json`) | Real. Public pages read them at build time |
+| Content files | `sites/main/content/*.json` (`summer-camp.json`, `sponsors.json`, `merch.json`) | Real. Public pages read them at build time |
 | Schemas, diff, rendering | `packages/content` (Zod; `pnpm content:check` in CI) | Real |
 | Branch, commit, pull request logic | `packages/data/src/site/` (`proposeChange`, `GithubSiteStore`) | Real code, tested with a fake GitHub; never run against github.com yet |
 | `/api/site` | `src/server/site-route.ts`, handler `handleSiteRequest` in `packages/data` | Real code and tests; the route is only added when Astro runs with `output: "server"` |
@@ -42,6 +42,15 @@ Sponsors page and in the scrolling strip on the home page (all three places read
 - **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
   Leave it empty for a new sponsor; the default size applies.
 - The "Your company here" tile and the tier cards are page layout, not part of this list.
+
+### Editing merch
+
+Pick **Merch**. Each entry is one card on `/merch`; **Up** and **Down** set the order (the grid reads left to right, row by
+row, and the page decides the tilt and animation delay from the position). Every field is required: **Photo** (file
+picker, same limits as sponsor logos), **Category** (the small label, e.g. Apparel), **Name**, **Description**, **Price**
+(typed exactly as it should read, e.g. `From $35`) and **Store link**. The price is text because the store sets the
+real price and it does not update from the store. The "Team gear" heading, the note under the grid, "How it works" and the
+sponsor teaser are page text, not part of this list.
 
 ## Why
 

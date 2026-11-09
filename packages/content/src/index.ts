@@ -3,12 +3,15 @@
 import { z } from "zod";
 import summerCampJson from "../../../sites/main/content/summer-camp.json" with { type: "json" };
 import sponsorsJson from "../../../sites/main/content/sponsors.json" with { type: "json" };
+import merchJson from "../../../sites/main/content/merch.json" with { type: "json" };
+import { merch, merchImages } from "./merch.ts";
 import { summerCamp } from "./summer-camp.ts";
 import { sponsorImages, sponsors } from "./sponsors.ts";
 
 export { diffContent, describeChange, clip, type Change } from "./diff.ts";
 export { renderInline, isSafeHref, isExternalHref, escapeText } from "./inline.ts";
 export { IMAGE_RULES, isImageFile, mediaUrl } from "./image.ts";
+export { merch, merchItem, merchCount, renderMerchItems, type Merch, type MerchItem } from "./merch.ts";
 export { sponsors, sponsor, renderSponsorWall, renderSponsorMarquee, TIERS, type Sponsors, type Sponsor } from "./sponsors.ts";
 export { summerCamp, renderBlock, renderBlocks, type SummerCamp, type Block } from "./summer-camp.ts";
 
@@ -45,6 +48,14 @@ export const AREAS = {
     schema: sponsors,
     initial: sponsorsJson,
     images: sponsorImages,
+  }),
+  merch: area({
+    id: "merch",
+    label: "Merch",
+    path: "sites/main/content/merch.json",
+    schema: merch,
+    initial: merchJson,
+    images: merchImages,
   }),
 } as const satisfies Record<string, AreaDef>;
 
