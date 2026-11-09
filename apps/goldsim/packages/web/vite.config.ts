@@ -3,9 +3,9 @@ import { fileURLToPath } from "node:url";
 
 const pkg = (name: string) => fileURLToPath(new URL(`../${name}/src/index.ts`, import.meta.url));
 
-// GitHub Pages project sites live under /GoldSim/; a custom domain serves from /. Override with BASE_PATH.
+// Served from team6220.org/apps/goldsim/ (built by integrations/build-apps.mjs in the site repo). Override with BASE_PATH.
 export default defineConfig(({ command }) => ({
-  base: process.env.BASE_PATH ?? (command === "build" ? "/GoldSim/" : "/"),
+  base: process.env.BASE_PATH ?? (command === "build" ? "/apps/goldsim/" : "/"),
   resolve: {
     alias: {
       "@goldsim/core": pkg("core"),

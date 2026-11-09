@@ -24,7 +24,7 @@ Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
 pnpm install
 pnpm dev        # http://localhost:4321
 pnpm check      # typecheck
-pnpm build      # outputs dist/
+pnpm build      # outputs dist/ (also builds GoldSim and WingIt into dist/apps/, see apps/README.md)
 ```
 
 ## Layout
@@ -37,7 +37,7 @@ apps/<name>/        One folder per team app, with its own media/ (see apps/READM
 packages/assets/    Shared logos, fonts and favicon that anyone may use
 packages/ui         Shared brand styles and components
 packages/data       The only code that talks to Wix / Apps Script
-integrations/       Build helpers (sync-media copies media to where the browser finds it)
+integrations/       Build helpers (sync-media copies media to where the browser finds it; build-apps builds the imported apps)
 docs/               Migration plan, Phase 0 checklist, photo policy
 .github/            CI, Pages deploy, CODEOWNERS, Dependabot
 ```
