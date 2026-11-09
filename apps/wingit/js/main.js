@@ -1,5 +1,5 @@
 // WingIt: screen router.
-import { h, clear, $, achievement, notify, setHud, fit, soundOn, setSound, sfx } from './ui.js';
+import { h, clear, $, achievement, notify, setHud, soundOn, setSound, sfx } from './ui.js';
 import { SEASONS, SEASON_IDS } from './data/seasons.js';
 import { PRINCIPLES, SLICE_IDS } from './data/principles.js';
 import { archetype, SLOT_NAMES } from './data/archetypes.js';
@@ -207,6 +207,4 @@ const soundBtn = $('#btn-sound');
 const syncSound = () => { soundBtn.textContent = soundOn() ? 'Sound on' : 'Sound off'; };
 soundBtn.addEventListener('click', () => { setSound(!soundOn()); syncSound(); sfx('click'); });
 syncSound();
-window.addEventListener('resize', fit);
-fit();
 showMenu();
