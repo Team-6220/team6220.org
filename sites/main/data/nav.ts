@@ -33,7 +33,7 @@ const tabs: (NavTab | false)[] = [
     ],
   },
   { id: "robots", label: "Robots", href: "/robots" },
-  { id: "support-us", label: "Support Us", href: "/support-us" },
+  { id: "sponsors", label: "Sponsors", href: "/sponsors" },
   { id: "merch", label: "Merch", href: MERCH_STORE_URL, external: true },
   {
     id: "resources",

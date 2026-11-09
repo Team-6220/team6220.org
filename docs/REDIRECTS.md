@@ -12,7 +12,7 @@ In Phase 3, step 2 of the [migration plan](MIGRATION-PLAN.md), add these as 301 
 | `/summer` | `/summer-camp` | The page always exists; it shows in the menu only while the summer camp switch is on |
 | `/our-team` | `/about` | |
 | `/our-team/subteams` | `/about` | No subteams page yet. Change this if one is added |
-| `/sponsors-donations` | `/support-us` | |
+| `/sponsors-donations` | `/sponsors` | |
 | `/contact` | `/about/contact` | |
 | `/gallery` | `/resources/media` | |
 
@@ -28,8 +28,8 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | `/#robots` | `/robots` |
 | `/#join` | `/about/join` |
 | `/#faq`, `/#apply` | `/about/join#faq`, `/about/join#apply` |
-| `/#sponsors` | `/support-us` |
-| `/#budget`, `/#sponsor-list` | `/support-us#budget`, `/support-us#sponsor-list` |
+| `/#sponsors` | `/sponsors` |
+| `/#budget`, `/#sponsor-list` | `/sponsors#budget`, `/sponsors#sponsor-list` |
 | `/#resources` | `/resources` |
 | `/#outreach` | `/about/outreach` |
 | `/#gallery`, `/#social` | `/about/outreach#gallery`, `/about/outreach#social` |
@@ -50,7 +50,7 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | About: Join | `/about/join` |
 | About: Contact | `/about/contact` |
 | Robots | `/robots` (one season: `/robots#2025`) |
-| Support Us | `/support-us` |
+| Sponsors | `/sponsors` |
 | Merch | the team store (menu); the item list is at `/merch` |
 | Resources | `/resources` |
 | Media | `/resources/media` (one album: `/resources/media#<album>`) |
