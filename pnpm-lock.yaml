@@ -10,13 +10,29 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      '@astrojs/react':
+        specifier: ^7.1.4
+        version: 7.1.4(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(yaml@2.9.1)
+      '@team6220/dashboard':
+        specifier: workspace:*
+        version: link:apps/dashboard
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:packages/ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.12
         version: 0.9.12(@emnapi/runtime@1.11.3)(prettier@3.9.10)(typescript@6.0.3)
-      '@astrojs/react':
-        specifier: ^7.1.4
-        version: 7.1.4(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(yaml@2.9.1)
       '@types/react':
         specifier: ^18.3.31
         version: 18.3.31
@@ -26,15 +42,18 @@ importers:
       astro:
         specifier: ^7.4.7
         version: 7.4.7(yaml@2.9.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+
+  apps/dashboard:
+    dependencies:
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
 
   apps/inventory:
     dependencies:
@@ -57,6 +76,12 @@ importers:
       '@wix/data':
         specifier: ^1.0.544
         version: 1.0.544(@types/react@18.3.31)(@wix/headless-components@0.0.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.7.0(react@18.3.1))
+      '@wix/members':
+        specifier: ^1.0.541
+        version: 1.0.541
+      '@wix/sdk':
+        specifier: ^1.21.18
+        version: 1.21.18
     devDependencies:
       vitest:
         specifier: ^5.1.0
@@ -1220,6 +1245,60 @@ packages:
   '@wix/auto_sdk_identity_verification@1.0.60':
     resolution: {integrity: sha512-0+JGnbnmnVFx2x7xJWGcfH4Bp3RVfiMP0kxLSxpSyK+lwlydJP6fVmeuxMS63J+c6hVrC7JJvAMAaCBC5uROpw==}
 
+  '@wix/auto_sdk_members_authentication@1.0.60':
+    resolution: {integrity: sha512-XUI/c7BpG3lwOH0ls8wBWkFr1o1fKLfBZ2ozkg1aQmSGxTQdtKgwWWugdGFFIAgEPpOjUI9jSG61Sb1vAjOpvg==}
+
+  '@wix/auto_sdk_members_authorization@1.0.40':
+    resolution: {integrity: sha512-bvVOerGlxskfBX/bKFw4ACijDcu56LREKo2zYO4cBOlx6oCoOQmH5aE8Id6541e6jhekyj6nlXv5wVd7vApiTg==}
+
+  '@wix/auto_sdk_members_badge-assignments@1.0.35':
+    resolution: {integrity: sha512-f/UwRyj0Hmf+te5zgBIspem9zA5bNIY9CW5SF1D3CDAhSoy5l6YLLaqfleJ3iDb6lcls+sSDeV7On9dl1Q37dw==}
+
+  '@wix/auto_sdk_members_badges-v-2@1.0.42':
+    resolution: {integrity: sha512-ls8ZMmEUZ77utfwRX7NBrtIvATZtzQkqVuIOxrXry2jLODzORtA+cc21gUaJczlIOZbv+ozrlnzKL6GoRWF1Xw==}
+
+  '@wix/auto_sdk_members_badges@1.0.57':
+    resolution: {integrity: sha512-57tIgvBf8VYih31kyNalJ8gG7u0agUHyRnG4g5i+SiWD7G/3yA1HvQ2RErC914ANhWdxvQ1bGFjboMxNY6zHVA==}
+
+  '@wix/auto_sdk_members_custom-field-applications@1.0.46':
+    resolution: {integrity: sha512-5U0tHX5JY1gtE6oY9Y2x6lR7l5adeTbc5+mO//Rr4Vf+iWzl0l5nQxbC6QNzz+zeF2vUpnbST/YLx+JBHouj+w==}
+
+  '@wix/auto_sdk_members_custom-field-suggestions@1.0.45':
+    resolution: {integrity: sha512-806UWs5UwcumTE8CzL0yqUTt+nIR1yCjQM8SHzrPgzkgffzUCYLQi7lvGPJnZsWxTnSPwzk4mzhsH2CIUnuDZQ==}
+
+  '@wix/auto_sdk_members_custom-fields@1.0.65':
+    resolution: {integrity: sha512-UpFpxkgn5EBXdHDjtaV29vsxn+JbWy94on1lWqExMC3W1R8voMTwZlmcsLetFsJq/rG3D6/nK9N/9+Kv/C7wMw==}
+
+  '@wix/auto_sdk_members_default-privacy@1.0.39':
+    resolution: {integrity: sha512-F78S+lwmH/6ho+dunzLNtDHKWV8BBsA83NMo6/vrT5y4zHvhhLKy6ZXMjiGcM5OxK9N3QjK97gW7hwbKrq9Miw==}
+
+  '@wix/auto_sdk_members_member-followers@1.0.49':
+    resolution: {integrity: sha512-dfQBGtLUXdoCy0ZKSrPLy6ulItAEen+QY8JyuaB3Cv76cGWx9z5yFyHO6kKqKCAF7TH/cJlo3/MSSwFR0q232w==}
+
+  '@wix/auto_sdk_members_member-privacy-settings@1.0.64':
+    resolution: {integrity: sha512-OAxst0ls1p4AXOnoLbRSxfPEcsT7sbQpOOa1NhAaMUkdgKhZoNGIU3Y9nJkZD1gNixzK9OyovkEm6WBUTiF6sA==}
+
+  '@wix/auto_sdk_members_member-report-overviews@1.0.3':
+    resolution: {integrity: sha512-vkvSCc9S5M2lCoWI1pP1CDn2pKm2/mz/3RvgqkfWuw+3AflRoti/5ihsKKXNVAXp1uheFIiYLkvsrRwO58BTJQ==}
+
+  '@wix/auto_sdk_members_member-report@1.0.57':
+    resolution: {integrity: sha512-QpPXbxQqReLT7zP/OhkwgnSIaIaSw0laCcJxFnqKsMwnuFZCsgfhyfEf5Y/hfzkPD2NhS81A9GZEapT9As29gQ==}
+
+  '@wix/auto_sdk_members_member-role-definition@1.0.52':
+    resolution: {integrity: sha512-Cuhc3tTtQ2rflJTkjC635FXqI+AhFuJgL6KoPW8wE7WQJcW73NMfF73Hs/DreF5Uem70RpYas7q2TnvqjPdBDA==}
+
+  '@wix/auto_sdk_members_member-to-member-block@1.0.39':
+    resolution: {integrity: sha512-rcQq40FCEeqCdEbVQaaYq7N87rPsyjadkpBSRaPtdGY2yX0El3ueCjRBhU3/MOAciNsMUA514pkfQIFZu9pQ+w==}
+
+  '@wix/auto_sdk_members_members-about@1.0.88':
+    resolution: {integrity: sha512-4s8gtPRhBU3y/bn1w0Z3tKo4SV8Gj8CoTUINem904skYYyP8c5pY4cvyeqbWGcQp864j21I8bFdiT9ZJHDyy1g==}
+
+  '@wix/auto_sdk_members_members@1.0.145':
+    resolution: {integrity: sha512-K8CeECyt6lGifVFYv4ELDgp/WAEpW/tw32Hk4iD+Nt9g2M6LNMKLLAK2EFBn12mDYbdo4HODBNPCgSTcDXdL4Q==}
+
+  '@wix/auto_sdk_members_user-member@1.0.62':
+    resolution: {integrity: sha512-1UXtxdtN23OI/Kj0fNZ3+B5EFijqVMzCz5cVds/eakx2BcWh2ZF9CX1gm8tgUdg/0RoClTKqepo5DgSRlQF4oQ==}
+
   '@wix/auto_sdk_redirects_redirects@1.0.60':
     resolution: {integrity: sha512-DrphRqURT6PuXpUxZnBjXozmu4eZdt5OaHlx9++/cDCzfIoNB1zIH/hr/AJtLlQ+oavXj5ZeZzMHbyY2iWg4vQ==}
 
@@ -1263,6 +1342,9 @@ packages:
 
   '@wix/image-kit@1.129.0':
     resolution: {integrity: sha512-sMaFMBC3xaQLXNfq4vP2Sj/4sHH0XbtOC8d/ucn9gR7n8jD8GLMC+4Vznm6rp3BLcjRAL37T1UIj42I1f7fN8Q==}
+
+  '@wix/members@1.0.541':
+    resolution: {integrity: sha512-nPFtH9XpxgzpNRUJgKaWqK8a1VkW02GVtW2AQlC29SqaJg1DDz1N5+v7VcBgkAmuf1+wvfboMhQKZ7A0lJk2pQ==}
 
   '@wix/monitoring-types@1.1.0':
     resolution: {integrity: sha512-BkGRTEDyPtvn/+TByciSUZEIwfgpxsXYcZJn26CIzwPqiehgk+akFROHArI8aAMzbAqs/+2OKerEm7U8ZDT7hQ==}
@@ -3496,6 +3578,96 @@ snapshots:
       '@wix/sdk-runtime': 1.0.31
       '@wix/sdk-types': 1.17.12
 
+  '@wix/auto_sdk_members_authentication@1.0.60':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_authorization@1.0.40':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_badge-assignments@1.0.35':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_badges-v-2@1.0.42':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_badges@1.0.57':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_custom-field-applications@1.0.46':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_custom-field-suggestions@1.0.45':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_custom-fields@1.0.65':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_default-privacy@1.0.39':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-followers@1.0.49':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-privacy-settings@1.0.64':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-report-overviews@1.0.3':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-report@1.0.57':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-role-definition@1.0.52':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_member-to-member-block@1.0.39':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_members-about@1.0.88':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_members@1.0.145':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_members_user-member@1.0.62':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
   '@wix/auto_sdk_redirects_redirects@1.0.60':
     dependencies:
       '@wix/sdk-runtime': 1.0.31
@@ -3616,6 +3788,27 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.13
       tslib: 2.9.1
+
+  '@wix/members@1.0.541':
+    dependencies:
+      '@wix/auto_sdk_members_authentication': 1.0.60
+      '@wix/auto_sdk_members_authorization': 1.0.40
+      '@wix/auto_sdk_members_badge-assignments': 1.0.35
+      '@wix/auto_sdk_members_badges': 1.0.57
+      '@wix/auto_sdk_members_badges-v-2': 1.0.42
+      '@wix/auto_sdk_members_custom-field-applications': 1.0.46
+      '@wix/auto_sdk_members_custom-field-suggestions': 1.0.45
+      '@wix/auto_sdk_members_custom-fields': 1.0.65
+      '@wix/auto_sdk_members_default-privacy': 1.0.39
+      '@wix/auto_sdk_members_member-followers': 1.0.49
+      '@wix/auto_sdk_members_member-privacy-settings': 1.0.64
+      '@wix/auto_sdk_members_member-report': 1.0.57
+      '@wix/auto_sdk_members_member-report-overviews': 1.0.3
+      '@wix/auto_sdk_members_member-role-definition': 1.0.52
+      '@wix/auto_sdk_members_member-to-member-block': 1.0.39
+      '@wix/auto_sdk_members_members': 1.0.145
+      '@wix/auto_sdk_members_members-about': 1.0.88
+      '@wix/auto_sdk_members_user-member': 1.0.62
 
   '@wix/monitoring-types@1.1.0': {}
 

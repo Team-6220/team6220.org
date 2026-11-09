@@ -2,7 +2,6 @@
 // confirmations and toasts.
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  INVENTORY_MANAGER_BADGE,
   InventoryError,
   type Changes,
   type InventoryService,
@@ -18,21 +17,17 @@ import { makeLookup, type Lookup } from "./lib/lookup.ts";
 import { ConfirmDialog, Toasts, type ConfirmOptions, type Toast } from "./ui.tsx";
 
 /**
- * Who may do what. Phase 1: these checks only hide buttons (Wix collections let any signed-in member write);
- * Phase 2 enforces the same rules in /api/inventory. Change a line here to change a rule everywhere.
+ * Who may do what. Team decision (Nov 2026): there is no Inventory Manager role; every approved member
+ * (status APPROVED + `Team Member` badge) can view and edit everything, including +/-, items, audits, the
+ * packing list and settings. In Phase 1 the real lock is the Wix collection permission "site members";
+ * Phase 2 checks the same rule in /api/inventory.
  */
 export interface Permissions {
-  /** Add, edit, archive items; +/- quantities; settings; start/finish audits; edit the packing list. */
-  manage: boolean;
-  /** Count items during an audit. */
-  count: boolean;
-  /** Tick items on the packing list and add "notes for next time". */
-  pack: boolean;
+  edit: boolean;
 }
 
 export function permissionsFor(session: MemberSession): Permissions {
-  const manager = session.badges.includes(INVENTORY_MANAGER_BADGE);
-  return { manage: manager, count: session.loggedIn, pack: session.loggedIn };
+  return { edit: session.loggedIn && session.approved };
 }
 
 export function applyChanges(tables: Tables, packingMeta: PackingMeta, ch: Changes): { tables: Tables; packingMeta: PackingMeta } {

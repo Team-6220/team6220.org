@@ -13,7 +13,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wix/data": "^1.0.544"
+    "@wix/data": "^1.0.544",
+    "@wix/members": "^1.0.541",
+    "@wix/sdk": "^1.21.18"
   },
   "devDependencies": {
     "vitest": "^5.1.0"

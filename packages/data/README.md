@@ -1,0 +1,62 @@
+# @team6220/data
+
+The **only** code in this repo that talks to Wix (and later Apps Script and FRC data sites). Apps import
+functions from here and never import `@wix/*` themselves, so the backend can change without touching app UIs.
+
+```ts
+import { auth, BADGES } from "@team6220/data";
+
+await auth.login("/apps/inventory"); // go to the Wix login page, come back to this path
+const member = await auth.getMember(); // { id, name, email, photoUrl, status } or null
+await auth.hasBadge(BADGES.attendanceAdmin); // cosmetic only (hide buttons), never security
+await auth.getAccess(); // "approved" | "pending" | "signed-out"
+await auth.logout(); // or link to /apps/logout
+```
+
+Wix calls only run in the browser in Phase 1. Mount components that use them with `client:only="react"`.
+
+## How login works (Phase 1, GitHub Pages)
+
+There is no server, so the browser runs Wix's "Wix login page" OAuth flow with PKCE, using the headless client ID
+in [`src/config.ts`](src/config.ts) (not a secret):
+
+1. `auth.login()` calls `generateOAuthData()` + `getAuthUrl()` and sends the browser to the Wix-hosted login page
+   on www.team6220.org, where members pick **Log in with Google**.
+2. Wix sends the browser back to the redirect URI with `#code=…&state=…`. The callback page
+   (`/apps/login/callback`) calls `auth.handleLoginCallback()`, which exchanges the code for member tokens with
+   `getMemberTokens()` and returns to where the member started.
+3. Tokens are kept in `localStorage` (`team6220.wix.tokens`). The SDK refreshes expired access tokens itself; if
+   that fails the member is simply signed out.
+4. `auth.getMember()` uses `members.getCurrentMember()`. Badges come from `badgeAssignments.queryBadgeAssignments()`
+   filtered by the member ID plus `badgesV2.queryBadges()` for the titles.
+
+**Redirect URI.** Wix only accepts redirect URIs that exactly match an *Allowed authorization redirect URI* on the
+headless client (**Wix → Settings → Headless Settings → (client) → Settings**). Allowed today:
+`https://dev.team6220.org/apps/login/callback` and `http://localhost:4321/apps/login/callback`, plus the bare origins.
+A new origin (for example a Wix preview URL) must be added there before login works on it.
+
+**Limits in Phase 1**
+
+- Badge and approval checks in the browser are **cosmetic**. Anyone can read the page's JavaScript. Real locks are
+  Wix CMS collection permissions (set app collections to site members, never "Anyone").
+- Badge assignments are readable by any visitor token, so badges are not secret either.
+- Refresh tokens live in `localStorage`. Wix recommends keeping them server-side; Phase 2 does.
+- The flow must not be mixed with `@wix/astro` (Wix says the integration won't recognize members who signed in
+  through a flow you run yourself).
+
+## What Phase 2 changes (`@wix/astro` on Wix hosting)
+
+Only the bodies of the functions in `src/auth.ts` change; their names and return values stay.
+
+- `login(returnTo)` → navigate to `/api/auth/login?returnToUrl=<returnTo>` (built into the integration).
+- `logout(returnTo)` → `POST /api/auth/logout?returnToUrl=<returnTo>`.
+- `getMember()` / `getBadges()` → the SDK with the integration's cookie session, or our own `/api/me` endpoint.
+- `/apps/login/callback`, `src/wix.ts` and the `localStorage` tokens are deleted.
+- Badge checks that matter move into `/api/<name>` endpoints, which refuse requests from members without the badge.
+
+Docs: [Add a Wix Login Page (JS SDK)](https://dev.wix.com/docs/go-headless/authentication/members/wix-login-page/add-a-wix-login-page-js-sdk),
+[OAuthStrategy](https://dev.wix.com/docs/sdk/core-modules/sdk/oauth-strategy),
+[Allow Redirect URIs and Domains](https://dev.wix.com/docs/go-headless/authentication/setup/allow-redirect-uris-and-domains),
+[Add Member Login with the Astro Integration](https://dev.wix.com/docs/go-headless/authentication/members/wix-login-page/add-member-login-with-the-astro-integration),
+[Get My Member](https://dev.wix.com/docs/api-reference/crm/members-contacts/members/member-management/members/get-my-member?apiView=SDK),
+[Query Badge Assignments](https://dev.wix.com/docs/api-reference/crm/members-contacts/members/activity/badge-assignments/query-badge-assignments?apiView=SDK).

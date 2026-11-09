@@ -16,12 +16,17 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "@astrojs/react": "^7.1.4",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "astro": "^7.4.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@astrojs/react": "^7.1.4",
+    "@team6220/dashboard": "workspace:*",
+    "@team6220/data": "workspace:*",
+    "@team6220/ui": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

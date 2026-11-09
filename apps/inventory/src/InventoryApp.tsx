@@ -34,6 +34,7 @@ function viewFromHash(): View {
 type LoadState =
   | { state: "loading" }
   | { state: "signed-out" }
+  | { state: "pending"; name?: string }
   | { state: "error"; message: string }
   | { state: "ready"; session: MemberSession; svc: InventoryService; snap: Snapshot };
 
@@ -48,12 +49,16 @@ export default function InventoryApp() {
           if (alive) setLoad({ state: "signed-out" });
           return;
         }
+        if (!session.approved) {
+          if (alive) setLoad({ state: "pending", name: session.name });
+          return;
+        }
         const svc = await connectInventory(session);
         const snap = await svc.loadAll();
         if (alive) setLoad({ state: "ready", session, svc, snap });
       } catch (e) {
         console.warn(e);
-        if (alive) setLoad({ state: "error", message: errorMessage(e) });
+        if (alive) setLoad({ state: "error", message: loadErrorMessage(e) });
       }
     })();
     return () => {
@@ -82,6 +87,21 @@ export default function InventoryApp() {
       </div>
     );
   }
+  if (load.state === "pending") {
+    return (
+      <div className="inv-center inv-signin">
+        <h1>
+          Inventory <span>6220</span>
+        </h1>
+        <p>
+          {load.name ? `Hi ${load.name}. ` : ""}Your account is waiting for a Web Admin to approve it and give it the Team Member badge.
+        </p>
+        <a className="inv-btn" href="/apps">
+          Back to /apps
+        </a>
+      </div>
+    );
+  }
   if (load.state === "error") {
     return (
       <div className="inv-center">
@@ -99,8 +119,20 @@ export default function InventoryApp() {
   );
 }
 
+/** Turns a loading failure into something a team member can act on. */
+function loadErrorMessage(e: unknown): string {
+  const text = e instanceof Error ? e.message : String(e);
+  if (/WDE0025|collection.*(not found|does not exist)|COLLECTION_NOT_FOUND/i.test(text)) {
+    return "the inventory collections aren’t set up in Wix yet (see apps/inventory/README.md, “Going live”).";
+  }
+  if (/WDE0027|permission|PERMISSION_DENIED|403/i.test(text)) {
+    return "your account doesn’t have access to the inventory collections yet. Ask a Web Admin.";
+  }
+  return errorMessage(e);
+}
+
 function Shell() {
-  const { svc, replaceSnapshot, saving, demo, session, perms, L } = useApp();
+  const { svc, replaceSnapshot, saving, demo, session, L } = useApp();
   const [view, setView] = useState<View>(viewFromHash);
   const [navOpen, setNavOpen] = useState(false);
 
@@ -140,7 +172,6 @@ function Shell() {
         </span>
         <span className="inv-who">
           {session.name ?? "Signed in"}
-          {perms.manage ? " · Inventory Manager" : ""}
         </span>
       </header>
       {demo && (

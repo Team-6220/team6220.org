@@ -72,12 +72,17 @@ export interface InventoryStore {
   setMeta(key: MetaKey, value: unknown): Promise<void>;
 }
 
-/** Who is using the app. Provided by the login code (packages/data/src/auth, built separately). */
+/** Who is using the app. Built from the site login (packages/data/src/auth.ts) by session.ts. */
 export interface MemberSession {
   loggedIn: boolean;
+  /**
+   * Approved by a Web Admin and given the `Team Member` badge. Every approved member can view AND edit the
+   * inventory (team decision, Nov 2026: there is no separate Inventory Manager role).
+   */
+  approved: boolean;
   /** Display name, if known. */
   name?: string;
-  /** Badge names, e.g. "Team Member", "Inventory Manager". */
+  /** Badge titles, e.g. "Team Member". */
   badges: string[];
   /**
    * A Wix SDK client (`createClient(...)` from @wix/sdk) carrying the member's tokens.

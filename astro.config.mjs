@@ -9,6 +9,6 @@ import buildApps from "./integrations/build-apps.mjs";
 export default defineConfig({
   site: "https://dev.team6220.org",
   output: "static",
-  // React renders the team apps under /apps (React 18: @wix/astro needs react ^18.3).
-  integrations: [syncMedia(), buildApps(), react()],
+  // React 18 only: @wix/astro (Phase 2) peers on react ^18.3. Apps under apps/* are React.
+  integrations: [syncMedia(), react(), buildApps()],
 });

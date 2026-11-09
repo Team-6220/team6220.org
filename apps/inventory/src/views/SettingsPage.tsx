@@ -31,7 +31,7 @@ export function SettingsPage() {
       <div className="inv-page-head">
         <div>
           <h1>Settings</h1>
-          <div className="inv-sub">{perms.manage ? "Changes apply to every item right away." : "Only Inventory Managers can change settings."}</div>
+          <div className="inv-sub">Changes apply to every item right away.</div>
         </div>
       </div>
       <div className="inv-tabs" role="tablist">
@@ -100,7 +100,7 @@ function SettingRow({ table, r, group, label, extra }: { table: TableKey; r: Row
         <span className="inv-row-title">{label ?? r[field]}</span>
       </div>
       {extra}
-      {perms.manage && (
+      {perms.edit && (
         <span className="inv-pack-tools">
           <button type="button" className="inv-icon-btn" aria-label={`Move ${r[field]} up`} onClick={() => void a.move(group, r, -1)}>
             ↑
@@ -123,7 +123,7 @@ function SettingRow({ table, r, group, label, extra }: { table: TableKey; r: Row
 function AddForm({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => Promise<unknown> }) {
   const [v, setV] = useState("");
   const { perms } = useApp();
-  if (!perms.manage) return null;
+  if (!perms.edit) return null;
   return (
     <form
       className="inv-inline-form"
@@ -169,7 +169,7 @@ function TagsTab() {
   const groups = [...cats.map((c) => ({ id: c.id, name: c.name })), { id: "", name: "No group (mechanisms, projects…)" }];
   return (
     <div className="inv-card">
-      {perms.manage && (
+      {perms.edit && (
         <div className="inv-row-inline">
           <Select ariaLabel="Group for the new tag" value={group} empty="No group" options={cats.map((c) => ({ value: c.id, label: c.name }))} onChange={setGroup} />
           <AddForm placeholder="New tag" onAdd={(name) => write(() => svc.create("tags", { name, categoryId: group }), { ok: "Tag added." })} />
@@ -189,7 +189,7 @@ function TagsTab() {
                   r={t}
                   group={tags}
                   extra={
-                    perms.manage && (
+                    perms.edit && (
                       <Select
                         ariaLabel={`Group for ${t.name}`}
                         value={t.categoryId || ""}
@@ -228,7 +228,7 @@ function LocationsTab() {
               <SettingRow key={c.id} table="locations" r={c} group={n.children} />
             ))}
           </ul>
-          {perms.manage && (
+          {perms.edit && (
             <div className="inv-indent">
               <AddForm placeholder={`New container in ${n.area.name}`} onAdd={(name) => write(() => svc.create("locations", { name, parentId: n.area.id }), { ok: "Container added." })} />
             </div>
@@ -272,7 +272,7 @@ function ArchiveTab() {
     <div className="inv-card">
       <p className="inv-hint">
         Archived items are hidden from the lists. Restore one to bring it back. The old app deleted archived items after 30 days automatically;
-        here an Inventory Manager deletes them.
+        here someone on the team deletes them.
       </p>
       {archived.length === 0 ? (
         <Empty title="The archive is empty" />
@@ -286,7 +286,7 @@ function ArchiveTab() {
                   {TABLES[k].label} · archived {timeAgo(r.archivedAt)}
                 </span>
               </div>
-              {perms.manage && (
+              {perms.edit && (
                 <span className="inv-pack-tools">
                   <button type="button" className="inv-link" onClick={() => void write(() => svc.restore(k, r.id), { ok: "Restored." }).catch(reported)}>
                     Restore

@@ -112,7 +112,7 @@ export function SectionPage({ cfg }: { cfg: SectionConfig }) {
             {cfg.key === "fasteners" ? " on hand" : ""}
           </div>
         </div>
-        {perms.manage && (
+        {perms.edit && (
           <button type="button" className="inv-btn primary" onClick={() => setEditing("new")}>
             + {cfg.addLabel}
           </button>
@@ -275,7 +275,7 @@ function SavedFilters({ f, savedId, onApply }: { f: FilterState; savedId: string
         empty="Saved filters…"
         options={[
           ...saved.map((c) => ({ value: c.id, label: c.name })),
-          ...(perms.manage && canSave ? [{ value: "__new", label: "＋ Save current filters…" }] : []),
+          ...(perms.edit && canSave ? [{ value: "__new", label: "＋ Save current filters…" }] : []),
         ]}
         onChange={async (v) => {
           if (v === "__new") {
@@ -360,7 +360,7 @@ function QtyStepper({ cfg, r }: { cfg: SectionConfig; r: Row }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!perms.manage) {
+  if (!perms.edit) {
     return (
       <span className="inv-qty readonly" aria-label={cfg.qtyLabel}>
         {fmtQty(r[field])} {unit}
@@ -401,7 +401,7 @@ function ItemEditor({ cfg, rec, initialName, onClose }: { cfg: SectionConfig; re
   const [values, setValues] = useState(() => initialValues(cfg, rec, L, initialName));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const readOnly = !perms.manage;
+  const readOnly = !perms.edit;
   const live = rec ? (L.get(cfg.key, rec.id) ?? rec) : null;
 
   const set = (name: string, v: unknown) => setValues((x) => ({ ...x, [name]: v }));

@@ -30,7 +30,7 @@ function NoAudit() {
           <h1>Inventory Audits</h1>
           <div className="inv-sub">Count everything before and after the season.</div>
         </div>
-        {perms.manage && (
+        {perms.edit && (
           <button type="button" className="inv-btn primary" onClick={() => setStarting(true)}>
             Start an audit
           </button>
@@ -39,7 +39,7 @@ function NoAudit() {
       <div className="inv-card">
         <p>
           An audit lists every item in the sections you choose. Team members mark each one <b>Confirmed</b>, <b>Different</b> (with the
-          count) or <b>Missing</b>. When it’s finished, an Inventory Manager applies the results: different counts replace the quantity,
+          count) or <b>Missing</b>. When it’s finished, whoever finishes the audit applies the results: different counts replace the quantity,
           missing items keep their quantity and get flagged “Needs check”.
         </p>
         <p className="inv-hint">If someone uses parts while the audit runs, their counts aren’t applied automatically; you choose which number to keep.</p>
@@ -189,7 +189,7 @@ function ActiveAudit({ session }: { session: Row }) {
             Started {new Date(session.createdAt).toLocaleDateString()} · {done} of {plural(items.length, "item")} counted
           </div>
         </div>
-        {perms.manage && (
+        {perms.edit && (
           <div className="inv-actions">
             <button type="button" className="inv-btn danger-text" onClick={cancel}>
               Cancel audit
@@ -262,7 +262,7 @@ function AuditRow({ ai }: { ai: Row }) {
         </span>
         {ai.status !== "unchecked" && <span className={`inv-badge ${ai.status}`}>{STATUS_LABELS[ai.status as AuditStatus]}</span>}
       </div>
-      {perms.count && (
+      {perms.edit && (
         <div className="inv-audit-actions">
           {editing ? (
             <form

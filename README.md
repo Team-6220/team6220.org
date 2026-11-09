@@ -8,7 +8,7 @@ editor to a coded site that uses Wix as the backend (Wix-managed headless). The 
 | Phase | Where it runs | Status |
 | --- | --- | --- |
 | 0. Setup | | **Done** ([docs/PHASE-0.md](docs/PHASE-0.md), [Wix CLI test](docs/WIX-CLI-SPIKE.md)) |
-| 1. Prototype | GitHub Pages at `dev.team6220.org` | In progress: homepage live; apps and pages next; styling waits for branding guidelines |
+| 1. Prototype | GitHub Pages at `dev.team6220.org` | In progress: homepage, `/apps` login + dashboard, GoldSim and WingIt live; other apps and pages next; styling waits for branding guidelines |
 | 2. Migration preview | Wix hosting, hidden preview | Not started |
 | 3. Switch over | `team6220.org` | Before kickoff (early January 2027) |
 

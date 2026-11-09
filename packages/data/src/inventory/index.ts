@@ -23,17 +23,20 @@ export { toWixItem, fromWixItem } from "./wix-mapping.ts";
 
 export type InventoryBackend = "mock" | "wix";
 
-/** The badge that unlocks editing (docs/MIGRATION-PLAN.md, "Login and permissions"). */
-export const INVENTORY_MANAGER_BADGE = "Inventory Manager";
-
+/**
+ * PUBLIC_INVENTORY_BACKEND wins when set. Otherwise production builds (the deployed site) use Wix and
+ * `pnpm dev` / tests use the mock data.
+ */
 export function inventoryBackend(): InventoryBackend {
-  let v: string | undefined;
+  let env: Record<string, unknown> | undefined;
   try {
-    v = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.PUBLIC_INVENTORY_BACKEND;
+    env = (import.meta as unknown as { env?: Record<string, unknown> }).env;
   } catch {
-    v = undefined;
+    env = undefined;
   }
-  return v === "wix" ? "wix" : "mock";
+  const v = env?.PUBLIC_INVENTORY_BACKEND;
+  if (v === "wix" || v === "mock") return v;
+  return env?.PROD === true ? "wix" : "mock";
 }
 
 /** A service over fresh demo data. */
@@ -43,10 +46,9 @@ export function createMockInventory(opts: Omit<MemoryStoreOptions, "seed" | "met
 }
 
 // ─────────────── who is signed in ───────────────
-// The login code (packages/data/src/auth, built on another branch) registers a provider with
-// setInventorySessionProvider(() => ...). Until then:
-//   mock backend: a demo member with the Inventory Manager badge (add ?demo=member or ?demo=signed-out to the URL to try the other views);
-//   wix backend:  signed out, so the app shows "sign in at /apps".
+//   wix backend:  the site login (session.ts -> packages/data/src/auth.ts).
+//   mock backend: a demo team member. Add ?demo=signed-out or ?demo=pending to the URL to see those screens.
+// Tests (or a later /api session) can replace it with setInventorySessionProvider().
 
 export type SessionProvider = () => Promise<MemberSession>;
 let sessionProvider: SessionProvider | null = null;
@@ -62,20 +64,22 @@ function demoSession(): MemberSession {
   } catch {
     mode = "";
   }
-  if (mode === "signed-out") return { loggedIn: false, badges: [] };
-  if (mode === "member") return { loggedIn: true, name: "Demo member", badges: ["Team Member"] };
-  return { loggedIn: true, name: "Demo manager", badges: ["Team Member", INVENTORY_MANAGER_BADGE] };
+  if (mode === "signed-out") return { loggedIn: false, approved: false, badges: [] };
+  if (mode === "pending") return { loggedIn: true, approved: false, name: "New member", badges: [] };
+  return { loggedIn: true, approved: true, name: "Demo member", badges: ["Team Member"] };
 }
 
-export async function getInventorySession(): Promise<MemberSession> {
+export async function getInventorySession(backend: InventoryBackend = inventoryBackend()): Promise<MemberSession> {
   if (sessionProvider) return sessionProvider();
-  return inventoryBackend() === "mock" ? demoSession() : { loggedIn: false, badges: [] };
+  if (backend === "mock") return demoSession();
+  const { wixMemberSession } = await import("./session.ts");
+  return wixMemberSession();
 }
 
 /** Connects to the configured backend for this session. */
 export async function connectInventory(session: MemberSession, backend: InventoryBackend = inventoryBackend()): Promise<InventoryService> {
   if (backend === "mock") return createMockInventory({ latencyMs: 120 });
-  if (!session.loggedIn) throw new Error("Sign in to use the inventory.");
+  if (!session.loggedIn || !session.approved) throw new Error("Sign in with an approved team account to use the inventory.");
   const { createWixStore } = await import("./wix-store.ts");
   return createInventoryService(await createWixStore(session.wixClient));
 }

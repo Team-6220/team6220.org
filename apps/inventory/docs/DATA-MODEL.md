@@ -197,21 +197,20 @@ Wix collection permissions take a minimum role per action: `ADMIN`, `SITE_MEMBER
 
 | Phase | read | insert | update | remove | Who can really edit |
 | --- | --- | --- | --- | --- | --- |
-| **Phase 1** (browser talks to Wix) | `SITE_MEMBER` | `SITE_MEMBER` | `SITE_MEMBER` | `SITE_MEMBER` | Any approved, signed-in member. Wix has no permission level for "members with the Inventory Manager badge", so the badge check in the app only hides buttons (cosmetic). Never `ANYONE`. |
-| **Phase 2** (`/api/inventory`) | `SITE_MEMBER` | `ADMIN` | `ADMIN` | `ADMIN` | The server endpoint checks the badge and writes with elevated permissions. |
+| **Phase 1** (browser talks to Wix) | `SITE_MEMBER` | `SITE_MEMBER` | `SITE_MEMBER` | `SITE_MEMBER` | Any signed-in site member. The app only opens for approved members with the `Team Member` badge, but Wix has no permission level for "members with a badge", so that check is cosmetic. Never `ANYONE`. |
+| **Phase 2** (`/api/inventory`) | `SITE_MEMBER` | `ADMIN` | `ADMIN` | `ADMIN` | The server endpoint checks the `Team Member` badge and writes with elevated permissions. |
 
 Because Phase 1 is cosmetic, the team should treat the prototype's data as non-sensitive (the plan says the same),
 and member signups must stay "approval required".
 
-What members can do in the app (`apps/inventory/src/context.tsx`, `permissionsFor`):
+Who can do what in the app (`apps/inventory/src/context.tsx`, `permissionsFor`). **Team decision (Nov 2026): there
+is no Inventory Manager role.** The old app had none either (anyone with the link could edit).
 
-| Action | Team Member | Inventory Manager |
-| --- | --- | --- |
-| View everything | yes | yes |
-| Count items in a running audit | yes | yes |
-| Tick the packing list, add / complete "notes for next time" | yes | yes |
-| +/- quantities, add / edit / archive items | no | yes |
-| Settings, start / finish / cancel audits, edit the packing list | no | yes |
+| Who | Can |
+| --- | --- |
+| Signed out | See "Sign in at /apps" |
+| Signed in, not yet approved / no `Team Member` badge | See "waiting for approval" |
+| Approved member with the `Team Member` badge | Everything: view, +/- quantities, add / edit / archive items, audits, the packing list, settings, the archive |
 
 ### Limits and API behaviour checked against the Wix docs (Nov 2026)
 

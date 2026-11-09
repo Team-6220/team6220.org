@@ -37,22 +37,29 @@ pnpm --filter @team6220/app-inventory test
 pnpm --filter @team6220/data test
 ```
 
-The mock backend signs you in as a demo Inventory Manager. Add `?demo=member` to the URL to see the read-only
-member view, or `?demo=signed-out` for the sign-in prompt.
+The mock backend signs you in as a demo team member (every approved member can edit; there is no separate
+inventory role). Add `?demo=signed-out` to the URL for the sign-in prompt, or `?demo=pending` for the
+"waiting for approval" screen.
 
 ### Backend switch
 
-`PUBLIC_INVENTORY_BACKEND` (build-time env var) picks the data:
+| Build | Data |
+| --- | --- |
+| `pnpm build` (the deployed site, dev.team6220.org) | **Wix**: the `inventory_*` CMS collections, as the signed-in member |
+| `pnpm dev`, tests | **Mock**: in-memory demo data, reset on reload; a banner says so |
 
-| Value | Data | When |
-| --- | --- | --- |
-| `mock` (default) | In-memory demo data, reset on reload; a banner says so | Now, and in tests |
-| `wix` | The Wix CMS collections, as the signed-in member | After the go-live steps below |
+`PUBLIC_INVENTORY_BACKEND=wix|mock` overrides this (e.g. `PUBLIC_INVENTORY_BACKEND=mock pnpm build` to test a built
+site without Wix, or `PUBLIC_INVENTORY_BACKEND=wix pnpm dev` to use real data locally).
 
-In `wix` mode the app needs the login code (being built separately) to register the member session:
-`setInventorySessionProvider(async () => ({ loggedIn, name, badges, wixClient }))` from `@team6220/data/inventory`,
-where `wixClient` is the member's `createClient(...)` from `@wix/sdk`. Until that's wired up, `wix` mode shows
-"Sign in at /apps".
+In Wix mode the session comes from the site login (`packages/data/src/inventory/session.ts` uses
+`auth.getMember()`, `auth.getAccess()`, `auth.getBadges()` and the shared Wix client):
+
+- signed out: "Sign in at /apps";
+- signed in but not approved / no `Team Member` badge: "waiting for approval";
+- approved `Team Member`: the full app. Everyone approved can edit; there is no separate inventory role.
+
+**Until the collections exist (go-live steps below), approved members on the deployed site see "the inventory
+collections aren't set up in Wix yet".** That's expected.
 
 ## Going live (needs a human with Wix admin access)
 
@@ -93,8 +100,8 @@ Nothing below has been done yet. Do it in this order; nothing touches the old Ap
    It refuses to import into a collection that already has items (so running it twice can't duplicate data).
    Then `unset WIX_API_KEY WIX_SITE_ID` and revoke the key.
 7. **Spot-check** a few parts, a location, a tag and the packing list in the Wix CMS dashboard.
-8. **Wire up login and switch the backend**: once the login branch is merged, register the session provider (above)
-   and set `PUBLIC_INVENTORY_BACKEND=wix` for the build (e.g. `env:` on the build step in `.github/workflows/pages.yml`).
+8. **Nothing to switch**: the deployed site already uses Wix and the site login. Open `/apps/inventory` signed in as
+   an approved member and check that the imported items appear and an edit saves.
 9. **Re-enter by hand**: the packing list's event name and season label (they lived in Script Properties).
 10. **Run a real meeting** on the new app. Only after that, take down the Apps Script deployment (see
     `backend/apps-script/README.md`).

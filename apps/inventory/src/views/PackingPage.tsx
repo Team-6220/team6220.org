@@ -1,6 +1,6 @@
 // The competition Packing List. Ported from JsPacking.html (without the "final check" mode yet).
 //   Packing:   everyone ticks things off; packed items are struck through and sink to the end of their group.
-//   Edit list: Inventory Managers add, rename, nest, reorder, link to inventory and delete entries.
+//   Edit list: add, rename, nest, reorder, link to inventory and delete entries.
 // Sections: Always pack · <season> · U-Haul Checklist.
 import { useMemo, useState } from "react";
 import { PACKING_SECTIONS, type PackingSection, type Row } from "@team6220/data/inventory";
@@ -81,12 +81,12 @@ export function PackingPage() {
           </div>
         </div>
         <div className="inv-actions">
-          {perms.manage && (
+          {perms.edit && (
             <button type="button" className={`inv-btn ${editMode ? "primary" : ""}`} aria-pressed={editMode} onClick={() => setEditMode((m) => !m)}>
               {editMode ? "Done editing" : "Edit list"}
             </button>
           )}
-          {perms.manage && !editMode && (
+          {perms.edit && !editMode && (
             <button type="button" className="inv-btn" onClick={newRound}>
               Start new packing round
             </button>
@@ -138,7 +138,7 @@ export function PackingPage() {
       )}
 
       {tree.kids("", section).length === 0 ? (
-        <Empty title="Nothing on this list yet">{perms.manage ? "Use “Edit list” to add entries." : ""}</Empty>
+        <Empty title="Nothing on this list yet">{perms.edit ? "Use “Edit list” to add entries." : ""}</Empty>
       ) : (
         <ul className="inv-tree" role="tree">
           {sortForPacking(tree.kids("", section), tree, editMode).map((r) => (
@@ -174,7 +174,7 @@ function PackNode(props: { r: Row; tree: Tree; depth: number; editMode: boolean;
   const siblings = tree.kids(r.parentId || "", r.section);
 
   const toggle = () => {
-    if (!perms.pack) return;
+    if (!perms.edit) return;
     const value = !allPacked;
     void write(() => svc.packingSetPacked(leaves.map((x) => x.id), value), {
       optimistic: { table: "packingItems", rows: leaves.map((x) => ({ ...x, packed: value })) },
@@ -205,7 +205,7 @@ function PackNode(props: { r: Row; tree: Tree; depth: number; editMode: boolean;
               ref={(el) => {
                 if (el) el.indeterminate = packedCount > 0 && !allPacked;
               }}
-              disabled={!perms.pack}
+              disabled={!perms.edit}
               onChange={toggle}
             />
             <span className="inv-pack-name">{r.name}</span>
@@ -347,7 +347,7 @@ function Notes() {
   return (
     <section className="inv-card inv-notes" aria-label="Notes for next time">
       <h2 className="inv-h2">Notes for next time</h2>
-      {perms.pack && (
+      {perms.edit && (
         <form
           className="inv-inline-form"
           onSubmit={(e) => {
@@ -372,12 +372,12 @@ function Notes() {
                 <input
                   type="checkbox"
                   checked={n.done}
-                  disabled={!perms.pack}
+                  disabled={!perms.edit}
                   onChange={() => void write(() => svc.packingNoteSet(n.id, !n.done), { optimistic: { table: "packingNotes", rows: [{ ...n, done: !n.done }] } }).catch(reported)}
                 />
                 {n.text}
               </label>
-              {perms.manage && (
+              {perms.edit && (
                 <button type="button" className="inv-icon-btn" aria-label="Delete note" onClick={() => void write(() => svc.packingNoteDelete(n.id)).catch(reported)}>
                   ×
                 </button>

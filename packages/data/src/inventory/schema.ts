@@ -397,9 +397,10 @@ export function getColumn(key: TableKey, name: string): Column | undefined {
 
 /**
  * Wix collection permissions for every inventory collection (Phase 1).
- * Wix can only tell "site member" from "visitor" here; the Inventory Manager badge is checked in the UI only
- * (cosmetic) until Phase 2 moves writes behind /api/inventory, when insert/update/remove become ADMIN and the
- * server does the writes after checking the badge.
+ * Every approved member (Team Member badge) may view and edit the inventory; there is no separate inventory role.
+ * Wix can only tell "site member" from "visitor" here, so in Phase 1 any signed-in site member could write; the
+ * app shows editing only to approved members (cosmetic). Phase 2 moves writes behind /api/inventory, where
+ * insert/update/remove become ADMIN and the server writes after checking the Team Member badge.
  */
 export const WIX_PERMISSIONS_PHASE1 = {
   read: "SITE_MEMBER",
