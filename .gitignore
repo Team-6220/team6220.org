@@ -24,3 +24,5 @@ dist/
 /public/favicon-32.png
 /public/apple-touch-icon.png
 /public/icon-*.png
+/dist-mock/
+/test-results/

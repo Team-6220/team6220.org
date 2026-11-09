@@ -1,0 +1,210 @@
+{
+  "$comment": "Old address -> new address. THE source of truth for redirects; docs/REDIRECTS.md and docs/redirects.csv are made from it. Edit this file, then run `pnpm redirects:csv` and `pnpm redirects:check`. Fields: from (old path, on team6220.org), to (new path, may end in #anchor), status (301 for the Wix URL Redirect Manager), decision (confirmed = already agreed in REDIRECTS.md; owner = decided by the owner; proposed = suggested in SEO.md or chosen as nearest page, needs a yes), note. `anchors` are the prototype's one-page addresses (dev.team6220.org/#about): browsers never send the # part to a server, so they cannot be Wix redirects. A script on the home page (MainLayout.astro, map in sites/main/data/old-anchors.ts) sends them; they are listed here so the map is checked against the built site and kept equal to old-anchors.ts.",
+  "pages": [
+    {
+      "from": "/summer",
+      "to": "/summer-camp",
+      "status": 301,
+      "decision": "confirmed",
+      "note": "The page always exists; it shows in the menu only while the summer camp switch is on."
+    },
+    {
+      "from": "/our-team",
+      "to": "/about",
+      "status": 301,
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/our-team/subteams",
+      "to": "/about",
+      "status": 301,
+      "decision": "confirmed",
+      "note": "No subteams page yet. Change this if one is added."
+    },
+    {
+      "from": "/sponsors-donations",
+      "to": "/sponsors",
+      "status": 301,
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/contact",
+      "to": "/#contact",
+      "status": 301,
+      "decision": "owner",
+      "note": "Owner decision: Contact (under About) has no page of its own; it scrolls to the footer. The footer's id is `contact` (sites/main/components/Footer.astro), so the target is /#contact. This replaces the earlier /about/contact in REDIRECTS.md. While /about/contact still exists, the home page script maps #contact to it (see anchors below); remove `contact` from sites/main/data/old-anchors.ts when that page is removed, or this redirect lands on /about/contact. If Wix's redirect manager refuses a # in the new address, use / instead."
+    },
+    {
+      "from": "/copy-of-contact",
+      "to": "/#contact",
+      "status": 301,
+      "decision": "owner",
+      "note": "Wix page named APPLY, same content as /contact. SEO.md suggested /about/contact; the owner decision for Contact (footer) applies. See /contact."
+    },
+    {
+      "from": "/gallery",
+      "to": "/resources/media",
+      "status": 301,
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/yearbook",
+      "to": "/resources/media",
+      "status": 301,
+      "decision": "proposed",
+      "note": "SEO.md names no target (one-off page of yearbook photo captions, in the old sitemap). Nearest page: Media."
+    },
+    {
+      "from": "/saved-site-materials",
+      "to": "/summer-camp",
+      "status": 301,
+      "decision": "proposed",
+      "note": "SEO.md: a 'sign up with LAEF' summer camp registration note; suggested /summer-camp. In the old sitemap."
+    },
+    {
+      "from": "/fullscreen-page",
+      "to": "/",
+      "status": 301,
+      "decision": "proposed",
+      "note": "SEO.md: empty template page; suggested /. Not in the old sitemap."
+    },
+    {
+      "from": "/team",
+      "to": "/about",
+      "status": 301,
+      "decision": "proposed",
+      "note": "Never a real page: the old canonical address of /our-team, which returned 404. Google may still know it. Same target as /our-team."
+    },
+    {
+      "from": "/sponsor",
+      "to": "/sponsors",
+      "status": 301,
+      "decision": "proposed",
+      "note": "Never a real page: the old canonical address of /sponsors-donations, which returned 404. Same target as /sponsors-donations."
+    }
+  ],
+  "anchors": [
+    {
+      "from": "/#about",
+      "to": "/about",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#history",
+      "to": "/about/history",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#robots",
+      "to": "/robots",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#join",
+      "to": "/about/join",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#faq",
+      "to": "/about/join#faq",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#apply",
+      "to": "/about/join#apply",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#sponsors",
+      "to": "/sponsors",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#budget",
+      "to": "/sponsors#budget",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#sponsor-list",
+      "to": "/sponsors#sponsor-list",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#resources",
+      "to": "/resources",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#outreach",
+      "to": "/about/outreach",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#gallery",
+      "to": "/about/outreach#gallery",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#social",
+      "to": "/about/outreach#social",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#contact",
+      "to": "/about/contact",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": "Owner decision: Contact has no page of its own and scrolls to the footer (#contact on the home page). Until /about/contact is removed this still goes there. When it is removed, delete the `contact` entry from sites/main/data/old-anchors.ts and set this target to /#contact (the home page then simply stays put)."
+    },
+    {
+      "from": "/#merch",
+      "to": "/merch",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#photos",
+      "to": "/resources/media",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": ""
+    },
+    {
+      "from": "/#photos-<album>",
+      "to": "/resources/media#<album>",
+      "via": "home page script",
+      "decision": "confirmed",
+      "note": "An album in the old gallery: any #photos-<name>. The check tests the pattern, not each album."
+    }
+  ]
+}
