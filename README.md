@@ -30,14 +30,20 @@ pnpm build      # outputs dist/
 ## Layout
 
 ```
-src/            Astro site (pages, layouts, styles). Homepage lives in src/content/home.html for now
-public/         Static files: assets/, js/, CNAME (dev.team6220.org)
-apps/           One React package per team app, mounted under /apps (see apps/README.md)
-packages/ui     Shared brand styles and components
-packages/data   The only code that talks to Wix / Apps Script
-docs/           Migration plan, Phase 0 checklist, photo policy
-.github/        CI, Pages deploy, CODEOWNERS, Dependabot
+src/pages/          Astro routes (thin; content comes from sites/ and apps/)
+src/layouts/        BaseLayout: the shared page shell (favicon, viewport)
+sites/main/         The public website: content, styles, scripts, media (see its README)
+apps/<name>/        One folder per team app, with its own media/ (see apps/README.md)
+packages/assets/    Shared logos, fonts and favicon that anyone may use
+packages/ui         Shared brand styles and components
+packages/data       The only code that talks to Wix / Apps Script
+integrations/       Build helpers (sync-media copies media to where the browser finds it)
+docs/               Migration plan, Phase 0 checklist, photo policy
+.github/            CI, Pages deploy, CODEOWNERS, Dependabot
 ```
+
+Media lives next to what uses it: `sites/main/media`, `apps/<name>/media`, or `packages/assets` when shared.
+It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/...`.
 
 ## Working here
 

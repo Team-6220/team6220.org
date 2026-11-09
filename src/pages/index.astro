@@ -1,22 +1,22 @@
 ---
 // Lift-and-shift of the approved homepage preview. The markup lives in
-// src/content/home.html and the scripts in public/js/. Phase 1 breaks this
+// sites/main/content/home.html and the scripts in sites/main/scripts/. Phase 1 breaks this
 // into Astro components, one section at a time.
-import BaseLayout from "../layouts/BaseLayout.astro";
-import rawHome from "../content/home.html?raw";
+import MainLayout from "../../sites/main/MainLayout.astro";
+import rawHome from "../../sites/main/content/home.html?raw";
 
 // Photos of students are not stored in this repo. They are served from PUBLIC_MEDIA_BASE
 // (a Wix media or other host URL, no trailing slash). See docs/PHOTOS.md.
-const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE ?? "/media").replace(/\/$/, "");
+const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE ?? "/photos").replace(/\/$/, "");
 const homeHtml = rawHome.replaceAll("%MEDIA%", mediaBase);
 ---
 
-<BaseLayout
+<MainLayout
   title="Golden Griffins Homepage"
   description="FRC Team 6220, the Golden Griffins: a student-led FIRST Robotics Competition team at Los Alamitos High School since 2016."
 >
   <Fragment set:html={homeHtml} />
   <script is:inline set:html={`window.MEDIA_BASE=${JSON.stringify(mediaBase)};`} />
-  <script is:inline src="/js/site-a.js"></script>
-  <script is:inline src="/js/site-b.js"></script>
-</BaseLayout>
+  <script is:inline src="/assets/main/js/site-a.js"></script>
+  <script is:inline src="/assets/main/js/site-b.js"></script>
+</MainLayout>
