@@ -46,7 +46,7 @@ export async function login(returnTo?: string): Promise<never> {
   const back = safeLocalPath(returnTo ?? window.location.pathname + window.location.search);
   const data = client.auth.generateOAuthData(origin + LOGIN_REDIRECT_PATH, origin + back);
   try {
-    window.localStorage.setItem(OAUTH_DATA_KEY, JSON.stringify(data));
+    window.sessionStorage.setItem(OAUTH_DATA_KEY, JSON.stringify(data));
   } catch {
     throw new Error("Sign-in needs browser storage. Turn off private browsing or allow site data.");
   }
@@ -64,9 +64,9 @@ export async function handleLoginCallback(): Promise<string> {
   const returned = client.auth.parseFromUrl();
   let stored: ReturnType<typeof client.auth.generateOAuthData> | null = null;
   try {
-    const raw = window.localStorage.getItem(OAUTH_DATA_KEY);
+    const raw = window.sessionStorage.getItem(OAUTH_DATA_KEY);
     stored = raw ? JSON.parse(raw) : null;
-    window.localStorage.removeItem(OAUTH_DATA_KEY);
+    window.sessionStorage.removeItem(OAUTH_DATA_KEY);
   } catch {
     // fall through to the error below
   }
