@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@goldsim/core": ["packages/core/src/index.ts"],
+      "@goldsim/schema": ["packages/schema/src/index.ts"],
+      "@goldsim/game-rebuilt": ["packages/game-rebuilt/src/index.ts"],
+      "@goldsim/agents": ["packages/agents/src/index.ts"],
+      "@goldsim/pathplan": ["packages/pathplan/src/index.ts"],
+      "@goldsim/batch": ["packages/batch/src/index.ts"],
+      "@goldsim/analytics": ["packages/analytics/src/index.ts"],
+      "@goldsim/data-layer": ["packages/data-layer/src/index.ts"]
+    }
+  }
+}

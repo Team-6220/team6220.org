@@ -1,0 +1,17 @@
+{
+  "types": [
+    {
+      "id": "fuel",
+      "label": "Fuel",
+      "shape": "circle",
+      "radius": 0.0751,
+      "mass": 0.215,
+      "restitution": 0.4,
+      "friction": 0.5,
+      "linearDamping": 1.2,
+      "color": "gold"
+    }
+  ],
+  "totalCount": 504,
+  "preload": { "piece": "fuel", "max": 8 }
+}

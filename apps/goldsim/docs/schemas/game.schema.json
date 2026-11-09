@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: game.json",
+  "description": "game.json: match metadata and timeline.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "year",
+    "version",
+    "manualVersion",
+    "robotsPerAlliance",
+    "timeline",
+    "activationGrace",
+    "thresholdProfiles",
+    "defaultProfile"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "type": "number"
+    },
+    "id": {
+      "minLength": 1,
+      "description": "e.g. rebuilt-2026",
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "version": {
+      "description": "Module version (semver).",
+      "type": "string"
+    },
+    "manualVersion": {
+      "description": "Game manual version the module was built from, e.g. TU22.",
+      "type": "string"
+    },
+    "robotsPerAlliance": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "timeline": {
+      "type": "object",
+      "required": [
+        "phases",
+        "postMatchAssessment"
+      ],
+      "properties": {
+        "phases": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "description": "One step of the match timeline.",
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "duration",
+              "period",
+              "robotsEnabled"
+            ],
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "description": "e.g. AUTO, TRANSITION, SHIFT_1, END_GAME",
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "duration": {
+                "description": "seconds",
+                "minimum": 0,
+                "type": "number"
+              },
+              "period": {
+                "description": "Scoring period this phase belongs to.",
+                "anyOf": [
+                  {
+                    "const": "auto",
+                    "type": "string"
+                  },
+                  {
+                    "const": "teleop",
+                    "type": "string"
+                  }
+                ]
+              },
+              "robotsEnabled": {
+                "description": "false for scoring-only gaps where robots are disabled.",
+                "type": "boolean"
+              },
+              "elementActive": {
+                "description": "Base element id (without alliance suffix) -> which alliance copies are active.",
+                "type": "object",
+                "patternProperties": {
+                  "^(.*)$": {
+                    "description": "Which alliances' copies of an element are active in this phase. groupA/groupB are alliances chosen at runtime by the game's groupsHook (e.g. REBUILT shift order).",
+                    "anyOf": [
+                      {
+                        "const": "both",
+                        "type": "string"
+                      },
+                      {
+                        "const": "none",
+                        "type": "string"
+                      },
+                      {
+                        "const": "groupA",
+                        "type": "string"
+                      },
+                      {
+                        "const": "groupB",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              },
+              "assessClimbAtEnd": {
+                "description": "Emit climb_assessed for every climbed robot when this phase ends.",
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "postMatchAssessment": {
+          "description": "seconds after the last phase during which in-flight pieces still score",
+          "minimum": 0,
+          "type": "number"
+        }
+      }
+    },
+    "activationGrace": {
+      "description": "seconds an element keeps scoring after it deactivates (assessment delay)",
+      "minimum": 0,
+      "type": "number"
+    },
+    "groupsHook": {
+      "description": "Id of a reviewed TypeScript hook that decides groupA/groupB at runtime.",
+      "type": "string"
+    },
+    "thresholdProfiles": {
+      "description": "Named sets of bonus ranking point thresholds, e.g. regional / districtChampionship.",
+      "type": "object",
+      "patternProperties": {
+        "^(.*)$": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "defaultProfile": {
+      "type": "string"
+    }
+  }
+}

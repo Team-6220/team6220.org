@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["scripts/**/*", "templates/**/*.ts", "packages/*/src/**/*", "packages/*/spike/**/*", "packages/*/tests/**/*", "vitest.config.ts", "packages/web/vite.config.ts"]
+}

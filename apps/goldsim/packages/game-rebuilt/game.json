@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "id": "rebuilt-2026",
+  "name": "REBUILT",
+  "year": 2026,
+  "version": "0.1.0",
+  "manualVersion": "TU22",
+  "robotsPerAlliance": 3,
+  "timeline": {
+    "phases": [
+      {
+        "id": "AUTO",
+        "label": "Auto",
+        "duration": 20,
+        "period": "auto",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "both" },
+        "assessClimbAtEnd": true
+      },
+      {
+        "id": "AUTO_GAP",
+        "label": "Auto scoring delay",
+        "duration": 3,
+        "period": "auto",
+        "robotsEnabled": false,
+        "elementActive": { "hub": "both" }
+      },
+      {
+        "id": "TRANSITION",
+        "label": "Transition shift",
+        "duration": 10,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "both" }
+      },
+      {
+        "id": "SHIFT_1",
+        "label": "Shift 1",
+        "duration": 25,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "groupA" }
+      },
+      {
+        "id": "SHIFT_2",
+        "label": "Shift 2",
+        "duration": 25,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "groupB" }
+      },
+      {
+        "id": "SHIFT_3",
+        "label": "Shift 3",
+        "duration": 25,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "groupA" }
+      },
+      {
+        "id": "SHIFT_4",
+        "label": "Shift 4",
+        "duration": 25,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "groupB" }
+      },
+      {
+        "id": "END_GAME",
+        "label": "End game",
+        "duration": 30,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "hub": "both" },
+        "assessClimbAtEnd": true
+      }
+    ],
+    "postMatchAssessment": 3
+  },
+  "activationGrace": 3,
+  "groupsHook": "rebuilt.shiftOrder",
+  "thresholdProfiles": {
+    "regional": { "energized": 100, "supercharged": 360, "traversal": 50 },
+    "districtChampionship": { "energized": 240, "supercharged": 360, "traversal": 50 },
+    "championship": { "energized": 360, "supercharged": 500, "traversal": 50 }
+  },
+  "defaultProfile": "regional"
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "template-2027",
+  "name": "TODO: game name",
+  "year": 2027,
+  "version": "0.1.0",
+  "manualVersion": "TODO: manual version (e.g. TU00)",
+  "robotsPerAlliance": 3,
+  "timeline": {
+    "phases": [
+      {
+        "id": "AUTO",
+        "label": "Auto (TODO: duration from manual)",
+        "duration": 15,
+        "period": "auto",
+        "robotsEnabled": true,
+        "elementActive": { "goal": "both" },
+        "assessClimbAtEnd": false
+      },
+      {
+        "id": "TELEOP",
+        "label": "Teleop (TODO: split into the manual's phases/shifts)",
+        "duration": 135,
+        "period": "teleop",
+        "robotsEnabled": true,
+        "elementActive": { "goal": "both" },
+        "assessClimbAtEnd": true
+      }
+    ],
+    "postMatchAssessment": 3
+  },
+  "activationGrace": 0,
+  "thresholdProfiles": {
+    "regional": { "bonusPieces": 999 }
+  },
+  "defaultProfile": "regional"
+}

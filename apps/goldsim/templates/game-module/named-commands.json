@@ -1,0 +1,7 @@
+{
+  "namedCommands": {
+    "Score": { "action": "shoot", "durationSeconds": 2.0 },
+    "IntakeOn": { "action": "intake", "state": "on" },
+    "IntakeOff": { "action": "intake", "state": "off" }
+  }
+}

@@ -1,0 +1,40 @@
+* { box-sizing: border-box; border-radius: 0; }
+html, body { margin: 0; height: 100%; background: var(--page); color: var(--text);
+  font-family: var(--font-body); font-size: 15px; }
+body { overflow: hidden; }
+
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gray-1); min-width: 1024px; }
+#topbar { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; background: #000;
+  border-bottom: 2px solid var(--gold); flex: none; color: #fff; }
+#logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+#logo img { height: 30px; width: 30px; display: block; }
+#logo .wordmark { font-family: var(--font-title); font-size: 24px; letter-spacing: 2px; color: var(--gold); line-height: 1; }
+#logo .wordmark span { color: #fff; }
+#nav { display: flex; gap: 8px; margin-left: 16px; flex: 1; }
+#nav a { color: #8a8a8a; text-decoration: none; padding: 4px 8px; border: 2px solid transparent; }
+#nav a:hover { color: #fff; border-color: #444; }
+#nav a.sel { color: var(--gold); border-color: var(--gold); }
+#topbar .btn { background: #2a2a2a; color: #fff; border-color: #444; }
+#topbar .btn:hover { border-color: var(--gold); }
+
+#main { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+#main.flush { padding: 0; overflow: hidden; }
+
+#toast { position: fixed; right: 12px; top: 54px; width: 340px; z-index: 30; display: flex; flex-direction: column; gap: 6px; }
+#modal { display: none; position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.88);
+  align-items: center; justify-content: center; }
+#modal.open { display: flex; }
+
+h1, h2, h3 { margin: 0 0 6px 0; }
+h1, h2, .title { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; }
+h1 { font-size: 28px; }
+h2 { font-size: 20px; color: var(--gold); }
+h3 { font-size: 16px; }
+p { margin: 0 0 8px 0; line-height: 1.4; }
+a { color: var(--gold); }
+hr { border: 0; border-top: 2px solid var(--gray-4); margin: 10px 0; }
+canvas { display: block; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border-bottom: 1px solid var(--gray-4); padding: 4px 8px; text-align: left; }
+th { color: var(--gray-5); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }

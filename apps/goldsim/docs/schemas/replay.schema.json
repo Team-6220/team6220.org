@@ -1,0 +1,401 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Replay",
+  "description": "A match replay: seed + versions + input log. Re-simulates deterministically.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "engineVersion",
+    "module",
+    "seed",
+    "hz",
+    "profile",
+    "robots",
+    "actionNames",
+    "inputs",
+    "durationTicks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "type": "number"
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "hz": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "profile": {
+      "description": "Threshold profile used.",
+      "type": "string"
+    },
+    "robots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "design",
+          "alliance",
+          "station"
+        ],
+        "properties": {
+          "design": {
+            "description": "A 2D robot design. Geometry drives behavior; nothing here is checked against robot rules.",
+            "type": "object",
+            "required": [
+              "schemaVersion",
+              "name",
+              "chassis",
+              "mechanisms"
+            ],
+            "properties": {
+              "schemaVersion": {
+                "const": 1,
+                "type": "number"
+              },
+              "name": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "chassis": {
+                "type": "object",
+                "required": [
+                  "frame",
+                  "height",
+                  "bumpers",
+                  "mass",
+                  "momentOfInertia",
+                  "drivetrain"
+                ],
+                "properties": {
+                  "frame": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "length",
+                          "width"
+                        ],
+                        "properties": {
+                          "type": {
+                            "const": "rect",
+                            "type": "string"
+                          },
+                          "length": {
+                            "description": "frame length along the robot's +x (forward) axis, meters, bumpers excluded",
+                            "exclusiveMinimum": 0,
+                            "type": "number"
+                          },
+                          "width": {
+                            "description": "frame width along the robot's +y (left) axis, meters, bumpers excluded",
+                            "exclusiveMinimum": 0,
+                            "type": "number"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "type",
+                          "points"
+                        ],
+                        "properties": {
+                          "type": {
+                            "const": "polygon",
+                            "type": "string"
+                          },
+                          "points": {
+                            "minItems": 3,
+                            "description": "Convex frame outline in the chassis frame (meters, origin at robot center).",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "x",
+                                "y"
+                              ],
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "height": {
+                    "description": "driving height in meters (used for height-gated passages)",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "bumpers": {
+                    "type": "object",
+                    "required": [
+                      "thickness",
+                      "mass"
+                    ],
+                    "properties": {
+                      "thickness": {
+                        "description": "bumper thickness beyond the frame, meters",
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "mass": {
+                        "description": "bumper mass, kg",
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "mass": {
+                    "description": "robot mass without bumpers, kg",
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "momentOfInertia": {
+                    "description": "'auto' computes it from the footprint assuming uniform density.",
+                    "anyOf": [
+                      {
+                        "const": "auto",
+                        "type": "string"
+                      },
+                      {
+                        "description": "kg m^2",
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "drivetrain": {
+                    "description": "Drivetrain model. Motor and gearbox limits are expressed as speed and acceleration caps.",
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "maxSpeed",
+                      "maxAccel",
+                      "maxAngularSpeed",
+                      "traction"
+                    ],
+                    "properties": {
+                      "type": {
+                        "description": "swerve and mecanum are holonomic; tank cannot strafe.",
+                        "anyOf": [
+                          {
+                            "const": "swerve",
+                            "type": "string"
+                          },
+                          {
+                            "const": "tank",
+                            "type": "string"
+                          },
+                          {
+                            "const": "mecanum",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "maxSpeed": {
+                        "description": "top translational speed, m/s",
+                        "exclusiveMinimum": 0,
+                        "type": "number"
+                      },
+                      "maxAccel": {
+                        "description": "translational acceleration limit, m/s^2",
+                        "exclusiveMinimum": 0,
+                        "type": "number"
+                      },
+                      "maxAngularSpeed": {
+                        "description": "top rotational speed, rad/s",
+                        "exclusiveMinimum": 0,
+                        "type": "number"
+                      },
+                      "maxAngularAccel": {
+                        "description": "rotational acceleration limit, rad/s^2 (default 4 x maxAngularSpeed)",
+                        "type": "number"
+                      },
+                      "traction": {
+                        "description": "wheel friction coefficient; caps pushing force at traction x weight",
+                        "exclusiveMinimum": 0,
+                        "type": "number"
+                      },
+                      "strafeFactor": {
+                        "description": "mecanum only: sideways speed as a fraction of maxSpeed (default 0.8)",
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              "mechanisms": {
+                "type": "array",
+                "items": {
+                  "description": "A mechanism mounted on the chassis.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "type",
+                    "mount",
+                    "params"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "Unique within the robot, e.g. 'intake1'.",
+                      "type": "string"
+                    },
+                    "type": {
+                      "minLength": 1,
+                      "description": "Core type (intake, storage, transfer, shooter, placer, climber, blocker) or a custom type id from the game module's mechanisms.json.",
+                      "type": "string"
+                    },
+                    "mount": {
+                      "description": "Where the mechanism sits on the chassis, in the chassis frame.",
+                      "type": "object",
+                      "required": [
+                        "x",
+                        "y",
+                        "theta"
+                      ],
+                      "properties": {
+                        "x": {
+                          "description": "meters forward of robot center",
+                          "type": "number"
+                        },
+                        "y": {
+                          "description": "meters left of robot center",
+                          "type": "number"
+                        },
+                        "theta": {
+                          "description": "radians; the direction the mechanism faces relative to robot forward",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "params": {
+                      "description": "Type-specific parameters. Missing values use the type's defaults.",
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "stateMachine": {
+                      "description": "Preset state machine id, e.g. 'intake.default'.",
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "preload": {
+                "description": "game pieces held at match start (capped by the game's preload limit)",
+                "minimum": 0,
+                "type": "number"
+              }
+            }
+          },
+          "alliance": {
+            "description": "Alliance color. The field is authored from the blue side; red elements are generated by mirroring.",
+            "anyOf": [
+              {
+                "const": "blue",
+                "type": "string"
+              },
+              {
+                "const": "red",
+                "type": "string"
+              }
+            ]
+          },
+          "station": {
+            "minimum": 0,
+            "description": "0-based driver station / start position index.",
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "actionNames": {
+      "description": "Bit i of an input's action mask is actionNames[i].",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputs": {
+      "description": "Input changes only: [tick, robotIndex, vx, vy, omega, actionMask]. vx/vy/omega are quantized to -127..127. An input holds until the next change for that robot.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "additionalItems": false,
+        "minItems": 6,
+        "maxItems": 6
+      }
+    },
+    "durationTicks": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "recordedAt": {
+      "type": "string"
+    }
+  }
+}

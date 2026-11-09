@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: rules.json",
+  "description": "rules.json",
+  "type": "object",
+  "required": [
+    "rules"
+  ],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "topic",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "description": "Manual rule number, e.g. G403.",
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "const": "implemented",
+                "type": "string"
+              },
+              {
+                "const": "approximated",
+                "type": "string"
+              },
+              {
+                "const": "not_implemented",
+                "type": "string"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "penalty": {
+            "description": "Foul severity key from scoring.json fouls.",
+            "type": "string"
+          },
+          "detector": {
+            "description": "Objective in-match rule check the sim can run.",
+            "anyOf": [
+              {
+                "description": "Robot crosses past a line toward the opponent.",
+                "type": "object",
+                "required": [
+                  "type",
+                  "lineX",
+                  "periods",
+                  "completely"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "crossLine",
+                    "type": "string"
+                  },
+                  "lineX": {
+                    "description": "blue-relative x of the line, meters (mirrored for red)",
+                    "type": "number"
+                  },
+                  "periods": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "const": "auto",
+                          "type": "string"
+                        },
+                        {
+                          "const": "teleop",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "completely": {
+                    "description": "Foul only when the whole robot footprint is past the line.",
+                    "type": "boolean"
+                  }
+                }
+              },
+              {
+                "description": "Robot launches at its target while bumpers are not at least partly in the zone.",
+                "type": "object",
+                "required": [
+                  "type",
+                  "zone",
+                  "target"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "launchOutsideZone",
+                    "type": "string"
+                  },
+                  "zone": {
+                    "description": "Base zone id (alliance copy of the shooter's alliance is used).",
+                    "type": "string"
+                  },
+                  "target": {
+                    "description": "Base sink id; only shots at the shooter's own copy count.",
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "description": "A piece the robot launched lands outside the field.",
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "pieceOutOfField",
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "fouls": { "MINOR": 5, "MAJOR": 15 },
+  "rules": [
+    {
+      "id": "goal-piece",
+      "label": "TODO: piece scored in the goal",
+      "on": "piece_scored",
+      "when": [
+        { "field": "targetBase", "op": "eq", "value": "goal" },
+        { "field": "active", "op": "eq", "value": true }
+      ],
+      "effects": [{ "points": 1, "counter": "goalPieces" }],
+      "source": "TODO: manual section"
+    }
+  ],
+  "rankingPoints": {
+    "win": 3,
+    "tie": 1,
+    "bonus": [
+      { "id": "BONUS", "label": "TODO: bonus RP name", "counter": "goalPieces", "thresholdKey": "bonusPieces" }
+    ]
+  }
+}
