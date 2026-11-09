@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
 import syncMedia from "./integrations/sync-media.mjs";
 import buildApps from "./integrations/build-apps.mjs";
 
@@ -8,5 +9,6 @@ import buildApps from "./integrations/build-apps.mjs";
 export default defineConfig({
   site: "https://dev.team6220.org",
   output: "static",
-  integrations: [syncMedia(), buildApps()],
+  // React 18 only: @wix/astro (Phase 2) peers on react ^18.3. Apps under apps/* are React.
+  integrations: [syncMedia(), react(), buildApps()],
 });

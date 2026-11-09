@@ -1,0 +1,19 @@
+{
+  "name": "@team6220/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The /apps dashboard: sign-in, the member's name and a card for every team app.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./apps": "./src/apps.ts",
+    "./dashboard.css": "./src/dashboard.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

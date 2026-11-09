@@ -4,6 +4,7 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 
 | Folder | Route | Status |
 | --- | --- | --- |
+| `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
 | `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only) |
 | `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
@@ -16,6 +17,40 @@ Rules (from the migration plan):
 - Each app owns its folder, with its own line in `.github/CODEOWNERS`.
 - Brand colors and fonts come from `@team6220/ui`.
 - The Wix integration needs **React 18** (`@wix/astro` peers on `^18.3.1`), so don't use React 19 here.
+
+## Login and the dashboard
+
+- **The main nav's "Log In" link points to `/apps`.** Signed out, that page shows a **Sign in** button (and the
+  public apps); signed in, it shows the member's name, a **Sign out** button and every app card.
+- Sign-in uses the Wix login page ("Log in with Google"). New signups need a Web Admin to approve them under
+  **Wix → Site Members** and give them the `Team Member` badge; until then the dashboard says "Waiting for approval".
+- Routes: `/apps` (dashboard), `/apps/login/callback` (finishes sign-in; never put it under `/api/auth/*`, which
+  `@wix/astro` owns in Phase 2) and `/apps/logout` (link here to sign out from anywhere).
+- In an app, use `auth` from `@team6220/data`: `auth.getMember()`, `auth.hasBadge(BADGES.attendanceAdmin)`,
+  `auth.login("/apps/<name>")`. Mount components that call it with `client:only="react"`. Badge checks in the browser
+  only hide UI; see [`packages/data/README.md`](../packages/data/README.md) for how login works, its limits and
+  what Phase 2 changes.
+
+### Add an app card
+
+Edit [`apps/dashboard/src/apps.ts`](dashboard/src/apps.ts), the one list of team apps (the main site's Resources
+menu can import it too, from `@team6220/dashboard/apps`). Add an entry with a unique `id`, `name`, `description`,
+`href` (its route under `/apps`), `status` (`"live"` or `"planned"`, which greys it out with no link) and `access`
+(`"public"` cards also show to signed-out visitors; `"team"` cards only to approved members).
+
+### Page shell for an app
+
+Use `src/layouts/AppLayout.astro` (shared tokens from `@team6220/ui/tokens.css`, none of the main site's styles):
+
+```astro
+---
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { MyApp } from "@team6220/my-app";
+---
+<AppLayout title="My app | Los Al Robotics" description="…">
+  <MyApp client:only="react" />
+</AppLayout>
+```
 
 ## Folder layout for one app
 

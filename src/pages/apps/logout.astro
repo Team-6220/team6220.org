@@ -1,0 +1,12 @@
+---
+// /apps/logout: signs the member out of the site and Wix, then returns to /apps.
+import AppLayout from "../../layouts/AppLayout.astro";
+import { Logout } from "@team6220/dashboard";
+import "@team6220/dashboard/dashboard.css";
+---
+
+<AppLayout title="Signing out | Los Al Robotics" description="Signing out.">
+  <Logout client:only="react">
+    <main class="dash" slot="fallback"><p class="dash__status">Signing you out…</p></main>
+  </Logout>
+</AppLayout>

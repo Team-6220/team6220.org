@@ -1,0 +1,68 @@
+/* Starter design tokens for the team apps. The Phase 1 styling pass replaces these with the real
+   brand (fonts, spacing scale, dark mode); keep using the variable names and only the values change. */
+:root {
+  --color-gold: #fa9504;
+  --color-gold-strong: #c97200;
+  --color-ink: #1d1d1f;
+  --color-muted: #5f6368;
+  --color-bg: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-border: #e2e2e6;
+  --color-danger: #b3261e;
+
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 10px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ink: #ececf0;
+    --color-muted: #a6a6ad;
+    --color-bg: #141416;
+    --color-surface: #1e1e22;
+    --color-border: #33333a;
+    --color-danger: #f2b8b5;
+  }
+}
+
+.t-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.6rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--color-gold);
+  color: #1d1d1f;
+  font: 600 1rem/1.2 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+.t-button:hover {
+  background: var(--color-gold-strong);
+  color: #fff;
+}
+.t-button:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+.t-button[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+.t-button--quiet {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-ink);
+}
+.t-button--quiet:hover {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-color: var(--color-muted);
+}
