@@ -1,0 +1,11 @@
+---
+// Media (photo albums). An album opens from the address: /resources/media#<album>.
+import MainLayout from "../../../sites/main/MainLayout.astro";
+import PageHero from "../../../sites/main/components/PageHero.astro";
+import Gallery from "../../../sites/main/sections/media/Gallery.astro";
+---
+
+<MainLayout page="resources" title="Media · Golden Griffins" description="Photos from Team 6220's competitions and build seasons.">
+  <PageHero img="/gal/socal-showdown-2025/06.webp" eyebrow="Media" title="Ten seasons in pictures" lede="Competitions, build seasons, and the people in between." />
+  <Gallery />
+</MainLayout>

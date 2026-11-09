@@ -4,7 +4,10 @@
 
   /* ---- Intro: winged gold ball flight → corner burst → gold wipe → griffin → title ----
      Pure function of time (draw(t)), so it can be replayed, skipped, or rendered to video. */
-  var intro=document.getElementById('intro'),cv=document.getElementById('intro-canvas'),cx=cv.getContext('2d');
+  document.querySelectorAll('.menu>li').forEach(function(li,n){li.style.setProperty('--n',n+1)});
+  var intro=document.getElementById('intro'),cv=document.getElementById('intro-canvas'),skipIntro=function(){},playIntro=null;
+  if(intro&&cv&&document.getElementById('griffin')){   /* intro markup is only on the home page */
+  var cx=cv.getContext('2d');
   var GOLD='#ffa300',GOLD2='#fa9504',INK='#000000';
   var logoSym=document.getElementById('griffin'),LOGO=new Path2D(logoSym.querySelector('path').getAttribute('d'));
   var vb=logoSym.getAttribute('viewBox').split(/[\s,]+/).map(Number);
@@ -141,7 +144,6 @@
   /* Playback */
   var raf=0,t0=0,END=4.1,MS=null,mraf=0,MDUR=.85;
   var heroH1=document.querySelector('.hero h1'),heroEb=document.querySelector('.hero .eyebrow');
-  document.querySelectorAll('.menu>li').forEach(function(li,n){li.style.setProperty('--n',n+1)});
   var finishIntro=function(){cancelAnimationFrame(raf);cancelAnimationFrame(mraf);clearTimeout(intro._t);clearTimeout(intro._w);MS=null;intro.classList.remove('morph','done');
     root.classList.remove('intro-on','intro-rm','mh-logo','mh-h1','mh-eb','eb-wait','nav-in','morph-late');try{sessionStorage.setItem('g6220-intro','1')}catch(e){}};
   /* Fallback / reduced motion: plain crossfade */
@@ -225,31 +227,45 @@
     document.getElementById('intro-skip').focus({preventScroll:true})};
   window.addEventListener('resize',function(){if(root.classList.contains('intro-on')&&!MS){resize();if(root.classList.contains('intro-rm'))draw(3.2)}});
   try{document.fonts.load('700 40px Karnivore');document.fonts.load('700 40px Orbitron');document.fonts.load('600 20px Jura')}catch(e){}
-  var skipIntro=function(){startMorph(true)};
+  skipIntro=function(){startMorph(true)};
   document.getElementById('intro-skip').addEventListener('click',skipIntro);
-  document.getElementById('replay').addEventListener('click',function(){
-    try{if(location.hash&&location.hash!=='#home')history.pushState(null,'','#home')}catch(e){}
-    if(typeof show==='function')show('home');window.scrollTo({top:0,left:0,behavior:'instant'});
-    playIntro(matchMedia('(prefers-reduced-motion: reduce)').matches?(root.classList.add('intro-rm'),true):false)});
   window.__g6220Intro={render:function(t){root.classList.add('intro-on');resize();draw(t)},
     morphAt:function(mt){if(!MS){MS=prepareMorph();intro.classList.add('morph')}drawMorph(mt);applyMorph(mt)}};
   if(root.classList.contains('intro-on'))playIntro(root.classList.contains('intro-rm'));
+  }else root.classList.remove('intro-on','intro-rm');
+  /* Replay intro (footer): plays here on the home page; elsewhere it opens the home page, which plays it */
+  var replayBtn=document.getElementById('replay');
+  if(replayBtn)replayBtn.addEventListener('click',function(){
+    if(!playIntro){try{sessionStorage.removeItem('g6220-intro')}catch(e){}location.href='/';return}
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+    playIntro(matchMedia('(prefers-reduced-motion: reduce)').matches?(root.classList.add('intro-rm'),true):false)});
 
   /* ---- Menu ---- */
   var btn=document.getElementById('menu-btn'),nav=document.getElementById('site-nav');
-  var closeSubs=function(except){nav.querySelectorAll('.has-sub.open').forEach(function(li){if(li!==except){li.classList.remove('open');li.querySelector('button').setAttribute('aria-expanded','false')}})};
+  var closeSubs=function(except){nav.querySelectorAll('.has-sub.open').forEach(function(li){if(li!==except){li.classList.remove('open');li.querySelector('.sub-btn').setAttribute('aria-expanded','false')}})};
   var closeMenu=function(){nav.classList.remove('open');btn.setAttribute('aria-expanded','false');btn.textContent='MENU';closeSubs()};
   btn.addEventListener('click',function(){var o=nav.classList.toggle('open');btn.setAttribute('aria-expanded',o);btn.textContent=o?'CLOSE':'MENU'});
-  nav.querySelectorAll('.has-sub>button').forEach(function(b){b.addEventListener('click',function(){var li=b.parentNode,o=!li.classList.contains('open');closeSubs(li);li.classList.toggle('open',o);b.setAttribute('aria-expanded',o)})});
+  nav.querySelectorAll('.has-sub>.sub-btn').forEach(function(b){b.addEventListener('click',function(){var li=b.parentNode,o=!li.classList.contains('open');closeSubs(li);li.classList.toggle('open',o);b.setAttribute('aria-expanded',o)})});
+  /* Desktop: hover or keyboard focus also opens a dropdown (CSS). Keep aria-expanded in step; Escape shuts it. */
+  var mobileMenu=function(){return getComputedStyle(btn).display!=='none'};
+  var syncSub=function(li){var b=li.querySelector('.sub-btn');b.setAttribute('aria-expanded',String(li.classList.contains('open')||!mobileMenu()&&!li.classList.contains('shut')&&(li.matches(':hover')||li.matches(':focus-within'))))};
+  nav.querySelectorAll('.has-sub').forEach(function(li){
+    li.addEventListener('mouseenter',function(){syncSub(li)});
+    li.addEventListener('mouseleave',function(){li.classList.remove('shut');syncSub(li)});
+    li.addEventListener('focusin',function(e){if(e.target!==li.querySelector(':scope>a'))li.classList.remove('shut');syncSub(li)});
+    li.addEventListener('focusout',function(){setTimeout(function(){if(!li.contains(document.activeElement))li.classList.remove('shut');syncSub(li)},0)})});
   document.addEventListener('click',function(e){if(!e.target.closest('.nav')&&!e.target.closest('#menu-btn'))closeSubs()});
   document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;
     if(root.classList.contains('intro-on')){skipIntro();return}
-    var o=nav.querySelector('.has-sub.open>button');closeSubs();if(nav.classList.contains('open')){closeMenu();btn.focus()}else if(o)o.focus()});
+    var o=nav.querySelector('.has-sub.open>.sub-btn');closeSubs();
+    if(nav.classList.contains('open')){closeMenu();btn.focus();return}
+    var li=document.activeElement&&document.activeElement.closest?document.activeElement.closest('.has-sub'):null;
+    if(li&&nav.contains(li)){li.classList.add('shut');li.querySelector(':scope>a').focus();syncSub(li)}else if(o)o.focus()});
   /* ---- Scroll: header size, progress line, hero parallax ---- */
   var prog=document.getElementById('progress'),heroImg=document.getElementById('hero-img'),ticking=false;
   var onScroll=function(){ticking=false;head.classList.toggle('scrolled',scrollY>40);
     var max=document.documentElement.scrollHeight-innerHeight;prog.style.transform='scaleX('+(max>0?Math.min(1,scrollY/max):0)+')';
-    if(motionOK&&scrollY<innerHeight*1.2){heroImg.style.transform='translate3d(0,'+(scrollY*.12).toFixed(1)+'px,0)';var bi=document.querySelector('.page.current .ph-img');if(bi)bi.style.transform='translate3d(0,'+(scrollY*.12).toFixed(1)+'px,0)'}};
+    if(motionOK&&scrollY<innerHeight*1.2){if(heroImg)heroImg.style.transform='translate3d(0,'+(scrollY*.12).toFixed(1)+'px,0)';var bi=document.querySelector('.page.current .ph-img');if(bi)bi.style.transform='translate3d(0,'+(scrollY*.12).toFixed(1)+'px,0)'}};
   /* Depth: decorative layers move at different speeds (0.6× back, 0.8× middle, 1.1× front), max ±60px */
   var pxEls=[].slice.call(document.querySelectorAll('.px')),echoEl=document.querySelector('.h1-echo'),homeEl=document.getElementById('home');
   var depthScroll=function(){if(!motionOK)return;var mid=innerHeight/2;
@@ -265,7 +281,7 @@
   /* ---- Reveals and timeline ---- */
   var io=motionOK&&new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.remove('pre');io.unobserve(en.target)}})},{rootMargin:'0px 0px -8% 0px'});
   var tl=document.getElementById('tl'),tlOn=false;
-  var drawTl=function(){if(!tlOn)return;var r=tl.getBoundingClientRect(),p=Math.max(0,Math.min(1,(innerHeight*.7-r.top)/r.height));tl.style.setProperty('--p',p.toFixed(3))};
+  var drawTl=function(){if(!tlOn||!tl)return;var r=tl.getBoundingClientRect(),p=Math.max(0,Math.min(1,(innerHeight*.7-r.top)/r.height));tl.style.setProperty('--p',p.toFixed(3))};
   addEventListener('scroll',function(){requestAnimationFrame(drawTl)},{passive:true});
 
   var arm=function(page){
@@ -273,49 +289,38 @@
     page.querySelectorAll('.rv,.tl li,.budget').forEach(function(el){
       el.classList.add('pre');io.observe(el);
     });
-    tlOn=page.contains(tl);if(tlOn){tl.style.setProperty('--p','0');requestAnimationFrame(drawTl)}
+    tlOn=!!tl&&page.contains(tl);if(tlOn){tl.style.setProperty('--p','0');requestAnimationFrame(drawTl)}
   };
 
-  /* ---- Hash router ---- */
-  var pages=[].slice.call(document.querySelectorAll('.page')),current=null;
-  var items=[].slice.call(nav.querySelectorAll('.menu>li[data-page]'));
-  var show=function(id,scroll){
-    var target=id&&document.getElementById(id);
-    if(!target)target=document.getElementById('home');
-    var page=target.classList.contains('page')?target:target.closest('.page');
-    if(!page){ /* footer anchors like #contact: no page change */ target.scrollIntoView({behavior:motionOK?'smooth':'auto'});return}
-    if(page!==current){
-      var swap=function(){
-      pages.forEach(function(p){p.classList.toggle('current',p===page)});
-      current=page;document.title=(page.dataset.title==='Home'?'Golden Griffins Homepage':page.dataset.title+' · Golden Griffins');
-      items.forEach(function(li){li.classList.toggle('active',li.dataset.page===page.id)});
-      window.scrollTo(0,0);arm(page);onScroll();
-      if(scroll!==false&&target!==page){requestAnimationFrame(function(){target.scrollIntoView()})}
-      };
-      if(current&&motionOK&&window.G6220Loader&&!root.classList.contains('intro-on'))G6220Loader.run(swap);else swap();
-    }else if(scroll!==false){
-      if(target===page)window.scrollTo({top:0,behavior:motionOK?'smooth':'auto'});
-      else target.scrollIntoView({behavior:motionOK?'smooth':'auto'});
-    }
-  };
+  /* ---- Pages: each page is its own address. Same-site links play the page-change loader (site-a.js). ---- */
+  var current=document.querySelector('.page.current');
+  if(current){arm(current);onScroll()}
   document.addEventListener('click',function(e){
-    var a=e.target.closest('a[href^="#"]');if(!a)return;
-    var id=a.getAttribute('href').slice(1);if(!id)return;
-    if(id==='main'){return}
-    e.preventDefault();closeMenu();if(document.activeElement&&nav.contains(document.activeElement))document.activeElement.blur();
-    if(location.hash!=='#'+id){try{history.pushState(null,'','#'+id)}catch(err){location.hash=id;return}}
-    show(id);
+    if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+    var a=e.target.closest('a[href]');if(!a||(a.target&&a.target!=='_self')||a.hasAttribute('download'))return;
+    var u;try{u=new URL(a.href,location.href)}catch(err){return}
+    if(u.origin!==location.origin)return;
+    var norm=function(p){return p.replace(/\/index\.html$|\.html$/,'').replace(/\/$/,'')||'/'};
+    if(norm(u.pathname)===norm(location.pathname)&&u.search===location.search){
+      if(u.hash&&u.hash!=='#')return;            /* in-page anchor: the browser scrolls */
+      e.preventDefault();closeMenu();if(document.activeElement&&nav.contains(document.activeElement))document.activeElement.blur();
+      window.scrollTo({top:0,behavior:motionOK?'smooth':'auto'});return}  /* this page's tab: back to the top */
+    if(/^\/(apps|assets|gal)(\/|$)/.test(u.pathname))return;   /* apps have their own pages */
+    if(!motionOK||!window.G6220Loader||!G6220Loader.go||root.classList.contains('intro-on'))return;
+    e.preventDefault();closeMenu();G6220Loader.go(u.href);
   });
 
 
   /* ---- Robot showcase ---- */
-  var ROBOTS=[{"year": "2026", "game": "REBUILT", "finish": "CA District playoffs \u00b7 Southern State Championship", "events": ["CA District Orange County Event", "CA District Los Angeles Event", "FIRST California Southern State Championship", "SoCal Showdown", "Beach Blitz"], "album": null, "img": "/assets/main/1256dd39df.webp", "alt": "CAD render of Goober, Team 6220's 2026 robot", "quip": "goober big, goober fat, goober needs to go on ozempic", "nameHtml": "Goober"}, {"year": "2025", "game": "REEFSCAPE", "finish": "SoCal Showdown \u00b7 7th-place alliance", "events": ["Los Angeles Regional", "SoCal Showdown", "Beach Blitz"], "album": "socal-showdown-2025", "img": "/assets/main/29c743c6a0.webp", "alt": "CAD render of Nessie, Team 6220's 2025 robot", "quip": null, "nameHtml": "Nessie"}, {"year": "2024", "game": "CRESCENDO", "finish": "OC Regional \u00b7 2nd pick, Alliance 5", "events": ["Orange County Regional", "Beach Blitz"], "album": "oc-regional-2024", "img": "/assets/main/750ea7b708.webp", "alt": "CAD render of George, Team 6220's 2024 robot", "quip": null, "nameHtml": "George"}, {"year": "2019", "game": "DESTINATION: DEEP SPACE", "finish": "OC Regional \u00b7 Rank 31", "events": ["Orange County Regional", "Beach Blitz"], "album": "oc-regional-2019", "img": "/assets/main/fc1361c0d9.webp", "alt": "CAD render of Team 6220's 2019 robot", "quip": null, "nameHtml": "2019 robot"}],sc=document.getElementById('showcase');
-  if(sc){var rtabs=[].slice.call(sc.querySelectorAll('.rtab')),rI=0;
-    var fill=function(i){var r=ROBOTS[i];var im=document.getElementById('rs-img');im.src=r.img;im.alt=r.alt;
+  var ROBOTS=[];try{ROBOTS=JSON.parse(document.getElementById('robots-data').textContent)}catch(e){}
+  var sc=document.getElementById('showcase');
+  if(sc&&ROBOTS.length){var rtabs=[].slice.call(sc.querySelectorAll('.rtab')),rI=0;
+    var fill=function(i){var r=ROBOTS[i];var im=document.getElementById('rs-img');var iu=null;try{iu=new URL(r.img,location.href)}catch(err){}if(iu&&/^https?:$/.test(iu.protocol))im.src=iu.href;im.alt=r.alt;
       document.getElementById('rs-season').textContent=r.year;document.getElementById('rs-plate').textContent=r.year+' · '+r.game;document.getElementById('rs-game').textContent=r.game;
-      document.getElementById('rs-name').innerHTML=r.nameHtml;document.getElementById('rs-finish').textContent=r.finish;var q=document.getElementById('rs-quip');if(r.quip){document.getElementById('rs-quip-t').textContent='“'+r.quip+'”';q.hidden=false}else{q.hidden=true}
+      document.getElementById('rs-name').textContent=r.name;var qc=document.getElementById('rs-quip-c');if(qc)qc.textContent='a teammate, on '+r.name;document.getElementById('rs-finish').textContent=r.finish;var q=document.getElementById('rs-quip');if(r.quip){document.getElementById('rs-quip-t').textContent='“'+r.quip+'”';q.hidden=false}else{q.hidden=true}
       var ul=document.getElementById('rs-events');ul.innerHTML='';r.events.forEach(function(e){var li=document.createElement('li');li.textContent=e;ul.appendChild(li)});
-      var ph=document.getElementById('rs-photos');ph.href=r.album?'#photos-'+r.album:'#photos';ph.textContent=r.album?'See '+r.year+' photos →':'See all photos →';
+      var ph=document.getElementById('rs-photos');ph.href=r.album?'/resources/media#'+r.album:'/resources/media';
+      var cad=document.getElementById('rs-cad');if(cad){var cu=null;try{cu=r.cad?new URL(r.cad,location.href):null}catch(err){}if(cu&&/^https?:$/.test(cu.protocol)){cad.href=cu.href;cad.hidden=false}else{cad.removeAttribute('href');cad.hidden=true}}ph.textContent=r.album?'See '+r.year+' photos →':'See all photos →';
       document.getElementById('robot-panel').setAttribute('aria-labelledby','rtab-'+r.year)};
     var pick=function(i,focus){i=(i+ROBOTS.length)%ROBOTS.length;if(i===rI&&!focus)return;rI=i;
       rtabs.forEach(function(b,k){b.setAttribute('aria-selected',String(k===i));b.tabIndex=k===i?0:-1});if(focus)rtabs[i].focus();
@@ -325,10 +330,16 @@
         if(d){e.preventDefault();pick(rI+d,true)}else if(e.key==='Home'){e.preventDefault();pick(0,true)}else if(e.key==='End'){e.preventDefault();pick(ROBOTS.length-1,true)}})});
     var rsx=null,si=sc.querySelector('.stage-img');si.addEventListener('pointerdown',function(e){rsx=e.clientX});
     si.addEventListener('pointerup',function(e){if(rsx===null)return;var dx=e.clientX-rsx;rsx=null;if(Math.abs(dx)>50)pick(rI+(dx<0?1:-1))});
-    ROBOTS.forEach(function(r){var p=new Image();p.src=r.img});fill(0);if(typeof dio!=='undefined'&&dio)dio.observe(document.getElementById('stage-img'))}
+    ROBOTS.forEach(function(r){var p=new Image();p.src=r.img});
+    /* /robots#2025 opens that season */
+    var byHash=function(){var y=location.hash.slice(1),k=-1;ROBOTS.forEach(function(r,i){if(r.year===y)k=i});return k};
+    var h0=byHash();if(h0>0){rI=h0;rtabs.forEach(function(b,k){b.setAttribute('aria-selected',String(k===h0));b.tabIndex=k===h0?0:-1})}fill(rI);
+    addEventListener('hashchange',function(){var k=byHash();if(k>=0){pick(k);sc.scrollIntoView({behavior:motionOK?'smooth':'auto'})}});if(typeof dio!=='undefined'&&dio)dio.observe(document.getElementById('stage-img'))}
   /* ---- Gallery: albums, filter, album view, lightbox ---- */
   var GAL=[{"slug": "beach-blitz-2025", "name": "Beach Blitz", "season": "2025", "game": "REEFSCAPE offseason", "tag": null, "photos": [{"alt": "Team members working on laptops at an outdoor table", "tw": 640, "th": 427}, {"alt": "Students working on the robot in the pits", "tw": 640, "th": 427}, {"alt": "The 6220 robot on the field next to another team's robot", "tw": 640, "th": 427}, {"alt": "Team members in the pit under the Golden Griffins banner", "tw": 640, "th": 427}, {"alt": "Robots on the field during a match", "tw": 640, "th": 427}, {"alt": "Students wheeling the robot across the courtyard", "tw": 640, "th": 427}]}, {"slug": "socal-showdown-2025", "name": "SoCal Showdown", "season": "2025", "game": "REEFSCAPE offseason", "tag": null, "photos": [{"alt": "Team photo on the grass with the robot cart", "tw": 640, "th": 426}, {"alt": "Students working on the robot in the pits", "tw": 640, "th": 426}, {"alt": "A team member on the field during setup", "tw": 426, "th": 640}, {"alt": "Team members in the pit under the Golden Griffins banner", "tw": 640, "th": 426}, {"alt": "Students working on the robot together", "tw": 426, "th": 640}, {"alt": "The whole team outside with the Golden Griffins banner", "tw": 640, "th": 480}, {"alt": "A team member setting the robot on the field", "tw": 426, "th": 640}, {"alt": "A team member lifting the robot at the field", "tw": 426, "th": 640}, {"alt": "A team member next to the robot at the field edge", "tw": 426, "th": 640}, {"alt": "The robot on the field during a match", "tw": 640, "th": 426}, {"alt": "Team members in 6220 shirts in the crowd", "tw": 640, "th": 426}]}, {"slug": "beach-blitz-2024", "name": "Beach Blitz", "season": "2024", "game": "CRESCENDO offseason", "tag": null, "photos": [{"alt": "Team members at the outreach table with a Golden Griffins sign", "tw": 640, "th": 480}, {"alt": "Team photo outdoors with the robot cart", "tw": 640, "th": 480}, {"alt": "Team members cheering in the stands with a 6220 sign", "tw": 640, "th": 480}, {"alt": "Drive team members at the driver station", "tw": 480, "th": 640}, {"alt": "Team members on the field after a match", "tw": 480, "th": 640}, {"alt": "Team members bringing the robot onto the field", "tw": 640, "th": 482}, {"alt": "The robot on the field behind the glass", "tw": 480, "th": 640}, {"alt": "The robot on the field during a match", "tw": 480, "th": 640}, {"alt": "Students working on the robot in the pits", "tw": 480, "th": 640}, {"alt": "Students fixing the robot at the pit table", "tw": 480, "th": 640}, {"alt": "Team members outside between matches", "tw": 480, "th": 640}, {"alt": "The drive team at the driver station with the 6220 display", "tw": 640, "th": 357}]}, {"slug": "oc-regional-2024", "name": "Orange County Regional", "season": "2024", "game": "CRESCENDO", "tag": null, "photos": [{"alt": "Team photo with the robot outside the venue", "tw": 640, "th": 480}, {"alt": "Close-up of the robot's shooter", "tw": 480, "th": 640}, {"alt": "Team members in the pit under the Golden Griffins banner", "tw": 640, "th": 480}]}, {"slug": "offseason-2023", "name": "FRC Offseason", "season": "2023", "game": "CHARGED UP offseason", "tag": null, "photos": [{"alt": "A student wiring the robot's electronics", "tw": 640, "th": 482}, {"alt": "Team members with the robot in the pits", "tw": 481, "th": 640}, {"alt": "A student working on the robot's frame", "tw": 481, "th": 640}, {"alt": "Drive team members watching a match", "tw": 640, "th": 482}, {"alt": "The drive team at the driver station", "tw": 481, "th": 640}, {"alt": "The robot on the field during a match", "tw": 640, "th": 482}, {"alt": "The arena seen from the stands", "tw": 640, "th": 482}, {"alt": "Close-up of the robot with its 6220 bumpers", "tw": 640, "th": 482}, {"alt": "A student working on the robot in the pits", "tw": 481, "th": 640}]}, {"slug": "oc-regional-2023", "name": "Orange County Regional", "season": "2023", "game": "CHARGED UP", "tag": "Finalist", "photos": [{"alt": "Team photo with the robot in front of Los Alamitos High School", "tw": 640, "th": 480}, {"alt": "Team members with the robot on its cart", "tw": 480, "th": 640}, {"alt": "Students working on the robot in the pits", "tw": 640, "th": 480}, {"alt": "Students working on the robot, seen from above", "tw": 480, "th": 640}, {"alt": "The robot on the field during a match", "tw": 480, "th": 640}, {"alt": "Close-up of the robot with its 6220 bumpers", "tw": 480, "th": 640}, {"alt": "Team members at a robot demo table", "tw": 640, "th": 480}, {"alt": "A student checking the robot in the pits", "tw": 480, "th": 640}, {"alt": "Team members walking through the pits", "tw": 480, "th": 640}]}, {"slug": "beach-blitz-2022", "name": "Beach Blitz", "season": "2022", "game": "RAPID REACT offseason", "tag": "Against All Odds", "photos": [{"alt": "Team photo outdoors with the robot", "tw": 640, "th": 480}, {"alt": "Mentors and students working on the robot", "tw": 640, "th": 427}, {"alt": "Students working on the robot in the pits", "tw": 640, "th": 427}, {"alt": "A student using the drill press", "tw": 640, "th": 427}, {"alt": "The robot on the field during a match", "tw": 640, "th": 427}, {"alt": "Team members cheering in the stands", "tw": 640, "th": 427}, {"alt": "The robot on the field", "tw": 640, "th": 427}, {"alt": "Team members gathered in the pits", "tw": 640, "th": 427}, {"alt": "The team celebrating together after the event", "tw": 640, "th": 427}]}, {"slug": "workshop-2021-22", "name": "Around the Workshop", "season": "2021–22", "game": "Build season", "tag": null, "photos": [{"alt": "Students working at tables outside the workshop", "tw": 480, "th": 640}, {"alt": "Team members working on campus", "tw": 640, "th": 480}, {"alt": "The robot testing on the blacktop outside the workshop", "tw": 640, "th": 360}, {"alt": "Students working on the robot", "tw": 426, "th": 640}, {"alt": "Close-up of the robot's electronics", "tw": 480, "th": 640}, {"alt": "The robot next to a wooden test structure", "tw": 640, "th": 480}, {"alt": "The robot from the front, outside the workshop", "tw": 640, "th": 480}, {"alt": "Students working at outdoor tables", "tw": 640, "th": 480}, {"alt": "The robot's intake and climber outside the workshop", "tw": 640, "th": 480}]}, {"slug": "oc-regional-2022", "name": "Orange County Regional", "season": "2022", "game": "RAPID REACT", "tag": null, "photos": [{"alt": "Team members in masks with the robot", "tw": 640, "th": 480}, {"alt": "The pits at the Orange County Regional", "tw": 640, "th": 480}, {"alt": "Students working on the robot in the pits", "tw": 480, "th": 640}, {"alt": "Team members walking through the pits", "tw": 480, "th": 640}, {"alt": "Team photo with the robot in front of Los Alamitos High School", "tw": 640, "th": 480}, {"alt": "The robot in front of Los Alamitos High School", "tw": 640, "th": 360}, {"alt": "Team members in masks posing in the pits", "tw": 640, "th": 480}, {"alt": "Team members with the robot near the field", "tw": 480, "th": 640}, {"alt": "The arena during a match", "tw": 640, "th": 480}]}, {"slug": "oc-regional-2019", "name": "Orange County Regional", "season": "2019", "game": "DESTINATION: DEEP SPACE", "tag": null, "photos": [{"alt": "Students working on laptops in the workshop", "tw": 640, "th": 480}, {"alt": "Students building the robot's elevator", "tw": 640, "th": 480}, {"alt": "CAD render of the 2019 robot", "tw": 640, "th": 640}, {"alt": "Students working on the robot in the pits", "tw": 640, "th": 360}, {"alt": "The robot with its 6220 bumpers", "tw": 426, "th": 640}, {"alt": "Students testing the robot in the workshop", "tw": 640, "th": 311}]}, {"slug": "power-up-2018", "name": "Power Up Season", "season": "2018", "game": "POWER UP", "tag": null, "photos": [{"alt": "Team photo in the school parking lot", "tw": 640, "th": 427}, {"alt": "Team members with the robot in the pits", "tw": 640, "th": 427}, {"alt": "Close-up of the robot holding a power cube", "tw": 640, "th": 427}, {"alt": "Students with the robot on the field", "tw": 427, "th": 640}, {"alt": "A student working on the robot in the pits", "tw": 427, "th": 640}]}, {"slug": "steamworks-2017", "name": "STEAMworks Season", "season": "2017", "game": "STEAMWORKS", "tag": null, "photos": [{"alt": "The robot in a test enclosure full of fuel balls", "tw": 640, "th": 480}, {"alt": "A student with the robot on the field", "tw": 427, "th": 640}, {"alt": "A student wiring the robot", "tw": 640, "th": 427}]}, {"slug": "stronghold-2016", "name": "Stronghold Season", "season": "2016", "game": "STRONGHOLD", "tag": "Regional Winner · Worlds", "photos": [{"alt": "Team members holding the FIRST Robotics Competition Winner banner", "tw": 640, "th": 639}, {"alt": "The 2016 robot", "tw": 480, "th": 640}, {"alt": "Teams gathered on the field at the World Championship", "tw": 640, "th": 424}]}];
-  var galGrid=document.getElementById('gal-grid'),galAlbum=document.getElementById('gal-album'),albumList=document.getElementById('album-photos');
+  var galGrid=document.getElementById('gal-grid');
+  if(galGrid){
+  var galAlbum=document.getElementById('gal-album'),albumList=document.getElementById('album-photos');
   var pad=function(n){return (n<10?'0':'')+n};
   var galSrc=function(a,i,thumb){return (window.MEDIA_BASE||'')+'/gal/'+a.slug+'/'+pad(i+1)+(thumb?'-t':'')+'.webp'};
   var chips=[].slice.call(document.querySelectorAll('.chip')),cards=[].slice.call(document.querySelectorAll('#albums>li')),galCount=document.getElementById('gal-count');
@@ -366,15 +377,12 @@
     else if(e.key==='Tab'){var f=[].slice.call(lb.querySelectorAll('button')),k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}},true);
   var sx=null;lb.addEventListener('pointerdown',function(e){sx=e.clientX});
   lb.addEventListener('pointerup',function(e){if(sx===null)return;var dx=e.clientX-sx;sx=null;if(Math.abs(dx)>50)step(dx<0?1:-1)});
-  var _show=show;show=function(id,scroll){
-    if(id&&/^photos(-|$)/.test(id)){var slug=id.length>7?id.slice(7):null;if(!lb.hidden)closeLb();
-      var wasOn=current&&current.id==='photos';_show('photos',false);var opened=renderGallery(slug);
-      if(opened||wasOn){var top=document.getElementById('gal-top').getBoundingClientRect().top+scrollY-80;window.scrollTo({top:Math.max(0,top),behavior:'instant'})}
-      return}
-    _show(id,scroll)};
-  addEventListener('hashchange',function(){show(location.hash.slice(1))});
-  addEventListener('popstate',function(){show(location.hash.slice(1))});
-  show(location.hash.slice(1)||'home');
+  var showAlbum=function(first){var slug=decodeURIComponent(location.hash.slice(1))||null;if(!lb.hidden)closeLb();
+    var opened=renderGallery(slug);
+    if(opened||!first){var top=document.getElementById('gal-top').getBoundingClientRect().top+scrollY-80;window.scrollTo({top:Math.max(0,top),behavior:'instant'})}};
+  addEventListener('hashchange',function(){showAlbum(false)});
+  showAlbum(true);
+  }
 
   /* ---- Copy buttons ---- */
   document.querySelectorAll('.copy-btn[data-copy]').forEach(function(cb){cb.addEventListener('click',function(){
@@ -383,7 +391,8 @@
     try{navigator.clipboard.writeText(cb.dataset.copy).then(function(){cb.textContent='COPIED';setTimeout(function(){cb.textContent='COPY'},1500)},sel)}catch(e){sel()}})});
 
   /* ---- Interest form (preview: no backend yet) ---- */
-  document.getElementById('apply').addEventListener('submit',function(e){e.preventDefault();
+  var applyForm=document.getElementById('apply');
+  if(applyForm)applyForm.addEventListener('submit',function(e){e.preventDefault();
     var n=document.getElementById('f-name'),m=document.getElementById('f-email'),ok=true;
     var nv=n.value.trim(),good=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m.value.trim());
     document.getElementById('f-name-err').hidden=!!nv;document.getElementById('f-email-err').hidden=good;

@@ -1,0 +1,11 @@
+---
+// Marks a spot whose content the team still has to write (see GitHub issue #69).
+interface Props {
+  /** What goes here, for the people filling it in (not shown on the page) */
+  issue?: string;
+}
+const { issue } = Astro.props;
+---
+
+<Fragment set:html={`<!-- TODO(#69): ${(issue ?? "content for this page").replace(/--/g, "-")}. See https://github.com/Team-6220/team6220.org/issues/69 -->`} />
+<p class="placeholder">Content coming soon.</p>

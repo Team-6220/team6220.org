@@ -101,3 +101,7 @@ example `pnpm preview`), then open `/apps/goldsim/` and `/apps/wingit/`.
 
 GoldSim runs in local/guest mode: the web app has no Supabase client wired in, so it needs no keys or env vars.
 Its `packages/data-layer` Supabase code and `supabase/` folder are unused by the site build and go away with #66.
+
+GoldSim's own lint, typecheck and tests (`npm run check` in `apps/goldsim`, about 8 minutes) run in a separate
+workflow, `.github/workflows/goldsim.yml`, only when files under `apps/goldsim/` change. It is not a required
+check; the site's required check stays `ci`.

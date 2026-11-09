@@ -1,0 +1,34 @@
+---
+// Robot showcase on /robots. Built from sites/main/data/robots.ts: the tabs come from the list, the stage
+// starts on the first robot, and site-b.js switches robots using the JSON below.
+// /robots#2025 opens a given season.
+import { ROBOTS } from "../../data/robots";
+const r = ROBOTS[0];
+const photosHref = (album: string | null) => (album ? `/resources/media#${album}` : "/resources/media");
+const photosLabel = (year: string, album: string | null) => (album ? `See ${year} photos →` : "See all photos →");
+---
+
+<section id="robots" class="robots-sec">
+  <div class="wrap">
+    <div class="showcase rv" id="showcase">
+      <div class="stage" role="tabpanel" id="robot-panel" tabindex="0" aria-labelledby={`rtab-${r.year}`}>
+        <div class="stage-img" id="stage-img">
+          <svg class="floor" viewBox="0 0 400 140" preserveAspectRatio="none" aria-hidden="true"><g><line x1="200" y1="-150" x2="-220" y2="140"/><line x1="200" y1="-150" x2="-150" y2="140"/><line x1="200" y1="-150" x2="-80" y2="140"/><line x1="200" y1="-150" x2="-10" y2="140"/><line x1="200" y1="-150" x2="60" y2="140"/><line x1="200" y1="-150" x2="130" y2="140"/><line x1="200" y1="-150" x2="200" y2="140"/><line x1="200" y1="-150" x2="270" y2="140"/><line x1="200" y1="-150" x2="340" y2="140"/><line x1="200" y1="-150" x2="410" y2="140"/><line x1="200" y1="-150" x2="480" y2="140"/><line x1="200" y1="-150" x2="550" y2="140"/><line x1="200" y1="-150" x2="620" y2="140"/><line x1="0" y1="8" x2="400" y2="8"/><line x1="0" y1="22" x2="400" y2="22"/><line x1="0" y1="40" x2="400" y2="40"/><line x1="0" y1="62" x2="400" y2="62"/><line x1="0" y1="88" x2="400" y2="88"/><line x1="0" y1="118" x2="400" y2="118"/></g></svg>
+          <span class="shadow" aria-hidden="true"></span>
+          <span class="plate" id="rs-plate">{r.year} · {r.game}</span>
+          <img id="rs-img" src={r.img} alt={r.alt}></div>
+        <div class="stage-info" id="rs-info">
+          <p class="rs-tag"><span class="season" id="rs-season">{r.year}</span><span class="game" id="rs-game">{r.game}</span></p>
+          <h3 class="rs-name winged"><span class="wing wing-l" aria-hidden="true"><svg><use href="#wing"/></svg></span><span class="wt" id="rs-name">{r.name}</span><span class="wing wing-r" aria-hidden="true"><svg><use href="#wing"/></svg></span></h3>
+          <blockquote class="rs-quip" id="rs-quip" hidden={!r.quip}><p id="rs-quip-t">{r.quip && `“${r.quip}”`}</p><cite id="rs-quip-c">a teammate, on {r.name}</cite></blockquote>
+          <dl class="rs-dl"><div><dt>Best finish</dt><dd id="rs-finish">{r.finish}</dd></div><div><dt>Events</dt><dd><ul id="rs-events">{r.events.map((e) => <li>{e}</li>)}</ul></dd></div></dl>
+          <div class="rs-ctas"><a class="btn btn-gold" id="rs-photos" href={photosHref(r.album)}>{photosLabel(r.year, r.album)}</a><a class="btn btn-line" id="rs-cad" href={r.cad ?? undefined} hidden={!r.cad} target="_blank" rel="noopener">View CAD ↗</a></div>
+        </div>
+      </div>
+      <div class="rtabs" role="tablist" aria-label="Robots by season">{ROBOTS.map((x, i) => (
+        <button class="rtab" type="button" role="tab" id={`rtab-${x.year}`} aria-controls="robot-panel" aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}><img src={x.img} alt=""><span><b>{x.year}</b><span>{x.name}</span></span></button>
+      ))}</div>
+    </div>
+  </div>
+  <script is:inline type="application/json" id="robots-data" set:html={JSON.stringify(ROBOTS).replace(/</g, "\\u003c")} />
+</section>
