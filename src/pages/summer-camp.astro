@@ -1,0 +1,14 @@
+---
+// Summer camp. Always built (old /summer links land here); shown in the menu and on the home page
+// only while SUMMER_CAMP_ENABLED is on (sites/main/config/site.ts).
+import MainLayout from "../../sites/main/MainLayout.astro";
+import PageHero from "../../sites/main/components/PageHero.astro";
+import SummerCamp from "../../sites/main/sections/summer-camp/SummerCamp.astro";
+import { media } from "../../sites/main/lib/media";
+import { SUMMER_CAMP_TITLE } from "../../sites/main/config/site";
+---
+
+<MainLayout page="summer-camp" title="Summer Camp · Golden Griffins" description="Team 6220's FRC and LEGO robotics summer camps at Los Alamitos High School.">
+  <PageHero img={media("team/27bdee70e4.webp")} eyebrow="Summer Camp" title={SUMMER_CAMP_TITLE} />
+  <SummerCamp />
+</MainLayout>

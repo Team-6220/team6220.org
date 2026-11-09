@@ -1,0 +1,12 @@
+---
+// Resources: team resources, apps, media, archive. Data in sites/main/data/resources.ts and apps.ts.
+import MainLayout from "../../../sites/main/MainLayout.astro";
+import PageHero from "../../../sites/main/components/PageHero.astro";
+import ResourceGrid from "../../../sites/main/sections/resources/ResourceGrid.astro";
+import { media } from "../../../sites/main/lib/media";
+---
+
+<MainLayout page="resources" title="Resources · Golden Griffins" description="Team 6220's open resources, team apps and media.">
+  <PageHero img={media("team/4f1c204f9c.webp")} eyebrow="For FIRST teams" title="Open resources" lede="We learned from teams who published their work. Here's ours." />
+  <ResourceGrid />
+</MainLayout>
