@@ -77,6 +77,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
 | Pit display | `/apps/pit` | Screen for the pit TV: match schedule from Nexus plus our scouting data and The Blue Alliance / Statbotics stats | Planned | Anyone (public, read-only) | Reads other apps and FRC data sites |
 | Production Tracker | `/apps/production` | Follows each robot part from design to finished. Replaces today's Google Forms and spreadsheets. | Planned | Designers submit parts; manufacturers update status | Wix database; design files stay in Google Drive as links |
+| Site Manager | `/apps/site` | Web Admins edit regular site content (summer camp, sponsors, merch, resources, later robots and history) with forms; saving opens a GitHub pull request. Plan: [SITE-MANAGER.md](SITE-MANAGER.md) | Planned (needs Phase 2 `/api` endpoint) | Web Admins | Content JSON files in the repo (`sites/main/content/`); changes are saved by opening a GitHub pull request |
 
 Apps are listed one by one under the **Resources** tab, plus an Apps section on the Resources page (#75). There is no separate Apps tab.
 
@@ -100,6 +101,7 @@ Apps are listed one by one under the **Resources** tab, plus an Apps section on 
 | Apps address | `team6220.org/apps/<name>`, not a subdomain: one login session, `/api` endpoints on the same site, one hosting plan |
 | Media | Wix hosts most site media (Media Manager, not the CMS); select gallery folders sync from Google Drive (#8). Team photos sit in git until then. **Photos uploaded through apps** (e.g. Inventory) go to Google Drive with only a link in the CMS, because CMS storage is limited (about 10 GB) |
 | GoldSim backend | No Supabase. GoldSim moves to Wix CMS + Wix Members (#66) |
+| Site content editing | The Site Manager app opens GitHub pull requests with the edited content (no live editing, no separate history; Git is the history). Web Admins only; a webmaster merges every PR; a GitHub App holds the access; small logos and photos are committed with the PR (decided Nov 2026) |
 | Branding | Kaydi's branding guidelines (in progress) set logos, spacing and styles. Branding work in #69 and the Phase 1 styling pass wait for them |
 
 ## Architecture at a glance
@@ -163,6 +165,7 @@ Lessons from the Phase 0 Wix CLI test (details in [WIX-CLI-SPIKE.md](WIX-CLI-SPI
 4. Move admin actions into `/api` endpoints on Wix's server: badge checks, starting/stopping attendance, and Nexus and The Blue Alliance calls.
 5. Release preview builds and have the team test them through **View** in Headless Settings.
 6. Turn off the GitHub Pages deploy. From now on, Wix preview builds are our test site: a GitHub Actions workflow runs `wix preview` for every pull request (using the `WIX_API_KEY` secret in the `wix` environment) and posts the preview link on the PR, so each draft is reviewed on its own before merging releases it. Preview URLs change per build and their server code expires after about 3 days; member login on previews only works if Wix allows the preview address as a redirect URI (to check). `dev.team6220.org` goes away (GitHub Pages can't run the server-side site).
+7. Once pages are server-rendered, build the Site Manager app ([SITE-MANAGER.md](SITE-MANAGER.md)) so webmasters can edit regular content with forms. Saving opens a GitHub pull request through a new `/api/site` endpoint (needs a GitHub App secret). The content-to-JSON conversion and the forms can be built before that endpoint exists.
 
 ### Phase 3: Switch over
 
@@ -277,7 +280,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 | Production Tracker | Team Member | Designers submit; manufacturers update status |
 | Scouting | Team Member | Team Member submits scouting data |
 | Pit display | Anyone (public, read-only) | n/a |
-| Site admin tools | Web Admin | Web Admin |
+| Site Manager (`/apps/site`) | Web Admin | Web Admin |
 
 **Enforcement differs by phase.**
 
