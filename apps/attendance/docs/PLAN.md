@@ -151,13 +151,12 @@ account"** as a stopgap and test it on the kiosk first; avoid "Anyone" on the ex
   enter or scan their IDs there without signing in themselves.
 - **Viewing.** Any approved team member can view attendance on their own phone or laptop to check that they signed in.
   Nothing is public.
+- **Registration stays as it is:** unknown IDs get the same registration prompt at the kiosk as today.
 - **No Inventory Manager role** (that was for Inventory, not Attendance): all Team Members can use Inventory.
 
 ## Still open
 
-1. **Registration.** Should unknown IDs still self-register at the kiosk, or should a lead approve new members?
-   (Until decided, the new kiosk keeps today's behaviour.)
-2. **Today's list.** Members can check their own sign-in. Should they also see who else signed in (names only)?
-3. **The "Only myself" deployment.** Which device/account runs it today? That device keeps working throughout.
-4. **Small bug to keep in mind:** the old screen builds the list with `innerHTML` from names typed at registration,
+1. **Today's list.** Members can check their own sign-in. Should they also see who else signed in (names only)?
+2. **The "Only myself" deployment.** Which device/account runs it today? That device keeps working throughout.
+3. **Small bug to keep in mind:** the old screen builds the list with `innerHTML` from names typed at registration,
    so a crafted name would run as HTML in the old page. The new screen renders text safely; no action needed on the old one.
