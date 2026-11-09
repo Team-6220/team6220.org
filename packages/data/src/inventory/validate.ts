@@ -59,6 +59,8 @@ export async function validateInput(
     }
   }
 
+  if (key === "rawMaterials" && Object.prototype.hasOwnProperty.call(out, "shape") && !errors.shape) deriveShapeFields(out);
+
   const bad = Object.keys(errors);
   if (bad.length) {
     const labels = bad.map((n) => {
@@ -184,7 +186,10 @@ export function shapeArea(pts: number[][]): number {
   return Math.abs(a) / 2;
 }
 
-/** A stock outline. Empty object = no shape recorded. (Shapes are kept on import; editing them isn't ported yet.) */
+/**
+ * A stock outline: { kind: 'rect'|'traced', points: [[x,y],...], edges: [len,...] }.
+ * Must be a real, non-self-crossing polygon. Empty object = no shape recorded.
+ */
 export function checkShape(v: unknown): Record<string, unknown> {
   if (v === null || v === undefined || v === "") return {};
   if (typeof v !== "object" || Array.isArray(v)) throw new FieldError("Invalid shape.");
@@ -202,8 +207,37 @@ export function checkShape(v: unknown): Record<string, unknown> {
     return [round(x, 4), round(y, 4)];
   });
   if (shapeArea(pts) < 0.01) throw new FieldError("That shape has no area.");
-  const edges = Array.isArray(o.edges) && o.edges.length === pts.length ? o.edges.map((e: unknown) => round(Number(e) || 0, 4)) : [];
+  if (selfIntersects(pts)) throw new FieldError("The outline crosses itself. Re-trace the corners in order around the edge.");
+  let edges: number[] = [];
+  if (Array.isArray(o.edges) && o.edges.length === pts.length) {
+    edges = o.edges.map((e: unknown) => {
+      const n = Number(e);
+      if (!isFinite(n) || n < 0 || n > 1000) throw new FieldError("Invalid dimension.");
+      return round(n, 4);
+    });
+  }
   return { kind, points: pts, edges };
+}
+
+/** True if two edges of an outline that aren't neighbours cross (Validate.gs selfIntersects_). */
+export function selfIntersects(pts: number[][]): boolean {
+  const n = pts.length;
+  const cross = (a: number[], b: number[], c: number[]) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  for (let i = 0; i < n; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % n];
+    for (let j = i + 1; j < n; j++) {
+      if (Math.abs(i - j) <= 1 || (i === 0 && j === n - 1)) continue; // neighbours share a corner
+      const c = pts[j];
+      const d = pts[(j + 1) % n];
+      const d1 = cross(c, d, a);
+      const d2 = cross(c, d, b);
+      const d3 = cross(a, b, c);
+      const d4 = cross(a, b, d);
+      if (((d1 > 1e-9 && d2 < -1e-9) || (d1 < -1e-9 && d2 > 1e-9)) && ((d3 > 1e-9 && d4 < -1e-9) || (d3 < -1e-9 && d4 > 1e-9))) return true;
+    }
+  }
+  return false;
 }
 
 /** Fills length/width (bounding box) and area from a shape, as Validate.gs did. */

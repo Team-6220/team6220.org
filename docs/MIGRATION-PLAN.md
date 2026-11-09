@@ -58,7 +58,7 @@ A full redesign of today's pages. The current target structure (from issue #69; 
 | About | The About page itself (team philosophy and intro), plus History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
 | Robots | One page per robot, easy to add to each year, 3D viewer for robots with CAD |
 | Sponsors | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF. The home page button says "Support us" |
-| Merch | |
+| Merch | `/merch`: the merch page from the original site, with a link to the team store |
 | Resources | Team resources, technical/team binders with an archive, Media, and every app listed individually (no separate Apps tab) |
 
 A **Log In** button sits in the top right. The forms on these pages get redesigned too (see Forms).
@@ -99,7 +99,7 @@ Apps are listed one by one under the **Resources** tab, plus an Apps section on 
 | Team name on the site | Mainly "Los Al Robotics"; the team name is "The Golden Griffins". The nonprofit is legally "Los Al Robotics" |
 | License | Code is MIT; logos, photos, site text and media are © Los Al Robotics, all rights reserved ([NOTICE.md](../NOTICE.md)) |
 | Apps address | `team6220.org/apps/<name>`, not a subdomain: one login session, `/api` endpoints on the same site, one hosting plan |
-| Media | Wix hosts most media; select gallery folders sync from Google Drive (#8). Team photos sit in git until then |
+| Media | Wix hosts most site media (Media Manager, not the CMS); select gallery folders sync from Google Drive (#8). Team photos sit in git until then. **Photos uploaded through apps** (e.g. Inventory) go to Google Drive with only a link in the CMS, because CMS storage is limited (about 10 GB) |
 | GoldSim backend | No Supabase. GoldSim moves to Wix CMS + Wix Members (#66) |
 | Site content editing | The Site Manager app opens GitHub pull requests with the edited content (no live editing, no separate history; Git is the history). Web Admins only; a webmaster merges every PR; a GitHub App holds the access; small logos and photos are committed with the PR (decided Nov 2026) |
 | Branding | Kaydi's branding guidelines (in progress) set logos, spacing and styles. Branding work in #69 and the Phase 1 styling pass wait for them |
@@ -131,7 +131,7 @@ in [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md).
 - [x] Set up the test address. In **Wix → Domains → team6220.org → Manage DNS Records**, add a CNAME record: host `dev`, value `team-6220.github.io`. In the repo's Pages settings, set the custom domain to `dev.team6220.org`, verify the domain for the GitHub org, and turn on Enforce HTTPS.
 - [x] In the Wix dashboard, open **Settings → Development & integrations → Headless Settings**. Create a headless (OAuth) client on our *current* site. Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs. This lets the prototype read and write our real Wix data.
 - [x] Set up Wix Members: turn on Google sign-in and set new signups to "only people I approve." (Corrected: no app to add; see PHASE-0.md.)
-- [x] Create badges: `Team Member`, `Attendance Admin`, `Inventory Manager`, `Web Admin`.
+- [x] Create badges: `Team Member`, `Attendance Admin`, `Web Admin`. (An `Inventory Manager` badge was created too and later dropped: every Team Member edits inventory.)
 - [x] Run a one-day test (see Limits and risks) to confirm the repo layout works with the Wix CLI before building much.
 
 ### Phase 1: Prototype on dev.team6220.org
@@ -149,7 +149,7 @@ GitHub publishes the site automatically every time code merges into `main`. In t
 - [ ] Convert the main site and each app to use those variables and components instead of their own colors and fonts.
 - [ ] Check every page in light and dark mode and on a phone.
 
-**Done when:** every public page and form works, Inventory plus Attendance survive a real team meeting, and the whole site shares one unified style.
+**Done when:** the main site is finished: every public page and form works and looks right, in one unified style. Team decision (Nov 2026): Phase 2 can start while apps are still being finished, as long as the main site is done. Inventory and Attendance must still survive a real team meeting before their old Apps Script deployments come down.
 
 ### Phase 2: Migration preview
 
@@ -164,7 +164,7 @@ Lessons from the Phase 0 Wix CLI test (details in [WIX-CLI-SPIKE.md](WIX-CLI-SPI
 3. Connect our existing Astro project to Wix and add the Wix Astro integration.
 4. Move admin actions into `/api` endpoints on Wix's server: badge checks, starting/stopping attendance, and Nexus and The Blue Alliance calls.
 5. Release preview builds and have the team test them through **View** in Headless Settings.
-6. Turn off the GitHub Pages deploy. From now on, Wix preview builds are our test site.
+6. Turn off the GitHub Pages deploy. From now on, Wix preview builds are our test site: a GitHub Actions workflow runs `wix preview` for every pull request (using the `WIX_API_KEY` secret in the `wix` environment) and posts the preview link on the PR, so each draft is reviewed on its own before merging releases it. Preview URLs change per build and their server code expires after about 3 days; member login on previews only works if Wix allows the preview address as a redirect URI (to check). `dev.team6220.org` goes away (GitHub Pages can't run the server-side site).
 7. Once pages are server-rendered, build the Site Manager app ([SITE-MANAGER.md](SITE-MANAGER.md)) so webmasters can edit regular content with forms. Saving opens a GitHub pull request through a new `/api/site` endpoint (needs a GitHub App secret). The content-to-JSON conversion and the forms can be built before that endpoint exists.
 
 ### Phase 3: Switch over
@@ -227,7 +227,7 @@ The same repo deploys to two places over its life. Only the build target and whe
 | PR checks | Install, typecheck, test, `astro build` | Same, plus `wix build` |
 | Wix login client | Headless client we create in Phase 0 | Project's private app, made by the migration |
 | Server code | None, so no secrets anywhere | `src/pages/api/*` with Wix secret env vars |
-| Staging | `dev` CNAME | Wix preview deploys |
+| Staging | `dev` CNAME | Wix preview deploys, one per pull request (link posted on the PR) |
 | Cost | $0 | $0 extra on the existing Premium plan |
 
 **Workflow files to add in Phase 0:**
@@ -264,7 +264,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 
 1. A student clicks **Log in** on team6220.org and picks Google.
 2. A Web Admin approves the request under Site Members in the dashboard and gives them the `Team Member` badge.
-3. Leads get extra badges (`Attendance Admin`) as their roles need. (`Inventory Manager` exists in Wix but is not used: every Team Member can edit the inventory.)
+3. Leads get extra badges (`Attendance Admin`) as their roles need.
 4. At the end of each season, remove graduated members and clean up badges.
 
 **What needs a login:** anything that writes data or shows team-internal info. Open-source tools like GoldSim can stay public.

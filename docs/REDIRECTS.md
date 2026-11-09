@@ -51,7 +51,7 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | About: Contact | `/about/contact` |
 | Robots | `/robots` (one season: `/robots#2025`) |
 | Sponsors | `/sponsors` |
-| Merch | the team store (menu); the item list is at `/merch` |
+| Merch | `/merch` (the merch page, with a link to the team store) |
 | Resources | `/resources` |
 | Media | `/resources/media` (one album: `/resources/media#<album>`) |
 | Apps dashboard (Log In) | `/apps`, apps at `/apps/<name>` |

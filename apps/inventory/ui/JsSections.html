@@ -1,0 +1,645 @@
+<script>
+/* ============================================================================
+   JsSections.html — Golden Griffins Inventory
+   Raw Materials, Tools & Equipment, Fastener Reference and Wire Inventory.
+   All four are built by one page builder, sectionView(config). Each config
+   at the bottom of this file says what to show, filter, sort and edit.
+   To add a field: add the column in Config.gs, then add it to `form`
+   (and `columns` / `search` if it should be visible or searchable).
+   ========================================================================== */
+'use strict';
+
+/** Same rules as the server's parseMeasure_: "1/8", "1 1/2", "0.125". */
+function parseMeasureClient(text) {
+  const s = String(text).trim().toLowerCase().replace(/(″|"|''|inches|inch|in|mm|cm|ft|m)$/, '').trim();
+  let m = s.match(/^(\d+)(?:\s+|-)(\d+)\s*\/\s*(\d+)$/);
+  if (m) return Number(m[3]) ? Number(m[1]) + Number(m[2]) / Number(m[3]) : null;
+  m = s.match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (m) return Number(m[2]) ? Number(m[1]) / Number(m[2]) : null;
+  m = s.match(/^(\d+(?:\.\d*)?|\.\d+)$/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+const listVal = function (id) { return App.name('lists', id); };
+const withUnit = function (v, unitId) { return v === '' || v === null || v === undefined ? '' : v + (unitId ? ' ' + listVal(unitId) : ''); };
+const listOrder = function (id) { const r = App.get('lists', id); return r ? (r.sortOrder || 0) : 1e9; };
+const natural = function (a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); };
+const defaultUnit = function (name) {
+  const u = App.listOptions('unit').filter(function (x) { return x.value === name; })[0] || App.listOptions('unit')[0];
+  return u ? u.id : '';
+};
+
+/**
+ * Builds a page. Config fields:
+ *   key, title, noun, nouns, addLabel, emptyText, searchPlaceholder
+ *   primary(rec) → main line;  meta(rec) → phone summary line;  chips(rec) → small tags
+ *   columns: [{ label, value(rec), cls, hideTablet }]   grid / gridTablet: CSS column sizes
+ *   filters: [{ id, label, options() → [{id,label,indent}], value(rec) }] or { id, location: true }
+ *   sorts:   [{ id, label, cmp(a,b) }]
+ *   search(rec) → [[text, weight], ...]
+ *   form:    [{ name, label, type, listKey, required, half, hint, placeholder, defaultValue() }]
+ */
+function sectionView(cfg) {
+  const key = cfg.key;
+  const hasQty = Boolean(TABLES_CLIENT[key].qtyField);
+  const qtyField = TABLES_CLIENT[key].qtyField;
+  const decimal = Boolean(TABLES_CLIENT[key].decimal);
+  const images = Boolean(TABLES_CLIENT[key].images);
+
+  const view = {
+    key: key, title: cfg.title, cfg: cfg,
+    f: { q: '', sel: {}, needsCheck: false },
+    sort: store.get(key + 'Sort', cfg.sorts[0].id),
+    limit: 100, index: null, indexDirty: true, rows: {}, order: [], refs: null,
+
+    render: function (main) {
+      const self = this, r = this.refs = {};
+      this.rows = {}; this.order = []; this.limit = 100; this.indexDirty = true;
+      r.sub = el('div', { class: 'page-sub' });
+      r.search = el('input', { type: 'search', placeholder: cfg.searchPlaceholder, value: this.f.q, 'aria-label': 'Search ' + cfg.nouns, autocomplete: 'off', spellcheck: 'false' });
+      r.clearSearch = el('button', { class: 'icon-btn clear', 'aria-label': 'Clear search', onClick: function () { r.search.value = ''; self.f.q = ''; self.update(); r.search.focus(); } }, icon('x'));
+      r.kbd = el('kbd', { text: '/' });
+      r.search.addEventListener('input', debounce(function () { self.f.q = r.search.value; self.limit = 100; self.update(); }, 90));
+      r.search.addEventListener('keydown', function (e) { if (e.key === 'Escape' && r.search.value) r.clearSearch.click(); });
+      r.filters = el('div', { class: 'filters' });
+      r.meta = el('div', { class: 'results-meta' });
+      r.empty = el('div');
+      r.head = el('div', { class: 'row head sec-row', role: 'row', style: this.gridStyle() },
+        el('div', { role: 'columnheader', text: cfg.primaryLabel }),
+        cfg.columns.map(function (c) { return el('div', { class: 'col' + (c.hideTablet ? ' hide-t' : ''), role: 'columnheader', text: c.label }); }),
+        hasQty ? el('div', { role: 'columnheader', style: { justifySelf: 'end' }, text: cfg.qtyLabel || 'Quantity' }) : null);
+      r.body = el('div', { role: cfg.cardEl ? 'list' : 'rowgroup', class: cfg.cardEl ? 'card-grid' : null });
+      r.more = el('div', { class: 'more-row' });
+      // Card layout (Raw Materials) has no header row.
+      r.table = cfg.cardEl ? el('div', { class: 'card-wrap', 'aria-label': cfg.title }, r.body, r.more)
+        : el('div', { class: 'table', role: 'table', 'aria-label': cfg.title }, r.head, r.body, r.more);
+      main.appendChild(el('div', { class: 'page' },
+        el('div', { class: 'page-head' },
+          el('div', null, el('h1', { class: 'page-title', text: cfg.title }), r.sub),
+          el('div', { class: 'page-actions' },
+            el('button', { class: 'btn primary', onClick: function () { self.openEditor(null); } }, icon('plus'), el('span', { class: 'label', text: cfg.addLabel })))),
+        cfg.top ? cfg.top() : null,
+        el('div', { class: 'search' }, icon('search'), r.search, r.clearSearch, r.kbd),
+        r.filters, r.meta, r.empty, r.table));
+      this.update();
+      if (window.innerWidth > 860) setTimeout(function () { r.search.focus(); }, 0);
+    },
+
+    gridStyle: function () {
+      return { '--cols': cfg.grid, '--cols-t': cfg.gridTablet || cfg.grid };
+    },
+
+    leave: function () { this.refs = null; },
+
+    onData: function (keys) {
+      if (!this.refs) return;
+      if (keys.some(function (k) { return k === key || k === 'lists' || k === 'locations'; })) { this.indexDirty = true; this.update(); }
+    },
+
+    results: function () {
+      const self = this;
+      if (this.indexDirty || !this.index) {
+        this.index = Search.build(App.rows(key), cfg.search);
+        this.indexDirty = false;
+      }
+      const sets = {};
+      cfg.filters.forEach(function (fl) {
+        const chosen = self.f.sel[fl.id] || [];
+        if (!chosen.length) return;
+        const s = new Set(chosen);
+        if (fl.location) {
+          chosen.forEach(function (id) { App.rows('locations').forEach(function (l) { if (l.parentId === id) s.add(l.id); }); });
+        }
+        sets[fl.id] = { fl: fl, set: s };
+      });
+      const list = this.index.query(this.f.q).filter(function (x) {
+        const rec = x.rec;
+        for (const id in sets) {
+          const fl = sets[id].fl;
+          const v = fl.location ? rec.locationId : fl.value(rec);
+          if (!sets[id].set.has(v)) return false;
+        }
+        if (self.f.needsCheck && !rec.needsCheck) return false;
+        return true;
+      });
+      const useRel = this.f.q.trim() && this.sort === 'relevance';
+      const sort = cfg.sorts.filter(function (s) { return s.id === self.sort; })[0] || cfg.sorts[0];
+      return list.sort(function (a, b) {
+        return useRel ? (b.score - a.score) || sort.cmp(a.rec, b.rec) : sort.cmp(a.rec, b.rec);
+      }).map(function (x) { return x.rec; });
+    },
+
+    activeCount: function () {
+      const sel = this.f.sel;
+      return Object.keys(sel).reduce(function (n, k) { return n + sel[k].length; }, 0) + (this.f.needsCheck ? 1 : 0);
+    },
+
+    update: function () {
+      const self = this, r = this.refs;
+      if (!r) return;
+      const all = App.rows(key);
+      const checkCount = all.filter(function (x) { return x.needsCheck; }).length;
+      const list = this.results();
+      clear(r.sub).append(el('b', { text: all.length + ' ' + (all.length === 1 ? cfg.noun : cfg.nouns) }),
+        cfg.subExtra ? cfg.subExtra(all) : '', checkCount ? ' · ' + checkCount + ' need checking' : '');
+      r.clearSearch.style.display = this.f.q ? '' : 'none';
+      r.kbd.style.display = this.f.q ? 'none' : '';
+      this.renderFilters(checkCount);
+
+      clear(r.meta);
+      if ((this.f.q.trim() || this.activeCount()) && all.length) {
+        r.meta.append(el('span', { text: list.length === 1 ? '1 match' : list.length + ' matches' }),
+          el('button', { class: 'link-btn', text: 'Clear search & filters', onClick: function () { self.clearAll(); } }));
+      }
+      clear(r.empty);
+      if (!list.length) {
+        r.table.style.display = 'none';
+        const q = this.f.q.trim();
+        r.empty.appendChild(el('div', { class: 'table' }, el('div', { class: 'empty-state' },
+          el('div', { class: 'big', text: all.length ? 'Nothing matches' : 'No ' + cfg.nouns + ' yet' }),
+          el('p', { text: all.length ? (q ? 'Nothing matches “' + q + '”' + (this.activeCount() ? ' with the current filters.' : '.') : 'Nothing matches these filters.') : cfg.emptyText }),
+          el('div', { style: { display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' } },
+            all.length && (q || this.activeCount()) ? el('button', { class: 'btn', text: 'Clear search & filters', onClick: function () { self.clearAll(); } }) : null,
+            el('button', { class: 'btn primary', onClick: function () { self.openEditor(null); } }, icon('plus'), cfg.addLabel)))));
+        return;
+      }
+      r.table.style.display = '';
+      this.renderRows(list.slice(0, this.limit));
+      clear(r.more);
+      r.more.style.display = list.length > this.limit ? '' : 'none';
+      if (list.length > this.limit) r.more.appendChild(el('button', { class: 'btn', text: 'Show more (' + (list.length - this.limit) + ' more)', onClick: function () { self.limit += 200; self.update(); } }));
+    },
+
+    clearAll: function () {
+      this.f = { q: '', sel: {}, needsCheck: false };
+      this.refs.search.value = '';
+      this.limit = 100;
+      this.update();
+    },
+
+    renderFilters: function (checkCount) {
+      const self = this, box = clear(this.refs.filters);
+      cfg.filters.forEach(function (fl) {
+        const n = (self.f.sel[fl.id] || []).length;
+        box.appendChild(el('button', { class: 'pill' + (n ? ' on' : ''), type: 'button', 'aria-haspopup': 'true',
+          onClick: function (e) { self.menu(e.currentTarget, fl); } }, fl.label, n ? el('span', { class: 'count', text: n }) : icon('chevronDown')));
+      });
+      if (cfg.auditable && (checkCount || this.f.needsCheck)) {
+        box.appendChild(el('button', { class: 'pill' + (this.f.needsCheck ? ' on' : ''), type: 'button', 'aria-pressed': String(this.f.needsCheck),
+          onClick: function () { self.f.needsCheck = !self.f.needsCheck; self.update(); } }, 'Needs check', el('span', { class: 'num', style: { opacity: 0.7 }, text: checkCount })));
+      }
+      box.appendChild(el('div', { class: 'spacer' }));
+      const s = App.selectEl(cfg.sorts.map(function (x) { return { value: x.id, label: 'Sort: ' + x.label }; }), this.sort);
+      s.classList.add('sort');
+      s.setAttribute('aria-label', 'Sort');
+      s.addEventListener('change', function () { self.sort = s.value; store.set(key + 'Sort', s.value); self.update(); });
+      box.appendChild(s);
+    },
+
+    menu: function (anchor, fl) {
+      const self = this;
+      App.popover(anchor, function (box) {
+        const body = el('div', { class: 'popover-body' });
+        const opts = fl.location ? locationFilterOptions() : fl.options();
+        if (!opts.length) body.appendChild(el('div', { class: 'opt-empty', text: fl.location ? 'No locations yet. Add them in Settings → Locations.' : 'Nothing to filter by yet.' }));
+        opts.forEach(function (o) {
+          const cur = self.f.sel[fl.id] || [];
+          body.appendChild(App.checkOpt(o.label, cur.indexOf(o.id) >= 0, function (on) {
+            const arr = (self.f.sel[fl.id] || []).filter(function (x) { return x !== o.id; });
+            if (on) arr.push(o.id);
+            self.f.sel[fl.id] = arr;
+            self.update();
+          }, o.indent ? 'indent' : ''));
+        });
+        box.append(body, el('div', { class: 'popover-foot' },
+          el('button', { class: 'link-btn', text: 'Clear', onClick: function () { self.f.sel[fl.id] = []; self.update(); App._popover.close(); } }),
+          el('button', { class: 'btn sm', text: 'Done', onClick: function () { App._popover.close(); } })));
+      });
+    },
+
+    signature: function (rec) {
+      return [rec.version, rec.imageId, JSON.stringify(rec.shape || ''), cfg.primary(rec), cfg.meta(rec), cfg.chips ? cfg.chips(rec).join('|') : '', rec.needsCheck,
+        hasQty ? App.qty.display(key, rec) + App.qty.state(key, rec.id) : '',
+        cfg.columns.map(function (c) { return c.value(rec); }).join('|')].join('\u0001');
+    },
+
+    renderRows: function (list) {
+      const self = this, body = this.refs.body;
+      const ids = list.map(function (x) { return x.id; });
+      const sameOrder = ids.length === this.order.length && ids.every(function (id, i) { return id === self.order[i]; });
+      const fresh = {};
+      list.forEach(function (rec) {
+        const sig = self.signature(rec), old = self.rows[rec.id];
+        if (old && (old.sig === sig || isEditingIn(old.el))) fresh[rec.id] = old;
+        else {
+          const n = self.rowEl(rec);
+          if (old && sameOrder && old.el.parentNode === body) body.replaceChild(n, old.el);
+          fresh[rec.id] = { el: n, sig: sig };
+        }
+      });
+      this.rows = fresh;
+      if (!sameOrder || body.children.length !== list.length) {
+        const frag = document.createDocumentFragment();
+        list.forEach(function (rec) { frag.appendChild(fresh[rec.id].el); });
+        clear(body).appendChild(frag);
+      }
+      this.order = ids;
+    },
+
+    refreshRow: function (id) {
+      if (!this.refs) return;
+      const old = this.rows[id], rec = App.get(key, id);
+      if (!old || !rec || isEditingIn(old.el)) return;
+      const sig = this.signature(rec);
+      if (sig === old.sig) return;
+      const n = this.rowEl(rec);
+      if (old.el.parentNode) old.el.parentNode.replaceChild(n, old.el);
+      this.rows[id] = { el: n, sig: sig };
+    },
+
+    rowEl: function (rec) {
+      const self = this;
+      if (cfg.cardEl) return cfg.cardEl(rec, function () { self.openEditor(App.get(key, rec.id)); });
+      const chips = cfg.chips ? cfg.chips(rec) : [];
+      const sub = el('div', { class: 'item-sub' },
+        rec.needsCheck ? el('span', { class: 'badge check', text: 'Needs check' }) : null,
+        chips.map(function (t) { return el('span', { class: 'tag', text: t }); }));
+      const row = el('div', { class: 'row item sec-row', role: 'row', tabindex: '0', style: this.gridStyle(), 'aria-label': cfg.primary(rec) },
+        el('div', { class: 'cell-name' + (images ? ' has-thumb' : ''), role: 'cell' },
+          images ? (rec.imageId ? el('div', { class: 'thumb' }, App.imgEl(rec.imageId, 120)) : el('div', { class: 'thumb empty' }, icon('tools'))) : null,
+          el('div', { class: 'name-wrap' },
+            el('div', { class: 'item-name', text: cfg.primary(rec) }),
+            el('div', { class: 'm-meta', text: cfg.meta(rec) }),
+            sub.children.length ? sub : null)),
+        cfg.columns.map(function (c) {
+          const v = c.value(rec);
+          return el('div', { class: 'cell col' + (c.hideTablet ? ' hide-t' : '') + (v ? '' : ' empty'), role: 'cell', text: v || '—' });
+        }),
+        hasQty ? el('div', { class: 'cell-qty', role: 'cell' },
+          syncDot(key, rec.id), qtyControl(key, rec),
+          cfg.qtyUnit ? el('span', { class: 'unit-suffix', text: cfg.qtyUnit(rec) }) : null) : null);
+      row.addEventListener('click', function (e) { if (!e.target.closest('.qty')) self.openEditor(App.get(key, rec.id)); });
+      row.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === row) self.openEditor(App.get(key, rec.id)); });
+      return row;
+    },
+
+    // ───── add / edit drawer ─────
+
+    openEditor: function (rec) {
+      const self = this, isNew = !rec;
+      const snapshot = rec ? JSON.parse(JSON.stringify(rec)) : null;
+      const controls = {}, wraps = {}, fieldEls = {};
+      const cells = [];
+
+      cfg.form.forEach(function (fd) {
+        if (fd.type === 'custom') {   // a field that builds its own controls: { el, value(), validate() }
+          const w = fd.build(rec, controls);
+          controls[fd.name] = w;
+          const cf = App.field(fd.label, w.el, { required: fd.required, hint: fd.hint, full: !fd.half });
+          fieldEls[fd.name] = cf;
+          cells.push(cf);
+          return;
+        }
+        let value = rec ? rec[fd.name] : (fd.defaultValue ? fd.defaultValue() : '');
+        if (rec && fd.name === qtyField) value = App.qty.display(key, rec);
+        let control;
+        if (fd.type === 'textarea') control = el('textarea', { class: 'textarea', maxlength: 2000, text: value || '' });
+        else if (fd.type === 'int' || fd.type === 'number') {
+          control = el('input', { class: 'input num', type: 'number', min: 0, step: fd.type === 'int' ? 1 : 'any',
+            inputmode: fd.type === 'int' ? 'numeric' : 'decimal', value: value === null || value === undefined ? '' : value, placeholder: fd.placeholder || '' });
+        } else if (fd.type === 'list') {
+          control = App.selectEl(App.listOptions(fd.listKey).map(function (o) { return { value: o.id, label: o.value }; }), value, fd.required ? 'Choose…' : '—');
+        } else if (fd.type === 'location') {
+          control = App.selectEl(App.locationSelectOptions(), value, 'No location');
+        } else {
+          control = el('input', { class: 'input', type: 'text', value: value || '', maxlength: fd.max || 150, placeholder: fd.placeholder || '', inputmode: fd.type === 'measure' ? 'decimal' : null });
+        }
+        controls[fd.name] = control;
+        wraps[fd.name] = el('div', { style: { display: 'contents' } }, control);
+        const f = App.field(fd.label, wraps[fd.name], { required: fd.required, hint: fd.hint, full: !fd.half });
+        if (fd.type === 'list' || fd.type === 'location') {
+          f.appendChild(el('button', { class: 'link-btn', type: 'button', style: { alignSelf: 'flex-start' },
+            text: fd.type === 'location' ? '+ New location' : '+ Add to list',
+            onClick: function () {
+              const p = fd.type === 'location' ? newLocationPrompt() : newListValuePrompt(fd.listKey, fd.label);
+              p.then(function (id) {
+                if (!id) return;
+                const n = fd.type === 'location'
+                  ? App.selectEl(App.locationSelectOptions(), id, 'No location')
+                  : App.selectEl(App.listOptions(fd.listKey).map(function (o) { return { value: o.id, label: o.value }; }), id, fd.required ? 'Choose…' : '—');
+                wraps[fd.name].replaceChild(n, controls[fd.name]);
+                controls[fd.name] = n;
+              });
+            } }));
+        }
+        fieldEls[fd.name] = f;
+        cells.push(f);
+      });
+
+      const body = [];
+      if (rec && rec.needsCheck) {
+        body.push(el('div', { class: 'notice' }, el('b', { text: 'Needs check. ' }),
+          'An audit couldn’t find this. Its amount was left unchanged. ',
+          el('button', { class: 'link-btn', type: 'button', text: 'Mark as found', onClick: function (e) {
+            const btn = e.currentTarget; btn.disabled = true;
+            App.write('apiSetNeedsCheck', [key, rec.id, false]).then(function (data) {
+              App.applyWrite(key, data); snapshot.version = data.record.version; btn.parentNode.remove();
+              App.toast('Marked as found.', { type: 'ok' });
+            }, function (err) { btn.disabled = false; App.toast(err.message, { type: 'error' }); });
+          } })));
+      }
+      const photo = images ? App.imageField(key, rec) : null;
+      if (photo) body.push(el('div', { class: 'field' }, el('div', { class: 'field-label', text: 'Photo' }), photo.el));
+      body.push(el('div', { class: 'form-grid' }, cells));
+      if (rec) body.push(el('div', { class: 'meta-line', text: 'Last updated ' + new Date(rec.updatedAt).toLocaleString() }));
+
+      const read = function () {
+        const out = {};
+        cfg.form.forEach(function (fd) {
+          if (fd.type === 'custom') { out[fd.name] = controls[fd.name].value(); return; }
+          const raw = controls[fd.name].value;
+          if (fd.type === 'int' || fd.type === 'number') out[fd.name] = raw === '' ? null : Number(raw);
+          else out[fd.name] = String(raw).trim();
+        });
+        return out;
+      };
+      const original = JSON.stringify(read());
+      const save = el('button', { class: 'btn primary', type: 'button', text: isNew ? cfg.addLabel : 'Save changes' });
+      const foot = [];
+      if (!isNew) foot.push(el('button', { class: 'btn danger', type: 'button', onClick: function () { self.archive(rec, m); } }, icon('archive'), el('span', { class: 'label', text: 'Archive' })));
+      foot.push(el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(); } }), save);
+      const m = App.modal({
+        kind: 'drawer', title: isNew ? cfg.addLabel : 'Edit ' + cfg.noun, body: body, foot: foot,
+        beforeClose: function () {
+          return JSON.stringify(read()) !== original || (photo && photo.hasPending())
+            ? App.confirm({ title: 'Discard changes?', message: 'Your changes haven’t been saved.', confirmLabel: 'Discard', cancelLabel: 'Keep editing', danger: true })
+            : true;
+        }
+      });
+
+      const showErrors = function (errs) {
+        Object.keys(fieldEls).forEach(function (k) { fieldEls[k].setError(errs[k] || ''); });
+        const first = Object.keys(errs).filter(function (k) { return fieldEls[k]; })[0];
+        if (first) fieldEls[first].scrollIntoView({ block: 'center' });
+      };
+
+      const submit = function () {
+        const val = read(), errs = {};
+        cfg.form.forEach(function (fd) {
+          const v = val[fd.name];
+          if (fd.type === 'custom') { const ce = controls[fd.name].validate ? controls[fd.name].validate() : ''; if (ce) errs[fd.name] = ce; return; }
+          if (fd.required && (v === '' || v === null)) errs[fd.name] = 'Required.';
+          else if (fd.type === 'int' && v !== null && (!Number.isInteger(v) || v < 0)) errs[fd.name] = 'Enter a whole number, 0 or more.';
+          else if (fd.type === 'number' && v !== null && (!isFinite(v) || v < 0)) errs[fd.name] = 'Enter a number, 0 or more.';
+          else if (fd.type === 'measure' && v && parseMeasureClient(v) === null) errs[fd.name] = 'Use a number or fraction, like 1/8 or 1 1/2.';
+        });
+        showErrors(errs);
+        if (Object.keys(errs).length) return;
+        const go = function () {
+          save.disabled = true; save.textContent = 'Saving…';
+          const done = function (data) {
+            if (!data) { reset(); return; }
+            App.applyWrite(key, data);
+            if (isNew && photo && photo.hasPending()) {
+              save.textContent = 'Uploading photo…';
+              photo.uploadAfterCreate(data.record.id).then(function () { m.close(true); });
+            } else m.close(true);
+            App.toast(isNew ? 'Added.' : 'Saved.', { type: 'ok' });
+          };
+          const reset = function () { save.disabled = false; save.textContent = isNew ? cfg.addLabel : 'Save changes'; };
+          const fail = function (err) {
+            reset();
+            if (err.code === 'VALIDATION' && err.details && err.details.fields) showErrors(err.details.fields);
+            else App.toast(err.message, { type: 'error' });
+          };
+          if (isNew) { App.write('apiCreate', [key, val]).then(done, fail); return; }
+          const orig = JSON.parse(original), changes = {};
+          Object.keys(val).forEach(function (k) { if (JSON.stringify(val[k]) !== JSON.stringify(orig[k])) changes[k] = val[k]; });
+          if (!Object.keys(changes).length) { m.close(true); return; }
+          if (hasQty) App.qty.flush(key, rec.id);
+          App.queue(rec.id, function () {
+            return App.write('apiUpdate', [key, rec.id, changes, snapshot.version]).catch(function (err) {
+              if (err.code !== 'CONFLICT') throw err;
+              return sectionConflict(key, err.details.current, snapshot, changes, cfg);
+            });
+          }).then(done, fail);
+        };
+        const dup = isNew && cfg.duplicateOf ? cfg.duplicateOf(val) : null;
+        if (dup) {
+          App.confirm({ title: 'Already listed', message: 'This looks the same as an existing entry: ' + cfg.primary(dup) + ' (' + cfg.meta(dup) + '). Add it anyway?', confirmLabel: 'Add anyway' })
+            .then(function (yes) { if (yes) go(); });
+        } else go();
+      };
+      save.addEventListener('click', submit);
+      m.root.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); submit(); }
+      });
+    },
+
+    archive: function (rec, modal) {
+      App.confirm({ title: 'Archive this ' + cfg.noun + '?', message: '“' + cfg.primary(rec) + '” will be hidden. You can restore it from Settings → Archive for 30 days.', confirmLabel: 'Archive', danger: true })
+        .then(function (yes) {
+          if (!yes) return;
+          App.write('apiArchive', [key, rec.id]).then(function (data) {
+            App.applyWrite(key, data);
+            if (modal) modal.close(true);
+            App.toast('Archived.', { action: { label: 'Undo', fn: function () {
+              App.write('apiRestore', [key, rec.id]).then(function (d) { App.applyWrite(key, d); App.toast('Restored.', { type: 'ok' }); },
+                function (e) { App.toast(e.message, { type: 'error' }); });
+            } } });
+          }, function (err) { App.toast(err.message, { type: 'error' }); });
+        });
+    }
+  };
+  return view;
+}
+
+function isEditingIn(rowEl) {
+  const a = document.activeElement;
+  return a && a.tagName === 'INPUT' && rowEl.contains(a);
+}
+
+function syncDot(key, id) {
+  const st = App.qty.state(key, id);
+  return el('span', { class: 'sync ' + st, title: st === 'pending' ? 'Saving…' : (st === 'saved' ? 'Saved' : '') }, st === 'saved' ? icon('check') : null);
+}
+
+function locationFilterOptions() {
+  const out = [];
+  App.locationTree().forEach(function (n) {
+    out.push({ id: n.area.id, label: n.area.name + (n.children.length ? ' (all)' : '') });
+    n.children.forEach(function (c) { out.push({ id: c.id, label: c.name, indent: true }); });
+  });
+  return out;
+}
+
+/** Options for filtering by a dropdown list: only values that are actually used. */
+function usedListOptions(key, field) {
+  const used = new Set(App.rows(key).map(function (r) { return r[field]; }).filter(Boolean));
+  return App.sorted('lists').filter(function (l) { return used.has(l.id); }).map(function (l) { return { id: l.id, label: l.value }; });
+}
+
+/** Options for filtering by a typed size (e.g. thickness): distinct value + unit pairs in use. */
+function usedMeasureOptions(key, textField, valueField, unitField) {
+  const seen = {};
+  App.rows(key).forEach(function (r) {
+    if (!r[textField]) return;
+    const id = r[valueField] + '|' + (r[unitField] || '');
+    if (!seen[id]) seen[id] = { id: id, label: withUnit(r[textField], r[unitField]), n: r[valueField], u: listOrder(r[unitField]) };
+  });
+  return Object.keys(seen).map(function (k) { return seen[k]; }).sort(function (a, b) { return (a.u - b.u) || (a.n - b.n); });
+}
+
+function newListValuePrompt(listKey, label) {
+  return App.prompt({
+    title: 'Add to ' + (LIST_LABELS[listKey] || label).toLowerCase(), submitLabel: 'Add',
+    intro: 'This adds a new choice for everyone. You can rename or reorder it in Settings → Dropdown lists.',
+    fields: [{ name: 'value', label: label, required: true, autofocus: true, max: 60 }],
+    onSubmit: function (v) {
+      return App.write('apiCreate', ['lists', { listKey: listKey, value: v.value }]).then(function (d) { App.applyWrite('lists', d); return d.record.id; });
+    }
+  });
+}
+
+/** Someone else saved while the form was open: merge if they touched other fields, otherwise ask. */
+function sectionConflict(key, current, snapshot, changes, cfg) {
+  const clash = Object.keys(changes).filter(function (f) { return JSON.stringify(current[f]) !== JSON.stringify(snapshot[f]); });
+  App.upsert(key, current);
+  if (!clash.length) return App.write('apiUpdate', [key, current.id, changes, current.version]);
+  const labels = clash.map(function (f) { const fd = cfg.form.filter(function (x) { return x.name === f; })[0]; return fd ? fd.label.toLowerCase() : f; });
+  return App.confirm({
+    title: 'Someone else edited this', confirmLabel: 'Save mine', cancelLabel: 'Cancel',
+    message: 'While you were editing, someone changed the ' + labels.join(', ') + '. Save your version anyway?'
+  }).then(function (yes) { return yes ? App.write('apiUpdate', [key, current.id, changes, null]) : null; });
+}
+
+// ───────────────────────── Section configs ─────────────────────────
+
+// Raw Materials is built in JsRaw.html (shapes, tracing and the cut planner).
+
+App.views.tools = sectionView({
+  key: 'tools', title: 'Tools & Equipment', noun: 'tool', nouns: 'tools', addLabel: 'Add tool',
+  primaryLabel: 'Tool', auditable: true,
+  searchPlaceholder: 'Search tools, locations…',
+  emptyText: 'List the tools and equipment the team owns and where they are kept.',
+  grid: 'minmax(0, 1fr) 220px 168px',
+  primary: function (r) { return r.name; },
+  meta: function (r) { return App.locationLabel(r.locationId) || 'No location'; },
+  columns: [{ label: 'Location', value: function (r) { return App.locationLabel(r.locationId); } }],
+  filters: [{ id: 'location', label: 'Location', location: true }],
+  sorts: [
+    { id: 'name', label: 'Name A–Z', cmp: function (a, b) { return natural(a.name, b.name); } },
+    { id: 'relevance', label: 'Best match', cmp: function (a, b) { return natural(a.name, b.name); } },
+    { id: 'location', label: 'Location', cmp: function (a, b) { return natural(App.locationLabel(a.locationId) || '~', App.locationLabel(b.locationId) || '~') || natural(a.name, b.name); } },
+    { id: 'updated', label: 'Recently updated', cmp: function (a, b) { return String(b.updatedAt).localeCompare(String(a.updatedAt)); } }
+  ],
+  search: function (r) { return [[r.name, 5], [App.locationLabel(r.locationId), 2], [r.description, 1]]; },
+  form: [
+    { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Digital calipers 6"' },
+    { name: 'quantity', label: 'Quantity', type: 'int', required: true, half: true, defaultValue: function () { return 1; } },
+    { name: 'locationId', label: 'Storage location', type: 'location' },
+    { name: 'description', label: 'Description', type: 'textarea', hint: 'Optional — brand, model, accessories, notes.' }
+  ]
+});
+
+App.views.fasteners = sectionView({
+  key: 'fasteners', title: 'Fastener Reference', noun: 'fastener', nouns: 'fasteners', addLabel: 'Add fastener',
+  primaryLabel: 'Fastener',
+  searchPlaceholder: 'Search size, type, length… e.g. 10-32 1/2',
+  emptyText: 'A reference of which fastener types, sizes and lengths the team has on hand. No counting needed.',
+  subExtra: function () { return ' on hand'; },
+  grid: 'minmax(0, 1fr) 190px 110px 100px 140px',
+  gridTablet: 'minmax(0, 1fr) 170px 100px 100px',
+  primary: function (r) {
+    const size = listVal(r.threadSizeId), pitch = pitchNumber(r);
+    return (size + (pitch ? '-' + pitch : '')) + (r.length ? ' × ' + withUnit(r.length, r.lengthUnitId) : '');
+  },
+  meta: function (r) { return [listVal(r.typeId), listVal(r.pitchId), listVal(r.materialId)].filter(Boolean).join(' · '); },
+  columns: [
+    { label: 'Type', value: function (r) { return listVal(r.typeId); } },
+    { label: 'Pitch', value: function (r) { return listVal(r.pitchId); } },
+    { label: 'Length', value: function (r) { return withUnit(r.length, r.lengthUnitId); } },
+    { label: 'Material', value: function (r) { return listVal(r.materialId); }, hideTablet: true }
+  ],
+  filters: [
+    { id: 'type', label: 'Type', options: function () { return usedListOptions('fasteners', 'typeId'); }, value: function (r) { return r.typeId; } },
+    { id: 'size', label: 'Size', options: function () { return usedListOptions('fasteners', 'threadSizeId'); }, value: function (r) { return r.threadSizeId; } },
+    { id: 'pitch', label: 'Pitch', options: function () { return usedListOptions('fasteners', 'pitchId'); }, value: function (r) { return r.pitchId; } },
+    { id: 'length', label: 'Length', options: function () { return usedMeasureOptions('fasteners', 'length', 'lengthValue', 'lengthUnitId'); },
+      value: function (r) { return r.lengthValue + '|' + (r.lengthUnitId || ''); } },
+    { id: 'material', label: 'Material', options: function () { return usedListOptions('fasteners', 'materialId'); }, value: function (r) { return r.materialId; } }
+  ],
+  sorts: [
+    { id: 'size', label: 'Size', cmp: fastenerCmp },
+    { id: 'relevance', label: 'Best match', cmp: fastenerCmp },
+    { id: 'type', label: 'Type', cmp: function (a, b) { return (listOrder(a.typeId) - listOrder(b.typeId)) || fastenerCmp(a, b); } },
+    { id: 'updated', label: 'Recently added', cmp: function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); } }
+  ],
+  search: function (r) {
+    const size = listVal(r.threadSizeId), pitch = pitchNumber(r);
+    return [[size + ' ' + size.replace('#', '') + (pitch ? ' ' + size.replace('#', '') + '-' + pitch + ' ' + size + '-' + pitch : ''), 5],
+      [listVal(r.typeId), 4], [listVal(r.pitchId), 3], [r.length + ' ' + listVal(r.lengthUnitId), 3], [listVal(r.materialId), 2], [r.description, 1]];
+  },
+  duplicateOf: function (v) {
+    return App.rows('fasteners').filter(function (r) {
+      return r.typeId === v.typeId && r.threadSizeId === v.threadSizeId && r.pitchId === v.pitchId &&
+        String(r.length) === v.length && (r.lengthUnitId || '') === v.lengthUnitId && (r.materialId || '') === v.materialId;
+    })[0] || null;
+  },
+  form: [
+    { name: 'typeId', label: 'Type', type: 'list', listKey: 'fastenerType', required: true },
+    { name: 'threadSizeId', label: 'Thread size', type: 'list', listKey: 'threadSize', required: true, half: true },
+    { name: 'pitchId', label: 'Thread pitch', type: 'list', listKey: 'threadPitch', half: true },
+    { name: 'length', label: 'Length', type: 'measure', half: true, placeholder: 'e.g. 1/2', hint: 'Leave blank for nuts and washers.', max: 30 },
+    { name: 'lengthUnitId', label: 'Length unit', type: 'list', listKey: 'unit', half: true, defaultValue: function () { return defaultUnit('in'); } },
+    { name: 'materialId', label: 'Material', type: 'list', listKey: 'fastenerMaterial' },
+    { name: 'description', label: 'Notes', type: 'textarea', hint: 'Optional — e.g. where the bin is, or “low profile head”.' }
+  ]
+});
+
+/** "32 TPI" → "32", "0.8 mm" → "0.8" (for titles like #10-32). */
+function pitchNumber(r) {
+  const p = listVal(r.pitchId);
+  const m = p.match(/^([\d.]+)/);
+  return m ? m[1] : '';
+}
+function fastenerCmp(a, b) {
+  return (listOrder(a.threadSizeId) - listOrder(b.threadSizeId)) || (listOrder(a.pitchId) - listOrder(b.pitchId)) ||
+    ((a.lengthValue || 0) - (b.lengthValue || 0)) || (listOrder(a.typeId) - listOrder(b.typeId));
+}
+
+App.views.wire = sectionView({
+  key: 'wire', title: 'Wire Inventory', noun: 'spool', nouns: 'spools', addLabel: 'Add wire',
+  primaryLabel: 'Wire', qtyLabel: 'Approx. length', auditable: true,
+  searchPlaceholder: 'Search gauge, color, location…',
+  emptyText: 'Track wire by gauge and color with a rough idea of how much is left. Estimates are fine.',
+  grid: 'minmax(0, 1fr) 190px 210px',
+  gridTablet: 'minmax(0, 1fr) 170px 210px',
+  primary: function (r) { return listVal(r.gaugeId) + (r.typeColor ? ' · ' + r.typeColor : ''); },
+  meta: function (r) { return App.locationLabel(r.locationId) || 'No location'; },
+  qtyUnit: function (r) { return listVal(r.lengthUnitId); },
+  columns: [{ label: 'Location', value: function (r) { return App.locationLabel(r.locationId); } }],
+  filters: [
+    { id: 'gauge', label: 'Gauge', options: function () { return usedListOptions('wire', 'gaugeId'); }, value: function (r) { return r.gaugeId; } },
+    { id: 'location', label: 'Location', location: true }
+  ],
+  sorts: [
+    { id: 'gauge', label: 'Gauge', cmp: function (a, b) { return (listOrder(a.gaugeId) - listOrder(b.gaugeId)) || natural(a.typeColor, b.typeColor); } },
+    { id: 'relevance', label: 'Best match', cmp: function (a, b) { return listOrder(a.gaugeId) - listOrder(b.gaugeId); } },
+    { id: 'lenAsc', label: 'Least left', cmp: function (a, b) { return App.qty.display('wire', a) - App.qty.display('wire', b); } },
+    { id: 'location', label: 'Location', cmp: function (a, b) { return natural(App.locationLabel(a.locationId) || '~', App.locationLabel(b.locationId) || '~'); } }
+  ],
+  search: function (r) {
+    const g = listVal(r.gaugeId);
+    return [[g + ' ' + g.replace(/\s*awg/i, ''), 5], [r.typeColor, 4], [App.locationLabel(r.locationId), 2], [r.description, 1]];
+  },
+  form: [
+    { name: 'gaugeId', label: 'Gauge', type: 'list', listKey: 'wireGauge', required: true, half: true },
+    { name: 'typeColor', label: 'Type / color', type: 'text', half: true, placeholder: 'e.g. Red, silicone', max: 80 },
+    { name: 'approxLength', label: 'Approximate length left', type: 'number', required: true, half: true, hint: 'A rough estimate is fine.' },
+    { name: 'lengthUnitId', label: 'Unit', type: 'list', listKey: 'unit', half: true, defaultValue: function () { return defaultUnit('ft'); } },
+    { name: 'locationId', label: 'Storage location', type: 'location' },
+    { name: 'description', label: 'Description', type: 'textarea' }
+  ]
+});
+</script>

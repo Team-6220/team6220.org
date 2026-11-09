@@ -1,0 +1,583 @@
+<script>
+/* ============================================================================
+   JsGeometry.html — Golden Griffins Inventory
+   Geometry for raw stock: shapes, drawing, the cut planner and leftovers.
+   Coordinates are x → right, y → down (like the screen), in the piece's
+   dimension unit (usually inches). Everything here is plain math with no
+   page code, so it can be tested on its own.
+   ========================================================================== */
+'use strict';
+
+const Geo = {};
+
+// ───────────────────────── basics ─────────────────────────
+
+Geo.signedArea = function (p) {
+  let a = 0;
+  for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i][0] * q[1] - q[0] * p[i][1]; }
+  return a / 2;
+};
+Geo.area = function (p) { return Math.abs(Geo.signedArea(p)); };
+
+Geo.bbox = function (p) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  p.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
+  return { x0: x0, y0: y0, x1: x1, y1: y1, w: x1 - x0, h: y1 - y0 };
+};
+
+Geo.edgeLengths = function (p) {
+  return p.map(function (a, i) { const b = p[(i + 1) % p.length]; return Math.hypot(b[0] - a[0], b[1] - a[1]); });
+};
+
+Geo.rotate = function (p, deg) {
+  const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  return p.map(function (q) { return [q[0] * c - q[1] * s, q[0] * s + q[1] * c]; });
+};
+
+Geo.translate = function (p, dx, dy) { return p.map(function (q) { return [q[0] + dx, q[1] + dy]; }); };
+
+Geo.round = function (p, step) { return p.map(function (q) { return [Math.round(q[0] / step) * step, Math.round(q[1] / step) * step]; }); };
+
+Geo.rect = function (x, y, w, h) { return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]; };
+
+/** A placement { x, y, w, h, angle } as a polygon in the piece's frame. */
+Geo.placementPoly = function (pl) { return Geo.rotate(Geo.rect(pl.x, pl.y, pl.w, pl.h), pl.angle || 0); };
+
+function distToSeg(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)));
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+
+/** Inside, or within eps of the boundary. */
+Geo.pointIn = function (pt, poly, eps) {
+  eps = eps === undefined ? 1e-6 : eps;
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if (distToSeg(pt, a, b) <= eps) return true;
+    if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+  }
+  return inside;
+};
+
+/** Strictly inside (not on the boundary). */
+function strictlyIn(pt, poly) { return Geo.pointIn(pt, poly, -1) && !onBoundary(pt, poly); }
+function onBoundary(pt, poly) {
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if (distToSeg(pt, poly[i], poly[j]) <= 1e-6) return true;
+  return false;
+}
+
+function cross(a, b, c) { return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); }
+
+/** Segments ab and cd cross at a single interior point (touching doesn't count). */
+Geo.segCross = function (a, b, c, d) {
+  const e = 1e-9;
+  const d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+  return ((d1 > e && d2 < -e) || (d1 < -e && d2 > e)) && ((d3 > e && d4 < -e) || (d3 < -e && d4 > e));
+};
+
+Geo.selfIntersects = function (p) {
+  const n = p.length;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (j === i + 1 || (i === 0 && j === n - 1)) continue;
+    if (Geo.segCross(p[i], p[(i + 1) % n], p[j], p[(j + 1) % n])) return true;
+  }
+  return false;
+};
+
+/** Is the (convex) rectangle polygon `r` completely inside `poly`? */
+Geo.containsRect = function (poly, r) {
+  for (let i = 0; i < r.length; i++) if (!Geo.pointIn(r[i], poly, 1e-6)) return false;
+  for (let i = 0; i < r.length; i++) {
+    const a = r[i], b = r[(i + 1) % r.length];
+    for (let j = 0; j < poly.length; j++) if (Geo.segCross(a, b, poly[j], poly[(j + 1) % poly.length])) return false;
+  }
+  // A notch corner of the stock poking into the rectangle.
+  for (let j = 0; j < poly.length; j++) if (convexStrictlyIn(poly[j], r)) return false;
+  const c = [(r[0][0] + r[2][0]) / 2, (r[0][1] + r[2][1]) / 2];
+  return Geo.pointIn(c, poly, 1e-6);
+};
+
+function convexStrictlyIn(pt, r) {
+  let sign = 0;
+  for (let i = 0; i < r.length; i++) {
+    const c = cross(r[i], r[(i + 1) % r.length], pt);
+    if (Math.abs(c) < 1e-7) return false;
+    const s = c > 0 ? 1 : -1;
+    if (sign && s !== sign) return false;
+    sign = s;
+  }
+  return true;
+}
+
+/** Do two convex polygons overlap (more than touching)? Separating-axis test. */
+Geo.overlap = function (a, b) {
+  const polys = [a, b];
+  for (let k = 0; k < 2; k++) {
+    const p = polys[k];
+    for (let i = 0; i < p.length; i++) {
+      const q = p[(i + 1) % p.length];
+      const nx = q[1] - p[i][1], ny = p[i][0] - q[0];
+      let amin = Infinity, amax = -Infinity, bmin = Infinity, bmax = -Infinity;
+      a.forEach(function (v) { const t = v[0] * nx + v[1] * ny; amin = Math.min(amin, t); amax = Math.max(amax, t); });
+      b.forEach(function (v) { const t = v[0] * nx + v[1] * ny; bmin = Math.min(bmin, t); bmax = Math.max(bmax, t); });
+      const tol = 1e-7 * Math.hypot(nx, ny);
+      if (amax <= bmin + tol || bmax <= amin + tol) return false;
+    }
+  }
+  return true;
+};
+
+// ───────────────────────── traced shapes ─────────────────────────
+
+/** Corners within `tol` degrees of square. flags[i] is the corner at point i. */
+Geo.detectRight = function (p, tol) {
+  tol = tol === undefined ? 10 : tol;
+  return p.map(function (b, i) {
+    const a = p[(i - 1 + p.length) % p.length], c = p[(i + 1) % p.length];
+    const v1 = [a[0] - b[0], a[1] - b[1]], v2 = [c[0] - b[0], c[1] - b[1]];
+    const ang = Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / (Math.hypot(v1[0], v1[1]) * Math.hypot(v2[0], v2[1]) || 1)))) * 180 / Math.PI;
+    return Math.abs(ang - 90) <= tol;
+  });
+};
+
+/**
+ * Turns a rough tracing + measured edge lengths into a true-to-size outline.
+ * Edge lengths are kept exactly; the corner angles come from the tracing
+ * (right-angle corners are held at exactly 90°) and are nudged only as much
+ * as needed for the outline to close. If the lengths can't close any shape,
+ * the smallest possible length changes are made and reported.
+ *   traced  — [[x,y],…] (any scale, e.g. photo pixels)
+ *   lengths — [L0, L1, …], Li = edge from point i to point i+1
+ *   right   — [bool…] corner i is square
+ * Returns { points, adjusted: [{ edge, from, to }] }.
+ */
+Geo.solveShape = function (traced, lengths, right) {
+  const n = traced.length;
+  right = right || traced.map(function () { return false; });
+  const theta0 = traced.map(function (a, i) { const b = traced[(i + 1) % n]; return Math.atan2(b[1] - a[1], b[0] - a[0]); });
+  const turn = traced.map(function (b, i) {   // turn direction at corner i (between edge i-1 and edge i)
+    const a = traced[(i - 1 + n) % n], c = traced[(i + 1) % n];
+    return cross(a, b, c) >= 0 ? 1 : -1;
+  });
+  // Group edges joined by square corners: they rotate together.
+  let start = 0;
+  for (let i = 0; i < n; i++) if (!right[i]) { start = i; break; }
+  const group = new Array(n), offset = new Array(n), groups = [];
+  for (let k = 0; k < n; k++) {
+    const i = (start + k) % n;
+    if (k === 0 || !right[i]) { groups.push({ edges: [i], phi0: 0 }); offset[i] = 0; }
+    else { const prev = (i - 1 + n) % n; offset[i] = offset[prev] + turn[i] * Math.PI / 2; groups[groups.length - 1].edges.push(i); }
+    group[i] = groups.length - 1;
+  }
+  groups.forEach(function (g) {   // best starting angle for the group (circular mean)
+    let sx = 0, sy = 0;
+    g.edges.forEach(function (i) { sx += Math.cos(theta0[i] - offset[i]); sy += Math.sin(theta0[i] - offset[i]); });
+    g.phi0 = Math.atan2(sy, sx); g.phi = g.phi0;
+  });
+  const L = lengths.slice();
+  const ang = function (i) { return groups[group[i]].phi + offset[i]; };
+  const residual = function () {
+    let rx = 0, ry = 0;
+    for (let i = 0; i < n; i++) { rx += L[i] * Math.cos(ang(i)); ry += L[i] * Math.sin(ang(i)); }
+    return [rx, ry];
+  };
+  const perim = L.reduce(function (s, x) { return s + x; }, 0) || 1;
+  if (groups.length > 1) {
+    for (let it = 0; it < 80; it++) {
+      const r = residual();
+      if (Math.hypot(r[0], r[1]) < 1e-9 * perim) break;
+      // J: 2×k, columns d r / d phi_g ; weights = 1/(edges in group)
+      const J = groups.map(function (g) {
+        let jx = 0, jy = 0;
+        g.edges.forEach(function (i) { jx += -L[i] * Math.sin(ang(i)); jy += L[i] * Math.cos(ang(i)); });
+        return [jx, jy, 1 / g.edges.length];
+      });
+      let a = 1e-12, b = 0, d = 1e-12;
+      J.forEach(function (c) { a += c[2] * c[0] * c[0]; b += c[2] * c[0] * c[1]; d += c[2] * c[1] * c[1]; });
+      const det = a * d - b * b;
+      if (Math.abs(det) < 1e-14) break;
+      const l0 = (d * r[0] - b * r[1]) / det, l1 = (-b * r[0] + a * r[1]) / det;
+      let step = 1;
+      const before = Math.hypot(r[0], r[1]);
+      const saved = groups.map(function (g) { return g.phi; });
+      for (let tries = 0; tries < 8; tries++) {
+        groups.forEach(function (g, k) { g.phi = saved[k] - step * J[k][2] * (J[k][0] * l0 + J[k][1] * l1); });
+        const r2 = residual();
+        if (Math.hypot(r2[0], r2[1]) < before) break;
+        step /= 2;
+      }
+    }
+  }
+  // Whatever doesn't close by turning: smallest length changes that do.
+  const adjusted = [];
+  let r = residual();
+  if (Math.hypot(r[0], r[1]) > 1e-6 * perim) {
+    let a = 0, b = 0, d = 0;
+    for (let i = 0; i < n; i++) { const c = Math.cos(ang(i)), s = Math.sin(ang(i)); a += c * c; b += c * s; d += s * s; }
+    const det = a * d - b * b;
+    if (Math.abs(det) > 1e-12) {
+      const l0 = (d * r[0] - b * r[1]) / det, l1 = (-b * r[0] + a * r[1]) / det;
+      for (let i = 0; i < n; i++) {
+        const dL = -(Math.cos(ang(i)) * l0 + Math.sin(ang(i)) * l1);
+        if (Math.abs(dL) > 1 / 32) adjusted.push({ edge: i, from: L[i], to: L[i] + dL });
+        L[i] = Math.max(0.01, L[i] + dL);
+      }
+    }
+  }
+  const pts = [[0, 0]];
+  for (let i = 0; i < n - 1; i++) { const p = pts[i]; pts.push([p[0] + L[i] * Math.cos(ang(i)), p[1] + L[i] * Math.sin(ang(i))]); }
+  return { points: Geo.normalize(pts), adjusted: adjusted, closed: adjusted.length === 0 };
+};
+
+/** Rotates so the longest edge is horizontal along the bottom, then moves to (0,0). */
+Geo.normalize = function (p) {
+  // Keeps the photo's orientation: turns the shape the smallest amount that
+  // makes its longest edge straight across or straight up (never mirrors it).
+  const lens = Geo.edgeLengths(p);
+  const k = lens.indexOf(Math.max.apply(null, lens));
+  const a = p[k], b = p[(k + 1) % p.length];
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  const snap = Math.round(ang / (Math.PI / 2)) * (Math.PI / 2);
+  const q = Geo.rotate(p, (snap - ang) * 180 / Math.PI);
+  const b2 = Geo.bbox(q);
+  return Geo.round(Geo.translate(q, -b2.x0, -b2.y0), 1e-4);
+};
+
+// ───────────────────────── units & labels ─────────────────────────
+
+Geo.toInches = function (unitName) {
+  return ({ mm: 1 / 25.4, cm: 1 / 2.54, m: 39.3701, ft: 12 })[String(unitName || '').toLowerCase()] || 1;
+};
+
+/** 12.5 → 12 1/2"  (inches, nearest 1/16) ; mm → "317.5 mm". */
+Geo.fmtLen = function (x, unitName) {
+  const u = String(unitName || 'in').toLowerCase();
+  if (u === 'mm' || u === 'cm' || u === 'm') return (Math.round(x * 10) / 10) + ' ' + u;
+  if (u === 'ft') return (Math.round(x * 100) / 100) + ' ft';
+  const s = Math.round(x * 16), whole = Math.floor(s / 16);
+  let num = s % 16, den = 16;
+  while (num && num % 2 === 0) { num /= 2; den /= 2; }
+  return (num ? (whole ? whole + ' ' : '') + num + '/' + den : String(whole)) + '"';
+};
+
+// ───────────────────────── drawing ─────────────────────────
+
+/**
+ * SVG drawing of a shape with edge dimensions.
+ *   opts: { width, height, unit, labels: true, edges: [entered lengths],
+ *           parts: [{ poly, label, kind: 'new'|'reserved' }], minLabel }
+ */
+Geo.svg = function (points, opts) {
+  opts = opts || {};
+  const W = opts.width || 280, H = opts.height || 200, NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('class', 'shape-svg');
+  const mk = function (tag, attrs, text) {
+    const n = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text !== undefined) n.textContent = text;
+    svg.appendChild(n);
+    return n;
+  };
+  if (!points || points.length < 3) {
+    mk('text', { x: W / 2, y: H / 2, 'text-anchor': 'middle', class: 'shape-empty' }, 'No shape recorded');
+    return svg;
+  }
+  const font = opts.font || 12;
+  const pad = opts.labels === false ? 8 : font * 3.6;
+  const bb = Geo.bbox(points);
+  const k = Math.min((W - 2 * pad) / (bb.w || 1), (H - 2 * pad) / (bb.h || 1));
+  const ox = (W - bb.w * k) / 2 - bb.x0 * k, oy = (H - bb.h * k) / 2 - bb.y0 * k;
+  const P = function (p) { return [ox + p[0] * k, oy + p[1] * k]; };
+  const path = function (poly) { return poly.map(function (p, i) { const q = P(p); return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('') + 'Z'; };
+  mk('path', { d: path(points), class: 'shape-fill' });
+  (opts.parts || []).forEach(function (pt) {
+    mk('path', { d: path(pt.poly), class: 'shape-part ' + (pt.kind || 'new') });
+    if (pt.label) {
+      const c = pt.poly.reduce(function (s, p) { return [s[0] + p[0] / pt.poly.length, s[1] + p[1] / pt.poly.length]; }, [0, 0]);
+      const q = P(c);
+      const pb = Geo.bbox(pt.poly.map(P));
+      const size = Math.min(font, pb.h / 2.2, pb.w / Math.max(3, pt.label.length) * 1.7);
+      if (size >= 8.5) {
+        const t = mk('text', { x: q[0], y: q[1], 'text-anchor': 'middle', 'dominant-baseline': 'middle', class: 'shape-part-label' }, pt.label);
+        t.setAttribute('font-size', size);
+      }
+    }
+  });
+  if (opts.labels !== false) {
+    const lens = Geo.edgeLengths(points);
+    const ccw = Geo.signedArea(points) > 0;   // y-down: positive area = clockwise on screen
+    const minLabel = opts.minLabel === undefined ? 0.5 : opts.minLabel;
+    points.forEach(function (a, i) {
+      const b = points[(i + 1) % points.length];
+      const len = opts.edges && opts.edges[i] ? opts.edges[i] : lens[i];
+      if (lens[i] < minLabel) return;
+      const pa = P(a), pb = P(b);
+      const mx = (pa[0] + pb[0]) / 2, my = (pa[1] + pb[1]) / 2;
+      let nx = pb[1] - pa[1], ny = pa[0] - pb[0];
+      const nl = Math.hypot(nx, ny) || 1;
+      nx /= nl; ny /= nl;
+      if (!ccw) { nx = -nx; ny = -ny; }
+      const off = font * 1.1;
+      mk('text', { x: (mx + nx * off).toFixed(1), y: (my + ny * off).toFixed(1), 'text-anchor': 'middle', 'dominant-baseline': 'middle', class: 'shape-dim', 'font-size': font },
+        Geo.fmtLen(len, opts.unit));
+    });
+  }
+  return svg;
+};
+
+// ───────────────────────── leftovers after cutting ─────────────────────────
+
+/**
+ * What's left of `poly` after removing the `cuts` polygons. Works on a
+ * 1/16" grid, then turns the grid back into clean outlines. Pieces smaller
+ * than `minArea` or thinner than `minWidth` are dropped as slivers. A leftover
+ * with a hole in the middle is opened up with a thin slit to the outside
+ * (outlines can't have holes). Returns polygons, largest first.
+ */
+Geo.leftovers = function (poly, cuts, opts) {
+  opts = opts || {};
+  const res = opts.res || 0.0625, minArea = opts.minArea === undefined ? 4 : opts.minArea, minWidth = opts.minWidth === undefined ? 0.75 : opts.minWidth;
+  const bb = Geo.bbox(poly);
+  const nx = Math.ceil(bb.w / res - 1e-9) + 2, ny = Math.ceil(bb.h / res - 1e-9) + 2;   // 1-cell empty border
+  const x0 = bb.x0 - res, y0 = bb.y0 - res;
+  const grid = new Uint8Array(nx * ny);
+  const fill = function (pg, value) {
+    for (let j = 0; j < ny; j++) {
+      const y = y0 + (j + 0.5) * res;
+      const xs = [];
+      for (let i = 0, k = pg.length - 1; i < pg.length; k = i++) {
+        const a = pg[i], b = pg[k];
+        if ((a[1] > y) !== (b[1] > y)) xs.push(a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
+      }
+      xs.sort(function (p, q) { return p - q; });
+      for (let t = 0; t + 1 < xs.length; t += 2) {
+        const i0 = Math.max(0, Math.ceil((xs[t] - x0) / res - 0.5 - 1e-9)), i1 = Math.min(nx - 1, Math.floor((xs[t + 1] - x0) / res - 0.5 + 1e-9));
+        for (let i = i0; i <= i1; i++) grid[j * nx + i] = value;
+      }
+    }
+  };
+  fill(poly, 1);
+  (cuts || []).forEach(function (c) { fill(c, 0); });
+
+  // Open up holes: empty cells not connected to the outside get a slit downwards.
+  const outside = new Uint8Array(nx * ny);
+  const flood = function () {
+    outside.fill(0);
+    const stack = [0];
+    outside[0] = 1;
+    while (stack.length) {
+      const c = stack.pop(), i = c % nx, j = (c - i) / nx;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        const a = i + d[0], b = j + d[1];
+        if (a < 0 || b < 0 || a >= nx || b >= ny) return;
+        const q = b * nx + a;
+        if (!grid[q] && !outside[q]) { outside[q] = 1; stack.push(q); }
+      });
+    }
+  };
+  for (let guard = 0; guard < 50; guard++) {
+    flood();
+    let hole = -1;
+    for (let c = 0; c < grid.length; c++) if (!grid[c] && !outside[c]) { hole = c; break; }
+    if (hole < 0) break;
+    const i = hole % nx;
+    for (let j = (hole - i) / nx; j < ny && !outside[j * nx + i]; j++) grid[j * nx + i] = 0;
+  }
+
+  // Connected pieces (4-neighbour).
+  const label = new Int32Array(nx * ny);
+  let count = 0;
+  for (let c = 0; c < grid.length; c++) {
+    if (!grid[c] || label[c]) continue;
+    count++;
+    const stack = [c];
+    label[c] = count;
+    while (stack.length) {
+      const q = stack.pop(), i = q % nx, j = (q - i) / nx;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        const a = i + d[0], b = j + d[1];
+        if (a < 0 || b < 0 || a >= nx || b >= ny) return;
+        const r = b * nx + a;
+        if (grid[r] && !label[r]) { label[r] = count; stack.push(r); }
+      });
+    }
+  }
+  const out = [];
+  for (let id = 1; id <= count; id++) {
+    const loop = traceLoop(label, nx, ny, id);
+    if (!loop) continue;
+    let pts = loop.map(function (v) { return [x0 + v[0] * res, y0 + v[1] * res]; });
+    pts = simplifyClosed(pts, res * 0.75);
+    let eps = res * 0.75;
+    while (pts.length > 60) { eps *= 1.6; pts = simplifyClosed(pts, eps); }
+    pts = Geo.round(pts, 1 / 64);
+    if (pts.length < 3 || Geo.selfIntersects(pts)) continue;
+    const a = Geo.area(pts), b = Geo.bbox(pts);
+    if (a < minArea || Math.min(b.w, b.h) < minWidth || a / Math.max(b.w, b.h) < minWidth * 0.5) continue;
+    out.push(pts);
+  }
+  return out.sort(function (p, q) { return Geo.area(q) - Geo.area(p); });
+};
+
+/** Outer boundary of one labelled region, as grid-corner points (cells at [i,i+1]×[j,j+1]). */
+function traceLoop(label, nx, ny, id) {
+  const at = function (i, j) { return i >= 0 && j >= 0 && i < nx && j < ny && label[j * nx + i] === id; };
+  // Directed boundary edges with the region on the left (screen y-down → clockwise visually).
+  const next = {};
+  let first = null;
+  const add = function (a, b) { const k = a[0] + ',' + a[1]; (next[k] = next[k] || []).push(b); if (!first) first = a; };
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    if (!at(i, j)) continue;
+    if (!at(i, j - 1)) add([i + 1, j], [i, j]);
+    if (!at(i, j + 1)) add([i, j + 1], [i + 1, j + 1]);
+    if (!at(i - 1, j)) add([i, j], [i, j + 1]);
+    if (!at(i + 1, j)) add([i + 1, j + 1], [i + 1, j]);
+  }
+  if (!first) return null;
+  const loop = [first];
+  let prev = null, cur = first;
+  for (let guard = 0; guard < nx * ny * 4; guard++) {
+    const k = cur[0] + ',' + cur[1];
+    const options = next[k];
+    if (!options || !options.length) break;
+    let pick = 0;
+    if (options.length > 1 && prev) {   // at a pinch point, turn consistently
+      const din = [cur[0] - prev[0], cur[1] - prev[1]];
+      let best = -Infinity;
+      options.forEach(function (o, idx) {
+        const dout = [o[0] - cur[0], o[1] - cur[1]];
+        const score = din[0] * dout[1] - din[1] * dout[0];
+        if (score > best) { best = score; pick = idx; }
+      });
+    }
+    const nxt = options.splice(pick, 1)[0];
+    if (nxt[0] === first[0] && nxt[1] === first[1]) break;
+    loop.push(nxt);
+    prev = cur; cur = nxt;
+  }
+  // drop points in the middle of straight runs
+  const clean = loop.filter(function (p, i) {
+    const a = loop[(i - 1 + loop.length) % loop.length], b = loop[(i + 1) % loop.length];
+    return cross(a, p, b) !== 0;
+  });
+  return clean;
+}
+
+/** Douglas–Peucker for a closed outline. */
+function simplifyClosed(pts, eps) {
+  if (pts.length <= 4) return pts;
+  // split at the two farthest-apart points
+  let a = 0, b = 0, best = -1;
+  for (let i = 0; i < pts.length; i++) {
+    const d = Math.hypot(pts[i][0] - pts[0][0], pts[i][1] - pts[0][1]);
+    if (d > best) { best = d; b = i; }
+  }
+  const rot = pts.slice(a).concat(pts.slice(0, a));
+  const half1 = dp(rot.slice(0, b + 1), eps), half2 = dp(rot.slice(b).concat([rot[0]]), eps);
+  return half1.slice(0, -1).concat(half2.slice(0, -1));
+}
+function dp(pts, eps) {
+  if (pts.length < 3) return pts;
+  let idx = -1, max = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const d = distToSeg(pts[i], pts[0], pts[pts.length - 1]);
+    if (d > max) { max = d; idx = i; }
+  }
+  if (max <= eps) return [pts[0], pts[pts.length - 1]];
+  const l = dp(pts.slice(0, idx + 1), eps), r = dp(pts.slice(idx), eps);
+  return l.slice(0, -1).concat(r);
+}
+
+// ───────────────────────── cut planner ─────────────────────────
+
+/**
+ * Finds a spot for a w×h rectangle on a piece, avoiding `taken` polygons.
+ * Tries square to the piece and square to each of its edges, scanning from
+ * one corner so leftovers stay in one usable block.
+ * Returns { x, y, w, h, angle } (see Geo.placementPoly) or null.
+ */
+Geo.findSpot = function (poly, taken, w, h) {
+  const angles = [];
+  const addAng = function (a) {
+    a = ((a % 180) + 180) % 180;
+    if (!angles.some(function (b) { return Math.abs(b - a) < 0.5 || Math.abs(b - a) > 179.5; })) angles.push(a);
+  };
+  addAng(0); addAng(90);
+  poly.forEach(function (p, i) { const q = poly[(i + 1) % poly.length]; const a = Math.atan2(q[1] - p[1], q[0] - p[0]) * 180 / Math.PI; addAng(a); addAng(a + 90); });
+  const area = Geo.area(poly);
+  for (let ai = 0; ai < angles.length; ai++) {
+    const ang = angles[ai];
+    const rp = Geo.rotate(poly, -ang);
+    const rt = taken.map(function (t) { return Geo.rotate(t, -ang); });
+    const bb = Geo.bbox(rp);
+    if (bb.w + 1e-6 < w || bb.h + 1e-6 < h) continue;
+    const step = Math.max(0.125, Math.min(0.5, Math.min(w, h) / 12, area > 600 ? 0.5 : 0.25));
+    const xs = candidates(bb.x0, bb.x1 - w, step, rp.map(function (p) { return p[0]; }).concat(rp.map(function (p) { return p[0] - w; })),
+      rt.reduce(function (s, t) { return s.concat(t.map(function (p) { return p[0]; })); }, []));
+    const ys = candidates(bb.y0, bb.y1 - h, step, rp.map(function (p) { return p[1]; }).concat(rp.map(function (p) { return p[1] - h; })),
+      rt.reduce(function (s, t) { return s.concat(t.map(function (p) { return p[1]; }), t.map(function (p) { return p[1] - h; })); }, []));
+    for (let yi = 0; yi < ys.length; yi++) {
+      for (let xi = 0; xi < xs.length; xi++) {
+        const r = Geo.rect(xs[xi], ys[yi], w, h);
+        if (rt.some(function (t) { return Geo.overlap(r, t); })) continue;
+        if (!Geo.containsRect(rp, r)) continue;
+        return { x: round4(xs[xi]), y: round4(ys[yi]), w: w, h: h, angle: round4(ang) };
+      }
+    }
+  }
+  return null;
+};
+
+function round4(x) { return Math.round(x * 1e4) / 1e4; }
+
+function candidates(lo, hi, step, extra, extra2) {
+  if (hi < lo - 1e-6) return [];
+  const set = [];
+  for (let v = lo; v <= hi + 1e-9; v += step) set.push(v);
+  extra.concat(extra2 || []).forEach(function (v) { if (v >= lo - 1e-9 && v <= hi + 1e-9) set.push(v); });
+  set.push(hi);
+  set.sort(function (a, b) { return a - b; });
+  return set.filter(function (v, i) { return i === 0 || v - set[i - 1] > 1e-6; });
+}
+
+/**
+ * Plans where each part comes from.
+ *   stocks: [{ id, copy, points (inches), taken: [polys already reserved] }]
+ *   parts:  [{ key, name, w, h }]  one entry per physical part, stock size incl. tolerance
+ * Biggest parts first. Each goes on the piece where it wastes the least:
+ * pieces already used by this plan first (keeps cuts together), then the
+ * smallest piece it fits on — so big sheets stay whole for big parts.
+ * Returns { placed: [{ part, stock, placement }], unplaced: [part] }.
+ */
+Geo.plan = function (stocks, parts) {
+  const state = stocks.map(function (s) { return { s: s, taken: (s.taken || []).slice(), used: false, area: Geo.area(s.points),
+    free: Geo.area(s.points) - (s.taken || []).reduce(function (a, t) { return a + Geo.area(t); }, 0) }; });
+  const order = parts.slice().sort(function (a, b) { return b.w * b.h - a.w * a.h; });
+  const placed = [], unplaced = [];
+  order.forEach(function (part) {
+    const need = part.w * part.h;
+    const cands = state.filter(function (st) { return st.free + 1e-6 >= need; })
+      .sort(function (a, b) { return (a.used === b.used ? 0 : (a.used ? -1 : 1)) || (a.area - b.area); });
+    for (let i = 0; i < cands.length; i++) {
+      const st = cands[i];
+      const spot = Geo.findSpot(st.s.points, st.taken, part.w, part.h);
+      if (spot) {
+        st.taken.push(Geo.placementPoly(spot));
+        st.used = true;
+        st.free -= need;
+        placed.push({ part: part, stock: st.s, placement: spot });
+        return;
+      }
+    }
+    unplaced.push(part);
+  });
+  return { placed: placed, unplaced: unplaced };
+};
+
+if (typeof module !== 'undefined') module.exports = Geo;
+</script>

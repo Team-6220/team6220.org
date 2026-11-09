@@ -1,9 +1,10 @@
 // Inventory data functions for apps/inventory. Apps call these; they never import the Wix SDK.
+// The inventory UI (the original Apps Script UI) reaches them through createScriptApi() (script-api.ts).
 //
-// Which backend is used is decided by PUBLIC_INVENTORY_BACKEND (build-time env var):
-//   "mock" (default) - in-memory demo data; nothing is saved. Used by `pnpm dev`, tests, and the dev site
-//                      until the Wix collections exist.
-//   "wix"            - Wix CMS collections, called from the browser with the signed-in member's Wix client.
+// Which backend is used is decided by PUBLIC_INVENTORY_BACKEND (build-time env var); when it isn't set,
+// production builds (the deployed site) use "wix" and `pnpm dev` / tests use "mock":
+//   "mock" - in-memory demo data; nothing is saved.
+//   "wix"  - Wix CMS collections, called from the browser with the signed-in member's Wix client.
 // Phase 2 adds an "api" backend that calls /api/inventory instead; app code doesn't change.
 
 import { MemoryStore, type MemoryStoreOptions } from "./memory-store.ts";
@@ -14,7 +15,18 @@ import type { MemberSession } from "./types.ts";
 export * from "./schema.ts";
 export * from "./types.ts";
 export { InventoryError, parseMeasure, fmtFraction } from "./util.ts";
-export { createInventoryService, auditItemName, type InventoryService, type AuditConflict, type AuditSummary } from "./service.ts";
+export {
+  createInventoryService,
+  auditItemName,
+  publicPackingMeta,
+  finalCheckLive,
+  FINAL_CHECK_STALE_MS,
+  type InventoryService,
+  type ServiceOptions,
+  type AuditConflict,
+  type AuditSummary,
+} from "./service.ts";
+export { createScriptApi, isNetworkError, PHOTOS_UNAVAILABLE, type ScriptApi, type ScriptApiOptions, type ScriptReply } from "./script-api.ts";
 export { MemoryStore } from "./memory-store.ts";
 export { demoData } from "./mock-data.ts";
 // The Wix adapter is loaded on demand by connectInventory() (import "./wix-store.ts" directly if you need it).
