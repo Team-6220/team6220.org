@@ -1,0 +1,27 @@
+---
+// Layout for the public team6220.org pages. Owns the main site's styles and
+// fonts so apps don't inherit them.
+import BaseLayout from "../../src/layouts/BaseLayout.astro";
+import "./styles/site.css";
+import earlyScript from "./content/early.js?raw";
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&display=swap"
+    />
+    <!-- Must run before first paint: sets the intro/reduced-motion classes. -->
+    <script is:inline set:html={earlyScript} />
+  </Fragment>
+  <slot />
+</BaseLayout>

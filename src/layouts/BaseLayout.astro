@@ -1,7 +1,6 @@
 ---
-import "../styles/site.css";
-import earlyScript from "../content/early.js?raw";
-
+// Shared page shell for the main site and every app: charset, viewport, favicon.
+// Each site or app wraps this in its own layout (see sites/main/MainLayout.astro).
 interface Props {
   title: string;
   description: string;
@@ -16,14 +15,11 @@ const { title, description } = Astro.props;
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&display=swap"
-    />
-    <!-- Must run before first paint: sets the intro/reduced-motion classes. -->
-    <script is:inline set:html={earlyScript} />
+    <!-- Favicons come from packages/assets/favicon/ (copied to the site root at build time). -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <slot name="head" />
   </head>
   <body>
     <slot />

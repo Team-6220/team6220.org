@@ -1,6 +1,6 @@
 /* Brand fonts. The web team drops the licensed files next to the page and uncomments the url() lines.
    Until then the stack falls back to Orbitron (display) and Chakra Petch (labels). */
-@font-face{font-family:"Karnivore";font-display:swap;font-weight:100 900;src:url(/assets/embedded/37daffea3f.ttf) format("truetype")}
+@font-face{font-family:"Karnivore";font-display:swap;font-weight:100 900;src:url(/assets/shared/fonts/Karnivore.ttf) format("truetype")}
 @font-face{font-family:"Apex Mk2";font-display:swap;src:local("Apex Mk2"),local("ApexMk2-Regular")/*, url("fonts/apex-mk2.woff2") format("woff2")*/}
 
 /* Layout: flat black site with gold accents; full-bleed photo hero; one hazard stripe; pages swap in place.
@@ -124,7 +124,7 @@ section{padding-block:clamp(var(--s5),9vw,128px)}
 .on-panel{background:var(--panel)}
 
 /* Designed empty state (photo/CAD not provided yet) */
-.ph-tile{position:relative;overflow:hidden;background-color:var(--panel-2);background-image:url("/assets/embedded/894e22ae08.png");background-size:92px 92px;display:flex;align-items:center;justify-content:center;text-align:center;padding:var(--s3)}
+.ph-tile{position:relative;overflow:hidden;background-color:var(--panel-2);background-image:url("/assets/main/894e22ae08.png");background-size:92px 92px;display:flex;align-items:center;justify-content:center;text-align:center;padding:var(--s3)}
 .ph-tile .ph-label{font-family:var(--display);text-transform:uppercase;color:var(--gold);font-size:clamp(1rem,2.2vw,1.5rem);line-height:1.15;background:var(--ink);padding:10px 14px}
 .ph-tag{position:absolute;top:10px;right:10px;font-family:var(--tech);font-weight:700;font-size:.66rem;letter-spacing:.14em;background:var(--gold);color:var(--ink);padding:3px 7px}
 

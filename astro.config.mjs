@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import syncMedia from "./integrations/sync-media.mjs";
 
 // Phase 1 (prototype): static site on GitHub Pages at dev.team6220.org.
 // Phase 2+: add the Wix Astro integration (@wix/astro) and delete pages.yml.
@@ -6,4 +7,5 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://dev.team6220.org",
   output: "static",
+  integrations: [syncMedia()],
 });

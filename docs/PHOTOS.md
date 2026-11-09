@@ -1,22 +1,22 @@
 # Photos of students
 
-Most photos on the site show students, most of them minors. **They are not stored in this repo.** The originals
-stay in the team Google Drive or Wix media, where consent and access are already managed. Logos, CAD renders,
-merch images and fonts are not photos of people and stay in `public/assets/`.
+Most photos on the site show students, most of them minors. A mentor confirmed consent for the photos below
+before they were committed to this public repo.
 
-## How the site finds them
+## Where they are
 
-`PUBLIC_MEDIA_BASE` is the base URL the homepage uses for team photos (`/team/<name>.webp`) and gallery albums
-(`/gal/<album>/NN.webp`, `NN-t.webp`). It defaults to `/media`, which is empty in git, so photos show as broken
-images until you point it at a host (a Wix media folder or other static host) in the Pages workflow
-(`env:` on the build step) or a local `.env`. Locally you can also drop files in `public/media/` (git-ignored).
+| Photos | Location | Served at |
+| --- | --- | --- |
+| Homepage team photos (hero + four cards, 5 files) | `sites/main/media/team/` | `/assets/main/team/<name>.webp` |
+| Gallery albums (94 photos) | **Not in git yet.** `/public/gal/*` is git-ignored | `/gal/<album>/NN.webp`. The gallery section shows broken images until they are added |
 
-Needed files: `team/4f1c204f9c.webp` (hero), `2d048fe84f`, `b5ea775824`, `bc010b578b`, `27bdee70e4`.
+This is a stopgap. Storing photos in git makes the repo heavy and any photo removed later stays in history.
+See the GitHub issue "Serve media from Wix instead of git".
+
+`PUBLIC_MEDIA_BASE` (default `/assets/main`) is the base URL the homepage uses for these photos. Point it at
+another host to move them out of git without touching the markup.
 
 ## Rules
 
-- Never commit photos of students. `/public/media/` and `/public/gal/*` are git-ignored.
+- Photos of students are added only after a mentor confirms consent.
 - Keep student names and Discord handles off the site.
-- **Git history:** the five team photos above were in the first commits of this public repo. Removing them from
-  the tree does not remove them from history. Fixing that needs a history rewrite (a repo admin must temporarily
-  allow it) or recreating the repo.

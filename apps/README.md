@@ -17,4 +17,14 @@ Rules (from the migration plan):
 - Brand colors and fonts come from `@team6220/ui`.
 - The Wix integration needs **React 18** (`@wix/astro` peers on `^18.3.1`), so don't use React 19 here.
 
-Apps that use Google Apps Script keep their server code in [`backend/apps-script/`](../backend/apps-script/README.md), unchanged.
+## Folder layout for one app
+
+```
+apps/<name>/
+  src/        the app's code
+  media/      images, icons and files only this app uses  ->  /assets/<name>/<file>
+  package.json
+```
+
+Media that several parts of the site use goes in [`packages/assets`](../packages/assets/README.md) instead
+(`/assets/shared/...`). The main website's own files are in `sites/main/`, never inside an app.
