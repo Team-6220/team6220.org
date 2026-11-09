@@ -58,3 +58,8 @@ It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/.
 - **TypeScript 6**: `astro check` does not support TypeScript 7 yet.
 - `pnpm-workspace.yaml` pins `@emnapi/runtime` to 1.11.3 because Astro's checker crashes with the 2.0 beta that
   pnpm otherwise picks. Remove the override once `@astrojs/check` fixes it.
+
+## License
+
+Code is [MIT](LICENSE). Logos, photos, site text and other media are © FRC Team 6220, all rights reserved, and
+third-party material keeps its own license. See [NOTICE.md](NOTICE.md) for exactly what is and isn't covered.
