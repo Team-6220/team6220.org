@@ -19,6 +19,7 @@ interface WixResult {
   next(): Promise<WixResult>;
 }
 interface WixQuery {
+  eq(field: string, value: unknown): WixQuery;
   limit(n: number): WixQuery;
   ascending(...fields: string[]): WixQuery;
   find(options?: { consistentRead?: boolean }): Promise<WixResult>;
@@ -118,7 +119,10 @@ export class WixStore implements InventoryStore {
   }
 
   async getMeta(key: MetaKey): Promise<unknown> {
-    const it = await this.items.get(META_COLLECTION, key, { consistentRead: true });
+    // Query instead of get(): a missing item (e.g. packingMeta before the first save) is a normal,
+    // empty answer here, while get() makes Wix reply 404 and the browser logs a console error.
+    const res = await this.items.query(META_COLLECTION).eq("_id", key).limit(1).find({ consistentRead: true });
+    const it = res.items[0];
     return it ? (it.value ?? null) : null;
   }
 
