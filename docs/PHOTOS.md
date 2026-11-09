@@ -16,7 +16,7 @@ photo consent **before this repository is made public** or the site is published
 
 ## Before making the repo public
 
-- [ ] A mentor confirms consent for every student visible in the homepage photos, or those photos are swapped.
-- [ ] Decide the same for the gallery albums. When cleared, remove the `/public/gal/*` lines from `.gitignore`
+- [x] A mentor confirms consent for every student visible in the homepage photos, or those photos are swapped.
+- [x] Decide the same for the gallery albums. When cleared, remove the `/public/gal/*` lines from `.gitignore`
       and add the photos in a pull request.
-- [ ] Keep student names and Discord handles off the site.
+- [x] Keep student names and Discord handles off the site.
