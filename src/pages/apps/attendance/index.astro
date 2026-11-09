@@ -1,0 +1,15 @@
+---
+// /apps/attendance: kiosk sign-in (Attendance Admins) and today's list / history (team members).
+// The UI is the React app in apps/attendance; it only runs in the browser. Data goes through
+// @team6220/data to the attendance Apps Script (backend/apps-script/attendance-api).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Attendance } from "@team6220/attendance";
+import "@team6220/attendance/attendance.css";
+---
+
+<AppLayout title="Attendance | Los Al Robotics" description="Los Al Robotics (FRC Team 6220) meeting attendance.">
+  <Attendance client:only="react">
+    <main class="att" slot="fallback"><p class="att__muted">Loading attendance…</p></main>
+  </Attendance>
+  <noscript><p class="att">Attendance needs JavaScript turned on.</p></noscript>
+</AppLayout>

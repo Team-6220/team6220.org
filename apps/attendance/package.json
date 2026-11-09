@@ -1,0 +1,18 @@
+{
+  "name": "@team6220/attendance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/attendance: kiosk sign-in for Attendance Admins, today's list and history for team members.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./attendance.css": "./src/attendance.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

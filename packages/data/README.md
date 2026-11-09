@@ -1,6 +1,6 @@
 # @team6220/data
 
-The **only** code in this repo that talks to Wix (and later Apps Script and FRC data sites). Apps import
+The **only** code in this repo that talks to Wix and Apps Script (and later FRC data sites). Apps import
 functions from here and never import `@wix/*` themselves, so the backend can change without touching app UIs.
 
 ```ts
@@ -14,6 +14,32 @@ await auth.logout(); // or link to /apps/logout
 ```
 
 Wix calls only run in the browser in Phase 1. Mount components that use them with `client:only="react"`.
+
+## Attendance
+
+```ts
+import { attendance } from "@team6220/data";
+
+await attendance.getViewer(); // { kind: "signed-out" | "pending" | "member", name, isAdmin } (cosmetic)
+await attendance.openKiosk(); // Attendance Admin: opens the kiosk in this tab (token kept in sessionStorage)
+await attendance.signIn("0123456789"); // on the open kiosk: { status: "signed-in" | "duplicate" | "needs-registration" | "invalid", name, time, message }
+await attendance.register(id, first, last); // unknown ID: add to the roster and sign in
+await attendance.closeKiosk();
+await attendance.today(); // Team Member: [{ name, time, at }], never student IDs
+await attendance.historyDays(); // [{ date, count }]; attendance.historyFor("2026-11-09")
+await attendance.lookup("0123456789"); // "did I sign in?" for your own ID: dates and times only
+```
+
+- Talks to the Apps Script in [`backend/apps-script/attendance-api`](../../backend/apps-script/attendance-api/README.md)
+  with `POST`, `Content-Type: text/plain`, JSON body (no CORS preflight). Viewer and admin calls send the member's Wix
+  access token (refreshed first if needed); the script verifies it with Wix and checks the badges. Errors are
+  `AttendanceError` with a `code` (`signed-out`, `forbidden`, `kiosk-closed`, `not-configured`, …).
+- The URL is `ATTENDANCE_API_URL` in [`src/config.ts`](src/config.ts) (or the `PUBLIC_ATTENDANCE_API_URL` build
+  variable). It isn't a secret. Empty means "not connected yet".
+- `src/attendance/mock.ts` is an in-memory stand-in with the same rules, used by tests and by demo mode
+  (`attendance.setDemoRole("admin")`, or `?demo=admin` on the page).
+- Tests: `pnpm --filter @team6220/data test` (vitest). `test/apps-script.test.ts` also runs the Apps Script `Code.gs`
+  against fake Apps Script services.
 
 ## How login works (Phase 1, GitHub Pages)
 
@@ -38,7 +64,8 @@ A new origin (for example a Wix preview URL) must be added there before login wo
 **Limits in Phase 1**
 
 - Badge and approval checks in the browser are **cosmetic**. Anyone can read the page's JavaScript. Real locks are
-  Wix CMS collection permissions (set app collections to site members, never "Anyone").
+  Wix CMS collection permissions (set app collections to site members, never "Anyone") and the attendance Apps Script,
+  which verifies the member's token and badges with Wix itself.
 - Badge assignments are readable by any visitor token, so badges are not secret either.
 - Refresh tokens live in `localStorage`. Wix recommends keeping them server-side; Phase 2 does.
 - The flow must not be mixed with `@wix/astro` (Wix says the integration won't recognize members who signed in

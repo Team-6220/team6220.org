@@ -27,3 +27,10 @@ export const BADGES = {
   webAdmin: "Web Admin",
 } as const;
 export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
+
+// The "attendance API" Apps Script web app (backend/apps-script/attendance-api). Its /exec URL is NOT a secret:
+// every request is checked there with the member's Wix token. Paste the URL from Deploy > Manage deployments
+// between the quotes below, or set PUBLIC_ATTENDANCE_API_URL when building. Empty = attendance not connected yet.
+const ATTENDANCE_API_URL_DEFAULT = "";
+export const ATTENDANCE_API_URL: string =
+  (import.meta.env?.PUBLIC_ATTENDANCE_API_URL as string | undefined) || ATTENDANCE_API_URL_DEFAULT;
