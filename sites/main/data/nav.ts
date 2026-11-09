@@ -25,7 +25,6 @@ const tabs: (NavTab | false)[] = [
     label: "About",
     href: "/about",
     children: [
-      { label: "Philosophy & Team Intro", href: "/about" },
       { label: "History", href: "/about/history" },
       { label: "Outreach", href: "/about/outreach" },
       { label: "Join", href: "/about/join" },
@@ -33,7 +32,7 @@ const tabs: (NavTab | false)[] = [
     ],
   },
   { id: "robots", label: "Robots", href: "/robots" },
-  { id: "support-us", label: "Support Us", href: "/support-us" },
+  { id: "sponsors", label: "Sponsors", href: "/sponsors" },
   { id: "merch", label: "Merch", href: MERCH_STORE_URL, external: true },
   {
     id: "resources",

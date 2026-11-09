@@ -55,9 +55,9 @@ A full redesign of today's pages. The current target structure (from issue #69; 
 | --- | --- |
 | Home | |
 | Summer Camp | Only shown when enabled by webmasters, with a banner on the home page during those times |
-| About | Philosophy & Team Intro (default), History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
+| About | The About page itself (team philosophy and intro), plus History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
 | Robots | One page per robot, easy to add to each year, 3D viewer for robots with CAD |
-| Support Us | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF |
+| Sponsors | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF. The home page button says "Support us" |
 | Merch | |
 | Resources | Team resources, technical/team binders with an archive, Media, and every app listed individually (no separate Apps tab) |
 
