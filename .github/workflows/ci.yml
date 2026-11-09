@@ -1,0 +1,30 @@
+name: CI
+
+# Runs on every pull request. Branch protection requires the "ci" job to pass.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm check
+      - name: Test (workspaces that define tests)
+        run: pnpm -r --if-present test
+      - name: Build
+        run: pnpm build

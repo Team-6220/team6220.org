@@ -1,0 +1,8 @@
+{
+  "name": "@team6220/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared brand styles and components for the site and every app (filled in during Phase 1 styling).",
+  "main": "src/index.ts"
+}

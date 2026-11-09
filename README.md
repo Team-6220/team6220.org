@@ -1,0 +1,52 @@
+# team6220.org
+
+Website and team apps for **FRC Team 6220, the Golden Griffins** (Los Alamitos High School).
+
+One repository holds the public website and every team app. It is being moved from the Wix Studio
+editor to a coded site that uses Wix as the backend (Wix-managed headless). The plan, in order:
+
+| Phase | Where it runs | Status |
+| --- | --- | --- |
+| 0. Setup | | Repo is scaffolded; settings checklist in [docs/PHASE-0.md](docs/PHASE-0.md) |
+| 1. Prototype | GitHub Pages at `dev.team6220.org` | Homepage ported; other pages and apps next |
+| 2. Migration preview | Wix hosting, hidden preview | Not started |
+| 3. Switch over | `team6220.org` | Before kickoff (early January 2027) |
+
+The real `team6220.org` stays on Wix, untouched, until the last step of Phase 3.
+
+## Run it
+
+Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
+
+```sh
+pnpm install
+pnpm dev        # http://localhost:4321
+pnpm check      # typecheck
+pnpm build      # outputs dist/
+```
+
+## Layout
+
+```
+src/            Astro site (pages, layouts, styles). Homepage lives in src/content/home.html for now
+public/         Static files: assets/, js/, CNAME (dev.team6220.org)
+apps/           One React package per team app, mounted under /apps (see apps/README.md)
+packages/ui     Shared brand styles and components
+packages/data   The only code that talks to Wix / Apps Script
+docs/           Setup checklist, photo policy
+.github/        CI, Pages deploy, CODEOWNERS, Dependabot
+```
+
+## Working here
+
+- Every change goes through a pull request with one review; `main` deploys automatically.
+- This repo is public. **Never commit** API keys, passcodes or `.env` files, and never commit photos of
+  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)).
+- Apps never import the Wix SDK; they call `@team6220/data`.
+
+## Version notes
+
+- **Astro 7** and **React 18**: `@wix/astro` requires `astro ^7.2` and `react ^18.3`.
+- **TypeScript 6**: `astro check` does not support TypeScript 7 yet.
+- `pnpm-workspace.yaml` pins `@emnapi/runtime` to 1.11.3 because Astro's checker crashes with the 2.0 beta that
+  pnpm otherwise picks. Remove the override once `@astrojs/check` fixes it.

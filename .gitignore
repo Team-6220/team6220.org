@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.astro/
+.wix/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+# Gallery photos show students, mostly minors. They are NOT committed until a
+# mentor confirms photo consent (see docs/PHOTOS.md). Only the placeholder is tracked.
+/public/gal/*
+!/public/gal/.gitkeep

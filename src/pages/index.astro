@@ -1,0 +1,16 @@
+---
+// Lift-and-shift of the approved homepage preview. The markup lives in
+// src/content/home.html and the scripts in public/js/. Phase 1 breaks this
+// into Astro components, one section at a time.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import homeHtml from "../content/home.html?raw";
+---
+
+<BaseLayout
+  title="Golden Griffins Homepage"
+  description="FRC Team 6220, the Golden Griffins: a student-led FIRST Robotics Competition team at Los Alamitos High School since 2016."
+>
+  <Fragment set:html={homeHtml} />
+  <script is:inline src="/js/site-a.js"></script>
+  <script is:inline src="/js/site-b.js"></script>
+</BaseLayout>

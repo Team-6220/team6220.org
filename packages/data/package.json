@@ -1,0 +1,8 @@
+{
+  "name": "@team6220/data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The only place that talks to Wix and Apps Script. Apps call these functions, never the Wix SDK directly.",
+  "main": "src/index.ts"
+}
