@@ -1,0 +1,14 @@
+---
+// /apps: the team apps dashboard. The main site's "Log In" link points here.
+// The UI is a React app in apps/dashboard; it only runs in the browser (sign-in state lives there in Phase 1).
+import AppLayout from "../../layouts/AppLayout.astro";
+import { Dashboard } from "@team6220/dashboard";
+import "@team6220/dashboard/dashboard.css";
+---
+
+<AppLayout title="Team apps | Los Al Robotics" description="Sign in to Los Al Robotics (FRC Team 6220) team apps.">
+  <Dashboard client:only="react">
+    <main class="dash" slot="fallback"><p class="dash__status">Loading team apps…</p></main>
+  </Dashboard>
+  <noscript><p class="dash">Team apps need JavaScript turned on.</p></noscript>
+</AppLayout>
