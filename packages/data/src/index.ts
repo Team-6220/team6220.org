@@ -4,3 +4,5 @@
 export { WIX_CLIENT_ID, APPS_HOME_PATH, LOGIN_CALLBACK_PATH, BADGES, type BadgeName } from "./config";
 export * as auth from "./auth";
 export type { Member, MemberStatus } from "./auth";
+// Inventory app data (apps/inventory). Also importable as "@team6220/data/inventory".
+export { inventory } from "./inventory/index.ts";

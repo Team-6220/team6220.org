@@ -5,8 +5,8 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 | Folder | Route | Status |
 | --- | --- | --- |
 | `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
-| `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only) |
-| `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
+| `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only). Options and recommendation: [attendance/docs/PLAN.md](attendance/docs/PLAN.md) |
+| `apps/inventory` | `/apps/inventory` | **Built.** Uses the Wix CMS on the deployed site once the collections exist; mock data in dev. See [inventory/README.md](inventory/README.md) |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
 | `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
 | `apps/scouting`, `apps/pit`, `apps/production` | | Planned |

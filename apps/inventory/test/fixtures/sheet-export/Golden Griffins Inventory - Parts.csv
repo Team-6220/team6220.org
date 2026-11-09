@@ -1,0 +1,6 @@
+id,name,quantity,categoryId,tagIds,locationId,supplierId,description,aliases,lowStockThreshold,imageId,needsCheck,version,createdAt,updatedAt,archivedAt,Notes (extra column)
+PT-0000000a,Bearing 1/2" hex,48,CA-00000001,TG-00000001|TG-00000002,LO-00000002,,"Flanged, ""FR8""",,20,,FALSE,3,2026-09-01T17:00:00.000Z,2026-10-02T17:00:00.000Z,,ignored
+PT-0000000b,Old belt,0,,TG-0000dead,LO-00000009,,,,,,TRUE,1,2026-09-01T17:00:00.000Z,2026-09-01T17:00:00.000Z,2026-10-20T10:00:00.000Z,
+PT-0000000c,'=SUM formula-looking name,2,,,,,"two
+lines",,,,FALSE,1,2026-09-01T17:00:00.000Z,2026-09-01T17:00:00.000Z,,
+,blank id row is skipped,1,,,,,,,,,FALSE,1,,,,

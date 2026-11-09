@@ -8,7 +8,7 @@ import { auth, BADGES } from "@team6220/data";
 
 await auth.login("/apps/inventory"); // go to the Wix login page, come back to this path
 const member = await auth.getMember(); // { id, name, email, photoUrl, status } or null
-await auth.hasBadge(BADGES.inventoryManager); // cosmetic only (hide buttons), never security
+await auth.hasBadge(BADGES.attendanceAdmin); // cosmetic only (hide buttons), never security
 await auth.getAccess(); // "approved" | "pending" | "signed-out"
 await auth.logout(); // or link to /apps/logout
 ```
