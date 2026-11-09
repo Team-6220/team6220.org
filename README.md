@@ -61,5 +61,5 @@ It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/.
 
 ## License
 
-Code is [MIT](LICENSE). Logos, photos, site text and other media are © FRC Team 6220, all rights reserved, and
+Code is [MIT](LICENSE). Logos, photos, site text and other media are © Los Al Robotics (FRC Team 6220), all rights reserved, and
 third-party material keeps its own license. See [NOTICE.md](NOTICE.md) for exactly what is and isn't covered.

@@ -2,7 +2,7 @@
 
 **Code** in this repository is MIT licensed ([LICENSE](LICENSE)): reuse it, fork it, learn from it.
 
-**Brand, media and content are not.** The following are © FRC Team 6220 (Golden Griffins), all rights reserved,
+**Brand, media and content are not.** The following are © Los Al Robotics (FRC Team 6220, The Golden Griffins), all rights reserved,
 and are not covered by the MIT license. Don't reuse them without the team's permission:
 
 | What | Where |
