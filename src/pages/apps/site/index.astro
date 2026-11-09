@@ -1,0 +1,15 @@
+---
+// /apps/site: the Site Manager. Web Admins edit website content with forms; Submit opens a GitHub pull request
+// through /api/site (Phase 2). In the static Phase 1 build it runs in demo mode: no pull request is opened.
+// The UI is the React app in apps/site; it only runs in the browser. Plan: docs/SITE-MANAGER.md
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Site } from "@team6220/site";
+import "@team6220/site/site.css";
+---
+
+<AppLayout title="Site Manager | Los Al Robotics" description="Los Al Robotics (FRC Team 6220) website content editor for Web Admins.">
+  <Site client:only="react">
+    <main class="site" slot="fallback"><p class="site__muted">Loading the Site Manager…</p></main>
+  </Site>
+  <noscript><p class="site">The Site Manager needs JavaScript turned on.</p></noscript>
+</AppLayout>

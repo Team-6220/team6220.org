@@ -2,13 +2,15 @@ import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import syncMedia from "./integrations/sync-media.mjs";
 import buildApps from "./integrations/build-apps.mjs";
+import siteApi from "./integrations/site-api.mjs";
 
 // Phase 1 (prototype): static site on GitHub Pages at dev.team6220.org.
 // Phase 2+: add the Wix Astro integration (@wix/astro) and delete pages.yml.
+// siteApi() adds /api/site only when output is "server" (docs/SITE-MANAGER.md).
 // See docs/PHASE-0.md and the Headless Migration Plan.
 export default defineConfig({
   site: "https://dev.team6220.org",
   output: "static",
   // React 18 only: @wix/astro (Phase 2) peers on react ^18.3. Apps under apps/* are React.
-  integrations: [syncMedia(), react(), buildApps()],
+  integrations: [syncMedia(), react(), buildApps(), siteApi()],
 });

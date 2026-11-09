@@ -30,6 +30,8 @@ jobs:
       - name: Install GoldSim dependencies
         run: npm ci --no-audit --no-fund
         working-directory: apps/goldsim
+      - name: Validate site content (sites/main/content/*.json against the schemas)
+        run: pnpm content:check
       - name: Typecheck
         run: pnpm check
       - name: Test (workspaces that define tests)

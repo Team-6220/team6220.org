@@ -17,5 +17,7 @@ export {
   type SignInStatus,
   type Viewer,
 } from "./attendance/types";
+// Site Manager (apps/site). Browser side only; the server side is "@team6220/data/site-server".
+export * as site from "./site";
 // Inventory app data (apps/inventory). Also importable as "@team6220/data/inventory".
 export { inventory } from "./inventory/index.ts";

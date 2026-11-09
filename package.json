@@ -12,7 +12,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "content:check": "pnpm --filter @team6220/content validate"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
@@ -24,8 +25,10 @@
   "dependencies": {
     "@astrojs/react": "^7.1.4",
     "@team6220/attendance": "workspace:*",
+    "@team6220/content": "workspace:*",
     "@team6220/dashboard": "workspace:*",
     "@team6220/data": "workspace:*",
+    "@team6220/site": "workspace:*",
     "@team6220/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

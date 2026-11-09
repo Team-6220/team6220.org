@@ -1,3 +1,8 @@
+---
+// The text and links come from sites/main/content/summer-camp.json (edit it in the Site Manager, /apps/site).
+import { renderBlocks } from "@team6220/content";
+import { SUMMER_CAMP } from "../../config/site";
+---
 <!--
   Ported as-is from the old Wix page (www.team6220.org/summer, November 2026): same text and links,
   plain layout. The team will rewrite and restyle it (#69). The old site writes zeros as "o" for its
@@ -5,38 +10,6 @@
 -->
 <section class="on-paper angled angled-gold">
   <div class="wrap camp-copy">
-    <h2 class="title-calm">FRC Robotics Camp</h2>
-    <p>Every year, Team 6220 hosts this training camp, in partnership with LAEF, designed to introduce you to the innovative and electrifying world of robotics. For the cost of $450, you have the invaluable opportunity to learn from our experienced mentors and students in a three-week robotics program. Each day will introduce a unique set of captivating, educational challenges as you gain hands-on experience fabricating a robot with other passionate learners. Students will have the chance to gain additional, specialized knowledge in computer-aided manufacturing, programming, or design.</p>
-    <ul>
-      <li>8th-12th grade students (2026-27 school year)</li>
-      <li>July 6-24, Monday-Friday, 8:30 AM-12:30 PM</li>
-      <li>Los Al High School, Room 760 (Robotics Room)</li>
-      <li>$450 registration (three weeks)</li>
-      <li>Absolutely no experience required</li>
-    </ul>
-    <a class="btn btn-black" href="https://app.thestudiodirector.com/laef4kids/portal.sd?page=Enroll&meth=enroll&sident=1711560621052&cident=1769796583939" target="_blank" rel="noopener">Sign up now ↗</a>
-    <p>(or go to <a href="https://laef4kids.org/clinicscamps/" target="_blank" rel="noopener">https://laef4kids.org/clinicscamps/</a> --&gt; "Register Now" --&gt; Find class named "<a href="https://app.thestudiodirector.com/laef4kids/portal.sd?page=Login&cident=1769796583939" target="_blank" rel="noopener">Robotics - Summer Camp: Incoming Grades 8th-12th</a>")</p>
-
-    <h2 class="title-calm">LEGO Robotics Camp</h2>
-    <p>In collaboration with LAEF, this camp gives elementary and middle school students a chance to develop fundamental engineering and teamwork skills. Students work together in small groups to construct their own LEGO Mindstorms robot. Students learn to adapt our team's competition-winning mindset to problem-solving, iterating on design challenges while never giving up. The week-long camp also features many fun activities to give your students a blast while building collaborative, interpersonal skills.</p>
-    <ul>
-      <li>July 6-24, Monday-Friday, 9 AM-12 PM</li>
-      <li>Los Al High School, Room 760 (dropoff)</li>
-      <li>$250 registration (one week)</li>
-    </ul>
-    <p><b>Three one-week camps:</b></p>
-    <ol>
-      <li>July 6-10: Grades 3-5</li>
-      <li>July 13-17: Grades 5-7</li>
-      <li>July 20-24: Grades 5-7</li>
-    </ol>
-    <a class="btn btn-black" href="https://app.thestudiodirector.com/laef4kids/portal.sd?page=Enroll&meth=enroll&sident=1711560621052&cident=1777656890749" target="_blank" rel="noopener">Sign up for week 1 ↗</a>
-    <a class="btn btn-black" href="https://app.thestudiodirector.com/laef4kids/portal.sd?page=Enroll&meth=enroll&sident=1711560621052&cident=1777656892735" target="_blank" rel="noopener">Sign up for week 2 ↗</a>
-    <a class="btn btn-black" href="https://app.thestudiodirector.com/laef4kids/portal.sd?page=Enroll&meth=enroll&sident=1711560621052&cident=1777656896220" target="_blank" rel="noopener">Sign up for week 3 ↗</a>
-    <p>(or go to <a href="https://laef4kids.org/clinicscamps/" target="_blank" rel="noopener">https://laef4kids.org/clinicscamps/</a> --&gt; "Register Now" --&gt; Find class named "Robotics - Summer Camp: Incoming Grades...")</p>
-
-    <h2 class="title-calm">Why robotics?</h2>
-    <p>On top of offering an extremely memorable experience, our summer camps provide students with unique, hands-on engineering exposure. You will gain an intuitive understanding on the use of basic and advanced tools and processes, learn to work as part of a real engineering team, and, for FRC Camp students, discover more about an exciting topic of your choice: manufacturing, programming, or design. Students or parents, please don't hesitate to <a href="/about/contact">reach out</a> if you have any questions to be answered by one of our friendly students or mentors.</p>
-    <p>Students who participate in the FRC camp also have an easy pathway to join the team during the school year, where members continue to gain engineering knowledge while helping to make important decisions for the team and the year's competition robot.</p>
+    <Fragment set:html={renderBlocks(SUMMER_CAMP.blocks)} />
   </div>
 </section>
