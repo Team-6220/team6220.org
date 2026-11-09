@@ -1,6 +1,6 @@
 # Phase 0 checklist
 
-Mirrors Phase 0 of the [Headless Migration Plan](MIGRATION-PLAN.md), which lives in this repo and is edited by pull request. **Done** items are in this repo already. **You** items need a
+**Status: done (Nov 9, 2026).** Mirrors Phase 0 of the [Headless Migration Plan](MIGRATION-PLAN.md), which lives in this repo and is edited by pull request. **Done** items are in this repo already. **You** items need a
 GitHub or Wix admin: they are organization or site settings that can't be changed from code.
 
 ## Done in the repo
@@ -66,5 +66,6 @@ Confirm the repo layout works with the Wix CLI. Results so far: [WIX-CLI-SPIKE.m
 
 ## Next (Phase 1)
 
-Split the homepage into Astro components, then build the remaining public pages, the `/apps` dashboard with
-login, and move in GoldSim and WingIt with `git subtree add` so their history is kept.
+Split the homepage into Astro components, then build the remaining public pages and the `/apps` dashboard with
+login. GoldSim and WingIt are moved in (history kept) and served at `/apps/goldsim/` and `/apps/wingit/`
+(see `apps/README.md`).

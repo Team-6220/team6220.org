@@ -7,8 +7,10 @@
 >   Members. The real menu paths are in [PHASE-0.md](PHASE-0.md).
 > - The GitHub team is `webmasters` (the doc said "web admins").
 > - Student photos are not stored in git ([PHOTOS.md](PHOTOS.md)).
-> - The tree under "Monorepo structure" is the original sketch. The repo actually uses `apps/*` and
->   `packages/*` at the root (see the [README](../README.md)).
+> - The tree under "Monorepo structure" is the original sketch. The repo actually has `sites/main/`, `apps/*`,
+>   `packages/*`, `backend/` and `integrations/` at the root (see the [README](../README.md)).
+> - The public page structure now follows Hoss' site review (issue #69), and the Decisions and Phase sections
+>   below are kept current. Last updated Nov 9, 2026.
 > - The architecture diagram in the original doc is replaced by a text description.
 
 ## The plan in one minute
@@ -47,7 +49,19 @@ We get there in two steps:
 
 ### Public website (anyone can see it)
 
-A full redesign of today's pages: Home (with About FIRST), Summer Camp, Our Team, Subteams, Sponsor Us, Contact and Gallery. The forms on these pages get redesigned too (see Forms).
+A full redesign of today's pages. The current target structure (from issue #69; it may still change) is:
+
+| Tab | Pages |
+| --- | --- |
+| Home | |
+| Summer Camp | Only shown when enabled by webmasters, with a banner on the home page during those times |
+| About | Philosophy & Team Intro (default), History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
+| Robots | One page per robot, easy to add to each year, 3D viewer for robots with CAD |
+| Support Us | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF |
+| Merch | |
+| Resources | Team resources, technical/team binders with an archive, Media, and every app listed individually (no separate Apps tab) |
+
+A **Log In** button sits in the top right. The forms on these pages get redesigned too (see Forms).
 
 ### Team apps at team6220.org/apps
 
@@ -56,13 +70,15 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | App | Address | What it does | Status | Who can use it | Data stored in |
 | --- | --- | --- | --- | --- | --- |
 | Apps dashboard | `/apps` | Home screen linking to every app | New | Team members | None |
-| Attendance | `/apps/attendance` | Members check in and out at meetings | Exists on Apps Script; the screen moves to our site | Everyone on the team can view; only Attendance Admins start or stop sessions | Same Google Sheet as today, through Apps Script |
-| Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script; moves fully | Team members view; Inventory Managers edit | Wix database (moved from Google Sheets) |
-| GoldSim | `/apps/goldsim` | Open-source 2D FRC strategy and robot-design simulator | Exists in a personal GitHub repo; moves into the team repo | Anyone (public) | None |
-| WingIt | `/apps/wingit` | Small existing team app | Exists in a personal GitHub repo; moves into the team repo | Team members | None |
+| Attendance | `/apps/attendance` | Members check in and out at meetings | Exists on Apps Script (source in `backend/apps-script/attendance`); the screen moves to our site | Everyone on the team can view; only Attendance Admins start or stop sessions | Same Google Sheet as today, through Apps Script |
+| Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script (source in `backend/apps-script/inventory`); moves fully | Team members view; Inventory Managers edit | Wix database (moved from Google Sheets) |
+| GoldSim | `/apps/goldsim` | Open-source 2D FRC strategy and robot-design simulator | Imported into `apps/goldsim` with history; old repo archived | Anyone (public) | Local in the browser; cloud saves move from Supabase to Wix CMS (#66) |
+| WingIt | `/apps/wingit` | Small existing team app | Imported into `apps/wingit` with history; old repo archived | Team members | None |
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
 | Pit display | `/apps/pit` | Screen for the pit TV: match schedule from Nexus plus our scouting data and The Blue Alliance / Statbotics stats | Planned | Anyone (public, read-only) | Reads other apps and FRC data sites |
 | Production Tracker | `/apps/production` | Follows each robot part from design to finished. Replaces today's Google Forms and spreadsheets. | Planned | Designers submit parts; manufacturers update status | Wix database; design files stay in Google Drive as links |
+
+Apps are listed one by one under the **Resources** tab, plus an Apps section on the Resources page (#75). There is no separate Apps tab.
 
 **For kickoff we need:** the public site, the dashboard, Attendance, Inventory, GoldSim and WingIt. Scouting, Pit display and Production Tracker can launch after the switch. Adding an app later is just another update to the same repo.
 
@@ -78,7 +94,13 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | Forms | All forms are redesigned as new Wix forms; old ones retire at the switch |
 | Production Tracker files | Stay in Google Drive |
 | Pit display | Public, read-only page (no login on the pit TV) |
-| Web admins (GitHub + Wix) | losalfrc@gmail.com, operations@team6220.org, programming@team6220.org |
+| Web admins (GitHub + Wix) | losalfrc@gmail.com, operations@team6220.org, programming@team6220.org; GitHub team `webmasters` |
+| Team name on the site | Mainly "Los Al Robotics"; the team name is "The Golden Griffins". The nonprofit is legally "Los Al Robotics" |
+| License | Code is MIT; logos, photos, site text and media are © Los Al Robotics, all rights reserved ([NOTICE.md](../NOTICE.md)) |
+| Apps address | `team6220.org/apps/<name>`, not a subdomain: one login session, `/api` endpoints on the same site, one hosting plan |
+| Media | Wix hosts most media; select gallery folders sync from Google Drive (#8). Team photos sit in git until then |
+| GoldSim backend | No Supabase. GoldSim moves to Wix CMS + Wix Members (#66) |
+| Branding | Kaydi's branding guidelines (in progress) set logos, spacing and styles. Branding work in #69 and the Phase 1 styling pass wait for them |
 
 ## Architecture at a glance
 
@@ -99,26 +121,27 @@ These windows are a suggested schedule; the web team should adjust them.
 
 ### Phase 0: Setup
 
-The checklist with exact menu paths and current status is in [PHASE-0.md](PHASE-0.md). In summary:
+**Done (Nov 9, 2026).** The checklist with exact menu paths is in [PHASE-0.md](PHASE-0.md); the Wix CLI results are
+in [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md).
 
-- [ ] Create the public repo `Team-6220/team6220.org` with a protected `main` branch (every change goes through a pull request with one review) and a `CODEOWNERS` file.
-- [ ] Add the three web admin accounts as owners of the GitHub org and as admins on the Wix site. Turn on 2FA for each and store the recovery codes where two leads or a mentor can reach them.
-- [ ] Set up the test address. In **Wix → Domains → team6220.org → Manage DNS Records**, add a CNAME record: host `dev`, value `team-6220.github.io`. In the repo's Pages settings, set the custom domain to `dev.team6220.org`, verify the domain for the GitHub org, and turn on Enforce HTTPS.
-- [ ] In the Wix dashboard, open **Settings → Development & integrations → Headless Settings**. Create a headless (OAuth) client on our *current* site. Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs. This lets the prototype read and write our real Wix data.
-- [ ] Set up Wix Members: turn on Google sign-in and set new signups to "only people I approve." (Corrected: no app to add; see PHASE-0.md.)
-- [ ] Create badges: `Team Member`, `Attendance Admin`, `Inventory Manager`, `Web Admin`.
-- [ ] Run a one-day test (see Limits and risks) to confirm the repo layout works with the Wix CLI before building much.
+- [x] Create the public repo `Team-6220/team6220.org` with a protected `main` branch (every change goes through a pull request with one review) and a `CODEOWNERS` file.
+- [x] Add the three web admin accounts as owners of the GitHub org and as admins on the Wix site. Turn on 2FA for each and store the recovery codes where two leads or a mentor can reach them.
+- [x] Set up the test address. In **Wix → Domains → team6220.org → Manage DNS Records**, add a CNAME record: host `dev`, value `team-6220.github.io`. In the repo's Pages settings, set the custom domain to `dev.team6220.org`, verify the domain for the GitHub org, and turn on Enforce HTTPS.
+- [x] In the Wix dashboard, open **Settings → Development & integrations → Headless Settings**. Create a headless (OAuth) client on our *current* site. Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs. This lets the prototype read and write our real Wix data.
+- [x] Set up Wix Members: turn on Google sign-in and set new signups to "only people I approve." (Corrected: no app to add; see PHASE-0.md.)
+- [x] Create badges: `Team Member`, `Attendance Admin`, `Inventory Manager`, `Web Admin`.
+- [x] Run a one-day test (see Limits and risks) to confirm the repo layout works with the Wix CLI before building much.
 
 ### Phase 1: Prototype on dev.team6220.org
 
 GitHub publishes the site automatically every time code merges into `main`. In this phase there's no server code, so the browser talks to Wix and Apps Script directly.
 
 - [ ] Build the public pages and the `/apps` dashboard with login.
-- [ ] Move in the existing apps, easiest first: GoldSim and WingIt (no backend), then Inventory (copy its Google Sheet data into new Wix databases), then the Attendance screen (still saving through Apps Script).
+- [ ] Move in the existing apps, easiest first: GoldSim and WingIt (no backend; code imported, not yet served at `/apps`), then Inventory (copy its Google Sheet data into new Wix databases), then the Attendance screen (still saving through Apps Script).
 - [ ] Create the new Wix forms and connect the redesigned form pages to them (see Forms).
 - [ ] Use mock data for anything that needs a private API key (Nexus, The Blue Alliance).
 
-**Styling comes later in this phase.** Right now the main site and each app have their own assorted styling. Moving them in comes first; making them look alike waits until everything works. Before Phase 2 starts, unify it:
+**Styling comes later in this phase, after Kaydi's branding guidelines are done.** Right now the main site and each app have their own assorted styling. Moving them in comes first; making them look alike waits until everything works. Before Phase 2 starts, unify it:
 
 - [ ] Write one shared stylesheet in `packages/ui`: CSS variables for colors (team gold, #FA9504), fonts, spacing and corner radius, plus shared styles for buttons, forms, tables and cards.
 - [ ] Convert the main site and each app to use those variables and components instead of their own colors and fonts.
@@ -129,6 +152,10 @@ GitHub publishes the site automatically every time code merges into `main`. In t
 ### Phase 2: Migration preview
 
 Wix's migration tool makes a hidden preview copy of the site that only we can see.
+
+Lessons from the Phase 0 Wix CLI test (details in [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md)): use Node 24, set
+`output: "server"`, never name a service worker `/sw.js`, and use this Start Migration flow, not `headless link`
+(which creates a new site). The Wix API key for CI goes in the GitHub environment `wix` as `WIX_API_KEY`.
 
 1. In Headless Settings, click **Start Migration**. Review the list of supported and unsupported Wix apps, then copy the prompt it gives.
 2. Run `wix env pull` so the project uses our current site's data.

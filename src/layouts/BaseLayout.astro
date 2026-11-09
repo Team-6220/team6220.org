@@ -1,11 +1,13 @@
 ---
 // Shared page shell for the main site and every app: charset, viewport, favicon.
 // Each site or app wraps this in its own layout (see sites/main/MainLayout.astro).
+
 interface Props {
   title: string;
   description: string;
 }
 const { title, description } = Astro.props;
+
 ---
 
 <!doctype html>

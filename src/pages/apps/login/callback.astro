@@ -1,0 +1,13 @@
+---
+// Wix sends members here after the Wix login page (see packages/data/src/config.ts, LOGIN_REDIRECT_PATH).
+// Deliberately NOT under /api/auth/*, which @wix/astro reserves in Phase 2.
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { LoginCallback } from "@team6220/dashboard";
+import "@team6220/dashboard/dashboard.css";
+---
+
+<AppLayout title="Signing in | Los Al Robotics" description="Finishing sign-in.">
+  <LoginCallback client:only="react">
+    <main class="dash" slot="fallback"><p class="dash__status">Signing you in…</p></main>
+  </LoginCallback>
+</AppLayout>
