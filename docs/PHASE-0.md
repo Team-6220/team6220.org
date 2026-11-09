@@ -56,14 +56,13 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 
 ## You: one-day Wix CLI test (before building much)
 
-Confirm the repo layout works with the Wix CLI. Check these four things from the plan's risk list:
+Confirm the repo layout works with the Wix CLI. Results so far: [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md).
 
-- [ ] Link this workspace-based repo with `@wix/cli` (`wix login`, then follow the headless project link steps).
-      If it fails, fall back to `src/apps/` folders instead of the `apps/` workspaces.
-- [ ] Wix's reserved URL paths don't collide with `/apps` or `/api`.
-- [ ] Whether `wix release` can run non-interactively from GitHub Actions (until confirmed, a Web Admin releases
-      from a laptop).
-- [ ] A service worker works on Wix hosting (needed for offline scouting).
+- [x] The workspace-based repo works with the Wix CLI (`headless link`, `wix build`, `wix preview`, `wix release`).
+- [x] Wix's reserved URL paths don't collide with `/apps` or `/api` (only `/api/auth/*` is taken).
+- [x] `wix release` runs without prompts, so it can run from GitHub Actions. Logging in there with an API key is
+      still to try; until then a Web Admin releases from a laptop.
+- [x] A service worker works on Wix hosting (needed for offline scouting). Yes, but never at `/sw.js`.
 
 ## Next (Phase 1)
 
