@@ -160,3 +160,18 @@ describe("diffContent", () => {
     expect(clip("x".repeat(500)).length).toBe(160);
   });
 });
+
+describe("inline scanner stays fast on hostile text", () => {
+  it("handles long runs of brackets and dashes", () => {
+    const t0 = Date.now();
+    renderInline("[\\".repeat(50_000));
+    renderInline("[!](!".repeat(50_000));
+    renderInline("**a".repeat(50_000));
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+  it("leaves unclosed or empty markup as plain text", () => {
+    expect(renderInline("[a](b")).toBe("[a](b");
+    expect(renderInline("[](x) ****")).toBe("[](x) ****");
+    expect(renderInline("**a** and [b](/c)")).toBe('<b>a</b> and <a href="/c">b</a>');
+  });
+});

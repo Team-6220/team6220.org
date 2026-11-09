@@ -29,16 +29,22 @@ export function branchName(area: string, now: Date, who: string): string {
   return `site-manager/${area}-${date}-${slug(who)}`;
 }
 
+function trimDashes(s: string): string {
+  let a = 0;
+  let b = s.length;
+  while (a < b && s[a] === "-") a++;
+  while (b > a && s[b - 1] === "-") b--;
+  return s.slice(a, b);
+}
+
 export function slug(name: string): string {
   const s = name
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 30)
-    .replace(/-+$/g, "");
-  return s || "admin";
+    .slice(0, 200);
+  return trimDashes(trimDashes(s).slice(0, 30)) || "admin";
 }
 
 /** Reads and validates an area's file from the store's base branch. */

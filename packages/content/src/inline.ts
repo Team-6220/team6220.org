@@ -3,7 +3,62 @@
 //   [label](https://x)  ->  link; absolute http(s) links open in a new tab, paths like /about/contact do not
 // Everything else is plain text. `& < >` are escaped, quotes and apostrophes are left alone.
 
-const INLINE = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
+const MAX_LABEL = 300;
+const MAX_URL = 600;
+
+interface Token {
+  /** Index of the first character and the length of the whole match. */
+  index: number;
+  length: number;
+  bold?: string;
+  label?: string;
+  href?: string;
+}
+
+/**
+ * Finds `**bold**` and `[label](href)` in one left-to-right pass. Written as a scanner instead of a regular
+ * expression so the work stays linear (labels and targets are length-capped; longer ones are plain text).
+ */
+function tokenize(text: string): Token[] {
+  const tokens: Token[] = [];
+  let boldClosed = true; // false once we know no closing `**` is left
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    if (c === "*" && boldClosed && text.startsWith("**", i)) {
+      const end = text.indexOf("**", i + 3);
+      if (end === -1) boldClosed = false;
+      else if (end > i + 2) {
+        tokens.push({ index: i, length: end + 2 - i, bold: text.slice(i + 2, end) });
+        i = end + 2;
+        continue;
+      }
+    } else if (c === "[") {
+      const t = linkAt(text, i);
+      if (t) {
+        tokens.push(t);
+        i += t.length;
+        continue;
+      }
+    }
+    i++;
+  }
+  return tokens;
+}
+
+function linkAt(text: string, start: number): Token | null {
+  let j = start + 1;
+  const labelEnd = Math.min(text.length, start + 1 + MAX_LABEL);
+  while (j < labelEnd && text[j] !== "]") j++;
+  if (j === start + 1 || text[j] !== "]" || text[j + 1] !== "(") return null;
+  const label = text.slice(start + 1, j);
+  const urlStart = j + 2;
+  const urlEnd = Math.min(text.length, urlStart + MAX_URL);
+  let k = urlStart;
+  while (k < urlEnd && text[k] !== ")" && !/\s/.test(text[k]!)) k++;
+  if (k === urlStart || text[k] !== ")") return null;
+  return { index: start, length: k + 1 - start, label, href: text.slice(urlStart, k) };
+}
 
 /** A link target we accept: an https/http URL or a path on this site. Never javascript: or protocol-relative. */
 export function isSafeHref(href: string): boolean {
@@ -27,17 +82,17 @@ export function escapeAttr(s: string): string {
 
 /** Every link target used in a piece of text (for validation). */
 export function inlineHrefs(text: string): string[] {
-  return [...text.matchAll(INLINE)].filter((m) => m[3] !== undefined).map((m) => m[3]!);
+  return tokenize(text).filter((t) => t.href !== undefined).map((t) => t.href!);
 }
 
 export function renderInline(text: string): string {
   let out = "";
   let last = 0;
-  for (const m of text.matchAll(INLINE)) {
-    out += escapeText(text.slice(last, m.index));
-    if (m[1] !== undefined) out += `<b>${escapeText(m[1])}</b>`;
-    else out += anchor(m[3]!, escapeText(m[2]!));
-    last = m.index + m[0].length;
+  for (const t of tokenize(text)) {
+    out += escapeText(text.slice(last, t.index));
+    if (t.bold !== undefined) out += `<b>${escapeText(t.bold)}</b>`;
+    else out += anchor(t.href!, escapeText(t.label!));
+    last = t.index + t.length;
   }
   return out + escapeText(text.slice(last));
 }
