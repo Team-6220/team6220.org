@@ -8,7 +8,7 @@ dist/
 *.log
 .DS_Store
 
-# Photos of students live in Google Drive / Wix media, not in git (docs/PHOTOS.md).
+# Gallery photos are hosted in Google Drive / Wix media because that is easier and keeps the repo small (issue #8).
 /public/gal/*
 !/public/gal/.gitkeep
 /public/media/
