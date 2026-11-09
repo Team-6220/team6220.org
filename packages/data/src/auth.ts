@@ -17,6 +17,48 @@ import { APPS_HOME_PATH, BADGES, LOGIN_REDIRECT_PATH, type BadgeName } from "./c
 import { clearStoredTokens, wix } from "./wix";
 
 const OAUTH_DATA_KEY = "team6220.wix.oauthData";
+const OAUTH_DATA_KEY_ID = "team6220.wix.oauthData.key";
+
+async function getSessionCryptoKey(): Promise<CryptoKey> {
+  const g = globalThis as typeof globalThis & { __team6220OAuthKey?: CryptoKey };
+  if (g.__team6220OAuthKey) return g.__team6220OAuthKey;
+  g.__team6220OAuthKey = await crypto.subtle.generateKey(
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"],
+  );
+  if (!window.sessionStorage.getItem(OAUTH_DATA_KEY_ID)) {
+    const keyId = crypto.getRandomValues(new Uint8Array(16));
+    window.sessionStorage.setItem(OAUTH_DATA_KEY_ID, btoa(String.fromCharCode(...keyId)));
+  }
+  return g.__team6220OAuthKey;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+
+async function encryptForSessionStorage(plainText: string): Promise<string> {
+  const key = await getSessionCryptoKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plainText);
+  const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
+  const cipher = new Uint8Array(cipherBuf);
+  return JSON.stringify({ iv: bytesToBase64(iv), data: bytesToBase64(cipher) });
+}
+
+async function decryptFromSessionStorage(payload: string): Promise<string> {
+  const parsed = JSON.parse(payload) as { iv: string; data: string };
+  const key = await getSessionCryptoKey();
+  const iv = base64ToBytes(parsed.iv);
+  const data = base64ToBytes(parsed.data);
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return new TextDecoder().decode(plainBuf);
+}
 
 export type MemberStatus = "APPROVED" | "PENDING" | "BLOCKED" | "OFFLINE" | "UNKNOWN";
 
@@ -46,7 +88,8 @@ export async function login(returnTo?: string): Promise<never> {
   const back = safeLocalPath(returnTo ?? window.location.pathname + window.location.search);
   const data = client.auth.generateOAuthData(origin + LOGIN_REDIRECT_PATH, origin + back);
   try {
-    window.sessionStorage.setItem(OAUTH_DATA_KEY, JSON.stringify(data));
+    const encrypted = await encryptForSessionStorage(JSON.stringify(data));
+    window.sessionStorage.setItem(OAUTH_DATA_KEY, encrypted);
   } catch {
     throw new Error("Sign-in needs browser storage. Turn off private browsing or allow site data.");
   }
@@ -65,7 +108,12 @@ export async function handleLoginCallback(): Promise<string> {
   let stored: ReturnType<typeof client.auth.generateOAuthData> | null = null;
   try {
     const raw = window.sessionStorage.getItem(OAUTH_DATA_KEY);
-    stored = raw ? JSON.parse(raw) : null;
+    if (raw) {
+      const decrypted = await decryptFromSessionStorage(raw);
+      stored = JSON.parse(decrypted);
+    } else {
+      stored = null;
+    }
     window.sessionStorage.removeItem(OAUTH_DATA_KEY);
   } catch {
     // fall through to the error below
