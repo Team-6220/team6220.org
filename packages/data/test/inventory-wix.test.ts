@@ -102,7 +102,12 @@ function fakeWix() {
   const api: WixItemsApi = {
     query(c) {
       let lim = 50;
+      let where: { field: string; value: unknown } | undefined;
       const q = {
+        eq(field: string, value: unknown) {
+          where = { field, value };
+          return q;
+        },
         limit(n: number) {
           lim = n;
           return q;
@@ -111,7 +116,7 @@ function fakeWix() {
           return q;
         },
         async find() {
-          const all = [...coll(c).values()].map(clone);
+          const all = [...coll(c).values()].filter((r) => !where || r[where.field] === where.value).map(clone);
           const page = (start: number): ReturnType<typeof q.find> =>
             Promise.resolve({
               items: all.slice(start, start + lim),
@@ -190,6 +195,12 @@ describe("WixStore", () => {
     expect(colls.get("inventory_parts")!.size).toBe(demoData().tables.parts.length);
     expect(await store.list("parts")).toEqual(demoData().tables.parts);
     expect(((await store.getMeta("packingMeta")) as { event: string }).event).toBe("Demo event");
+  });
+
+  it("reads a missing meta record as null without a get() call", async () => {
+    const { api } = fakeWix();
+    api.get = () => Promise.reject(new Error("get() would 404 in the browser"));
+    expect(await new WixStore(api).getMeta("packingMeta")).toBeNull();
   });
 
   it("pages through more than 1000 items", async () => {
