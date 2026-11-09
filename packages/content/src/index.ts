@@ -5,6 +5,8 @@ import summerCampJson from "../../../sites/main/content/summer-camp.json" with {
 import sponsorsJson from "../../../sites/main/content/sponsors.json" with { type: "json" };
 import merchJson from "../../../sites/main/content/merch.json" with { type: "json" };
 import { merch, merchImages } from "./merch.ts";
+import resourcesJson from "../../../sites/main/content/resources.json" with { type: "json" };
+import { resources } from "./resources.ts";
 import { summerCamp } from "./summer-camp.ts";
 import { sponsorImages, sponsors } from "./sponsors.ts";
 
@@ -12,6 +14,7 @@ export { diffContent, describeChange, clip, type Change } from "./diff.ts";
 export { renderInline, isSafeHref, isExternalHref, escapeText } from "./inline.ts";
 export { IMAGE_RULES, isImageFile, mediaUrl } from "./image.ts";
 export { merch, merchItem, merchCount, renderMerchItems, type Merch, type MerchItem } from "./merch.ts";
+export { resources, resourceLink, archiveItem, renderResourceCards, type Resources, type ResourceLink, type ArchiveItem } from "./resources.ts";
 export { sponsors, sponsor, renderSponsorWall, renderSponsorMarquee, TIERS, type Sponsors, type Sponsor } from "./sponsors.ts";
 export { summerCamp, renderBlock, renderBlocks, type SummerCamp, type Block } from "./summer-camp.ts";
 
@@ -56,6 +59,13 @@ export const AREAS = {
     schema: merch,
     initial: merchJson,
     images: merchImages,
+  }),
+  resources: area({
+    id: "resources",
+    label: "Resources and links",
+    path: "sites/main/content/resources.json",
+    schema: resources,
+    initial: resourcesJson,
   }),
 } as const satisfies Record<string, AreaDef>;
 

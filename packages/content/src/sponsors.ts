@@ -32,7 +32,7 @@ export type Sponsor = z.infer<typeof sponsor>;
 
 /** sites/main/content/sponsors.json. The order of the list is the order on the pages. */
 export const sponsors = z.object({
-  sponsors: z.array(sponsor).max(100).meta({ title: "Sponsors (top to bottom = left to right on the pages)" }),
+  sponsors: z.array(sponsor).max(100).meta({ title: "Sponsors" }),
 });
 export type Sponsors = z.infer<typeof sponsors>;
 

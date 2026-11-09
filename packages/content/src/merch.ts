@@ -22,7 +22,7 @@ export type MerchItem = z.infer<typeof merchItem>;
 
 /** sites/main/content/merch.json. The order of the list is the order on the /merch page. */
 export const merch = z.object({
-  items: z.array(merchItem).max(60).meta({ title: "Items (top to bottom = left to right, row by row)" }),
+  items: z.array(merchItem).max(60).meta({ title: "Merch items" }),
 });
 export type Merch = z.infer<typeof merch>;
 
