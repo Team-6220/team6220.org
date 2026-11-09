@@ -4,5 +4,18 @@
   "private": true,
   "type": "module",
   "description": "The only place that talks to Wix and Apps Script. Apps call these functions, never the Wix SDK directly.",
-  "main": "src/index.ts"
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./inventory": "./src/inventory/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wix/data": "^1.0.544"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.0"
+  }
 }
