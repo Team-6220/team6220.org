@@ -1,0 +1,18 @@
+<div id="qr-reader" class="mt-4" style="position: relative; padding: 0px; border: none;"></div>
+<div id="qr-reader-results"></div>
+<br>
+<form id="InventoryForm" onsubmit="handleFormSubmit(this); return false;">
+  <div class="mb-3 input-group">
+    <span class="input-group-text bg-primary text-white"><i class="bi bi-qr-code-scan"></i></span>
+    <input type="text" class="form-control" id="productCode" name="productCode" placeholder="119011 number (type or scan student ID/5-Star Bar Code or QR Code)">
+  </div>
+
+  <button 
+  type="submit" 
+  class="btn mb-3 w-100" 
+  style="background-color:#ffa300; border-color:#ffa300; color:#000; font-weight:600;"
+>
+  Submit
+</button>
+
+</form>

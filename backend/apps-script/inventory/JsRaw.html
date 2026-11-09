@@ -1,0 +1,445 @@
+<script>
+/* ============================================================================
+   JsRaw.html — Golden Griffins Inventory
+   Raw Materials: stock pieces shown as dimensioned drawings, the shape field
+   (quick rectangle, or traced from a photo), and the photo tracer.
+     Trace flow: photo → tap the corners → confirm (photo is thrown away) →
+     type each edge's length → the outline is redrawn true to size.
+   The Cut planner tab lives in JsPlanner.html.
+   ========================================================================== */
+'use strict';
+
+/** The piece's outline in its own unit (falls back to a rectangle from old length × width entries). */
+function rawPoints(r) {
+  if (r.shape && r.shape.points && r.shape.points.length >= 3) return r.shape.points;
+  if (r.lengthValue && r.widthValue) return Geo.rect(0, 0, r.lengthValue, r.widthValue);
+  return null;
+}
+function rawUnit(r) { return listVal(r.dimUnitId) || 'in'; }
+function rawThickness(r) { return withUnit(r.thickness, r.thicknessUnitId) || 'Thickness not set'; }
+function rawSize(r) {
+  const dims = [r.length, r.width].filter(Boolean).join(' × ');
+  return dims ? withUnit(dims, r.dimUnitId) : '';
+}
+
+/** Big, zoomable drawing of a piece. */
+function showShapeLightbox(title, points, opts) {
+  const W = Math.min(920, window.innerWidth - 40), H = Math.min(620, Math.round(window.innerHeight * 0.68));
+  const m = App.modal({ title: title, body: el('div', { class: 'shape-zoom' }, Geo.svg(points, Object.assign({ width: W - 40, height: H, font: 15 }, opts))) });
+  m.root.classList.add('wide');
+}
+
+// ───────────────────────── stock list ─────────────────────────
+
+function rawCard(r, openEditor) {
+  const pts = rawPoints(r);
+  const preview = el('button', { class: 'stock-preview', type: 'button', title: 'Click to zoom', 'aria-label': 'Zoom in on the shape' },
+    Geo.svg(pts, { width: 300, height: 210, unit: rawUnit(r), edges: r.shape && r.shape.edges, minLabel: 0.6 }));
+  preview.addEventListener('click', function (e) {
+    e.stopPropagation();
+    showShapeLightbox(listVal(r.materialTypeId) + ' · ' + rawThickness(r), pts, { unit: rawUnit(r), edges: r.shape && r.shape.edges, minLabel: 0.25 });
+  });
+  const card = el('div', { class: 'stock-card', role: 'listitem', tabindex: '0', 'aria-label': listVal(r.materialTypeId) + ' ' + rawThickness(r) },
+    preview,
+    el('div', { class: 'stock-info' },
+      el('div', null,
+        el('div', { class: 'item-name', text: listVal(r.materialTypeId) || 'Unknown material' }),
+        el('div', { class: 'stock-thick', text: rawThickness(r) })),
+      el('div', { class: 'stock-badges' },
+        r.quantity > 1 ? el('span', { class: 'tag', title: r.quantity + ' identical pieces', text: '×' + r.quantity }) : null,
+        r.quantity === 0 ? el('span', { class: 'badge low', text: 'None left' }) : null,
+        r.needsCheck ? el('span', { class: 'badge check', text: 'Needs check' }) : null,
+        el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Edit', onClick: function (e) { e.stopPropagation(); openEditor(); } }, icon('edit')))));
+  card.addEventListener('click', function () { openEditor(); });
+  card.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === card) openEditor(); });
+  return card;
+}
+
+function rawTabs(active) {
+  return el('div', { class: 'tabs raw-tabs' },
+    el('button', { class: active === 'stock' ? 'on' : '', type: 'button', text: 'Stock pieces', onClick: function () { RawView.tab = 'stock'; App.go('rawMaterials', true); } }),
+    el('button', { class: active === 'planner' ? 'on' : '', type: 'button', text: 'Cut planner', onClick: function () { RawView.tab = 'planner'; App.go('rawMaterials', true); } }));
+}
+
+const RawStock = sectionView({
+  key: 'rawMaterials', title: 'Raw Materials', noun: 'piece', nouns: 'pieces', addLabel: 'Add stock',
+  primaryLabel: 'Material', auditable: true,
+  searchPlaceholder: 'Search material, thickness…',
+  emptyText: 'Add each sheet or offcut. Full sheets are a quick rectangle; odd-shaped offcuts are traced from a photo.',
+  grid: '1fr',
+  top: function () { return rawTabs('stock'); },
+  cardEl: rawCard,
+  primary: function (r) { return listVal(r.materialTypeId) || 'Unknown material'; },
+  meta: function (r) { return rawThickness(r); },
+  columns: [],
+  filters: [
+    { id: 'material', label: 'Material', options: function () { return usedListOptions('rawMaterials', 'materialTypeId'); }, value: function (r) { return r.materialTypeId; } },
+    { id: 'thickness', label: 'Thickness', options: function () { return usedMeasureOptions('rawMaterials', 'thickness', 'thicknessValue', 'thicknessUnitId'); },
+      value: function (r) { return r.thicknessValue + '|' + (r.thicknessUnitId || ''); } },
+    { id: 'location', label: 'Location', location: true }
+  ],
+  sorts: [
+    { id: 'material', label: 'Material', cmp: function (a, b) { return (listOrder(a.materialTypeId) - listOrder(b.materialTypeId)) || ((a.thicknessValue || 0) - (b.thicknessValue || 0)) || ((b.area || 0) - (a.area || 0)); } },
+    { id: 'relevance', label: 'Best match', cmp: function (a, b) { return listOrder(a.materialTypeId) - listOrder(b.materialTypeId); } },
+    { id: 'size', label: 'Largest first', cmp: function (a, b) { return (b.area || 0) - (a.area || 0); } },
+    { id: 'small', label: 'Smallest first', cmp: function (a, b) { return (a.area || 0) - (b.area || 0); } },
+    { id: 'updated', label: 'Recently updated', cmp: function (a, b) { return String(b.updatedAt).localeCompare(String(a.updatedAt)); } }
+  ],
+  search: function (r) {
+    return [[listVal(r.materialTypeId), 5], [r.thickness + ' ' + listVal(r.thicknessUnitId), 3],
+      [r.length + ' ' + r.width + ' ' + listVal(r.dimUnitId), 2], [App.locationLabel(r.locationId), 2], [r.description, 1]];
+  },
+  form: [
+    { name: 'materialTypeId', label: 'Material', type: 'list', listKey: 'materialType', required: true },
+    { name: 'thickness', label: 'Thickness', type: 'measure', half: true, placeholder: 'e.g. 1/8', max: 30, required: true },
+    { name: 'thicknessUnitId', label: 'Thickness unit', type: 'list', listKey: 'unit', half: true, defaultValue: function () { return defaultUnit('in'); } },
+    { name: 'shape', label: 'Shape & size', type: 'custom', required: true, build: function (rec, controls) { return shapeField(rec, controls); } },
+    { name: 'dimUnitId', label: 'Size unit', type: 'list', listKey: 'unit', half: true, defaultValue: function () { return defaultUnit('in'); } },
+    { name: 'quantity', label: 'Identical pieces', type: 'int', required: true, half: true, defaultValue: function () { return 1; }, hint: 'Usually 1. Use more only for identical full sheets.' },
+    { name: 'locationId', label: 'Storage location', type: 'location' },
+    { name: 'description', label: 'Notes', type: 'textarea', hint: 'Optional, e.g. “has holes along one edge”.' }
+  ]
+});
+
+const RawView = {
+  title: 'Raw Materials',
+  tab: 'stock',
+  current: function () { return this.tab === 'planner' ? Planner : RawStock; },
+  render: function (main) { this.current().render(main); },
+  leave: function () { if (RawStock.refs) RawStock.leave(); if (Planner.refs) Planner.leave(); },
+  onData: function (keys) { const v = this.current(); if (v.onData) v.onData(keys); },
+  refreshRow: function (id) { if (this.tab === 'stock') RawStock.refreshRow(id); },
+  cfg: RawStock.cfg
+};
+App.views.rawMaterials = RawView;
+
+// ───────────────────────── shape field ─────────────────────────
+
+/**
+ * The "Shape & size" field in the stock editor.
+ *   Rectangle: type length × width.
+ *   Traced:    from a photo (see Tracer).
+ * Returns { el, value(), validate() } for sectionView.
+ */
+function shapeField(rec, controls) {
+  const cur = rec && rec.shape && rec.shape.points ? JSON.parse(JSON.stringify(rec.shape)) : null;
+  let mode = cur && cur.kind === 'traced' ? 'traced' : 'rect';
+  let traced = cur && cur.kind === 'traced' ? cur : null;
+  const startPts = rec ? rawPoints(rec) : null;
+  const bb = startPts ? Geo.bbox(startPts) : null;
+  const lenIn = el('input', { class: 'input num', type: 'text', inputmode: 'decimal', placeholder: 'e.g. 48', value: mode === 'rect' && bb ? trimNum(Math.max(bb.w, bb.h)) : '' });
+  const widIn = el('input', { class: 'input num', type: 'text', inputmode: 'decimal', placeholder: 'e.g. 24', value: mode === 'rect' && bb ? trimNum(Math.min(bb.w, bb.h)) : '' });
+  const seg = el('div', { class: 'seg shape-seg', role: 'tablist' });
+  const body = el('div', { class: 'shape-body' });
+  const preview = el('div', { class: 'shape-preview' });
+  const unit = function () { const c = controls.dimUnitId; return (c && c.value && listVal(c.value)) || 'in'; };
+
+  const rectPoints = function () {
+    const L = parseMeasureClient(lenIn.value), W = parseMeasureClient(widIn.value);
+    return L > 0 && W > 0 ? Geo.rect(0, 0, L, W) : null;
+  };
+  const drawPreview = function () {
+    clear(preview);
+    const pts = mode === 'rect' ? rectPoints() : (traced && traced.points);
+    if (pts) {
+      const svg = Geo.svg(pts, { width: 300, height: 200, unit: unit(), edges: mode === 'traced' && traced ? traced.edges : null });
+      const zoom = el('button', { class: 'stock-preview small', type: 'button', title: 'Click to zoom' }, svg);
+      zoom.addEventListener('click', function () { showShapeLightbox('Shape', pts, { unit: unit(), edges: mode === 'traced' && traced ? traced.edges : null, minLabel: 0.25 }); });
+      preview.appendChild(zoom);
+    } else preview.appendChild(el('div', { class: 'shape-placeholder', text: mode === 'rect' ? 'Type the length and width.' : 'No shape traced yet.' }));
+  };
+  const fileIn = el('input', { type: 'file', accept: 'image/*', capture: 'environment', style: { display: 'none' } });
+  fileIn.addEventListener('change', function () {
+    const f = fileIn.files && fileIn.files[0];
+    fileIn.value = '';
+    if (!f) return;
+    Tracer.fromPhoto(f, unit()).then(function (shape) { if (shape) { traced = shape; draw(); } });
+  });
+  const draw = function () {
+    clear(seg).append(
+      el('button', { type: 'button', class: mode === 'rect' ? 'on' : '', text: 'Rectangle', onClick: function () { mode = 'rect'; draw(); } }),
+      el('button', { type: 'button', class: mode === 'traced' ? 'on' : '', text: 'Odd shape (trace a photo)', onClick: function () { mode = 'traced'; draw(); } }));
+    clear(body);
+    if (mode === 'rect') {
+      body.append(el('div', { class: 'rect-inputs' },
+        el('label', null, el('span', { class: 'field-label', text: 'Length' }), lenIn),
+        el('span', { class: 'times', text: '×' }),
+        el('label', null, el('span', { class: 'field-label', text: 'Width' }), widIn)));
+    } else {
+      body.append(el('div', { class: 'trace-actions' },
+        el('button', { class: 'btn sm primary', type: 'button', onClick: function () { fileIn.click(); } }, icon('image'), traced ? 'Re-trace from a new photo' : 'Take or choose a photo'),
+        traced ? el('button', { class: 'btn sm', type: 'button', text: 'Edit dimensions', onClick: function () {
+          Tracer.editDims(traced.points, traced.edges, unit()).then(function (shape) { if (shape) { traced = shape; draw(); } });
+        } }) : null),
+        el('p', { class: 'meta-line', text: 'Take the photo from straight above with the whole piece in view. You’ll tap its corners, then type each edge’s length. The photo isn’t saved.' }));
+    }
+    body.appendChild(fileIn);
+    drawPreview();
+  };
+  lenIn.addEventListener('input', drawPreview);
+  widIn.addEventListener('input', drawPreview);
+  draw();
+  return {
+    el: el('div', { class: 'shape-field' }, seg, body, preview),
+    value: function () {
+      if (mode === 'rect') {
+        const pts = rectPoints();
+        if (!pts) return {};
+        const L = pts[1][0], W = pts[2][1];
+        return { kind: 'rect', points: pts, edges: [L, W, L, W] };
+      }
+      return traced ? { kind: 'traced', points: traced.points, edges: traced.edges || [] } : {};
+    },
+    validate: function () {
+      if (mode === 'rect') {
+        const L = parseMeasureClient(lenIn.value), W = parseMeasureClient(widIn.value);
+        if (!(L > 0) || !(W > 0)) return 'Enter the length and width (numbers or fractions like 23 1/2).';
+        return '';
+      }
+      return traced ? '' : 'Trace the shape from a photo, or switch to Rectangle.';
+    }
+  };
+}
+
+function trimNum(x) { return String(Math.round(x * 10000) / 10000); }
+
+// ───────────────────────── the tracer ─────────────────────────
+
+const Tracer = {
+  /** Photo → corners → confirm → dimensions. Resolves a shape or null. */
+  fromPhoto: function (file, unit) {
+    const self = this;
+    return App.prepareImage(file).then(function (dataUrl) {
+      return new Promise(function (resolve) {
+        const img = new Image();
+        img.onload = function () { self.traceStep(img, unit, resolve); };
+        img.onerror = function () { App.toast('That photo couldn’t be read.', { type: 'error' }); resolve(null); };
+        img.src = dataUrl;
+      });
+    }).catch(function (err) { App.toast(err.message, { type: 'error' }); return null; });
+  },
+
+  /** Step 1 & 2: tap corners on the photo, then confirm. */
+  traceStep: function (img, unit, resolve) {
+    const self = this;
+    let pts = [], dragging = -1, confirming = false, finished = false;
+    const maxW = Math.min(900, window.innerWidth - 48), maxH = Math.round(window.innerHeight * 0.6);
+    const k = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1.5);
+    const W = Math.round(img.naturalWidth * k), H = Math.round(img.naturalHeight * k);
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('class', 'trace-overlay');
+    const pic = el('img', { src: img.src, alt: 'Photo of the stock', draggable: 'false', style: { width: W + 'px', height: H + 'px' } });
+    const stage = el('div', { class: 'trace-stage', style: { width: W + 'px', height: H + 'px' } }, pic, svg);
+    const hint = el('p', { class: 'trace-hint' });
+    const undo = el('button', { class: 'btn sm', type: 'button', onClick: function () { pts.pop(); render(); } }, icon('undo'), 'Undo');
+    const clearBtn = el('button', { class: 'btn sm ghost', type: 'button', text: 'Clear', onClick: function () { pts = []; render(); } });
+    const finish = el('button', { class: 'btn primary', type: 'button', text: 'Finish shape', onClick: function () { confirming = true; render(); } });
+    const back = el('button', { class: 'btn', type: 'button', text: 'Keep adjusting', onClick: function () { confirming = false; render(); } });
+    const yes = el('button', { class: 'btn primary', type: 'button', text: 'Yes, the shape is done' });
+    const tools = el('div', { class: 'trace-tools' });
+    const foot = el('div', { class: 'trace-foot' });
+
+    const render = function () {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const P = pts.map(function (p) { return [p[0] * k, p[1] * k]; });
+      if (P.length) {
+        const d = P.map(function (p, i) { return (i ? 'L' : 'M') + p[0] + ' ' + p[1]; }).join('') + (confirming || P.length > 2 ? 'Z' : '');
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('class', confirming ? 'trace-shape done' : 'trace-shape');
+        svg.appendChild(path);
+      }
+      P.forEach(function (p, i) {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', i === 0 && !confirming ? 11 : 8);
+        c.setAttribute('class', 'trace-pt' + (i === 0 ? ' first' : ''));
+        svg.appendChild(c);
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', p[0]); t.setAttribute('y', p[1] + 0.5);
+        t.setAttribute('class', 'trace-num'); t.textContent = i + 1;
+        svg.appendChild(t);
+      });
+      clear(tools); clear(foot);
+      if (confirming) {
+        hint.textContent = 'Is this the rough shape of the piece? Once you confirm, the photo is thrown away and you’ll type in the measurements.';
+        foot.append(back, yes);
+      } else {
+        hint.textContent = pts.length < 3
+          ? 'Tap each corner of the stock, going around the edge in order. Drag a dot to move it.'
+          : 'Keep tapping corners (curves: add a few points along them). Tap the first dot or “Finish shape” when you’ve gone all the way around.';
+        undo.disabled = !pts.length; clearBtn.disabled = !pts.length;
+        finish.disabled = pts.length < 3 || Geo.selfIntersects(pts);
+        tools.append(undo, clearBtn);
+        foot.append(el('div', { class: 'spacer' }), finish);
+        if (pts.length >= 3 && Geo.selfIntersects(pts)) hint.textContent = 'The outline crosses itself. Undo or drag the dots so you go around the edge in order.';
+      }
+    };
+
+    const local = function (e) {
+      const r = svg.getBoundingClientRect();
+      return [(e.clientX - r.left) * (W / r.width) / k, (e.clientY - r.top) * (H / r.height) / k];
+    };
+    const nearest = function (p) {
+      let best = -1, bd = 22 / k;
+      pts.forEach(function (q, i) { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < bd) { bd = d; best = i; } });
+      return best;
+    };
+    svg.addEventListener('pointerdown', function (e) {
+      if (confirming) return;
+      e.preventDefault();
+      const p = local(e);
+      const n = nearest(p);
+      if (n === 0 && pts.length >= 3) { if (!Geo.selfIntersects(pts)) { confirming = true; render(); } return; }
+      if (n >= 0) { dragging = n; svg.setPointerCapture(e.pointerId); return; }
+      pts.push(p);
+      render();
+    });
+    svg.addEventListener('pointermove', function (e) {
+      if (dragging < 0) return;
+      const p = local(e);
+      pts[dragging] = [Math.max(0, Math.min(img.naturalWidth, p[0])), Math.max(0, Math.min(img.naturalHeight, p[1]))];
+      render();
+    });
+    const stop = function () { dragging = -1; };
+    svg.addEventListener('pointerup', stop);
+    svg.addEventListener('pointercancel', stop);
+
+    const m = App.modal({
+      title: 'Trace the stock', body: [hint, el('div', { class: 'trace-scroll' }, stage), tools], foot: [foot],
+      onClose: function () { if (!finished) resolve(null); }
+    });
+    m.root.classList.add('wide', 'tracer');
+    yes.addEventListener('click', function () {
+      finished = true;
+      const traced = pts.slice();
+      pic.src = '';               // photo is discarded here
+      m.close(true);
+      self.dimsStep(traced, null, unit, Geo.detectRight(traced, 10)).then(resolve);
+    });
+    render();
+  },
+
+  /** Re-open the dimensions step for a saved shape. */
+  editDims: function (points, edges, unit) {
+    return this.dimsStep(points, edges && edges.length === points.length ? edges : Geo.edgeLengths(points), unit, Geo.detectRight(points, 1.5));
+  },
+
+  /**
+   * Step 3: a box on each edge for its length. When every box is filled the
+   * outline is redrawn true to size (angles from the tracing; square corners
+   * held square — tap a corner to toggle).
+   */
+  dimsStep: function (traced, startEdges, unit, right) {
+    return new Promise(function (resolve) {
+      const n = traced.length;
+      const values = startEdges ? startEdges.map(function (x) { return trimFrac(x); }) : traced.map(function () { return ''; });
+      let shown = Geo.normalizeKeepIndex(traced);
+      let solved = null, warn = '';
+      const W = Math.min(820, window.innerWidth - 48), H = Math.min(480, Math.round(window.innerHeight * 0.55));
+      const stage = el('div', { class: 'dims-stage', style: { width: W + 'px', height: H + 'px' } });
+      const note = el('div', { class: 'dims-note' });
+      const use = el('button', { class: 'btn primary', type: 'button', text: 'Use this shape' });
+      const inputs = [];
+      let done = false;
+
+      const layout = function () {
+        const focusIdx = inputs.indexOf(document.activeElement);
+        clear(stage);
+        const pad = 64;
+        const bb = Geo.bbox(shown);
+        const kk = Math.min((W - 2 * pad) / (bb.w || 1), (H - 2 * pad) / (bb.h || 1));
+        const ox = (W - bb.w * kk) / 2 - bb.x0 * kk, oy = (H - bb.h * kk) / 2 - bb.y0 * kk;
+        const P = function (p) { return [ox + p[0] * kk, oy + p[1] * kk]; };
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        svg.setAttribute('class', 'dims-svg');
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', shown.map(function (p, i) { const q = P(p); return (i ? 'L' : 'M') + q[0] + ' ' + q[1]; }).join('') + 'Z');
+        path.setAttribute('class', solved ? 'shape-fill' : 'trace-shape');
+        svg.appendChild(path);
+        stage.appendChild(svg);
+        const cw = Geo.signedArea(shown) > 0;
+        shown.forEach(function (p, i) {
+          // corner marker (tap to toggle square)
+          const q = P(p);
+          const c = el('button', { class: 'corner' + (right[i] ? ' square' : ''), type: 'button', title: right[i] ? 'Square corner (tap to unlock)' : 'Tap to make this a square corner',
+            'aria-label': 'Corner ' + (i + 1) + (right[i] ? ', square' : ''), style: { left: (q[0] - 11) + 'px', top: (q[1] - 11) + 'px' } }, right[i] ? '∟' : '');
+          c.addEventListener('click', function () { right[i] = !right[i]; solve(); });
+          stage.appendChild(c);
+          // edge input
+          const b = shown[(i + 1) % n], qb = P(b);
+          let nx = qb[1] - q[1], ny = q[0] - qb[0];
+          const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
+          if (!cw) { nx = -nx; ny = -ny; }
+          const mx = (q[0] + qb[0]) / 2 + nx * 26, my = (q[1] + qb[1]) / 2 + ny * 22;
+          const inp = inputs[i] || el('input', { class: 'dim-input', type: 'text', inputmode: 'decimal', placeholder: '?', 'aria-label': 'Length of edge ' + (i + 1) });
+          if (!inputs[i]) {
+            inp.value = values[i];
+            inp.addEventListener('input', function () { values[i] = inp.value; inp.classList.toggle('bad', inp.value !== '' && !(parseMeasureClient(inp.value) > 0)); scheduleSolve(); });
+            inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); const nxt = inputs[(i + 1) % n]; nxt.focus(); nxt.select(); } });
+            inputs[i] = inp;
+          }
+          inp.style.left = Math.max(2, Math.min(W - 74, mx - 36)) + 'px';
+          inp.style.top = Math.max(2, Math.min(H - 32, my - 15)) + 'px';
+          stage.appendChild(inp);
+        });
+        if (focusIdx >= 0) inputs[focusIdx].focus();
+        const filled = values.filter(function (v) { return parseMeasureClient(v) > 0; }).length;
+        use.disabled = !solved;
+        note.className = 'dims-note' + (warn ? ' warn' : '');
+        note.textContent = warn || (solved
+          ? 'Redrawn to your measurements. Check it looks right, then save. Tap a corner to make it square (∟) or not.'
+          : 'Type each edge’s length (' + unit + '; fractions like 23 1/2 are fine). ' + filled + ' of ' + n + ' done. Corners marked ∟ are kept square — tap a corner to change it.');
+      };
+
+      const solve = function () {
+        const lens = values.map(function (v) { return parseMeasureClient(v); });
+        if (lens.some(function (x) { return !(x > 0); })) { solved = null; warn = ''; shown = Geo.normalizeKeepIndex(traced); layout(); return; }
+        const res = Geo.solveShape(traced, lens, right);
+        solved = { points: res.points, edges: lens.map(function (x, i) {
+          const adj = res.adjusted.filter(function (a) { return a.edge === i; })[0];
+          return adj ? Math.round(adj.to * 10000) / 10000 : x;
+        }) };
+        warn = res.adjusted.length ? 'These measurements don’t quite close into a shape, so ' +
+          res.adjusted.map(function (a) { return 'edge ' + (a.edge + 1) + ' (' + Geo.fmtLen(a.from, unit) + ' → ' + Geo.fmtLen(a.to, unit) + ')'; }).join(', ') +
+          ' had to change. Re-measure those edges, or unlock square corners (∟) that aren’t really square.' : '';
+        shown = res.points;
+        layout();
+      };
+      const scheduleSolve = debounce(solve, 300);
+
+      const m = App.modal({
+        title: 'Measure each edge', body: [note, el('div', { class: 'trace-scroll' }, stage)],
+        foot: [el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(); } }), use],
+        beforeClose: function () { return done || App.confirm({ title: 'Discard this shape?', message: 'The tracing and measurements will be lost.', confirmLabel: 'Discard', cancelLabel: 'Keep going', danger: true }); },
+        onClose: function () { if (!done) resolve(null); }
+      });
+      m.root.classList.add('wide', 'tracer');
+      use.addEventListener('click', function () {
+        if (!solved) return;
+        done = true;
+        resolve({ kind: 'traced', points: solved.points, edges: solved.edges });
+        m.close(true);
+      });
+      solve();
+      setTimeout(function () { const f = inputs.filter(function (x) { return !x.value; })[0] || inputs[0]; if (f) f.focus(); }, 60);
+    });
+  }
+};
+
+function trimFrac(x) {
+  const s = Math.round(x * 16), whole = Math.floor(s / 16);
+  let num = s % 16, den = 16;
+  while (num && num % 2 === 0) { num /= 2; den /= 2; }
+  return num ? (whole ? whole + ' ' : '') + num + '/' + den : String(whole);
+}
+
+/** Like normalize, but only scales/moves (keeps the tracing's orientation so corners stay where you tapped them). */
+Geo.normalizeKeepIndex = function (p) {
+  const bb = Geo.bbox(p);
+  return Geo.translate(p, -bb.x0, -bb.y0);
+};
+</script>
