@@ -315,12 +315,12 @@
   var ROBOTS=[];try{ROBOTS=JSON.parse(document.getElementById('robots-data').textContent)}catch(e){}
   var sc=document.getElementById('showcase');
   if(sc&&ROBOTS.length){var rtabs=[].slice.call(sc.querySelectorAll('.rtab')),rI=0;
-    var fill=function(i){var r=ROBOTS[i];var im=document.getElementById('rs-img');im.src=r.img;im.alt=r.alt;
+    var fill=function(i){var r=ROBOTS[i];var im=document.getElementById('rs-img');var iu=null;try{iu=new URL(r.img,location.href)}catch(err){}if(iu&&/^https?:$/.test(iu.protocol))im.src=iu.href;im.alt=r.alt;
       document.getElementById('rs-season').textContent=r.year;document.getElementById('rs-plate').textContent=r.year+' · '+r.game;document.getElementById('rs-game').textContent=r.game;
       document.getElementById('rs-name').textContent=r.name;var qc=document.getElementById('rs-quip-c');if(qc)qc.textContent='a teammate, on '+r.name;document.getElementById('rs-finish').textContent=r.finish;var q=document.getElementById('rs-quip');if(r.quip){document.getElementById('rs-quip-t').textContent='“'+r.quip+'”';q.hidden=false}else{q.hidden=true}
       var ul=document.getElementById('rs-events');ul.innerHTML='';r.events.forEach(function(e){var li=document.createElement('li');li.textContent=e;ul.appendChild(li)});
       var ph=document.getElementById('rs-photos');ph.href=r.album?'/resources/media#'+r.album:'/resources/media';
-      var cad=document.getElementById('rs-cad');if(cad){if(r.cad){cad.href=r.cad;cad.hidden=false}else{cad.removeAttribute('href');cad.hidden=true}}ph.textContent=r.album?'See '+r.year+' photos →':'See all photos →';
+      var cad=document.getElementById('rs-cad');if(cad){var cu=null;try{cu=r.cad?new URL(r.cad,location.href):null}catch(err){}if(cu&&/^https?:$/.test(cu.protocol)){cad.href=cu.href;cad.hidden=false}else{cad.removeAttribute('href');cad.hidden=true}}ph.textContent=r.album?'See '+r.year+' photos →':'See all photos →';
       document.getElementById('robot-panel').setAttribute('aria-labelledby','rtab-'+r.year)};
     var pick=function(i,focus){i=(i+ROBOTS.length)%ROBOTS.length;if(i===rI&&!focus)return;rI=i;
       rtabs.forEach(function(b,k){b.setAttribute('aria-selected',String(k===i));b.tabIndex=k===i?0:-1});if(focus)rtabs[i].focus();
