@@ -23,7 +23,7 @@ repo root). Each page file only picks a layout, a banner and sections from here.
   a banner on the home page. `/summer-camp` exists either way.
 - **Add next season's robot:** add one entry at the top of `data/robots.ts` (and its CAD render in `media/`).
   It shows up on `/robots` and as "Latest robot" on the home page.
-- **Add an app:** add one entry to `data/apps.ts`. It shows up on `/resources` and in the Resources menu.
+- **Add an app:** add one entry to `apps/dashboard/src/apps.ts` (the one list of apps). Live apps show up on `/apps`, on `/resources` and in the Resources menu.
 - **Add a resource link:** add one entry to `data/resources.ts` (`menuLabel` also puts it in the Resources menu).
 - **Change the menu:** `data/nav.ts`.
 

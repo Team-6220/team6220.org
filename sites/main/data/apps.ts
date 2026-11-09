@@ -1,6 +1,7 @@
-// The team apps listed on the Resources page and in the Resources menu.
-// TODO: once PR #83 is merged, import the list from apps/dashboard/src/apps.ts (`@team6220/dashboard/apps`)
-// and delete this copy, so there is one list of apps.
+// The team apps shown on the Resources page and in the Resources menu.
+// There is ONE list of apps: apps/dashboard/src/apps.ts (also used by the /apps dashboard).
+// Add or change apps there; this file only picks the live ones for the main site.
+import { APPS as ALL_APPS } from "@team6220/dashboard/apps";
 
 export interface TeamApp {
   name: string;
@@ -12,9 +13,8 @@ export interface TeamApp {
 /** The apps dashboard (also where "Log In" goes). */
 export const APPS_DASHBOARD = { name: "Apps", href: "/apps" };
 
-export const APPS: TeamApp[] = [
-  { name: "Attendance", href: "/apps/attendance", blurb: "Check in and out at meetings." },
-  { name: "Inventory", href: "/apps/inventory", blurb: "Parts, tools and stock audits." },
-  { name: "GoldSim", href: "/apps/goldsim", blurb: "Open-source 2D FRC strategy and robot-design simulator." },
-  { name: "WingIt", href: "/apps/wingit", blurb: "Build-season roguelite that teaches our design principles." },
-];
+export const APPS: TeamApp[] = ALL_APPS.filter((a) => a.status === "live" && a.href).map((a) => ({
+  name: a.name,
+  href: a.href as string,
+  blurb: a.description,
+}));
