@@ -8,7 +8,7 @@ Sources the principles come from: 6220 Design Standards, NASA RAP Robotics Desig
 6220 Design Resources, and frcdesign.org.
 
 ## Play
-Deployed with GitHub Pages from the `main` branch root. Open the site and start with the tutorial season.
+Served at `/apps/wingit/` on the team website (copied in by the site build, see `apps/README.md`). Open it and start with the tutorial season.
 Add `?debug` to the URL to see which principles a run has not met yet.
 
 ## Layout

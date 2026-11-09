@@ -6,8 +6,8 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 | --- | --- | --- |
 | `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only) |
 | `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
-| `apps/goldsim` | `/apps/goldsim` | **Imported** with history (Nov 2026). Still builds with its own npm workspace; not yet mounted on the site |
-| `apps/wingit` | `/apps/wingit` | **Imported** with history (Nov 2026). Static HTML/JS game; not yet mounted on the site |
+| `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
+| `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
 | `apps/scouting`, `apps/pit`, `apps/production` | | Planned |
 
 Rules (from the migration plan):
@@ -31,14 +31,38 @@ Media that several parts of the site use goes in [`packages/assets`](../packages
 
 ## Imported apps (GoldSim, WingIt)
 
-They came from their own repos with full history and keep their own tooling for now:
+They came from their own repos with full history and keep their own tooling:
 
-- `apps/goldsim` uses npm workspaces (`npm ci`, `npm run dev`). It is excluded from the root pnpm workspace in
-  `pnpm-workspace.yaml`, so root installs and CI don't touch it.
-- `apps/wingit` is static files (`index.html`, `js/`, `css/`); run it by opening `index.html` or any static server.
+- `apps/goldsim` uses npm workspaces (`npm ci`, `npm run dev`, `npm test`). It is excluded from the root pnpm workspace
+  in `pnpm-workspace.yaml`, so `pnpm install` doesn't touch it.
+- `apps/wingit` is static files (`index.html`, `js/`, `css/`, `assets/`) with relative paths; run it by opening
+  `index.html` or any static server.
 - Issues from the old GoldSim repo were moved here with the label `APP: GOLDSIM`. Use `APP: WINGIT` for WingIt.
-- The old repos are archived with a README pointing here. Don't commit there.
-- To mount them on the site (Phase 1), build each to static files and publish them under `/apps/goldsim` and
-  `/apps/wingit` (their old GitHub Pages addresses should redirect there).
+- The old repos are archived with a README pointing here. Don't commit there. Their old GitHub Pages addresses
+  should redirect to `/apps/goldsim/` and `/apps/wingit/` (not set up yet).
 - **Merge pull requests that add or move whole imported folders with "Create a merge commit"**, not squash or rebase,
   or the imported history is lost.
+
+### How they get onto the site
+
+`pnpm build` builds both apps as part of the normal site build, through
+[`integrations/build-apps.mjs`](../integrations/build-apps.mjs) (an Astro integration that runs on `astro build`
+only, not on `astro dev` or `astro check`):
+
+| App | Build | Output |
+| --- | --- | --- |
+| WingIt | Nothing to build: `index.html`, `css/`, `js/` and `assets/` are copied | `dist/apps/wingit/` |
+| GoldSim | `npm ci` (only if `apps/goldsim/node_modules` is missing), then `npm run build` with `BASE_PATH=/apps/goldsim/` (Vite `base`) | `dist/apps/goldsim/` |
+
+Nothing generated is committed: the copies live only in `dist/`, and GoldSim's `node_modules/` and
+`packages/web/dist/` are git-ignored by its own `.gitignore`. CI (`ci.yml`) and the Pages deploy (`pages.yml`) run
+`npm ci` in `apps/goldsim` (npm cache keyed on its `package-lock.json`) before `pnpm build`. GoldSim's own tests and
+lint (`npm run check` in `apps/goldsim`) don't run in the site CI yet. The workflows under `apps/goldsim/.github/`
+came with the import and don't run (GitHub only reads the root `.github/`).
+
+To work on an app, use its own dev server (`npm run dev` in `apps/goldsim`, or a static server in `apps/wingit`);
+`pnpm dev` doesn't serve them. To check them as the site serves them, run `pnpm build` and serve `dist/` (for
+example `pnpm preview`), then open `/apps/goldsim/` and `/apps/wingit/`.
+
+GoldSim runs in local/guest mode: the web app has no Supabase client wired in, so it needs no keys or env vars.
+Its `packages/data-layer` Supabase code and `supabase/` folder are unused by the site build and go away with #66.
