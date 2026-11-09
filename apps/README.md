@@ -4,8 +4,8 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 
 | Folder | Route | Status |
 | --- | --- | --- |
-| `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only) |
-| `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
+| `apps/attendance` | `/apps/attendance` | Moves in from Apps Script (screen only). Options and recommendation: [attendance/docs/PLAN.md](attendance/docs/PLAN.md) |
+| `apps/inventory` | `/apps/inventory` | **Built** on mock data; Wix collections not created yet. See [inventory/README.md](inventory/README.md) |
 | `apps/goldsim` | `/apps/goldsim` | **Imported** with history (Nov 2026). Still builds with its own npm workspace; not yet mounted on the site |
 | `apps/wingit` | `/apps/wingit` | **Imported** with history (Nov 2026). Static HTML/JS game; not yet mounted on the site |
 | `apps/scouting`, `apps/pit`, `apps/production` | | Planned |

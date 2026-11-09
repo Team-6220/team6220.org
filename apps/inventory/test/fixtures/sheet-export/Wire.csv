@@ -1,0 +1,2 @@
+id,gaugeId,approxLength,lengthUnitId,typeColor,locationId,description,needsCheck,version,createdAt,updatedAt,archivedAt
+WR-00000001,LI-00000002,12.5,LI-00000001,Red,LO-00000001,,FALSE,1,2026-09-01T17:00:00.000Z,2026-09-01T17:00:00.000Z,

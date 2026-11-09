@@ -1,0 +1,2 @@
+id,auditId,itemTable,itemId,nameSnapshot,baselineQty,countedQty,status,updatedAt
+AI-00000001,AS-00000001,parts,PT-0000000a,Bearing,48,,confirmed,
