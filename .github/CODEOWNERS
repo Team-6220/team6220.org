@@ -1,10 +1,10 @@
 # Every pull request needs a review from someone listed here.
-# Needs a GitHub team called "web-admins" in the Team-6220 org with Write access
+# Needs a GitHub team called "webmasters" in the Team-6220 org with Write access
 # to this repo (see docs/PHASE-0.md). Until it exists, GitHub ignores this file.
-*                    @Team-6220/web-admins
+*                    @Team-6220/webmasters
 
 # Per-app maintainers: uncomment and edit as each app moves in (Phase 1).
-# /apps/attendance/  @Team-6220/web-admins
-# /apps/inventory/   @Team-6220/web-admins
-# /apps/goldsim/     @Team-6220/web-admins
-# /apps/wingit/      @Team-6220/web-admins
+# /apps/attendance/  @Team-6220/webmasters
+# /apps/inventory/   @Team-6220/webmasters
+# /apps/goldsim/     @Team-6220/webmasters
+# /apps/wingit/      @Team-6220/webmasters

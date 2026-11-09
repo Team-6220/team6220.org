@@ -6,7 +6,7 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 ## Done in the repo
 
 - [x] Monorepo: pnpm workspaces, Astro 7 site at the root, `apps/*` and `packages/*` (`ui`, `data`)
-- [x] Homepage ported from the approved preview (markup, CSS, scripts and 33 embedded assets split into files)
+- [x] Homepage ported from the approved preview (markup, CSS, scripts and assets split into files; student photos are served from `PUBLIC_MEDIA_BASE`, not git)
 - [x] `ci.yml`: install, typecheck, tests, build on every pull request (job name `ci`)
 - [x] `pages.yml`: deploys `dist/` to GitHub Pages on every push to `main`
 - [x] `public/CNAME` set to `dev.team6220.org`
@@ -21,8 +21,8 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 2. **Org owners and 2FA.** Org → People: make `losalfrc@gmail.com`, `operations@team6220.org` and
    `programming@team6220.org` owners (use the GitHub accounts tied to those emails). Turn on 2FA for each and
    store recovery codes where two leads or a mentor can reach them.
-3. **Create the `web-admins` team.** Org → Teams → New team, add the web admins, then give it **Write** access to
-   this repo (repo Settings → Collaborators and teams). `CODEOWNERS` points at `@Team-6220/web-admins` and is
+3. **Create the `webmasters` team.** Org → Teams → New team, add the web admins, then give it **Write** access to
+   this repo (repo Settings → Collaborators and teams). `CODEOWNERS` points at `@Team-6220/webmasters` and is
    ignored until the team exists.
 4. **Protect `main`.** Repo Settings → Rules → Rulesets → New branch ruleset:
    - Target: default branch

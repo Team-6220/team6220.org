@@ -41,7 +41,7 @@ docs/           Setup checklist, photo policy
 
 - Every change goes through a pull request with one review; `main` deploys automatically.
 - This repo is public. **Never commit** API keys, passcodes or `.env` files, and never commit photos of
-  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)).
+  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)). Photos live in Google Drive or Wix media.
 - Apps never import the Wix SDK; they call `@team6220/data`.
 
 ## Version notes
