@@ -73,7 +73,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | Attendance | `/apps/attendance` | Members check in and out at meetings | Exists on Apps Script (source in `backend/apps-script/attendance`); the screen moves to our site | Everyone on the team can view; only Attendance Admins start or stop sessions | Same Google Sheet as today, through Apps Script |
 | Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script (source in `backend/apps-script/inventory`); moves fully | Team members view; Inventory Managers edit | Wix database (moved from Google Sheets) |
 | GoldSim | `/apps/goldsim` | Open-source 2D FRC strategy and robot-design simulator | Imported into `apps/goldsim` with history; old repo archived | Anyone (public) | Local in the browser; cloud saves move from Supabase to Wix CMS (#66) |
-| WingIt | `/apps/wingit` | Small existing team app | Imported into `apps/wingit` with history; old repo archived | Team members | None |
+| WingIt | `/apps/wingit` | Small existing team app | Imported into `apps/wingit` with history; old repo archived | Anyone (public) | None |
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
 | Pit display | `/apps/pit` | Screen for the pit TV: match schedule from Nexus plus our scouting data and The Blue Alliance / Statbotics stats | Planned | Anyone (public, read-only) | Reads other apps and FRC data sites |
 | Production Tracker | `/apps/production` | Follows each robot part from design to finished. Replaces today's Google Forms and spreadsheets. | Planned | Designers submit parts; manufacturers update status | Wix database; design files stay in Google Drive as links |
@@ -273,7 +273,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 | Attendance | Team Member (status, history) | Start or stop sessions: Attendance Admin only |
 | Inventory | Team Member | Edit items and audits: Inventory Manager |
 | GoldSim | Anyone | n/a |
-| WingIt | Team Member | n/a |
+| WingIt | Anyone | n/a |
 | Production Tracker | Team Member | Designers submit; manufacturers update status |
 | Scouting | Team Member | Team Member submits scouting data |
 | Pit display | Anyone (public, read-only) | n/a |
