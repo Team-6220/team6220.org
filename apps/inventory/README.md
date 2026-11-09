@@ -41,6 +41,12 @@ packages/data/src/inventory/
   wix-store.ts             Wix adapter (@wix/data, with the signed-in member's client)
 ```
 
+**Loading screen:** the page uses the main site's animated page-change loader (shared, see
+[sites/main/README.md](../../sites/main/README.md#where-the-loader-lives-shared-by-the-main-site-and-inventory)) instead of
+the original boot screens, which the wrapper hides (never by editing `ui/`). It covers the page until the first
+`apiGetAll` finishes; the sign-in / approval / error screens still show. The logo lands in a placeholder spot in the
+top-left corner until the branding pass.
+
 The page is `src/pages/apps/inventory/index.astro` (no site layout: the original page brings its own fonts, styles
 and logos). The UI never imports the Wix SDK; the shim calls `@team6220/data/inventory`.
 
