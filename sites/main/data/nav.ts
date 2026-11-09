@@ -25,7 +25,6 @@ const tabs: (NavTab | false)[] = [
     label: "About",
     href: "/about",
     children: [
-      { label: "Philosophy & Team Intro", href: "/about" },
       { label: "History", href: "/about/history" },
       { label: "Outreach", href: "/about/outreach" },
       { label: "Join", href: "/about/join" },

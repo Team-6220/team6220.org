@@ -44,7 +44,7 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | --- | --- |
 | Home | `/` |
 | Summer Camp | `/summer-camp` |
-| About: Philosophy & Team Intro | `/about` |
+| About | `/about` |
 | About: History | `/about/history` |
 | About: Outreach | `/about/outreach` |
 | About: Join | `/about/join` |
