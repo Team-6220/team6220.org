@@ -297,10 +297,10 @@ None of these block the plan. The first four should be checked in a Phase 0 test
 
 | Item | Why it matters | What we do |
 | --- | --- | --- |
-| Reserved URL paths | Wix serves some paths itself; those never reach our code | Check Wix's reserved-path list against `/apps` and `/api` before routing |
+| Reserved URL paths | Wix serves some paths itself; those never reach our code | Checked: `/apps` is free; avoid `/api/auth/*`, `/_api`, `/_wix` and `/sw.js` |
 | Wix CLI + npm workspaces | The CLI expects a standard Astro layout | Test linking a workspace-based repo in Phase 0; fall back to `src/apps/` folders if needed |
 | `wix release` from CI | Not confirmed for automated deploys | A web admin runs releases manually until confirmed |
-| Offline scouting | Event Wi-Fi is unreliable | Confirm a service worker works on Wix hosting |
+| Offline scouting | Event Wi-Fi is unreliable | Tested: service workers work on Wix hosting, but Wix overrides `/sw.js`. Use a different file name (see WIX-CLI-SPIKE.md) |
 | Server limits: 1000 CPU ms and 20 sub-requests per request | The pit display pulls from several APIs | Cache results; one `/api` call per data source |
 | Preview builds' server code stops after 3 days | A stale preview breaks on test day | Re-release the preview the day before a team test |
 | Badges API is in developer preview | It may change | All badge calls live in `packages/data` |

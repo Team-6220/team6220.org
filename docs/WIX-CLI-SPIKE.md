@@ -6,12 +6,15 @@ how, and what is still open. Checked Nov 9, 2026 against `@wix/cli` 1.2.9, `@wix
 
 ## Results
 
-| # | Question | Result | How we know |
-| --- | --- | --- | --- |
-| 1 | Does this repo's layout (pnpm workspaces, Astro at the root, `sites/`, `apps/`, `packages/`) work with the Wix Astro integration? | **Yes for the build.** Linking and `wix build` not tested yet | Built a copy of `main` with the Wix integration and adapter (below) |
-| 2 | Do Wix's reserved paths collide with `/apps` or `/api`? | **No collision for `/apps`.** Under `/api`, only `/api/auth/*` is taken | Wix docs: Reserved URL Paths |
-| 3 | Can `wix release` run from GitHub Actions? | **Probably.** `wix login --api-key` exists "for automations and CI environments". Not tested; `wix release` has no `--yes` flag documented | Wix CLI reference: login, release |
-| 4 | Do service workers work on Wix hosting? | **Open.** Nothing in the docs either way. Build output supports a custom `_headers` file, which is a good sign | Needs a deployed preview |
+Tested end to end on a throwaway Wix project ("6220 CLI test") created with `headless link`, deployed with
+`wix preview` and `wix release`.
+
+| # | Question | Result |
+| --- | --- | --- |
+| 1 | Does this repo's layout (pnpm workspaces, Astro at the root, `sites/`, `apps/`, `packages/`) work with the Wix CLI? | **Yes.** `headless link` detected pnpm, `wix build`, `wix preview` and `wix release` all worked, and the homepage rendered on Wix hosting. Needs `output: "server"` (see below) |
+| 2 | Do Wix's reserved paths collide with `/apps` or `/api`? | **No collision for `/apps`.** Under `/api`, only `/api/auth/*` is taken. **Also: Wix overrides `/sw.js`** (see 4) |
+| 3 | Can `wix release` run from GitHub Actions? | **Yes, very likely.** `wix release` ran to completion with no prompts in a non-interactive shell. Login in CI uses `wix login --api-key` (documented; not yet run with a real key) |
+| 4 | Do service workers work on Wix hosting? | **Yes, but not at `/sw.js`.** A worker at `/app-sw.js` registered, cached the page, and the page loaded offline. At `/sw.js`, Wix serves its own worker that unregisters itself |
 
 ## Details
 
@@ -72,16 +75,39 @@ From Wix's "Reserved URL Paths for the Astro Integration":
 
 ### 4. Service workers
 
-Wix doesn't document service workers on headless hosting. To test: deploy a preview with `public/sw.js` that caches
-one page, open it, go offline, reload. Check the `Content-Type` of `/sw.js` (must be JavaScript) and that it isn't
-served with long immutable caching (the adapter adds immutable caching for `/_astro/*` only).
+Wix doesn't document service workers on headless hosting, so this was tested on a preview in Chromium:
 
-## Still to do (needs network access to Wix)
+- **`/sw.js` is taken by Wix.** When a browser requests `/sw.js` as a service worker (`Service-Worker: script`
+  header), Wix ignores our file and serves its own worker that unregisters itself and reloads the page. Our worker
+  never stays installed. A plain `curl` of `/sw.js` still shows our file, which makes this easy to miss.
+- **Any other name works.** `/app-sw.js` served as `application/javascript` with `Cache-Control: no-store, no-cache`,
+  registered with scope `/`, controlled the page after a reload, cached it, and the page loaded with the network off.
+- **Rule:** name workers per app, e.g. `/apps/scouting/sw.js` (scope `/apps/scouting/`) or `/scouting-sw.js`.
+  Never `/sw.js`.
 
-This test ran in an environment that can't reach `manage.wix.com`, so the following wait for a machine that can:
+### What `headless link` actually did here
 
-- [ ] In a scratch copy: `npm create @wix/new@latest -- headless link --business-name "6220 CLI test"`
-      (creates a throwaway Wix site; delete it afterwards)
-- [ ] `wix build` and `wix preview` from the pnpm workspace layout
-- [ ] Service worker test on the preview URL (section 4)
-- [ ] `wix login --api-key` plus `wix release` in a GitHub Actions run against the throwaway site
+- Detected **pnpm** and installed with it (the docs say npm). Its `pnpm install` failed on our lockfile
+  (`ERR_PNPM_OUTDATED_LOCKFILE`); `pnpm install --no-frozen-lockfile` finished it. The Wix business and project were
+  already created by then.
+- Added `wix.config.json` (`appId`, `siteId`; not secret), `react()`, `wix()`, `wixPages()` (`@wix/astro-pages`),
+  the hosting adapter and `static.wixstatic.com` images. It chose `@astrojs/react` ^6, `@wix/sdk`,
+  `@wix/dashboard`.
+- It **kept `output: "static"`**. With that, every page on the preview returned "Internal Server Error". With
+  `output: "server"` everything rendered. Set `output: "server"` and mark pages static with
+  `export const prerender = true` only after testing them on a preview.
+- Replaced our scripts with `wix dev|build|preview|release|env|generate|skills`.
+- `wix env pull` writes `.env.local` with `WIX_CLIENT_ID`, `WIX_CLIENT_INSTANCE_ID`, `WIX_CLIENT_PUBLIC_KEY` and
+  **`WIX_CLIENT_SECRET`**. It is git-ignored (`.env.*`); never commit it. In CI these become repository secrets.
+
+## Cleanup and follow-ups
+
+- [ ] Delete the throwaway **"6220 CLI test"** site in Wix (My Sites). It is published at a free
+      `*.wix-site-host.com` address and needs no Premium plan, but there's no reason to keep it.
+- [ ] Before Phase 2: create a Wix API key with Wix CLI permissions, store it as a GitHub Actions secret, and run
+      `wix login --api-key` + `wix build` + `wix preview` in a workflow to confirm CI end to end.
+- [ ] When adding Wix to this repo (Phase 2, via the existing site's Start Migration flow): Node 24, `output: "server"`,
+      allow `workerd` builds in pnpm, no `/sw.js`.
+
+Note for whoever reruns this from an AI sandbox: Node's `fetch` needs `NODE_USE_ENV_PROXY=1` to go through an HTTP
+proxy, otherwise uploads fail with `FailedToUploadStaticFiles ... fetch failed`.
