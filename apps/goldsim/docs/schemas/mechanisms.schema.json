@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: mechanisms.json",
+  "description": "mechanisms.json",
+  "type": "object",
+  "required": [
+    "types"
+  ],
+  "properties": {
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "base",
+          "label",
+          "defaults"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "base": {
+            "description": "Core mechanism type this composes.",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "defaults": {
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

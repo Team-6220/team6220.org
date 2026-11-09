@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: pieces.json",
+  "description": "pieces.json",
+  "type": "object",
+  "required": [
+    "types",
+    "totalCount",
+    "preload"
+  ],
+  "properties": {
+    "types": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "shape",
+          "radius",
+          "mass",
+          "restitution",
+          "friction",
+          "linearDamping"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "shape": {
+            "const": "circle",
+            "type": "string"
+          },
+          "radius": {
+            "description": "meters",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "mass": {
+            "description": "kg",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "restitution": {
+            "description": "bounciness 0-1",
+            "minimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "friction": {
+            "description": "surface friction",
+            "minimum": 0,
+            "type": "number"
+          },
+          "linearDamping": {
+            "description": "rolling resistance on carpet, 1/s",
+            "minimum": 0,
+            "type": "number"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "totalCount": {
+      "minimum": 0,
+      "description": "Pieces staged per match.",
+      "type": "integer"
+    },
+    "preload": {
+      "type": "object",
+      "required": [
+        "piece",
+        "max"
+      ],
+      "properties": {
+        "piece": {
+          "type": "string"
+        },
+        "max": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

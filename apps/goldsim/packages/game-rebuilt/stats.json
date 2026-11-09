@@ -1,0 +1,38 @@
+{
+  "stats": [
+    {
+      "id": "fuelActive",
+      "label": "Fuel scored in an active Hub",
+      "event": "piece_scored",
+      "when": [{ "field": "active", "op": "eq", "value": true }],
+      "per": "robot"
+    },
+    {
+      "id": "fuelWasted",
+      "label": "Fuel shot into an inactive Hub",
+      "event": "piece_scored",
+      "when": [{ "field": "active", "op": "eq", "value": false }],
+      "per": "robot"
+    },
+    {
+      "id": "autoFuel",
+      "label": "AUTO Fuel",
+      "event": "piece_scored",
+      "when": [
+        { "field": "active", "op": "eq", "value": true },
+        { "field": "period", "op": "eq", "value": "auto" }
+      ],
+      "per": "robot"
+    },
+    { "id": "shots", "label": "Fuel launched", "event": "shot_launched", "per": "robot" },
+    {
+      "id": "towerLevel",
+      "label": "End-game Tower level",
+      "event": "climb_assessed",
+      "when": [{ "field": "period", "op": "eq", "value": "teleop" }],
+      "sumField": "level",
+      "per": "robot"
+    },
+    { "id": "fouls", "label": "Fouls committed", "event": "foul", "per": "robot" }
+  ]
+}

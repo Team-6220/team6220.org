@@ -1,0 +1,12 @@
+{
+  "name": "@goldsim/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@dimforge/rapier2d-deterministic-compat": "^0.21.0",
+    "planck": "^1.5.1"
+  }
+}

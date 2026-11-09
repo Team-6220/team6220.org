@@ -1,0 +1,8 @@
+{
+  "namedCommands": {
+    "Shoot": { "action": "shoot", "durationSeconds": 3.0 },
+    "IntakeOn": { "action": "intake", "state": "on" },
+    "IntakeOff": { "action": "intake", "state": "off" },
+    "ClimbL1": { "action": "climb", "level": 1 }
+  }
+}

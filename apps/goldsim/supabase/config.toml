@@ -1,0 +1,44 @@
+# Supabase CLI config for local development (`npx supabase start`).
+# The hosted project is configured in the Supabase dashboard; see docs/SELF-HOSTING.md.
+project_id = "goldsim"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+# Every origin that serves the app must be listed (PRD §14.5, §18).
+additional_redirect_urls = [
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "https://hossharman.github.io/GoldSim/",
+]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+# Magic links only; no passwords are used by GoldSim.
+
+[auth.external.google]
+enabled = false
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"

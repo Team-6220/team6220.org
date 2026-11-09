@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GoldSim</title>
+    <meta name="description" content="Open-source 2D FRC strategy and design simulator by FRC Team 6220." />
+    <link rel="icon" type="image/svg+xml" href="brand/6220-logo-gold.svg" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        const t = localStorage.getItem("goldsim.theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar"></header>
+      <main id="main"></main>
+      <div id="toast"></div>
+      <div id="modal"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

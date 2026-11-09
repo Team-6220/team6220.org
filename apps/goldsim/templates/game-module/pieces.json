@@ -1,0 +1,17 @@
+{
+  "types": [
+    {
+      "id": "piece",
+      "label": "TODO: game piece name",
+      "shape": "circle",
+      "radius": 0.08,
+      "mass": 0.2,
+      "restitution": 0.4,
+      "friction": 0.5,
+      "linearDamping": 1.2,
+      "color": "gold"
+    }
+  ],
+  "totalCount": 20,
+  "preload": { "piece": "piece", "max": 1 }
+}

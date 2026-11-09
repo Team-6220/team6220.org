@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game module: scoring.json",
+  "description": "scoring.json",
+  "type": "object",
+  "required": [
+    "fouls",
+    "rules",
+    "rankingPoints"
+  ],
+  "properties": {
+    "fouls": {
+      "description": "Foul severity -> points to the opponent.",
+      "type": "object",
+      "patternProperties": {
+        "^(.*)$": {
+          "type": "number"
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "description": "Event-driven scoring rule.",
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "on",
+          "effects"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "on": {
+            "description": "Match event that can trigger a scoring rule.",
+            "anyOf": [
+              {
+                "const": "piece_scored",
+                "type": "string"
+              },
+              {
+                "const": "climb_assessed",
+                "type": "string"
+              },
+              {
+                "const": "foul",
+                "type": "string"
+              },
+              {
+                "const": "piece_acquired",
+                "type": "string"
+              },
+              {
+                "const": "shot_launched",
+                "type": "string"
+              },
+              {
+                "const": "phase_start",
+                "type": "string"
+              },
+              {
+                "const": "phase_end",
+                "type": "string"
+              }
+            ]
+          },
+          "when": {
+            "type": "array",
+            "items": {
+              "description": "Condition on an event field. All conditions of a rule must hold.",
+              "type": "object",
+              "required": [
+                "field",
+                "op",
+                "value"
+              ],
+              "properties": {
+                "field": {
+                  "description": "Event field, e.g. target, active, period, phase, level, alliance.",
+                  "type": "string"
+                },
+                "op": {
+                  "anyOf": [
+                    {
+                      "const": "eq",
+                      "type": "string"
+                    },
+                    {
+                      "const": "neq",
+                      "type": "string"
+                    },
+                    {
+                      "const": "in",
+                      "type": "string"
+                    },
+                    {
+                      "const": "gte",
+                      "type": "string"
+                    },
+                    {
+                      "const": "lte",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "effects": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "description": "What a rule does when it fires.",
+              "type": "object",
+              "properties": {
+                "points": {
+                  "description": "Points to add.",
+                  "type": "number"
+                },
+                "to": {
+                  "description": "Who receives points/counters: the event's alliance (default) or its opponent.",
+                  "anyOf": [
+                    {
+                      "const": "event",
+                      "type": "string"
+                    },
+                    {
+                      "const": "opponent",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "counter": {
+                  "description": "Per-alliance counter to increment, e.g. fuelActive.",
+                  "type": "string"
+                },
+                "by": {
+                  "description": "Counter increment (default 1).",
+                  "type": "number"
+                },
+                "category": {
+                  "description": "Score breakdown bucket (default: the event's period).",
+                  "anyOf": [
+                    {
+                      "const": "auto",
+                      "type": "string"
+                    },
+                    {
+                      "const": "teleop",
+                      "type": "string"
+                    },
+                    {
+                      "const": "endgame",
+                      "type": "string"
+                    },
+                    {
+                      "const": "foul",
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "limitPerAlliance": {
+            "minimum": 1,
+            "description": "Maximum firings per alliance per match.",
+            "type": "integer"
+          },
+          "source": {
+            "description": "Manual section, e.g. '§6.5.2 Table 6-4'.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rankingPoints": {
+      "type": "object",
+      "required": [
+        "win",
+        "tie",
+        "bonus"
+      ],
+      "properties": {
+        "win": {
+          "type": "number"
+        },
+        "tie": {
+          "type": "number"
+        },
+        "bonus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "counter",
+              "thresholdKey"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "counter": {
+                "description": "Alliance counter compared against the threshold.",
+                "type": "string"
+              },
+              "thresholdKey": {
+                "description": "Key into the selected threshold profile.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

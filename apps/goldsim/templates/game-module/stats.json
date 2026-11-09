@@ -1,0 +1,12 @@
+{
+  "stats": [
+    {
+      "id": "goalPieces",
+      "label": "TODO: pieces scored in the goal",
+      "event": "piece_scored",
+      "when": [{ "field": "active", "op": "eq", "value": true }],
+      "per": "robot"
+    },
+    { "id": "shots", "label": "Pieces launched", "event": "shot_launched", "per": "robot" }
+  ]
+}
