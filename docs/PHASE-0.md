@@ -44,12 +44,15 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 ## You: Wix
 
 8. Add the three web admin accounts as admins on the Wix site, with 2FA on.
-9. Dashboard → Settings → Development & integrations → **Headless Settings** → create a headless (OAuth) client.
-   Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs. The client ID is safe
-   to commit (it is not a secret); put it in `packages/data` when you wire up login.
-10. **Wix Members:** add the Member Authentication app, turn on Google sign-in, set signups to
-    "only people I approve."
-11. Create badges: **Team Member**, **Attendance Admin**, **Inventory Manager**, **Web Admin**.
+9. Dashboard → Settings → Development & integrations → **Headless settings** → create a headless (OAuth) client.
+   Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs.
+   The client ID is committed in `packages/data/src/config.ts` (it identifies the site and is not a secret).
+10. **Wix Members:** Settings → **Site member settings** → **Signup & login security** → *Who can be a site member?*
+    → **Only people I manually approve** → Save. New members then show up in the Member List for approval.
+    There is no separate "Member Authentication app" to install. Google sign-in is run by Wix itself (no Google
+    keys needed) and is wired up when the login page is built in Phase 1.
+11. Settings → Site member settings → **Member badges** → Manage Badges: create **Team Member**,
+    **Attendance Admin**, **Inventory Manager**, **Web Admin**.
 
 ## You: one-day Wix CLI test (before building much)
 
