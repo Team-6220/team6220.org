@@ -101,7 +101,7 @@ Apps are listed one by one under the **Resources** tab, plus an Apps section on 
 | Apps address | `team6220.org/apps/<name>`, not a subdomain: one login session, `/api` endpoints on the same site, one hosting plan |
 | Media | Wix hosts most media; select gallery folders sync from Google Drive (#8). Team photos sit in git until then |
 | GoldSim backend | No Supabase. GoldSim moves to Wix CMS + Wix Members (#66) |
-| Site content editing | The Site Manager app opens GitHub pull requests with the edited content (no live editing, no separate history; Git is the history). Web Admins only (decided Nov 2026) |
+| Site content editing | The Site Manager app opens GitHub pull requests with the edited content (no live editing, no separate history; Git is the history). Web Admins only; a webmaster merges every PR; a GitHub App holds the access; small logos and photos are committed with the PR (decided Nov 2026) |
 | Branding | Kaydi's branding guidelines (in progress) set logos, spacing and styles. Branding work in #69 and the Phase 1 styling pass wait for them |
 
 ## Architecture at a glance

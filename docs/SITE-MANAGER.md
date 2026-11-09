@@ -91,12 +91,10 @@ exist, previews are the Phase 2 PR previews, and the live site stays static and 
 Each area is its own issue: convert the content to JSON, make the page read it, build the form, and check
 the page is identical before and after.
 
-## Still open
+## Decisions (Nov 2026)
 
-- **Auto-merge or a human merges?** Default proposed: a webmaster merges, since a typo reaches the public
-  site on merge.
-- **GitHub App or fine-grained token?** Proposed: GitHub App (not tied to one person's account). Needs an
-  org owner to install it.
-- **Logo/photo uploads:** commit to the repo (proposed) or upload to the Wix Media Manager and store the URL.
+- **A webmaster merges every pull request.** No auto-merge: a typo would reach the public site on merge.
+- **GitHub App** (installed on this repo only, not tied to one person's account). An org owner installs it when `/api/site` is built.
+- **Logos and photos** are committed with the pull request when small (sponsor logos, merch photos, robot renders). Large galleries stay in Wix Media / Google Drive (#8).
 
-Decisions are recorded in [MIGRATION-PLAN.md](MIGRATION-PLAN.md) once made.
+Nothing is left open for the first batch. These are recorded in [MIGRATION-PLAN.md](MIGRATION-PLAN.md).
