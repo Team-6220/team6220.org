@@ -1,5 +1,6 @@
 // The team apps listed on the Resources page and in the Resources menu.
-// To add an app, add one entry here. The apps themselves live in apps/<name> and src/pages/apps/.
+// TODO: once PR #83 is merged, import the list from apps/dashboard/src/apps.ts (`@team6220/dashboard/apps`)
+// and delete this copy, so there is one list of apps.
 
 export interface TeamApp {
   name: string;

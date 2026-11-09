@@ -56,5 +56,5 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | Media | `/resources/media` (one album: `/resources/media#<album>`) |
 | Apps dashboard (Log In) | `/apps`, apps at `/apps/<name>` |
 
-Pages are built as `about.html`, `about/history.html`, ... (`build.format: "file"` in `astro.config.mjs`) so
-GitHub Pages serves `/about` directly, without redirecting to `/about/`.
+Links use addresses without a trailing slash (`/about`). Pages are built in Astro's default folder format
+(`about/index.html`), so on GitHub Pages (dev.team6220.org) `/about` redirects once to `/about/`; both work.
