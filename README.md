@@ -49,7 +49,7 @@ It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/.
 
 - Every change goes through a pull request with one review; `main` deploys automatically.
 - This repo is public. **Never commit** API keys, passcodes or `.env` files, and never commit photos of
-  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)). Photos live in Google Drive or Wix media.
+  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)). Photos currently live in `sites/main/media/team` (see [docs/PHOTOS.md](docs/PHOTOS.md)).
 - Apps never import the Wix SDK; they call `@team6220/data`.
 
 ## Version notes

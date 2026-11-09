@@ -5,9 +5,9 @@
 import MainLayout from "../../sites/main/MainLayout.astro";
 import rawHome from "../../sites/main/content/home.html?raw";
 
-// Photos of students are not stored in this repo. They are served from PUBLIC_MEDIA_BASE
-// (a Wix media or other host URL, no trailing slash). See docs/PHOTOS.md.
-const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE ?? "/photos").replace(/\/$/, "");
+// Team photos live in sites/main/media/team and are served from PUBLIC_MEDIA_BASE
+// (default: the copies in sites/main/media/team; set it to move photos to another host). See docs/PHOTOS.md.
+const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE ?? "/assets/main").replace(/\/$/, "");
 const homeHtml = rawHome.replaceAll("%MEDIA%", mediaBase);
 ---
 

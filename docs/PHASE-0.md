@@ -6,7 +6,7 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 ## Done in the repo
 
 - [x] Monorepo: pnpm workspaces, Astro 7 site at the root, `apps/*` and `packages/*` (`ui`, `data`)
-- [x] Homepage ported from the approved preview (markup, CSS, scripts and assets split into files; student photos are served from `PUBLIC_MEDIA_BASE`, not git)
+- [x] Homepage ported from the approved preview (markup, CSS, scripts and assets split into files; team photos are in `sites/main/media/team`)
 - [x] `ci.yml`: install, typecheck, tests, build on every pull request (job name `ci`)
 - [x] `pages.yml`: deploys `dist/` to GitHub Pages on every push to `main`
 - [x] `public/CNAME` set to `dev.team6220.org`

@@ -14,4 +14,4 @@ Pages themselves are in `src/pages/` because Astro requires it (and Wix hosting 
 repo root). Each page file should stay thin and pull its content from here.
 
 Shared brand media (logos, fonts) is not here: it is in [`packages/assets`](../../packages/assets/README.md).
-Student photos are not in git at all ([docs/PHOTOS.md](../../docs/PHOTOS.md)).
+Team photos are in `media/team/` ([docs/PHOTOS.md](../../docs/PHOTOS.md)).
