@@ -2,10 +2,14 @@
 // To add an area, see docs/SITE-MANAGER.md ("Add a new editable area").
 import { z } from "zod";
 import summerCampJson from "../../../sites/main/content/summer-camp.json" with { type: "json" };
+import sponsorsJson from "../../../sites/main/content/sponsors.json" with { type: "json" };
 import { summerCamp } from "./summer-camp.ts";
+import { sponsorImages, sponsors } from "./sponsors.ts";
 
 export { diffContent, describeChange, clip, type Change } from "./diff.ts";
 export { renderInline, isSafeHref, isExternalHref, escapeText } from "./inline.ts";
+export { IMAGE_RULES, isImageFile, mediaUrl } from "./image.ts";
+export { sponsors, sponsor, renderSponsorWall, renderSponsorMarquee, TIERS, type Sponsors, type Sponsor } from "./sponsors.ts";
 export { summerCamp, renderBlock, renderBlocks, type SummerCamp, type Block } from "./summer-camp.ts";
 
 export interface AreaDef {
@@ -17,6 +21,8 @@ export interface AreaDef {
   schema: z.ZodType;
   /** The file as it is in this checkout (bundled for the editor's mock mode). */
   initial: unknown;
+  /** Image paths (relative to sites/main/media/) the content points to; CI checks each file exists. */
+  images?: (value: any) => string[];
 }
 
 function area(def: AreaDef): AreaDef {
@@ -31,6 +37,14 @@ export const AREAS = {
     path: "sites/main/content/summer-camp.json",
     schema: summerCamp,
     initial: summerCampJson,
+  }),
+  sponsors: area({
+    id: "sponsors",
+    label: "Sponsors",
+    path: "sites/main/content/sponsors.json",
+    schema: sponsors,
+    initial: sponsorsJson,
+    images: sponsorImages,
   }),
 } as const satisfies Record<string, AreaDef>;
 

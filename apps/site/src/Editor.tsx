@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { AREAS, clip, diffContent, jsonSchemaOf, parseContent, type AreaId } from "@team6220/content";
+import { AREAS, clip, diffContent, IMAGE_RULES, jsonSchemaOf, parseContent, type AreaId } from "@team6220/content";
 import { site } from "@team6220/data";
-import Field from "./Field";
+import Field, { ImagesContext } from "./Field";
+import type { PreparedImage } from "./images";
 import { setAt, type Path, type Schema } from "./schema";
 
 type Load = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; original: unknown; source: "main" | "bundled" };
@@ -18,8 +19,10 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [draft, setDraft] = useState<unknown>(undefined);
   const [sent, setSent] = useState<Sent>({ kind: "idle" });
+  const [pending, setPending] = useState<Record<string, PreparedImage>>({});
 
   const fetchArea = () => {
+    setPending({});
     setLoad({ kind: "loading" });
     setSent({ kind: "idle" });
     site
@@ -42,6 +45,13 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
     () => (load.kind === "ready" && check?.ok ? diffContent(load.original, check.value) : []),
     [load, check],
   );
+  // Only images the content still points to are sent (a replaced upload is dropped).
+  const uploads = useMemo(() => {
+    if (!check?.ok) return [];
+    const used = new Set(area.images?.(check.value) ?? []);
+    return Object.values(pending).filter((p) => used.has(p.path));
+  }, [check, pending, area]);
+  const tooMany = uploads.length > IMAGE_RULES.maxPerChange;
 
   if (load.kind === "loading") return <p className="site__muted" role="status">Loading {area.label.toLowerCase()}…</p>;
   if (load.kind === "error") {
@@ -63,7 +73,11 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
     if (!check?.ok) return;
     setSent({ kind: "sending" });
     try {
-      const result = await site.submit(areaId, check.value);
+      const result = await site.submit(
+        areaId,
+        check.value,
+        uploads.map((u) => ({ path: IMAGE_RULES.dir + u.path, base64: u.base64 })),
+      );
       setSent({ kind: "done", result, real });
     } catch (err) {
       const issues = (err as { issues?: { path: string; message: string }[] }).issues;
@@ -91,7 +105,9 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
         }}
         noValidate
       >
-        <Field schema={schema} value={draft} path={[]} errors={errors} onChange={onChange} />
+        <ImagesContext.Provider value={{ files: pending, add: (img) => setPending((p) => ({ ...p, [img.path]: img })) }}>
+          <Field schema={schema} value={draft} path={[]} errors={errors} onChange={onChange} />
+        </ImagesContext.Provider>
 
         <section className="site__panel" aria-labelledby="site-changes">
           <h2 id="site-changes">What will change</h2>
@@ -129,8 +145,14 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
               ))}
             </ul>
           )}
+          {uploads.length > 0 && (
+            <p className="site__hint">
+              New images committed with this change: {uploads.map((u) => u.path).join(", ")} ({uploads.length} of {IMAGE_RULES.maxPerChange} allowed).
+            </p>
+          )}
+          {tooMany && <p className="site__error" role="alert">Too many new images: at most {IMAGE_RULES.maxPerChange} per change. Submit in smaller steps.</p>}
           <p className="site__actions">
-            <button type="submit" className="t-button" disabled={!valid || changes.length === 0 || sent.kind === "sending"}>
+            <button type="submit" className="t-button" disabled={!valid || changes.length === 0 || sent.kind === "sending" || tooMany}>
               {sent.kind === "sending" ? "Submitting…" : real ? "Submit for review (opens a pull request)" : "Submit (demo)"}
             </button>
             <button type="button" className="t-button t-button--quiet" onClick={() => setDraft(load.original)} disabled={changes.length === 0 && valid}>

@@ -33,6 +33,9 @@ for (const file of files) {
     for (const issue of parsed.issues) problems.push(`${file}: ${issue.path || "(file)"}: ${issue.message}`);
     continue;
   }
+  for (const img of AREAS[id].images?.(parsed.value) ?? []) {
+    if (!existsSync(join(root, "sites/main/media", img))) problems.push(`${file}: image "${img}" is not in sites/main/media/.`);
+  }
   const canonical = toFileText(parsed.value);
   if (canonical !== text) {
     if (write) writeFileSync(join(dir, file), canonical);

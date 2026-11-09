@@ -3,6 +3,8 @@
 import {
   AREAS,
   describeChange,
+  IMAGE_RULES,
+  isImageFile,
   diffContent,
   parseContent,
   toFileText,
@@ -18,10 +20,9 @@ import {
   type SiteStore,
 } from "./types";
 
-export const IMAGE_DIR = "sites/main/media/";
-const IMAGE_PATH = /^sites\/main\/media\/[A-Za-z0-9][A-Za-z0-9._/-]*\.(png|jpe?g|webp|gif|avif)$/i;
-export const MAX_IMAGE_BYTES = 2_000_000;
-export const MAX_IMAGES = 10;
+export const IMAGE_DIR = IMAGE_RULES.dir;
+export const MAX_IMAGE_BYTES = IMAGE_RULES.maxBytes;
+export const MAX_IMAGES = IMAGE_RULES.maxPerChange;
 
 /** `site-manager/<area>-<yyyymmdd>-<who>` (UTC date). */
 export function branchName(area: string, now: Date, who: string): string {
@@ -66,7 +67,7 @@ export function validateImages(images: ImageUpload[] | undefined): ImageUpload[]
   const list = images ?? [];
   if (list.length > MAX_IMAGES) throw new SiteError("invalid-image", `At most ${MAX_IMAGES} images per change.`);
   for (const img of list) {
-    if (!IMAGE_PATH.test(img.path) || img.path.includes("..") || img.path.includes("//")) {
+    if (!img.path.startsWith(IMAGE_DIR) || !isImageFile(img.path.slice(IMAGE_DIR.length))) {
       throw new SiteError("invalid-image", `Images must be png, jpg, webp, gif or avif files under ${IMAGE_DIR}. Got "${img.path}".`);
     }
     if (typeof img.base64 !== "string" || !/^[A-Za-z0-9+/]+={0,2}$/.test(img.base64) || img.base64.length % 4 !== 0) {

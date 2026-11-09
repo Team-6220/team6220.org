@@ -4,14 +4,14 @@ A Web Admin app at `/apps/site` where webmasters change the website's regular co
 It started as an idea at the end of issue #69 ("Maybe a new app dedicated to site management"). The more
 the backend grows, the more the team needs it, so it now has its own plan.
 
-**Status (Nov 2026):** foundations and the **Summer camp** editor are built (#110, #111). Today the app runs in
+**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** editor (#112) and the image uploader are built. Today the app runs in
 **demo mode**: it validates, shows what would change and says "demo: no pull request is opened". It starts opening real
 pull requests once the Phase 2 server (`output: "server"`) and the GitHub App exist (see "Turn on real pull requests").
-Sponsors, Merch and Resources are next (#112 to #114): each is one more area (see "Add a new editable area").
+Merch and Resources follow (#113, #114): each is one more area (see "Add a new editable area").
 
 | Piece | Where | Real or mocked today |
 | --- | --- | --- |
-| Content files | `sites/main/content/*.json` (only `summer-camp.json` so far) | Real. Public pages read them at build time |
+| Content files | `sites/main/content/*.json` (`summer-camp.json`, `sponsors.json`) | Real. Public pages read them at build time |
 | Schemas, diff, rendering | `packages/content` (Zod; `pnpm content:check` in CI) | Real |
 | Branch, commit, pull request logic | `packages/data/src/site/` (`proposeChange`, `GithubSiteStore`) | Real code, tested with a fake GitHub; never run against github.com yet |
 | `/api/site` | `src/server/site-route.ts`, handler `handleSiteRequest` in `packages/data` | Real code and tests; the route is only added when Astro runs with `output: "server"` |
@@ -29,6 +29,19 @@ Sponsors, Merch and Resources are next (#112 to #114): each is one more area (se
    is treated as formatting, and HTML is never allowed.
 
 Developers can try the editor without signing in at `/apps/site?demo=admin` (demo mode: nothing real is touched).
+
+### Editing sponsors
+
+Pick **Sponsors**. Each entry is one sponsor; **Up** and **Down** set the order, which is the order of the logos on the
+Sponsors page and in the scrolling strip on the home page (all three places read the same list).
+
+- **Name** is also the logo's alt text. **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images
+  per change); leave it empty to show the name as plain text, as the Gene Haas Foundation does today.
+- **Link** is optional; when set, the logo on the Sponsors page links there (the home strip never links).
+- **Tier** and **Season** are stored for the list but not shown yet.
+- **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
+  Leave it empty for a new sponsor; the default size applies.
+- The "Your company here" tile and the tier cards are page layout, not part of this list.
 
 ## Why
 
@@ -148,8 +161,11 @@ for free. Do this in one pull request per area (it is its own issue: #112 sponso
 6. **Images** (sponsor logos, merch photos): small ones go in `sites/main/media/` and travel with the pull request.
    `site.submit(area, value, images)` takes `{ path, base64 }` files; the server accepts only png, jpg, webp, gif and
    avif under `sites/main/media/`, at most 2 MB each and 10 per change (larger media stays in Wix Media / Drive).
-   The summer camp has no image fields, so the form has no uploader yet: add one to `Field.tsx` with the first area
-   that needs it.
+   Mark an image field with `imageField(...)` from `packages/content/src/image.ts` (a path relative to
+   `sites/main/media/`, served at `/assets/main/<path>`); the form then shows a file picker (`Field.tsx`) that checks the
+   same limits (`IMAGE_RULES`), previews the file, names it after a hash of its content and sends it with
+   `site.submit(area, value, images)` when you Submit. Register the area's `images` function so `pnpm content:check`
+   fails when a file points to an image that isn't in `sites/main/media/`.
 7. **Tests:** add the area to `packages/content/test` (valid, invalid, rendering) and run `pnpm content:check`,
    `pnpm -r --if-present test`, `pnpm check` and `pnpm build`.
 

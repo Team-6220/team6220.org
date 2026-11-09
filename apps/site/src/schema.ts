@@ -7,7 +7,8 @@ export interface Schema {
   title?: string;
   description?: string;
   /** Our own hint from `.meta({ ui: "textarea" })` */
-  ui?: "textarea";
+  ui?: "textarea" | "image";
+  enum?: string[];
   properties?: Record<string, Schema>;
   required?: string[];
   items?: Schema;

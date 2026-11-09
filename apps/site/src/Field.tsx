@@ -1,5 +1,14 @@
-import { useId } from "react";
+import { createContext, useContext, useId, useState } from "react";
+import { mediaUrl } from "@team6220/content";
+import { prepareImage, type PreparedImage } from "./images";
 import { defaultFor, labelFor, move, pathKey, variants, variantTag, type Path, type Schema } from "./schema";
+
+/** Images chosen in this editing session, by the path the content file will use. The Editor commits the ones still in use. */
+export interface PendingImages {
+  files: Record<string, PreparedImage>;
+  add: (image: PreparedImage) => void;
+}
+export const ImagesContext = createContext<PendingImages>({ files: {}, add: () => {} });
 
 export interface FieldProps {
   schema: Schema;
@@ -22,6 +31,8 @@ export default function Field(props: FieldProps) {
     case "boolean":
       return <BooleanField {...props} label={labelFor(schema, key)} />;
     case "string":
+      if (schema.ui === "image") return <ImageField {...props} label={labelFor(schema, key)} />;
+      if (schema.enum) return <SelectField {...props} label={labelFor(schema, key)} />;
       return <TextField {...props} label={labelFor(schema, key)} />;
     case "array":
       return <ListField {...props} label={labelFor(schema, key)} />;
@@ -79,6 +90,76 @@ function TextField({ schema, value, path, errors, onChange, label }: FieldProps 
         <input id={id} type="text" value={text} maxLength={schema.maxLength} aria-invalid={bad} onChange={(e) => onChange(path, e.target.value)} />
       )}
       {schema.description && <p className="site__hint">{schema.description}</p>}
+      <Errors errors={errors} path={path} />
+    </div>
+  );
+}
+
+function SelectField({ schema, value, path, errors, onChange, label }: FieldProps & { label: string }) {
+  const id = useId();
+  return (
+    <div className="site__field">
+      <label htmlFor={id}>
+        <b>{label}</b>
+      </label>
+      <select id={id} value={typeof value === "string" ? value : ""} onChange={(e) => onChange(path, e.target.value)}>
+        {schema.enum!.map((o) => (
+          <option key={o} value={o}>
+            {o === "" ? "(none)" : o}
+          </option>
+        ))}
+      </select>
+      {schema.description && <p className="site__hint">{schema.description}</p>}
+      <Errors errors={errors} path={path} />
+    </div>
+  );
+}
+
+/** Pick an image file: checked against the upload limits, previewed, and committed with the pull request on Submit. */
+function ImageField({ schema, value, path, errors, onChange, label }: FieldProps & { label: string }) {
+  const id = useId();
+  const images = useContext(ImagesContext);
+  const [problem, setProblem] = useState<string | null>(null);
+  const current = typeof value === "string" ? value : "";
+  const pending = images.files[current];
+  const preview = pending ? pending.dataUrl : current ? mediaUrl(current) : "";
+
+  async function pick(file: File | undefined) {
+    if (!file) return;
+    setProblem(null);
+    try {
+      const prepared = await prepareImage(file);
+      images.add(prepared);
+      onChange(path, prepared.path);
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : "Couldn't read that file.");
+    }
+  }
+
+  return (
+    <div className="site__field site__image">
+      <label htmlFor={id}>
+        <b>{label}</b>
+      </label>
+      {preview && <img className="site__preview" src={preview} alt={`Preview of ${label.toLowerCase()}`} style={{ maxHeight: 80, maxWidth: 240, display: "block", margin: "6px 0" }} />}
+      {current && (
+        <p className="site__hint">
+          <code>{current}</code>
+          {pending ? " (new, uploaded when you submit)" : ""}
+        </p>
+      )}
+      <input id={id} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
+      {current && (
+        <button type="button" className="t-button t-button--quiet" onClick={() => onChange(path, "")}>
+          Remove image
+        </button>
+      )}
+      {schema.description && <p className="site__hint">{schema.description}</p>}
+      {problem && (
+        <p className="site__error" role="alert">
+          {problem}
+        </p>
+      )}
       <Errors errors={errors} path={path} />
     </div>
   );
