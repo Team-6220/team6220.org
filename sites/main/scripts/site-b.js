@@ -306,8 +306,10 @@
       e.preventDefault();closeMenu();if(document.activeElement&&nav.contains(document.activeElement))document.activeElement.blur();
       window.scrollTo({top:0,behavior:motionOK?'smooth':'auto'});return}  /* this page's tab: back to the top */
     if(/^\/(apps|assets|gal)(\/|$)/.test(u.pathname))return;   /* apps have their own pages */
-    if(!motionOK||!window.G6220Loader||!G6220Loader.go||root.classList.contains('intro-on'))return;
-    e.preventDefault();closeMenu();G6220Loader.go(u.href);
+    if(!motionOK||!window.G6220Loader||!G6220Loader.go||!window.G6220PageNav||root.classList.contains('intro-on'))return;
+    /* The loader only appears if the next page is not ready within LOADER_DELAY_MS (packages/assets/scripts/page-nav.js). */
+    e.preventDefault();closeMenu();
+    G6220PageNav.go(u.href,function(){if(G6220Loader.busy)location.href=u.href;else G6220Loader.go(u.href)});
   });
 
 

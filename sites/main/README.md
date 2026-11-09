@@ -31,3 +31,27 @@ Old addresses and their new pages are listed in [docs/REDIRECTS.md](../../docs/R
 
 Shared brand media (logos, fonts) is not here: it is in [`packages/assets`](../../packages/assets/README.md).
 Team photos are in `media/team/` ([docs/PHOTOS.md](../../docs/PHOTOS.md)).
+
+## Page-change loader: when it appears
+
+The loader (logo spin, wipe, logo flying into the header) only appears when the next page is **not ready quickly**.
+On a same-site link click the site fetches the target page and waits up to a short delay:
+
+- page arrives within the delay (or the fetch fails, for example a 404 or no network): plain navigation, no loader;
+- delay passes first: the loader plays as before and the navigation finishes under it.
+
+Hovering, focusing or touching a link starts that fetch early, so most clicks are instant. Reduced motion, new-tab and
+modified clicks, `#` links, downloads, external links and back/forward behave as normal browser navigation.
+
+**The one setting:** `LOADER_DELAY_MS` at the top of [`packages/assets/scripts/page-nav.js`](../../packages/assets/scripts/page-nav.js)
+(default `200` ms; bigger = the loader shows less often, `0` = on every click as before). The file is published at
+`/assets/shared/scripts/page-nav.js` and loaded by `MainLayout.astro` and `src/layouts/AppLayout.astro`. It only uses
+`fetch`, so it works the same on static hosting and on Wix server rendering. Its decision logic is tested in
+`packages/ui/test/page-nav.test.ts`.
+
+Apps: the apps' layout loads the same script (hover prefetch with the same delay), but `/apps/*` pages have no loader
+markup or header logo for the animation to land on, so no loader plays there yet; links from the main site into `/apps`
+are plain navigations, as before. **Inventory** keeps its own boot screens ("Loading inventory…" while the sign-in is
+checked, and again while `apiGetAll` loads the data) and is not wired to the shared loader. GoldSim and WingIt are
+standalone static pages and are not either. Giving the apps the animation needs a decision on where the logo lands
+without a header (design), and for Inventory a "ready" signal tied to the first data load.
