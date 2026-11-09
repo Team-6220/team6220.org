@@ -1,0 +1,15 @@
+---
+// /apps/inventory: the Inventory app (apps/inventory). It runs only in the browser (client:only),
+// because it needs the signed-in member's session. Signed-out visitors are sent to /apps.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import InventoryApp from "../../../../apps/inventory/src/InventoryApp.tsx";
+import "../../../../apps/inventory/src/styles.css";
+---
+
+<BaseLayout title="Inventory | Los Al Robotics" description="Team inventory: parts, tools, audits and the packing list. For team members.">
+  <Fragment slot="head">
+    <meta name="robots" content="noindex" />
+  </Fragment>
+  <InventoryApp client:only="react" />
+  <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>
+</BaseLayout>
