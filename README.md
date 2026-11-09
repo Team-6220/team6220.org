@@ -7,8 +7,8 @@ editor to a coded site that uses Wix as the backend (Wix-managed headless). The 
 
 | Phase | Where it runs | Status |
 | --- | --- | --- |
-| 0. Setup | | Repo is scaffolded; settings checklist in [docs/PHASE-0.md](docs/PHASE-0.md) |
-| 1. Prototype | GitHub Pages at `dev.team6220.org` | Homepage ported; `/apps` login + dashboard; other pages and apps next |
+| 0. Setup | | **Done** ([docs/PHASE-0.md](docs/PHASE-0.md), [Wix CLI test](docs/WIX-CLI-SPIKE.md)) |
+| 1. Prototype | GitHub Pages at `dev.team6220.org` | In progress: homepage, `/apps` login + dashboard, GoldSim and WingIt live; other apps and pages next; styling waits for branding guidelines |
 | 2. Migration preview | Wix hosting, hidden preview | Not started |
 | 3. Switch over | `team6220.org` | Before kickoff (early January 2027) |
 
@@ -24,7 +24,7 @@ Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
 pnpm install
 pnpm dev        # http://localhost:4321
 pnpm check      # typecheck
-pnpm build      # outputs dist/
+pnpm build      # outputs dist/ (also builds GoldSim and WingIt into dist/apps/, see apps/README.md)
 ```
 
 ## Layout
@@ -37,7 +37,7 @@ apps/<name>/        One folder per team app, with its own media/ (see apps/READM
 packages/assets/    Shared logos, fonts and favicon that anyone may use
 packages/ui         Shared brand styles and components
 packages/data       The only code that talks to Wix / Apps Script
-integrations/       Build helpers (sync-media copies media to where the browser finds it)
+integrations/       Build helpers (sync-media copies media to where the browser finds it; build-apps builds the imported apps)
 docs/               Migration plan, Phase 0 checklist, photo policy
 .github/            CI, Pages deploy, CODEOWNERS, Dependabot
 ```
