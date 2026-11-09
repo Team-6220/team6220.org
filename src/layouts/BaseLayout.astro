@@ -1,7 +1,6 @@
 ---
 // Shared page shell for the main site and every app: charset, viewport, favicon.
 // Each site or app wraps this in its own layout (see sites/main/MainLayout.astro).
-import { LOGIN_CALLBACK_PATH, LOGIN_REDIRECT_PATH } from "../../packages/data/src/config";
 
 interface Props {
   title: string;
@@ -9,13 +8,6 @@ interface Props {
 }
 const { title, description } = Astro.props;
 
-// While Wix only allows the bare origin as a login redirect URI, Wix returns members to
-// "/#code=...&state=...". Forward that to the login callback page before anything renders.
-// Disappears by itself once LOGIN_REDIRECT_PATH points at the callback (see packages/data/src/config.ts).
-const loginForwarder =
-  LOGIN_REDIRECT_PATH === ""
-    ? `if(location.pathname==="/"&&/[#&]state=/.test(location.hash)&&/[#&](code|error)=/.test(location.hash))location.replace(${JSON.stringify(LOGIN_CALLBACK_PATH)}+location.hash);`
-    : "";
 ---
 
 <!doctype html>
@@ -23,7 +15,6 @@ const loginForwarder =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    {loginForwarder && <script is:inline set:html={loginForwarder} />}
     <title>{title}</title>
     <meta name="description" content={description} />
     <!-- Favicons come from packages/assets/favicon/ (copied to the site root at build time). -->

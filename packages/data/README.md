@@ -31,11 +31,9 @@ in [`src/config.ts`](src/config.ts) (not a secret):
    filtered by the member ID plus `badgesV2.queryBadges()` for the titles.
 
 **Redirect URI.** Wix only accepts redirect URIs that exactly match an *Allowed authorization redirect URI* on the
-headless client. Today only `https://dev.team6220.org` and `http://localhost:4321` are listed, so
-`LOGIN_REDIRECT_PATH` is `""` (the site root) and a one-line script in `src/layouts/BaseLayout.astro` forwards
-`/#code=…&state=…` to `/apps/login/callback`. When a Web Admin adds `https://dev.team6220.org/apps/login/callback`
-and `http://localhost:4321/apps/login/callback` in **Wix → Settings → Headless Settings → (client) → Settings**,
-set `LOGIN_REDIRECT_PATH = LOGIN_CALLBACK_PATH`; the forwarding script then disappears by itself.
+headless client (**Wix → Settings → Headless Settings → (client) → Settings**). Allowed today:
+`https://dev.team6220.org/apps/login/callback` and `http://localhost:4321/apps/login/callback`, plus the bare origins.
+A new origin (for example a Wix preview URL) must be added there before login works on it.
 
 **Limits in Phase 1**
 
@@ -53,7 +51,7 @@ Only the bodies of the functions in `src/auth.ts` change; their names and return
 - `login(returnTo)` → navigate to `/api/auth/login?returnToUrl=<returnTo>` (built into the integration).
 - `logout(returnTo)` → `POST /api/auth/logout?returnToUrl=<returnTo>`.
 - `getMember()` / `getBadges()` → the SDK with the integration's cookie session, or our own `/api/me` endpoint.
-- `/apps/login/callback`, `src/wix.ts`, the `localStorage` tokens and the BaseLayout forwarder are deleted.
+- `/apps/login/callback`, `src/wix.ts` and the `localStorage` tokens are deleted.
 - Badge checks that matter move into `/api/<name>` endpoints, which refuse requests from members without the badge.
 
 Docs: [Add a Wix Login Page (JS SDK)](https://dev.wix.com/docs/go-headless/authentication/members/wix-login-page/add-a-wix-login-page-js-sdk),
