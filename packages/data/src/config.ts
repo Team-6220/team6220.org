@@ -31,6 +31,6 @@ export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
 // The "attendance API" Apps Script web app (backend/apps-script/attendance-api). Its /exec URL is NOT a secret:
 // every request is checked there with the member's Wix token. Paste the URL from Deploy > Manage deployments
 // between the quotes below, or set PUBLIC_ATTENDANCE_API_URL when building. Empty = attendance not connected yet.
-const ATTENDANCE_API_URL_DEFAULT = "";
+const ATTENDANCE_API_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxvHanf8i2Qx425LnwR1rVa8f01h-1ChHSoe424lQEvRgveyZNybhIgzG191WxWCrK6Fw/exec";
 export const ATTENDANCE_API_URL: string =
   (import.meta.env?.PUBLIC_ATTENDANCE_API_URL as string | undefined) || ATTENDANCE_API_URL_DEFAULT;
