@@ -1,0 +1,716 @@
+<script>
+/* ============================================================================
+   JsPacking.html — Golden Griffins Inventory
+   The competition Packing List.
+     Packing      — everyone ticks things off; packed items turn grey with a
+                    strikethrough and sink to the end of their group. A
+                    finished group sinks to the end of the group it's in, all
+                    the way up to the end of the list.
+     Final check  — one person (by name) re-checks everything; verified items
+                    fold away out of sight. Leaving the page pauses it; it can
+                    be resumed by them or anyone else.
+     Edit list    — add, rename, reorder, nest, photo, link to inventory.
+   Sections: Always pack · <season> · U-Haul Checklist.
+   ========================================================================== */
+'use strict';
+
+const PACK_SECTIONS = [
+  { id: 'always', label: 'Always pack' },
+  { id: 'season', label: 'Season' },
+  { id: 'loadout', label: 'U-Haul Checklist' }
+];
+
+/** The tree, rebuilt whenever the list changes. */
+function packingTree() {
+  const rows = App.tables.packingItems || [];
+  const kids = {};
+  rows.forEach(function (r) { (kids[r.parentId || ''] = kids[r.parentId || ''] || []).push(r); });
+  Object.keys(kids).forEach(function (k) { kids[k].sort(function (a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); }); });
+  const leafCache = {};
+  const leaves = function (id) {
+    if (leafCache[id]) return leafCache[id];
+    const c = kids[id] || [];
+    const out = c.length ? [].concat.apply([], c.map(function (x) { return leaves(x.id); })) : [App.get('packingItems', id)].filter(Boolean);
+    leafCache[id] = out;
+    return out;
+  };
+  return {
+    /** Children in display order: single items first, then groups (each kept in its saved order). */
+    kids: function (id, section) {
+      const list = (kids[id || ''] || []).filter(function (r) { return id || r.section === section; });
+      const isG = function (r) { return Boolean((kids[r.id] || []).length); };
+      return list.filter(function (r) { return !isG(r); }).concat(list.filter(isG));
+    },
+    isGroup: function (id) { return Boolean((kids[id] || []).length); },
+    leaves: leaves,
+    sectionLeaves: function (section) {
+      return rows.filter(function (r) { return r.section === section && !(kids[r.id] || []).length; });
+    },
+    path: function (rec) {
+      const out = [];
+      let p = rec.parentId, guard = 0;
+      while (p && guard++ < 10) { const x = App.get('packingItems', p); if (!x) break; out.unshift(x.name); p = x.parentId; }
+      return out;
+    },
+    descendants: function (id) {
+      const out = [];
+      const walk = function (pid) { (kids[pid] || []).forEach(function (r) { out.push(r); walk(r.id); }); };
+      walk(id);
+      return out;
+    },
+    depth: function (rec) { let d = 1, p = rec.parentId; while (p) { d++; const x = App.get('packingItems', p); p = x ? x.parentId : ''; } return d; }
+  };
+}
+
+const PackingView = {
+  title: 'Packing List',
+  mode: 'pack',            // 'pack' | 'check' | 'edit'
+  section: 'always',
+  q: '',
+  open: {},                // group id → true when its "done" items are shown
+  collapsed: store.get('packCollapsed', {}),
+  token: null,             // final-check token, only while this browser holds the check
+  refs: null,
+  dirty: false,
+
+  field: function () { return this.mode === 'check' ? 'verified' : 'packed'; },
+  holding: function () {
+    const fc = (App.packingMeta || {}).finalCheck || {};
+    return Boolean(this.token) && fc.state === 'active';
+  },
+
+  render: function (main) {
+    const self = this, r = this.refs = {};
+    App.fastPoll = true;
+    r.sub = el('div', { class: 'page-sub' });
+    r.actions = el('div', { class: 'page-actions' });
+    r.modes = el('div', { class: 'seg mode-seg', role: 'tablist', 'aria-label': 'Mode' });
+    r.banner = el('div');
+    r.progress = el('div', { class: 'audit-progress' });
+    r.tabs = el('div', { class: 'tabs' });
+    r.search = el('input', { type: 'search', placeholder: 'Find something on the list…', 'aria-label': 'Search the packing list', value: this.q, autocomplete: 'off' });
+    r.search.addEventListener('input', debounce(function () { self.q = r.search.value; self.draw(); }, 90));
+    r.list = el('div', { class: 'pack-list' });
+    r.notes = el('aside', { class: 'pack-notes' });
+    main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' }, el('div', null, el('h1', { class: 'page-title', text: 'Packing List' }), r.sub), r.actions),
+      r.modes, r.banner, r.progress, r.tabs,
+      el('div', { class: 'search' }, icon('search'), r.search),
+      el('div', { class: 'pack-grid' }, r.list, r.notes)));
+    this.draw();
+  },
+
+  leave: function () {
+    App.fastPoll = false;
+    this.refs = null;
+  },
+
+  /** Leaving the page while holding the final check pauses it. */
+  canLeave: function () {
+    const self = this;
+    if (!this.holding()) return true;
+    return App.confirm({ title: 'Pause the final check?', message: 'You’re doing the final check. Leaving this page pauses it — your progress is kept and you or someone else can resume it.',
+      confirmLabel: 'Pause and leave', cancelLabel: 'Stay' }).then(function (yes) {
+      if (yes) self.pause();
+      return yes;
+    });
+  },
+
+  onData: function () {
+    if (!this.refs) return;
+    // Lost the claim (someone resumed it after we were away)?
+    const fc = (App.packingMeta || {}).finalCheck || {};
+    if (this.token && fc.state !== 'active') this.dropToken();
+    if (this.typing()) { this.dirty = true; return; }
+    this.draw();
+  },
+
+  typing: function () {
+    const a = document.activeElement;
+    return a && this.refs && this.refs.list.contains(a) && a.tagName === 'INPUT' && a.value;
+  },
+
+  draw: function () {
+    const r = this.refs;
+    if (!r) return;
+    this.dirty = false;
+    const tree = packingTree();
+    const meta = App.packingMeta || {};
+    this.drawHead(tree, meta);
+    this.drawModes();
+    this.drawBanner(tree, meta);
+    this.drawProgress(tree);
+    this.drawTabs(tree, meta);
+    const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.addKey : null;
+    clear(r.list);
+    r.search.parentNode.style.display = this.mode === 'check' && !this.holding() ? 'none' : '';
+    if (this.mode === 'check' && !this.holding()) this.drawCheckGate(tree, meta);
+    else if (this.q.trim()) this.drawSearch(tree);
+    else this.drawSection(tree, meta);
+    if (focusKey) { const again = r.list.querySelector('[data-add-key="' + focusKey + '"]'); if (again) again.focus(); }
+    this.drawNotes();
+  },
+
+  // ───── header, modes, banner, progress, tabs ─────
+
+  drawHead: function (tree, meta) {
+    const self = this, r = this.refs;
+    clear(r.sub).append(
+      el('b', { text: meta.event || 'No event set' }),
+      el('button', { class: 'link-btn', type: 'button', text: meta.event ? ' Rename' : ' Set event name', style: { marginLeft: '6px' },
+        onClick: function () { self.editInfo('event'); } }),
+      meta.roundStartedAt ? ' · round started ' + new Date(meta.roundStartedAt).toLocaleDateString() : '');
+    clear(r.actions).append(el('button', { class: 'btn', type: 'button', onClick: function () { self.newRound(); } }, icon('undo'), el('span', { class: 'label', text: 'Start new packing round' })));
+  },
+
+  drawModes: function () {
+    const self = this;
+    const fc = (App.packingMeta || {}).finalCheck || {};
+    const b = function (id, label, extra) {
+      return el('button', { type: 'button', role: 'tab', class: self.mode === id ? 'on' : '', 'aria-selected': String(self.mode === id),
+        onClick: function () {
+          if (self.mode === id) return;
+          if (self.holding() && id !== 'check') {
+            self.canLeave().then(function (ok) { if (ok) { self.mode = id; self.draw(); } });
+            return;
+          }
+          self.mode = id; self.draw();
+        } }, label, extra || null);
+    };
+    clear(this.refs.modes).append(
+      b('pack', 'Packing'),
+      b('check', 'Final check', fc.state === 'active' ? el('span', { class: 'live-dot' }) : (fc.state === 'complete' ? el('span', { class: 'done-dot' }) : null)),
+      b('edit', 'Edit list'));
+  },
+
+  drawBanner: function (tree, meta) {
+    const self = this, box = clear(this.refs.banner);
+    const fc = meta.finalCheck || {};
+    const leaves = (App.tables.packingItems || []).filter(function (r) { return !tree.isGroup(r.id); });
+    const v = leaves.filter(function (r) { return r.verified; }).length;
+    if (this.mode === 'check' && this.holding()) {
+      box.appendChild(el('div', { class: 'notice check-banner' },
+        el('div', null, el('b', { text: 'You’re doing the final check. ' }), 'Tick each item as you confirm it’s actually packed. Stay on this page — leaving pauses the check.'),
+        el('div', { class: 'banner-actions' },
+          el('button', { class: 'btn sm', type: 'button', text: 'Pause', onClick: function () { self.pause(); } }),
+          el('button', { class: 'btn sm primary', type: 'button', text: 'Complete final check', onClick: function () { self.complete(tree); } }))));
+    } else if (this.mode === 'pack' && fc.state === 'active') {
+      box.appendChild(el('div', { class: 'notice' }, el('b', { text: fc.by }), ' is doing the final check (' + v + ' of ' + leaves.length + ' verified).'));
+    } else if (this.mode === 'pack' && fc.state === 'complete') {
+      box.appendChild(el('div', { class: 'notice ok' }, 'Final check completed by ', el('b', { text: fc.by }), ' — ' + fc.verified + ' of ' + fc.total + ' verified (' + new Date(fc.completedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ').'));
+    } else if (this.mode === 'edit') {
+      box.appendChild(el('div', { class: 'notice' }, 'Editing the list for everyone. Type in an “Add…” box and press Enter to add quickly. Use ✏️ for notes, photos, links to inventory, or to move something into a group.'));
+    }
+  },
+
+  drawProgress: function (tree) {
+    const field = this.field();
+    const leaves = (App.tables.packingItems || []).filter(function (r) { return !tree.isGroup(r.id); });
+    const done = leaves.filter(function (r) { return r[field]; }).length;
+    const total = leaves.length;
+    clear(this.refs.progress);
+    if (this.mode === 'edit' || (this.mode === 'check' && !this.holding())) return;
+    this.refs.progress.append(
+      el('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(done) },
+        el('span', { class: 'seg ' + (field === 'verified' ? 'verified' : 'confirmed'), style: { width: total ? (done / total * 100) + '%' : '0%' } })),
+      el('div', { class: 'legend' }, el('span', null, el('b', { text: done + ' of ' + total }), field === 'verified' ? ' verified' : ' packed')));
+  },
+
+  drawTabs: function (tree, meta) {
+    const self = this, box = clear(this.refs.tabs);
+    const field = this.field();
+    if (this.mode === 'check' && !this.holding()) return;
+    PACK_SECTIONS.forEach(function (s) {
+      const leaves = tree.sectionLeaves(s.id);
+      const done = leaves.filter(function (r) { return r[field]; }).length;
+      const label = s.id === 'season' ? (meta.season || 'Season') : s.label;
+      box.appendChild(el('button', { class: self.section === s.id ? 'on' : '', type: 'button',
+        onClick: function () { self.section = s.id; self.draw(); } },
+        label, el('span', { class: 'tab-count', text: self.mode === 'edit' ? leaves.length : done + '/' + leaves.length })));
+    });
+  },
+
+  // ───── list rendering ─────
+
+  drawSection: function (tree, meta) {
+    const self = this, box = this.refs.list;
+    const tops = tree.kids('', this.section);
+    if (this.section === 'season') {
+      box.appendChild(el('div', { class: 'season-head' },
+        el('div', null, el('div', { class: 'item-name', text: meta.season || 'Season-specific items' }),
+          el('div', { class: 'meta-line', text: 'Things only needed this season, e.g. game-specific spares and supplies.' })),
+        this.mode === 'edit' ? el('div', { class: 'banner-actions' },
+          el('button', { class: 'btn sm', type: 'button', text: 'Rename season', onClick: function () { self.editInfo('season'); } }),
+          el('button', { class: 'btn sm danger', type: 'button', text: 'Clear for new season', onClick: function () { self.clearSeason(); } })) : null));
+    }
+    if (!tops.length) {
+      box.appendChild(el('div', { class: 'group-card' }, el('div', { class: 'list-empty', text: this.mode === 'edit' ? 'Nothing here yet. Add the first item below.' : 'Nothing here yet. Switch to “Edit list” to add items.' })));
+    }
+    const field = this.field();
+    // Groups get their own card; single items at the top level share a card.
+    const place = function (target, nodes) {
+      let loose = null;
+      nodes.forEach(function (n) {
+        if (tree.isGroup(n.id)) { loose = null; target.appendChild(self.nodeEl(tree, n, 1)); return; }
+        if (!loose) { loose = el('div', { class: 'group-card pgroup loose' }); target.appendChild(loose); }
+        loose.appendChild(self.nodeEl(tree, n, 1));
+      });
+    };
+    const isDone = function (n) { const l = tree.leaves(n.id); return l.length && l.every(function (x) { return x[field]; }); };
+    if (this.mode === 'edit') {
+      place(box, tops);
+    } else if (this.mode === 'pack') {
+      // Packing: finished entries stay visible (greyed out) but sink to the end.
+      place(box, tops.filter(function (n) { return !isDone(n); }).concat(tops.filter(isDone)));
+    } else {
+      // Final check: verified entries fold away at the bottom.
+      place(box, tops.filter(function (n) { return !isDone(n); }));
+      const finished = tops.filter(isDone);
+      if (finished.length) {
+        const fold = this.doneFold('top:' + this.section, [], tree, 1);
+        if (this.open['top:' + this.section]) place(fold, finished);
+        fold.querySelector('.done-toggle').lastChild.textContent = (field === 'verified' ? 'Verified' : 'Packed') + ' (' + finished.length + ')';
+        box.appendChild(fold);
+      }
+    }
+    if (this.mode === 'edit') box.appendChild(el('div', { class: 'group-card add-top' }, this.addInput('', this.section, 'Add an item or group to ' + (this.section === 'season' ? (meta.season || 'this season') : PACK_SECTIONS.filter(function (s) { return s.id === self.section; })[0].label.toLowerCase()) + '…')));
+  },
+
+  /** "✓ Packed (5)" fold that hides finished entries until opened. */
+  doneFold: function (key, nodes, tree, depth) {
+    const self = this;
+    const open = Boolean(this.open[key]);
+    const wrap = el('div', { class: 'done-fold' + (depth === 1 ? ' top' : '') });
+    wrap.appendChild(el('button', { class: 'done-toggle', type: 'button', 'aria-expanded': String(open), onClick: function () { self.open[key] = !open; self.draw(); } },
+      icon(open ? 'chevronDown' : 'chevronLeft'), (this.field() === 'verified' ? 'Verified' : 'Packed') + ' (' + nodes.length + ')'));
+    if (open) nodes.forEach(function (n) { wrap.appendChild(self.nodeEl(tree, n, depth)); });
+    return wrap;
+  },
+
+  nodeEl: function (tree, rec, depth) {
+    return tree.isGroup(rec.id) ? this.groupEl(tree, rec, depth) : this.leafEl(tree, rec, depth);
+  },
+
+  groupEl: function (tree, rec, depth) {
+    const self = this, field = this.field();
+    const leaves = tree.leaves(rec.id);
+    const done = leaves.filter(function (x) { return x[field]; }).length;
+    const all = leaves.length && done === leaves.length;
+    const collapsed = Boolean(this.collapsed[rec.id]) && this.mode !== 'edit';
+    const head = el('div', { class: 'pgroup-head' },
+      this.mode === 'edit' ? null : this.checkbox(all ? 'on' : (done ? 'partial' : ''), rec.name, function () { self.toggle(leaves.map(function (x) { return x.id; }), !all); }),
+      el('button', { class: 'pgroup-title', type: 'button', 'aria-expanded': String(!collapsed), onClick: function () {
+        self.collapsed[rec.id] = !collapsed; store.set('packCollapsed', self.collapsed); self.draw();
+      } }, el('span', { class: 'name', text: rec.name }), rec.note ? el('span', { class: 'pnote', text: rec.note }) : null),
+      this.mode === 'edit' ? null : el('span', { class: 'pcount num' + (all ? ' all' : ''), text: done + '/' + leaves.length }),
+      this.thumbFor(rec),
+      this.mode === 'edit' ? this.editTools(tree, rec) : null,
+      el('button', { class: 'icon-btn', type: 'button', 'aria-label': collapsed ? 'Expand ' + rec.name : 'Collapse ' + rec.name, onClick: function () {
+        self.collapsed[rec.id] = !collapsed; store.set('packCollapsed', self.collapsed); self.draw();
+      } }, icon(collapsed ? 'chevronLeft' : 'chevronDown')));
+    const card = el('div', { class: (depth === 1 ? 'group-card pgroup' : 'pgroup sub') + (all && this.mode !== 'edit' ? ' all-done' : '') + ' depth-' + depth }, head);
+    if (collapsed) return card;
+    const body = el('div', { class: 'pgroup-body' });
+    const children = tree.kids(rec.id);
+    if (this.mode === 'edit') {
+      children.forEach(function (c) { body.appendChild(self.nodeEl(tree, c, depth + 1)); });
+      if (depth < 4) body.appendChild(this.addInput(rec.id, rec.section, 'Add to ' + rec.name + '…'));
+    } else {
+      const isDone = function (n) { const l = tree.leaves(n.id); return l.length && l.every(function (x) { return x[field]; }); };
+      const todo = children.filter(function (c) { return !isDone(c); });
+      const fin = children.filter(isDone);
+      todo.forEach(function (c) { body.appendChild(self.nodeEl(tree, c, depth + 1)); });
+      if (this.mode === 'pack') fin.forEach(function (c) { body.appendChild(self.nodeEl(tree, c, depth + 1)); });   // greyed, at the end
+      else if (fin.length) body.appendChild(this.doneFold(rec.id, fin, tree, depth + 1));                         // final check: hidden
+    }
+    card.appendChild(body);
+    return card;
+  },
+
+  leafEl: function (tree, rec, depth) {
+    const self = this, field = this.field();
+    const on = Boolean(rec[field]);
+    const linked = rec.linkTable ? App.get(rec.linkTable, rec.linkId) : null;
+    const where = linked && !linked.archivedAt && linked.locationId ? App.locationLabel(linked.locationId) : '';
+    const row = el('div', { class: 'pleaf depth-' + depth + (on && this.mode !== 'edit' ? ' on' : '') },
+      this.mode === 'edit' ? null : this.checkbox(on ? 'on' : '', rec.name, function () { self.toggle([rec.id], !on); }),
+      el('div', { class: 'pleaf-text' },
+        el('div', { class: 'name', text: rec.name }),
+        rec.note ? el('div', { class: 'pnote', text: rec.note }) : null,
+        where ? el('div', { class: 'plink' }, icon('parts'), 'Kept in ' + where) : null,
+        this.mode === 'check' && !rec.packed ? el('div', { class: 'pwarn', text: 'Not marked packed' }) : null),
+      this.thumbFor(rec),
+      this.mode === 'edit' ? this.editTools(tree, rec) : null);
+    if (this.mode !== 'edit') {
+      row.addEventListener('click', function (e) { if (!e.target.closest('button, img')) self.toggle([rec.id], !on); });
+    }
+    return row;
+  },
+
+  checkbox: function (state, label, onClick) {
+    return el('button', { class: 'pcheck ' + state + (this.field() === 'verified' ? ' verify' : ''), type: 'button', role: 'checkbox',
+      'aria-checked': state === 'on' ? 'true' : (state === 'partial' ? 'mixed' : 'false'), 'aria-label': label,
+      onClick: function (e) { e.stopPropagation(); onClick(); } }, state === 'on' ? icon('check') : (state === 'partial' ? icon('minus') : null));
+  },
+
+  /** Own photo, or the linked inventory item's photo. Click to enlarge. */
+  thumbFor: function (rec) {
+    const linked = rec.linkTable ? App.get(rec.linkTable, rec.linkId) : null;
+    const fileId = rec.imageId || (linked && linked.imageId);
+    if (!fileId) return null;
+    const img = App.imgEl(fileId, 160);
+    img.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const m = App.modal({ title: rec.name, body: el('div', { class: 'lightbox' }, App.imgEl(fileId, 1200)) });
+      m.root.classList.add('wide');
+    });
+    return el('div', { class: 'thumb pthumb', title: 'View photo' }, img);
+  },
+
+  editTools: function (tree, rec) {
+    const self = this;
+    // Items move among items and groups among groups (items always come first).
+    const siblings = tree.kids(rec.parentId, rec.section)
+      .filter(function (x) { return tree.isGroup(x.id) === tree.isGroup(rec.id); }).map(function (x) { return x.id; });
+    const i = siblings.indexOf(rec.id);
+    return el('div', { class: 'edit-tools' },
+      el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Move up', disabled: i <= 0, onClick: function (e) { e.stopPropagation(); self.move(siblings, i, -1); } }, icon('arrowUp')),
+      el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Move down', disabled: i >= siblings.length - 1, onClick: function (e) { e.stopPropagation(); self.move(siblings, i, 1); } }, icon('arrowDown')),
+      el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Edit ' + rec.name, onClick: function (e) { e.stopPropagation(); self.openEditor(rec.id); } }, icon('edit')),
+      el('button', { class: 'icon-btn danger', type: 'button', 'aria-label': 'Delete ' + rec.name, onClick: function (e) { e.stopPropagation(); self.remove(tree, rec); } }, icon('trash')));
+  },
+
+  addInput: function (parentId, section, placeholder) {
+    const self = this;
+    const key = 'add-' + (parentId || section);
+    const input = el('input', { class: 'input', type: 'text', placeholder: placeholder, maxlength: 150, 'aria-label': placeholder, 'data-add-key': key });
+    const go = function () {
+      const name = input.value.trim();
+      if (!name) return;
+      input.value = '';
+      App.write('apiPackingCreate', [{ name: name, parentId: parentId, section: section }]).then(function (d) {
+        App.applyWrite('packingItems', d);
+        const again = self.refs && self.refs.list.querySelector('[data-add-key="' + key + '"]');
+        if (again) again.focus();
+      }, function (err) { input.value = name; App.toast(err.message, { type: 'error' }); });
+    };
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+    input.addEventListener('blur', function () { if (self.dirty) setTimeout(function () { if (!self.typing()) self.draw(); }, 50); });
+    return el('div', { class: 'padd' }, input, el('button', { class: 'btn sm', type: 'button', onClick: go }, icon('plus'), 'Add'));
+  },
+
+  drawSearch: function (tree) {
+    const self = this, box = this.refs.list;
+    const nq = Search.normalize(this.q);
+    const field = this.field();
+    const hits = (App.tables.packingItems || []).filter(function (r) {
+      return Search.normalize(r.name + ' ' + r.note + ' ' + tree.path(r).join(' ')).indexOf(nq) >= 0;
+    }).filter(function (r) { return !tree.isGroup(r.id) || Search.normalize(r.name).indexOf(nq) >= 0; });
+    if (!hits.length) { box.appendChild(el('div', { class: 'group-card' }, el('div', { class: 'list-empty', text: 'Nothing on the list matches “' + this.q + '”.' }))); return; }
+    const card = el('div', { class: 'group-card pgroup' });
+    hits.sort(function (a, b) { return (a[field] ? 1 : 0) - (b[field] ? 1 : 0); }).slice(0, 150).forEach(function (r) {
+      const n = self.nodeEl(tree, r, 2);
+      const sec = PACK_SECTIONS.filter(function (s) { return s.id === r.section; })[0];
+      n.insertBefore(el('div', { class: 'ppath', text: [r.section === 'season' ? ((App.packingMeta || {}).season || 'Season') : sec.label].concat(tree.path(r)).join(' › ') }), n.firstChild);
+      card.appendChild(n);
+    });
+    box.appendChild(card);
+  },
+
+  // ───── notes for next time ─────
+
+  drawNotes: function () {
+    const self = this, box = clear(this.refs.notes);
+    const notes = (App.tables.packingNotes || []).slice().sort(function (a, b) { return (a.done - b.done) || String(b.createdAt).localeCompare(String(a.createdAt)); });
+    const input = el('input', { class: 'input', type: 'text', maxlength: 500, placeholder: 'e.g. Bring more zip ties', 'aria-label': 'New note' });
+    const add = function () {
+      const t = input.value.trim();
+      if (!t) return;
+      input.value = '';
+      App.write('apiPackingNoteAdd', [t]).then(function (d) { App.applyWrite('packingNotes', d); }, function (err) { input.value = t; App.toast(err.message, { type: 'error' }); });
+    };
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    box.append(
+      el('h3', { text: 'Notes for next time' }),
+      el('p', { class: 'meta-line', text: 'Forgot something, or brought too much? Leave a note so the list gets better.' }),
+      el('div', { class: 'padd' }, input, el('button', { class: 'btn sm', type: 'button', onClick: add }, icon('plus'), 'Add')),
+      el('div', { class: 'note-list' }, notes.length ? notes.map(function (n) {
+        return el('div', { class: 'note-row' + (n.done ? ' done' : '') },
+          el('button', { class: 'pcheck small' + (n.done ? ' on' : ''), type: 'button', role: 'checkbox', 'aria-checked': String(n.done), 'aria-label': 'Handled',
+            title: n.done ? 'Handled' : 'Mark as handled (e.g. added to the list)',
+            onClick: function () {
+              App.write('apiPackingNoteSet', [n.id, !n.done]).then(function (d) { App.applyWrite('packingNotes', d); }, function (err) { App.toast(err.message, { type: 'error' }); });
+            } }, n.done ? icon('check') : null),
+          el('div', { class: 'note-text' }, el('div', { text: n.text }), el('div', { class: 'meta-line', text: new Date(n.createdAt).toLocaleDateString() })),
+          el('button', { class: 'icon-btn danger', type: 'button', 'aria-label': 'Delete note', onClick: function () {
+            App.write('apiPackingNoteDelete', [n.id]).then(function (d) { App.removeLocal('packingNotes', n.id); App.applyWrite('packingNotes', d); },
+              function (err) { App.toast(err.message, { type: 'error' }); });
+          } }, icon('trash')));
+      }) : el('div', { class: 'list-empty', text: 'No notes yet.' })));
+  },
+
+  // ───── actions ─────
+
+  toggle: function (ids, value) {
+    const self = this;
+    if (this.mode === 'check' && !this.holding()) return;
+    const field = this.field();
+    const changed = ids.filter(function (id) { const r = App.get('packingItems', id); return r && r[field] !== value; });
+    if (!changed.length) return;
+    const before = changed.map(function (id) { return Object.assign({}, App.get('packingItems', id)); });
+    changed.forEach(function (id) { const r = Object.assign({}, App.get('packingItems', id)); r[field] = value; App.upsert('packingItems', r); });
+    this.draw();
+    const call = field === 'verified' ? ['apiFinalCheckVerify', [this.token, changed, value]] : ['apiPackingSetPacked', [changed, value]];
+    App.queue('packing', function () {
+      return App.write(call[0], call[1]).then(function (d) {
+        App.applyWrite(['packingItems', 'packingMeta'], d);
+      }, function (err) {
+        before.forEach(function (r) { App.upsert('packingItems', r); });
+        App.emit('data', ['packingItems']);
+        if (err.code === 'FINAL_CHECK_LOST') { self.dropToken(); App.poll(); }
+        App.toast(err.message, { type: 'error' });
+      });
+    });
+  },
+
+  move: function (ids, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= ids.length) return;
+    const next = ids.slice();
+    next[i] = ids[j]; next[j] = ids[i];
+    const a = Object.assign({}, App.get('packingItems', ids[i])), b = Object.assign({}, App.get('packingItems', ids[j]));
+    const t = a.sortOrder; a.sortOrder = b.sortOrder; b.sortOrder = t === b.sortOrder ? t + dir : t;
+    App.upsert('packingItems', a); App.upsert('packingItems', b);
+    this.draw();
+    App.write('apiReorder', ['packingItems', next]).then(function () { App.poll(); }, function (err) { App.toast(err.message, { type: 'error' }); App.poll(); });
+  },
+
+  remove: function (tree, rec) {
+    const inside = tree.descendants(rec.id).length;
+    App.confirm({ title: 'Delete “' + rec.name + '”?', message: inside ? 'This also deletes the ' + plural(inside, 'entry', 'entries') + ' inside it.' : 'It will be removed from the list for everyone.',
+      confirmLabel: 'Delete', danger: true }).then(function (yes) {
+      if (!yes) return;
+      App.write('apiPackingDelete', [rec.id]).then(function (d) {
+        d.removedIds.forEach(function (id) { App.removeLocal('packingItems', id); });
+        App.applyWrite('packingItems', d);
+      }, function (err) { App.toast(err.message, { type: 'error' }); });
+    });
+  },
+
+  editInfo: function (which) {
+    const meta = App.packingMeta || {};
+    App.prompt({
+      title: which === 'event' ? 'Event name' : 'Season name', submitLabel: 'Save',
+      fields: [{ name: 'v', label: which === 'event' ? 'Event (e.g. Beach Blitz 2026)' : 'Season (e.g. 2027 season)', value: meta[which] || '', autofocus: true, max: which === 'event' ? 80 : 40 }],
+      onSubmit: function (v) {
+        const info = {}; info[which] = v.v;
+        return App.write('apiPackingSetInfo', [info]).then(function (d) { App.applyWrite('packingMeta', d); });
+      }
+    });
+  },
+
+  newRound: function () {
+    const self = this;
+    const meta = App.packingMeta || {};
+    App.prompt({
+      title: 'Start a new packing round',
+      intro: 'This unchecks everything (packed and final check) for everyone. The list itself and your notes stay.',
+      submitLabel: 'Uncheck everything',
+      fields: [{ name: 'event', label: 'Event', value: '', hint: meta.event ? 'Last round: ' + meta.event : 'e.g. Beach Blitz 2026', autofocus: true, max: 80 }],
+      onSubmit: function (v) {
+        return App.write('apiPackingReset', [v.event]).then(function (d) {
+          (App.tables.packingItems || []).forEach(function (r) { r.packed = false; r.verified = false; });
+          App.applyWrite(['packingItems', 'packingMeta'], d);
+          self.dropToken();
+          self.open = {};
+          App.toast('New round started — everything is unchecked.', { type: 'ok' });
+        });
+      }
+    });
+  },
+
+  clearSeason: function () {
+    const n = (App.tables.packingItems || []).filter(function (r) { return r.section === 'season'; }).length;
+    App.confirm({ title: 'Clear season items?', message: 'Deletes all ' + n + ' season-specific entries so you can start the new season’s list. Anything you want to keep every year should be moved to “Always pack” first (✏️ → Section).',
+      confirmLabel: 'Delete season items', danger: true }).then(function (yes) {
+      if (!yes) return;
+      App.write('apiPackingClearSeason', []).then(function () {
+        App.tables.packingItems = (App.tables.packingItems || []).filter(function (r) { return r.section !== 'season'; });
+        App.setTable('packingItems', App.tables.packingItems);
+        App.poll();
+        PackingView.editInfo('season');
+      }, function (err) { App.toast(err.message, { type: 'error' }); });
+    });
+  },
+
+  // ───── item editor ─────
+
+  openEditor: function (id) {
+    const self = this;
+    const rec = App.get('packingItems', id);
+    if (!rec) return;
+    const tree = packingTree();
+    const exclude = new Set([rec.id].concat(tree.descendants(rec.id).map(function (d) { return d.id; })));
+    const parentOpts = [];
+    PACK_SECTIONS.forEach(function (s) {
+      const label = s.id === 'season' ? ((App.packingMeta || {}).season || 'Season') : s.label;
+      parentOpts.push({ value: 'top:' + s.id, label: label + ' (top level)', group: label });
+      const walk = function (pid, depth) {
+        tree.kids(pid, s.id).forEach(function (r) {
+          if (!tree.isGroup(r.id) && depth > 1) return;
+          if (exclude.has(r.id)) return;
+          parentOpts.push({ value: r.id, label: new Array(depth).join('— ') + r.name, group: label });
+          if (depth < 3) walk(r.id, depth + 1);
+        });
+      };
+      walk('', 1);
+    });
+    const name = el('input', { class: 'input', type: 'text', value: rec.name, maxlength: 150, autofocus: true });
+    const note = el('input', { class: 'input', type: 'text', value: rec.note, maxlength: 500, placeholder: 'e.g. The good ones · Don’t forget like last time' });
+    const where = App.selectEl(parentOpts, rec.parentId || 'top:' + rec.section);
+    const linkOpts = [];
+    App.rows('tools').slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (t) { linkOpts.push({ value: 'tools:' + t.id, label: t.name, group: 'Tools & Equipment' }); });
+    App.rows('parts').slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (p) { linkOpts.push({ value: 'parts:' + p.id, label: p.name, group: 'Parts' }); });
+    const link = App.selectEl(linkOpts, rec.linkTable ? rec.linkTable + ':' + rec.linkId : '', 'Not linked');
+    const photo = App.imageField('packingItems', rec);
+    const fields = {
+      name: App.field('Name', name, { required: true }),
+      note: App.field('Note', note, { hint: 'Shown under the name.' }),
+      parentId: App.field('Where it goes on the list', where, { hint: 'Put it inside a group (e.g. Super pit → Tools), or at the top level of a section.' }),
+      linkId: App.field('Linked inventory item', link, { hint: 'Shows where it’s stored and uses its photo if this entry has none.' })
+    };
+    const save = el('button', { class: 'btn primary', type: 'button', text: 'Save' });
+    const m = App.modal({
+      kind: 'drawer', title: 'Edit entry',
+      body: [fields.name, fields.note, fields.parentId, fields.linkId, el('div', { class: 'field' }, el('div', { class: 'field-label', text: 'Photo' }), photo.el)],
+      foot: [el('button', { class: 'btn danger', type: 'button', onClick: function () { m.close(true); self.remove(packingTree(), rec); } }, icon('trash'), el('span', { class: 'label', text: 'Delete' })),
+        el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(true); } }), save]
+    });
+    save.addEventListener('click', function () {
+      const ch = {};
+      if (!name.value.trim()) { fields.name.setError('Required.'); return; }
+      if (name.value.trim() !== rec.name) ch.name = name.value.trim();
+      if (note.value.trim() !== rec.note) ch.note = note.value.trim();
+      const w = where.value;
+      if (w.indexOf('top:') === 0) {
+        if (rec.parentId) ch.parentId = '';
+        if (w.slice(4) !== rec.section) ch.section = w.slice(4);
+      } else if (w !== rec.parentId) ch.parentId = w;
+      const lv = link.value ? link.value.split(':') : ['', ''];
+      if (lv[0] !== (rec.linkTable || '') || lv[1] !== (rec.linkId || '')) { ch.linkTable = lv[0]; ch.linkId = lv[1]; }
+      if (!Object.keys(ch).length) { m.close(true); return; }
+      save.disabled = true;
+      App.write('apiPackingUpdate', [rec.id, ch]).then(function (d) {
+        App.applyWrite('packingItems', d);
+        App.poll();   // a move can change entries inside it too
+        m.close(true);
+      }, function (err) {
+        save.disabled = false;
+        const f = err.details && err.details.fields;
+        if (f) Object.keys(f).forEach(function (k) { if (fields[k]) fields[k].setError(f[k]); });
+        App.toast(err.message, { type: 'error' });
+      });
+    });
+  },
+
+  // ───── final check ─────
+
+  drawCheckGate: function (tree, meta) {
+    const self = this, box = this.refs.list;
+    const fc = meta.finalCheck || {};
+    const leaves = (App.tables.packingItems || []).filter(function (r) { return !tree.isGroup(r.id); });
+    const v = leaves.filter(function (r) { return r.verified; }).length;
+    const nameIn = el('input', { class: 'input', type: 'text', maxlength: 40, placeholder: 'Your name', value: store.get('checkerName', ''), 'aria-label': 'Your name' });
+    const claim = function (restart) {
+      const who = nameIn.value.trim();
+      if (!who) { nameIn.focus(); App.toast('Type your name first so everyone knows who is checking.', { type: 'error' }); return; }
+      store.set('checkerName', who);
+      App.write('apiFinalCheckClaim', [who, restart === true]).then(function (d) {
+        self.token = d.token;
+        if (restart === true) (App.tables.packingItems || []).forEach(function (r) { r.verified = false; });
+        App.applyWrite(['packingMeta', 'packingItems'], d);
+        self.startHeartbeat();
+        self.draw();
+      }, function (err) { App.toast(err.message, { type: 'error' }); App.poll(); });
+    };
+    nameIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); claim(fc.state === 'complete'); } });
+    const card = el('div', { class: 'group-card gate' });
+    if (fc.state === 'active') {
+      card.append(el('h2', { text: fc.by + ' is doing the final check' }),
+        el('p', { text: v + ' of ' + leaves.length + ' items verified so far. Only one person checks at a time, so the whole list gets one careful pass.' }));
+    } else if (fc.state === 'paused') {
+      card.append(el('h2', { text: 'Final check paused' }),
+        el('p', { text: (fc.by ? fc.by + ' left the page' : 'It was paused') + ' with ' + v + ' of ' + leaves.length + ' items verified. Progress is saved — anyone can pick it up.' }),
+        el('div', { class: 'gate-row' }, nameIn, el('button', { class: 'btn primary', type: 'button', text: 'Resume final check', onClick: claim })));
+    } else if (fc.state === 'complete') {
+      card.append(el('h2', { text: 'Final check complete' }),
+        el('p', { text: 'Done by ' + fc.by + ' on ' + new Date(fc.completedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' — ' + fc.verified + ' of ' + fc.total + ' verified.' }),
+        el('div', { class: 'gate-row' }, nameIn, el('button', { class: 'btn', type: 'button', text: 'Start the final check over', onClick: function () {
+          App.confirm({ title: 'Start over?', message: 'Clears every “verified” mark and starts a fresh final check under your name.', confirmLabel: 'Start over' })
+            .then(function (yes) { if (yes) claim(true); });
+        } })));
+    } else {
+      card.append(el('h2', { text: 'Final check' }),
+        el('p', { text: 'Before leaving, one person goes through the whole list and confirms each item is actually packed — instead of everyone glancing at bits of it. Stay on this page while you check; leaving pauses it.' }),
+        el('div', { class: 'gate-row' }, nameIn, el('button', { class: 'btn primary', type: 'button', text: 'Start final check', onClick: claim })));
+    }
+    box.appendChild(card);
+  },
+
+  startHeartbeat: function () {
+    const self = this;
+    this.stopHeartbeat();
+    this._hb = setInterval(function () {
+      if (!self.token || document.visibilityState !== 'visible') return;
+      App.api('apiFinalCheckPing', [self.token]).then(function (d) { App.applyWrite('packingMeta', d); }, function (err) {
+        if (err.code === 'FINAL_CHECK_LOST') { self.dropToken(); App.toast(err.message, { type: 'error' }); App.poll(); }
+      });
+    }, 30000);
+  },
+
+  stopHeartbeat: function () { clearInterval(this._hb); this._hb = null; clearTimeout(this._away); },
+
+  dropToken: function () {
+    this.token = null;
+    this.stopHeartbeat();
+  },
+
+  pause: function () {
+    const t = this.token;
+    this.dropToken();
+    if (!t) return;
+    App.api('apiFinalCheckPause', [t]).then(function (d) { App.applyWrite('packingMeta', d); }, function () {});
+    if (this.refs) this.draw();
+  },
+
+  complete: function (tree) {
+    const self = this;
+    const leaves = (App.tables.packingItems || []).filter(function (r) { return !tree.isGroup(r.id); });
+    const missing = leaves.filter(function (r) { return !r.verified; });
+    const finish = function () {
+      App.write('apiFinalCheckComplete', [self.token]).then(function (d) {
+        self.dropToken();
+        App.applyWrite('packingMeta', d);
+        self.mode = 'pack';
+        self.draw();
+        App.toast('Final check complete.', { type: 'ok' });
+      }, function (err) { App.toast(err.message, { type: 'error' }); });
+    };
+    if (!missing.length) { finish(); return; }
+    App.confirm({ title: missing.length + ' not verified', message: missing.length + ' item' + (missing.length === 1 ? ' is' : 's are') + ' still unchecked (for example: ' +
+      missing.slice(0, 4).map(function (r) { return r.name; }).join(', ') + '). Complete the final check anyway?', confirmLabel: 'Complete anyway', cancelLabel: 'Keep checking' })
+      .then(function (yes) { if (yes) finish(); });
+  }
+};
+
+// Leaving the tab for more than a minute pauses the final check; closing it tries to pause right away.
+document.addEventListener('visibilitychange', function () {
+  const v = PackingView;
+  if (!v.token) return;
+  clearTimeout(v._away);
+  if (document.visibilityState === 'hidden') v._away = setTimeout(function () { v.pause(); }, 60000);
+});
+window.addEventListener('pagehide', function () { if (PackingView.token) PackingView.pause(); });
+
+App.views.packing = PackingView;
+</script>

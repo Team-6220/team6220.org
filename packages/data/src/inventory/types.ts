@@ -18,6 +18,13 @@ export interface FinalCheckInfo {
   completedAt?: string;
   verified?: number;
   total?: number;
+  /** When the checker's page last said "still here" (ISO). Older than 90 s counts as paused. */
+  lastSeen?: string;
+  /** Who held it before it was resumed. */
+  resumedFrom?: string;
+  pausedReason?: string;
+  /** The checker's private token. Stored, but never sent to browsers (see publicPackingMeta in service.ts). */
+  token?: string;
 }
 
 export interface PackingMeta {

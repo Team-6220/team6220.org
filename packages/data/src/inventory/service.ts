@@ -1,5 +1,5 @@
 // The inventory's business rules, ported from the Apps Script server files
-// (ApiInventory.gs, ApiSettings.gs, ApiAudit.gs, ApiPacking.gs). They run on top of any InventoryStore,
+// (ApiInventory.gs, ApiSettings.gs, ApiAudit.gs, ApiPacking.gs, ApiRaw.gs). They run on top of any InventoryStore,
 // so the in-memory adapter (dev, tests) and the Wix adapter behave the same.
 //
 // Every write returns { value, changes } so the UI can update its copy at once.
@@ -18,9 +18,14 @@ import {
   type InventorySection,
   type TableKey,
 } from "./schema.ts";
-import type { Changes, InventoryStore, PackingMeta, Row, Snapshot, Tables, WriteResult } from "./types.ts";
+import type { Changes, FinalCheckInfo, InventoryStore, PackingMeta, Row, Snapshot, Tables, WriteResult } from "./types.ts";
 import { FieldError, InventoryError, assertId, cleanText, isId, jsonHasId, jsonStripIds, newId, nowIso, round } from "./util.ts";
-import { blankRecord, checkSections, validateInput, type RefContext } from "./validate.ts";
+import { blankRecord, checkSections, checkShape, deriveShapeFields, validateInput, type RefContext } from "./validate.ts";
+
+export interface ServiceOptions {
+  /** Clock for the final check's 90-second rule (tests pass a fake one). Default Date.now. */
+  now?: () => number;
+}
 
 export interface AuditSummary {
   total: number;
@@ -123,8 +128,9 @@ export function auditItemName(key: TableKey, r: Row, lists: Map<string, Row>): s
   }
 }
 
-export function createInventoryService(store: InventoryStore) {
+export function createInventoryService(store: InventoryStore, opts: ServiceOptions = {}) {
   const ctx = () => new Ctx(store);
+  const clock = opts.now ?? (() => Date.now());
 
   async function mustGet(key: TableKey, id: string, what = "This item"): Promise<Row> {
     const rec = await store.get(key, id);
@@ -239,8 +245,13 @@ export function createInventoryService(store: InventoryStore) {
     const c = ctx();
     const clean = await validateInput(key, changes, "update", rec, c);
     const next: Row = { ...rec, ...clean };
-    if (key === "rawMaterials" && (("length" in clean && clean.length !== rec.length) || ("width" in clean && clean.width !== rec.width))) {
-      // The outline is drawn from length × width; typed sizes win over an old outline.
+    if (
+      key === "rawMaterials" &&
+      !("shape" in clean) &&
+      (("length" in clean && clean.length !== rec.length) || ("width" in clean && clean.width !== rec.width))
+    ) {
+      // Sizes typed without a new outline: the old outline no longer matches them. (The inventory UI always sends
+      // the outline, and length / width are then filled in from it by validateInput.)
       next.shape = {};
       next.area = null;
     }
@@ -852,6 +863,305 @@ export function createInventoryService(store: InventoryStore) {
     return new ChangeSet().rm("packingNotes", [id]).result(id);
   }
 
+  // ─────────────── final check (ApiPacking.gs) ───────────────
+  // ONE person claims it by typing their name and gets a private token; only that browser can tick "verified".
+  // It pings every 30 s; a check nobody has pinged for 90 s shows as paused (publicPackingMeta).
+  // Without Apps Script's lock, two people claiming in the same instant can both succeed; the later one wins and
+  // the earlier one gets FINAL_CHECK_LOST on their next tick or ping.
+
+  function requireFinalCheckToken(m: PackingMeta, token: unknown): void {
+    const fc = m.finalCheck;
+    if (typeof token !== "string" || !fc.token || fc.token !== token) {
+      throw new InventoryError(
+        "FINAL_CHECK_LOST",
+        fc.state === "active" && fc.by ? `${fc.by} has taken over the final check.` : "Your final check was paused. Resume it to keep going.",
+      );
+    }
+    if (fc.state === "complete") throw new InventoryError("FINAL_CHECK_LOST", "The final check is already complete.");
+  }
+
+  /**
+   * Starts or resumes the final check under a name. Returns a private token.
+   * restart: true clears all "verified" marks first (used after a completed check).
+   */
+  async function finalCheckClaim(name: string, restart?: boolean): Promise<WriteResult<{ token: string; packingMeta: PackingMeta }>> {
+    const who = cleanLabel(name, 40, "name");
+    if (!who) throw new InventoryError("VALIDATION", "Type your name so others know who is checking.", { fields: { name: "Required." } });
+    const m = await readPackingMeta();
+    const fc = m.finalCheck;
+    const t = clock();
+    if (finalCheckLive(fc, t) && restart !== true) {
+      throw new InventoryError("FINAL_CHECK_TAKEN", `${fc.by} is doing the final check right now.`, { by: fc.by });
+    }
+    if (fc.state === "complete" && restart !== true) throw new InventoryError("FINAL_CHECK_DONE", "The final check is already complete.");
+    const cs = new ChangeSet();
+    if (restart === true) {
+      if (finalCheckLive(fc, t)) throw new InventoryError("FINAL_CHECK_TAKEN", `${fc.by} is doing the final check right now.`, { by: fc.by });
+      for (const r of (await store.list("packingItems")).filter((x) => x.verified)) {
+        const next = { ...r, verified: false };
+        await store.replace("packingItems", next);
+        cs.up("packingItems", next);
+      }
+    }
+    const token = newToken();
+    const now = new Date(t).toISOString();
+    m.finalCheck = {
+      state: "active",
+      by: who,
+      token,
+      startedAt: fc.state === "none" || fc.state === "complete" || restart === true ? now : fc.startedAt || now,
+      lastSeen: now,
+      resumedFrom: fc.state === "paused" || fc.state === "active" ? fc.by || "" : "",
+    };
+    await store.setMeta("packingMeta", m);
+    return cs.meta(m).result({ token, packingMeta: m });
+  }
+
+  /** "Still here" signal, sent every ~30 s while the checker has the page open. */
+  async function finalCheckPing(token: string): Promise<WriteResult<PackingMeta>> {
+    const m = await readPackingMeta();
+    requireFinalCheckToken(m, token);
+    m.finalCheck.state = "active";
+    m.finalCheck.lastSeen = new Date(clock()).toISOString();
+    await store.setMeta("packingMeta", m);
+    return new ChangeSet().meta(m).result(m);
+  }
+
+  /** The checker left the page: keep progress, release the claim. */
+  async function finalCheckPause(token: string): Promise<WriteResult<PackingMeta>> {
+    const m = await readPackingMeta();
+    if (m.finalCheck.token !== token || m.finalCheck.state !== "active") return new ChangeSet().result(m);
+    m.finalCheck.state = "paused";
+    m.finalCheck.pausedReason = "left";
+    delete m.finalCheck.token;
+    await store.setMeta("packingMeta", m);
+    return new ChangeSet().meta(m).result(m);
+  }
+
+  /** Ticks or unticks "verified" (final-check holder only). */
+  async function finalCheckVerify(token: string, ids: string[], value: boolean): Promise<WriteResult<Row[]>> {
+    checkIdList(ids, 3000);
+    if (value !== true && value !== false) throw new InventoryError("BAD_REQUEST", "Invalid value.");
+    const m = await readPackingMeta();
+    requireFinalCheckToken(m, token);
+    const byId = new Map((await store.list("packingItems")).map((r) => [r.id, r]));
+    const changed: Row[] = [];
+    for (const id of ids) {
+      const r = byId.get(id);
+      if (r && r.verified !== value) {
+        const next = { ...r, verified: value, updatedAt: nowIso() };
+        await store.replace("packingItems", next);
+        changed.push(next);
+      }
+    }
+    m.finalCheck.state = "active";
+    m.finalCheck.lastSeen = new Date(clock()).toISOString();
+    await store.setMeta("packingMeta", m);
+    return new ChangeSet().up("packingItems", ...changed).meta(m).result(changed);
+  }
+
+  /** Marks the final check complete (records how many entries were verified). */
+  async function finalCheckComplete(token: string): Promise<WriteResult<PackingMeta>> {
+    const m = await readPackingMeta();
+    requireFinalCheckToken(m, token);
+    const rows = await store.list("packingItems");
+    const parents = new Set(rows.map((r) => r.parentId).filter(Boolean));
+    const leaves = rows.filter((r) => !parents.has(r.id));
+    m.finalCheck = {
+      state: "complete",
+      by: m.finalCheck.by,
+      startedAt: m.finalCheck.startedAt,
+      completedAt: new Date(clock()).toISOString(),
+      verified: leaves.filter((r) => r.verified).length,
+      total: leaves.length,
+    };
+    await store.setMeta("packingMeta", m);
+    return new ChangeSet().meta(m).result(m);
+  }
+
+  // ─────────────── production jobs and "Mark as cut" (ApiRaw.gs) ───────────────
+
+  /** Saves planned parts from the cut planner. jobs: [{ partName, materialTypeId, thickness, partLength, ... }] */
+  async function productionCreate(jobs: unknown[]): Promise<WriteResult<Row[]>> {
+    if (!Array.isArray(jobs) || !jobs.length || jobs.length > 300) throw new InventoryError("BAD_REQUEST", "Invalid list of parts.");
+    const c = ctx();
+    const raw = await c.byId("rawMaterials");
+    const now = nowIso();
+    const recs: Row[] = [];
+    for (const j of jobs) {
+      const clean = await validateInput("production", Object.assign({ status: "planned" }, j), "create", null, c);
+      if (clean.rawMaterialId) {
+        const piece = raw.get(String(clean.rawMaterialId));
+        if (!piece || piece.archivedAt) throw new InventoryError("CONFLICT", "A stock piece in this plan no longer exists. Run the planner again.");
+        if ((Number(clean.copyIndex) || 0) >= (Number(piece.quantity) || 1)) {
+          throw new InventoryError("CONFLICT", "The stock changed since this plan was made. Run the planner again.");
+        }
+      }
+      recs.push(Object.assign(blankRecord("production"), clean, { id: newId(TABLES.production.prefix), createdAt: now, updatedAt: now }));
+    }
+    await store.insert("production", recs);
+    return new ChangeSet().up("production", ...recs).result(recs);
+  }
+
+  /** Edits a job (status, notes, name...). Clearing rawMaterialId un-assigns it. */
+  async function productionUpdate(id: string, changes: unknown): Promise<WriteResult<Row>> {
+    assertId(id);
+    const rec = await store.get("production", id);
+    if (!rec) throw new InventoryError("NOT_FOUND", "This job no longer exists.");
+    const clean = await validateInput("production", changes, "update", rec, ctx());
+    const next: Row = { ...rec, ...clean, updatedAt: nowIso() };
+    if ("rawMaterialId" in clean && !clean.rawMaterialId) {
+      next.placement = {};
+      next.copyIndex = null;
+    }
+    await store.replace("production", next);
+    return new ChangeSet().up("production", next).result(next);
+  }
+
+  async function productionDelete(ids: string[]): Promise<WriteResult<string[]>> {
+    checkIdList(ids, 500);
+    const existing = new Set((await store.list("production")).map((r) => r.id));
+    const removed = ids.filter((id) => existing.has(id));
+    if (removed.length) await store.remove("production", removed);
+    return new ChangeSet().rm("production", removed).result(removed);
+  }
+
+  /**
+   * "Mark as cut".
+   *   pieceId, pieceVersion: the stock piece (version must match what the browser saw; null skips the check)
+   *   copyIndex:             which identical copy (0 for pieces with quantity 1)
+   *   cutJobIds:             planned jobs on that copy being cut now
+   *   leftovers:             [{ points }] what remains (worked out in the browser), largest first
+   *   reassign:              { jobId: leftoverIndex | -1 } for the OTHER planned jobs on that copy
+   * Quantity 1: the piece's shape becomes the biggest leftover, other leftovers become new pieces, nothing left
+   * archives it. Quantity > 1 (identical sheets): quantity goes down by 1 and the leftovers become new pieces.
+   */
+  async function rawCut(
+    pieceId: string,
+    pieceVersion: number | null,
+    copyIndex: number,
+    cutJobIds: string[],
+    leftovers: { points?: unknown }[],
+    reassign: Record<string, number> | null,
+  ): Promise<WriteResult<{ piece: Row; newPieces: Row[]; jobs: Row[] }>> {
+    assertId(pieceId);
+    checkIdList(cutJobIds, 500);
+    if (!Array.isArray(leftovers) || leftovers.length > 20) throw new InventoryError("BAD_REQUEST", "Invalid leftovers.");
+    const shapes = leftovers.map((l) => {
+      try {
+        return checkShape({ kind: "traced", points: l && l.points, edges: [] });
+      } catch (e) {
+        if (e instanceof FieldError) throw new InventoryError("VALIDATION", "A leftover shape was invalid: " + e.message);
+        throw e;
+      }
+    });
+    const map: Record<string, unknown> = reassign && typeof reassign === "object" ? reassign : {};
+    const found = await store.get("rawMaterials", pieceId);
+    if (!found || found.archivedAt) throw new InventoryError("NOT_FOUND", "This stock piece no longer exists.");
+    const piece: Row = { ...found };
+    const staleMsg = "This stock piece was changed by someone else. Refresh and try again.";
+    if (pieceVersion !== null && pieceVersion !== piece.version) throw new InventoryError("CONFLICT", staleMsg, { current: found });
+    const qty = Number(piece.quantity) || 1;
+    const ci = Number(copyIndex) || 0;
+    if (!Number.isInteger(ci) || ci < 0 || ci >= qty) throw new InventoryError("BAD_REQUEST", "Invalid stock copy.");
+
+    const jobs = await store.list("production");
+    const jobsById = new Map(jobs.map((j) => [j.id, j]));
+    const cutting = cutJobIds.map((id) => {
+      const j = jobsById.get(id);
+      if (!j || j.rawMaterialId !== pieceId || (j.copyIndex || 0) !== ci || j.status !== "planned") {
+        throw new InventoryError("CONFLICT", "That job isn’t planned on this piece any more. Refresh and try again.");
+      }
+      return j;
+    });
+    const cutSet = new Set(cutJobIds);
+    const now = nowIso();
+
+    // Leftovers -> this piece and/or new pieces.
+    const leftoverIds: string[] = [];
+    const newRows: Row[] = [];
+    const makeRow = (shape: Record<string, unknown>): string => {
+      const r: Row = Object.assign(blankRecord("rawMaterials"), {
+        id: newId(TABLES.rawMaterials.prefix),
+        materialTypeId: piece.materialTypeId,
+        thickness: piece.thickness,
+        thicknessValue: piece.thicknessValue,
+        thicknessUnitId: piece.thicknessUnitId,
+        dimUnitId: piece.dimUnitId,
+        quantity: 1,
+        locationId: piece.locationId,
+        shape,
+        description: "Leftover from cutting " + cutting.map((j) => j.partName).join(", ") + " (" + now.slice(0, 10) + ")",
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        archivedAt: "",
+        needsCheck: false,
+      });
+      deriveShapeFields(r);
+      newRows.push(r);
+      return r.id;
+    };
+    if (qty > 1) {
+      piece.quantity = qty - 1;
+      shapes.forEach((s) => leftoverIds.push(makeRow(s)));
+    } else if (shapes.length) {
+      piece.shape = shapes[0];
+      deriveShapeFields(piece);
+      leftoverIds.push(pieceId);
+      shapes.slice(1).forEach((s) => leftoverIds.push(makeRow(s)));
+    } else {
+      piece.archivedAt = now; // used up (restorable from Settings -> Archive)
+    }
+    const prevVersion = Number(found.version) || 0;
+    piece.version = prevVersion + 1;
+    piece.updatedAt = now;
+    if (!(await store.replace("rawMaterials", piece, prevVersion))) {
+      const current = await store.get("rawMaterials", pieceId);
+      if (!current) throw new InventoryError("NOT_FOUND", "This stock piece no longer exists.");
+      throw new InventoryError("CONFLICT", staleMsg, { current });
+    }
+    if (newRows.length) await store.insert("rawMaterials", newRows);
+
+    // Jobs: mark the cut ones; move the others to their leftover.
+    const changed: Row[] = [];
+    for (const orig of jobs) {
+      if (orig.rawMaterialId !== pieceId) continue;
+      const j: Row = { ...orig };
+      if (cutSet.has(j.id)) {
+        j.status = "cut";
+        j.updatedAt = now;
+        changed.push(j);
+        continue;
+      }
+      if (j.status !== "planned") continue;
+      const jc = j.copyIndex || 0;
+      if (qty > 1 && jc > ci) {
+        j.copyIndex = jc - 1;
+        changed.push(j);
+        continue;
+      }
+      if (qty > 1 && jc < ci) continue;
+      const idx = Object.prototype.hasOwnProperty.call(map, j.id) ? Number(map[j.id]) : -1;
+      if (idx >= 0 && idx < leftoverIds.length) {
+        j.rawMaterialId = leftoverIds[idx];
+        j.copyIndex = 0;
+      } else {
+        j.rawMaterialId = "";
+        j.copyIndex = null;
+        j.placement = {};
+      }
+      j.updatedAt = now;
+      changed.push(j);
+    }
+    for (const j of changed) await store.replace("production", j);
+
+    return new ChangeSet()
+      .up("rawMaterials", piece, ...newRows)
+      .up("production", ...changed)
+      .result({ piece, newPieces: newRows, jobs: changed });
+  }
+
   return {
     store,
     loadAll,
@@ -881,7 +1191,49 @@ export function createInventoryService(store: InventoryStore) {
     packingNoteAdd,
     packingNoteSet,
     packingNoteDelete,
+    finalCheckClaim,
+    finalCheckPing,
+    finalCheckPause,
+    finalCheckVerify,
+    finalCheckComplete,
+    productionCreate,
+    productionUpdate,
+    productionDelete,
+    rawCut,
+    /** The time used for the final check (Date.now() unless a test passed `now`). */
+    now: clock,
   };
+}
+
+/** A final check nobody has pinged for this long shows as paused. */
+export const FINAL_CHECK_STALE_MS = 90 * 1000;
+
+/** True when the stored check is owned by someone who is still on the page. */
+export function finalCheckLive(fc: FinalCheckInfo, now: number): boolean {
+  const seen = Date.parse(fc.lastSeen || "");
+  return fc.state === "active" && isFinite(seen) && now - seen <= FINAL_CHECK_STALE_MS;
+}
+
+/** What browsers see (ApiPacking.gs publicPackingMeta_): no token, and a stale active check shows as paused. */
+export function publicPackingMeta(m: PackingMeta, now: number): PackingMeta {
+  const fc: FinalCheckInfo = { ...(m.finalCheck || { state: "none" }) };
+  delete fc.token;
+  if (fc.state === "active" && !finalCheckLive(fc, now)) {
+    fc.state = "paused";
+    fc.pausedReason = "left";
+  }
+  return { ...m, finalCheck: fc };
+}
+
+function newToken(): string {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === "function") return c.randomUUID();
+  return newId("FC") + newId("FC") + newId("FC");
+}
+
+function checkIdList(ids: unknown, max: number): asserts ids is string[] {
+  if (!Array.isArray(ids) || !ids.length || ids.length > max) throw new InventoryError("BAD_REQUEST", "Invalid selection.");
+  ids.forEach(assertId);
 }
 
 export type InventoryService = ReturnType<typeof createInventoryService>;

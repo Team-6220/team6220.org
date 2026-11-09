@@ -1,0 +1,948 @@
+<script>
+/* ============================================================================
+   JsParts.html — Golden Griffins Inventory
+   The Parts Inventory page: search, filters, sorting, quantity steppers,
+   and the add/edit drawer (with tag picker and inline "new location").
+   ========================================================================== */
+'use strict';
+
+const PARTS_SORTS = [
+  { id: 'relevance', label: 'Best match' },
+  { id: 'name', label: 'Name A–Z' },
+  { id: 'qtyAsc', label: 'Quantity: low to high' },
+  { id: 'qtyDesc', label: 'Quantity: high to low' },
+  { id: 'location', label: 'Location' },
+  { id: 'updated', label: 'Recently updated' }
+];
+
+function emptyPartsFilter() {
+  return { q: '', categoryIds: [], tagIds: [], tagMode: 'any', locationIds: [], supplierIds: [], lowStock: false, needsCheck: false };
+}
+
+function isLowStock(key, rec) {
+  return rec.lowStockThreshold !== null && rec.lowStockThreshold !== undefined && rec.lowStockThreshold !== '' &&
+    App.qty.display(key, rec) <= rec.lowStockThreshold;
+}
+
+const PartsView = {
+  key: 'parts',
+  title: 'Parts Inventory',
+  f: emptyPartsFilter(),
+  sort: store.get('partsSort', 'name'),
+  limit: 100,
+  index: null,
+  indexDirty: true,
+  rows: {},          // id → { el, sig }
+  order: [],         // ids currently shown, in order
+  refs: null,
+
+  render: function (main) {
+    const self = this;
+    const r = this.refs = {};
+    this.rows = {};
+    this.order = [];
+    this.limit = 100;
+
+    r.sub = el('div', { class: 'page-sub' });
+    r.search = el('input', {
+      type: 'search', placeholder: 'Search parts, tags, locations…', value: this.f.q,
+      'aria-label': 'Search parts', autocomplete: 'off', spellcheck: 'false'
+    });
+    r.clearSearch = el('button', { class: 'icon-btn clear', 'aria-label': 'Clear search', onClick: function () {
+      r.search.value = ''; self.f.q = ''; self.limit = 100; self.update(); r.search.focus();
+    } }, icon('x'));
+    r.kbd = el('kbd', { text: '/' });
+    r.search.addEventListener('input', debounce(function () { self.f.q = r.search.value; self.limit = 100; self.update(); }, 90));
+    r.search.addEventListener('keydown', function (e) { if (e.key === 'Escape' && r.search.value) { r.clearSearch.click(); } });
+
+    r.filters = el('div', { class: 'filters' });
+    r.low = el('div');
+    r.meta = el('div', { class: 'results-meta' });
+    r.table = el('div', { class: 'table', role: 'table', 'aria-label': 'Parts' });
+    r.head = this.headRow();
+    r.body = el('div', { role: 'rowgroup' });
+    r.more = el('div', { class: 'more-row' });
+    r.empty = el('div');
+    r.table.append(r.head, r.body, r.more);
+
+    main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' },
+        el('div', null, el('h1', { class: 'page-title', text: 'Parts Inventory' }), r.sub),
+        el('div', { class: 'page-actions' },
+          el('button', { class: 'btn primary', onClick: function () { self.openEditor(null, { name: self.f.q }); } },
+            icon('plus'), el('span', { class: 'label', text: 'Add part' })))),
+      el('div', { class: 'search' }, icon('search'), r.search, r.clearSearch, r.kbd),
+      r.filters, r.low, r.meta, r.empty, r.table));
+
+    this.indexDirty = true;
+    this.update();
+    if (window.innerWidth > 860) setTimeout(function () { r.search.focus(); }, 0);
+  },
+
+  onData: function (keys) {
+    if (!this.refs) return;
+    if (keys.some(function (k) { return ['parts', 'categories', 'tags', 'locations', 'suppliers'].indexOf(k) >= 0; })) {
+      this.indexDirty = true;
+      this.update();
+    }
+  },
+
+  leave: function () { this.refs = null; },
+
+  // ───── search + filters ─────
+
+  buildIndex: function () {
+    this.index = Search.build(App.rows('parts'), function (p) {
+      return [
+        [p.name, 5], [p.aliases, 5],
+        [p.tagIds.map(function (t) { return App.name('tags', t); }).join(' '), 3],
+        [App.name('categories', p.categoryId), 2],
+        [App.name('suppliers', p.supplierId), 2],
+        [App.locationLabel(p.locationId), 2],
+        [p.description, 1]
+      ];
+    });
+    this.indexDirty = false;
+  },
+
+  locationSet: function () {
+    const set = new Set(this.f.locationIds);
+    this.f.locationIds.forEach(function (id) {
+      App.rows('locations').forEach(function (l) { if (l.parentId === id) set.add(l.id); });
+    });
+    return set;
+  },
+
+  results: function () {
+    if (this.indexDirty || !this.index) this.buildIndex();
+    const f = this.f;
+    const cats = new Set(f.categoryIds), tags = f.tagIds, sups = new Set(f.supplierIds), locs = this.locationSet();
+    let list = this.index.query(f.q).filter(function (x) {
+      const p = x.rec;
+      if (cats.size && !cats.has(p.categoryId)) return false;
+      if (sups.size && !sups.has(p.supplierId)) return false;
+      if (locs.size && !locs.has(p.locationId)) return false;
+      if (tags.length) {
+        const has = function (t) { return p.tagIds.indexOf(t) >= 0; };
+        if (f.tagMode === 'all' ? !tags.every(has) : !tags.some(has)) return false;
+      }
+      if (f.lowStock && !isLowStock('parts', p)) return false;
+      if (f.needsCheck && !p.needsCheck) return false;
+      return true;
+    });
+    const sort = f.q.trim() && this.sort === 'relevance' ? 'relevance' : (this.sort === 'relevance' ? 'name' : this.sort);
+    const byName = function (a, b) { return a.rec.name.localeCompare(b.rec.name, undefined, { numeric: true, sensitivity: 'base' }); };
+    const qty = function (x) { return App.qty.display('parts', x.rec); };
+    const cmp = {
+      relevance: function (a, b) { return (b.score - a.score) || byName(a, b); },
+      name: byName,
+      qtyAsc: function (a, b) { return (qty(a) - qty(b)) || byName(a, b); },
+      qtyDesc: function (a, b) { return (qty(b) - qty(a)) || byName(a, b); },
+      location: function (a, b) {
+        const la = App.locationLabel(a.rec.locationId), lb = App.locationLabel(b.rec.locationId);
+        if (!la !== !lb) return la ? -1 : 1;
+        return la.localeCompare(lb, undefined, { numeric: true }) || byName(a, b);
+      },
+      updated: function (a, b) { return String(b.rec.updatedAt).localeCompare(String(a.rec.updatedAt)); }
+    }[sort];
+    return list.sort(cmp).map(function (x) { return x.rec; });
+  },
+
+  activeCount: function () {
+    const f = this.f;
+    return f.categoryIds.length + f.tagIds.length + f.locationIds.length + f.supplierIds.length + (f.lowStock ? 1 : 0) + (f.needsCheck ? 1 : 0);
+  },
+
+  update: function () {
+    const r = this.refs;
+    if (!r) return;
+    const self = this;
+    const all = App.rows('parts');
+    const lowCount = all.filter(function (p) { return isLowStock('parts', p); }).length;
+    const checkCount = all.filter(function (p) { return p.needsCheck; }).length;
+    const list = this.results();
+
+    clear(r.sub).append(el('b', { text: plural(all.length, 'part') }),
+      lowCount ? ' · ' + lowCount + ' low stock' : '',
+      checkCount ? ' · ' + checkCount + ' need checking' : '');
+    r.clearSearch.style.display = this.f.q ? '' : 'none';
+    r.kbd.style.display = this.f.q ? 'none' : '';
+    this.renderFilters(lowCount, checkCount);
+
+    const filtered = this.f.q.trim() || this.activeCount();
+    this.renderLowPanel(filtered ? 0 : lowCount);
+    clear(r.meta);
+    if (filtered && all.length) {
+      r.meta.append(el('span', { text: list.length === 1 ? '1 match' : list.length + ' matches' }));
+      if (this.activeCount() || this.f.q) {
+        r.meta.append(el('button', { class: 'link-btn', text: 'Clear search & filters', onClick: function () { self.clearAll(); } }));
+      }
+    }
+
+    clear(r.empty);
+    if (!all.length) {
+      r.table.style.display = 'none';
+      r.empty.appendChild(el('div', { class: 'table' }, el('div', { class: 'empty-state' },
+        el('div', { class: 'big', text: 'No parts yet' }),
+        el('p', { text: 'Add the first part to start tracking stock. Tip: set up storage locations in Settings first so you can say where things live.' }),
+        el('button', { class: 'btn primary', onClick: function () { self.openEditor(null); } }, icon('plus'), 'Add a part'))));
+      return;
+    }
+    if (!list.length) {
+      r.table.style.display = 'none';
+      const q = this.f.q.trim();
+      r.empty.appendChild(el('div', { class: 'table' }, el('div', { class: 'empty-state' },
+        el('div', { class: 'big', text: 'No matching parts' }),
+        el('p', { text: q ? 'Nothing matches “' + q + '”' + (this.activeCount() ? ' with the current filters.' : '. Check the spelling, or add it if the team has it.') : 'No parts match these filters.' }),
+        el('div', { style: { display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' } },
+          this.activeCount() || q ? el('button', { class: 'btn', text: 'Clear search & filters', onClick: function () { self.clearAll(); } }) : null,
+          q ? el('button', { class: 'btn primary', onClick: function () { self.openEditor(null, { name: q }); } }, icon('plus'), 'Add “' + q + '”') : null))));
+      return;
+    }
+    r.table.style.display = '';
+    this.updateHead();
+    this.renderRows(list.slice(0, this.limit));
+    clear(r.more);
+    r.more.style.display = list.length > this.limit ? '' : 'none';
+    if (list.length > this.limit) {
+      r.more.appendChild(el('button', { class: 'btn', text: 'Show more (' + (list.length - this.limit) + ' more)', onClick: function () { self.limit += 200; self.update(); } }));
+    }
+  },
+
+  clearAll: function () {
+    const q = this.refs.search;
+    const mode = this.f.tagMode;
+    this.f = emptyPartsFilter();
+    this.f.tagMode = mode;
+    this.activeCol = null;
+    q.value = '';
+    this.limit = 100;
+    this.update();
+  },
+
+  // ───── filter pills ─────
+
+  renderFilters: function (lowCount, checkCount) {
+    const self = this, f = this.f, box = clear(this.refs.filters);
+    const pill = function (label, count, onClick) {
+      return el('button', { class: 'pill' + (count ? ' on' : ''), type: 'button', 'aria-haspopup': 'true', onClick: onClick },
+        label, count ? el('span', { class: 'count', text: count }) : icon('chevronDown'));
+    };
+    box.append(
+      this.collectionsPill(),
+      pill('Category', f.categoryIds.length, function (e) { self.menuList(e.currentTarget, 'categoryIds', App.sorted('categories').map(function (c) { return { id: c.id, label: c.name }; })); }),
+      pill('Tags', f.tagIds.length, function (e) { self.menuTags(e.currentTarget); }),
+      pill('Location', f.locationIds.length, function (e) { self.menuLocations(e.currentTarget); }),
+      pill('Supplier', f.supplierIds.length, function (e) { self.menuList(e.currentTarget, 'supplierIds', App.sorted('suppliers').map(function (c) { return { id: c.id, label: c.name }; })); }),
+      el('button', { class: 'pill' + (f.lowStock ? ' on' : ''), type: 'button', 'aria-pressed': String(f.lowStock), 'data-low-pill': '1',
+        onClick: function () { f.lowStock = !f.lowStock; self.update(); } }, 'Low stock', el('span', { class: 'num', style: { opacity: 0.7 }, text: lowCount })),
+      checkCount || f.needsCheck ? el('button', { class: 'pill' + (f.needsCheck ? ' on' : ''), type: 'button', 'aria-pressed': String(f.needsCheck),
+        onClick: function () { f.needsCheck = !f.needsCheck; self.update(); } }, 'Needs check', el('span', { class: 'num', style: { opacity: 0.7 }, text: checkCount })) : null,
+      el('div', { class: 'spacer' }),
+      this.sortSelect()
+    );
+  },
+
+  sortSelect: function () {
+    const self = this;
+    const s = App.selectEl(PARTS_SORTS.map(function (x) { return { value: x.id, label: 'Sort: ' + x.label }; }), this.sort);
+    s.classList.add('sort');
+    s.setAttribute('aria-label', 'Sort parts');
+    s.addEventListener('change', function () { self.sort = s.value; store.set('partsSort', s.value); self.update(); });
+    return s;
+  },
+
+  /** Generic multi-select popover for a filter array. */
+  menuList: function (anchor, field, items) {
+    const self = this;
+    App.popover(anchor, function (box) {
+      const body = el('div', { class: 'popover-body' });
+      if (!items.length) body.appendChild(el('div', { class: 'opt-empty', text: 'Nothing here yet. Add some in Settings.' }));
+      items.forEach(function (it) {
+        body.appendChild(App.checkOpt(it.label, self.f[field].indexOf(it.id) >= 0, function (on) {
+          const arr = self.f[field].filter(function (x) { return x !== it.id; });
+          if (on) arr.push(it.id);
+          self.f[field] = arr;
+          self.update();
+        }));
+      });
+      box.append(body, el('div', { class: 'popover-foot' },
+        el('button', { class: 'link-btn', text: 'Clear', onClick: function () { self.f[field] = []; self.update(); App._popover.close(); } }),
+        el('button', { class: 'btn sm', text: 'Done', onClick: function () { App._popover.close(); } })));
+    });
+  },
+
+  menuTags: function (anchor) {
+    const self = this;
+    App.popover(anchor, function (box) {
+      const input = el('input', { class: 'input', type: 'search', placeholder: 'Find a tag…', 'aria-label': 'Find a tag' });
+      const body = el('div', { class: 'popover-body' });
+      const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Match' });
+      const drawSeg = function () {
+        clear(seg).append(
+          el('button', { class: self.f.tagMode === 'any' ? 'on' : '', type: 'button', text: 'Any', title: 'Parts with any selected tag',
+            onClick: function () { self.f.tagMode = 'any'; drawSeg(); self.update(); } }),
+          el('button', { class: self.f.tagMode === 'all' ? 'on' : '', type: 'button', text: 'All', title: 'Parts with every selected tag',
+            onClick: function () { self.f.tagMode = 'all'; drawSeg(); self.update(); } }));
+      };
+      const draw = function () {
+        clear(body);
+        const q = Search.normalize(input.value);
+        const groups = App.sorted('categories').map(function (c) { return { name: c.name, id: c.id }; }).concat([{ name: 'Other tags', id: '' }]);
+        let any = false;
+        groups.forEach(function (g) {
+          const tags = App.sorted('tags', function (t) {
+            return (t.categoryId || '') === g.id || (g.id === '' && t.categoryId && !App.get('categories', t.categoryId));
+          }).filter(function (t) { return !q || Search.normalize(t.name).indexOf(q) >= 0; });
+          if (!tags.length) return;
+          any = true;
+          body.appendChild(el('div', { class: 'opt-group', text: g.name }));
+          tags.forEach(function (t) {
+            body.appendChild(App.checkOpt(t.name, self.f.tagIds.indexOf(t.id) >= 0, function (on) {
+              const arr = self.f.tagIds.filter(function (x) { return x !== t.id; });
+              if (on) arr.push(t.id);
+              self.f.tagIds = arr;
+              self.update();
+            }));
+          });
+        });
+        if (!any) body.appendChild(el('div', { class: 'opt-empty', text: 'No tags match.' }));
+      };
+      input.addEventListener('input', draw);
+      drawSeg();
+      draw();
+      box.append(el('div', { class: 'popover-head' }, input), body, el('div', { class: 'popover-foot' },
+        el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Match', seg),
+        el('div', { style: { display: 'flex', gap: '10px', alignItems: 'center' } },
+          el('button', { class: 'link-btn', text: 'Clear', onClick: function () { self.f.tagIds = []; self.update(); App._popover.close(); } }),
+          el('button', { class: 'btn sm', text: 'Done', onClick: function () { App._popover.close(); } }))));
+    });
+  },
+
+  menuLocations: function (anchor) {
+    const self = this;
+    App.popover(anchor, function (box) {
+      const body = el('div', { class: 'popover-body' });
+      const tree = App.locationTree();
+      if (!tree.length) body.appendChild(el('div', { class: 'opt-empty', text: 'No locations yet. Add them in Settings → Locations.' }));
+      const toggle = function (id) {
+        return function (on) {
+          const arr = self.f.locationIds.filter(function (x) { return x !== id; });
+          if (on) arr.push(id);
+          self.f.locationIds = arr;
+          self.update();
+        };
+      };
+      tree.forEach(function (n) {
+        body.appendChild(App.checkOpt(n.area.name + (n.children.length ? ' (all)' : ''), self.f.locationIds.indexOf(n.area.id) >= 0, toggle(n.area.id)));
+        n.children.forEach(function (c) {
+          body.appendChild(App.checkOpt(c.name, self.f.locationIds.indexOf(c.id) >= 0, toggle(c.id), 'indent'));
+        });
+      });
+      box.append(body, el('div', { class: 'popover-foot' },
+        el('button', { class: 'link-btn', text: 'Clear', onClick: function () { self.f.locationIds = []; self.update(); App._popover.close(); } }),
+        el('button', { class: 'btn sm', text: 'Done', onClick: function () { App._popover.close(); } })));
+    });
+  },
+
+  // ───── saved collections ─────
+
+  activeCol: null,
+
+  /** The current filters in the shape saved to a collection (empty values left out). */
+  filterSnapshot: function () {
+    const f = this.f, out = {};
+    if (f.q.trim()) out.q = f.q.trim();
+    ['categoryIds', 'tagIds', 'locationIds', 'supplierIds'].forEach(function (k) { if (f[k].length) out[k] = f[k].slice().sort(); });
+    if (f.tagIds.length) out.tagMode = f.tagMode;
+    if (f.lowStock) out.lowStock = true;
+    if (f.needsCheck) out.needsCheck = true;
+    return out;
+  },
+
+  sameFilter: function (a, b) {
+    const norm = function (x) {
+      const o = {};
+      Object.keys(x || {}).sort().forEach(function (k) {
+        const v = x[k];
+        if (Array.isArray(v)) { if (v.length) o[k] = v.slice().sort(); }
+        else if (v !== '' && v !== false && v !== null && v !== undefined && !(k === 'tagMode' && !(x.tagIds || []).length)) o[k] = v;
+      });
+      return JSON.stringify(o);
+    };
+    return norm(a) === norm(b);
+  },
+
+  collectionsPill: function () {
+    const self = this;
+    const col = this.activeCol && App.get('collections', this.activeCol);
+    if (this.activeCol && !col) this.activeCol = null;
+    const edited = col && !this.sameFilter(this.filterSnapshot(), col.filter);
+    return el('button', { class: 'pill' + (col ? ' on' : ''), type: 'button', 'aria-haspopup': 'true',
+      title: col ? 'Collection: ' + col.name + (edited ? ' (filters changed)' : '') : 'Saved collections',
+      onClick: function (e) { self.menuCollections(e.currentTarget); } },
+      icon('filter'), col ? col.name + (edited ? ' •' : '') : 'Collections', icon('chevronDown'));
+  },
+
+  applyCollection: function (c) {
+    const f = emptyPartsFilter();
+    Object.keys(c.filter || {}).forEach(function (k) {
+      if (!(k in f)) return;
+      f[k] = Array.isArray(f[k]) ? (Array.isArray(c.filter[k]) ? c.filter[k].slice() : []) : c.filter[k];
+    });
+    this.f = f;
+    this.activeCol = c.id;
+    this.refs.search.value = f.q || '';
+    this.limit = 100;
+    this.update();
+  },
+
+  menuCollections: function (anchor) {
+    const self = this;
+    App.popover(anchor, function (box) {
+      const body = el('div', { class: 'popover-body' });
+      const cols = App.sorted('collections', function (c) { return c.section === 'parts'; });
+      if (!cols.length) body.appendChild(el('div', { class: 'opt-empty', text: 'No saved collections yet. Set some filters, then save them here.' }));
+      cols.forEach(function (c) {
+        const on = self.activeCol === c.id;
+        body.appendChild(el('button', { class: 'opt' + (on ? ' checked' : ''), type: 'button', onClick: function () {
+          App._popover.close();
+          if (on) self.clearAll(); else self.applyCollection(c);
+        } }, el('span', { class: 'box' }, on ? icon('check') : null), el('span', { text: c.name })));
+      });
+      const snap = self.filterSnapshot();
+      const hasFilters = Object.keys(snap).length > 0;
+      const col = self.activeCol && App.get('collections', self.activeCol);
+      const actions = el('div', { class: 'popover-foot', style: { flexDirection: 'column', alignItems: 'stretch' } });
+      if (col && !self.sameFilter(snap, col.filter)) {
+        actions.appendChild(el('button', { class: 'btn sm', type: 'button', text: 'Update “' + col.name + '” with current filters', onClick: function () {
+          App._popover.close();
+          App.write('apiUpdate', ['collections', col.id, { filter: snap }]).then(function (d) { App.applyWrite('collections', d); self.update(); App.toast('Collection updated.', { type: 'ok' }); },
+            function (err) { App.toast(err.message, { type: 'error' }); });
+        } }));
+      }
+      actions.appendChild(el('button', { class: 'btn sm' + (hasFilters ? ' primary' : ''), type: 'button', disabled: !hasFilters,
+        title: hasFilters ? '' : 'Choose some filters or type a search first',
+        text: 'Save current filters as a collection…', onClick: function () { App._popover.close(); self.saveCollection(snap); } }));
+      actions.appendChild(el('button', { class: 'link-btn', type: 'button', style: { alignSelf: 'center', padding: '4px' }, text: 'Rename or delete collections in Settings',
+        onClick: function () { App._popover.close(); SettingsView.tab = 'collections'; App.go('settings'); } }));
+      box.append(el('div', { class: 'opt-group', text: 'Saved collections' }), body, actions);
+    });
+  },
+
+  saveCollection: function (snap) {
+    const self = this;
+    App.prompt({
+      title: 'Save collection', submitLabel: 'Save',
+      intro: 'Saves the current search and filters so anyone can bring them back in one click.',
+      fields: [{ name: 'name', label: 'Collection name', required: true, autofocus: true, max: 60, hint: 'e.g. Dead Axle Components' }],
+      onSubmit: function (v) {
+        return App.write('apiCreate', ['collections', { name: v.name, section: 'parts', filter: snap }]).then(function (d) {
+          App.applyWrite('collections', d);
+          return d.record;
+        });
+      }
+    }).then(function (rec) {
+      if (!rec) return;
+      self.activeCol = rec.id;
+      self.update();
+      App.toast('Saved “' + rec.name + '”.', { type: 'ok' });
+    });
+  },
+
+  // ───── low-stock panel ─────
+
+  renderLowPanel: function (count) {
+    const self = this, box = clear(this.refs.low);
+    if (!count) return;
+    const open = store.get('lowOpen', true);
+    const items = App.rows('parts').filter(function (p) { return isLowStock('parts', p); }).sort(function (a, b) {
+      const ra = App.qty.display('parts', a) / Math.max(1, a.lowStockThreshold), rb = App.qty.display('parts', b) / Math.max(1, b.lowStockThreshold);
+      return (ra - rb) || a.name.localeCompare(b.name);
+    });
+    const head = el('button', { class: 'low-head', type: 'button', 'aria-expanded': String(open), onClick: function () { store.set('lowOpen', !open); self.renderLowPanel(count); } },
+      el('span', { class: 'badge low', text: 'Low stock' }),
+      el('span', { text: plural(count, 'part') + ' at or below their warning level' }),
+      el('span', { class: 'spacer' }),
+      icon(open ? 'chevronDown' : 'chevronLeft'));
+    const panel = el('div', { class: 'low-panel' }, head);
+    if (open) {
+      const list = el('div', { class: 'low-list' });
+      items.slice(0, 6).forEach(function (p) {
+        const q = App.qty.display('parts', p);
+        list.appendChild(el('button', { class: 'low-item', type: 'button', onClick: function () { self.openEditor(App.get('parts', p.id)); } },
+          el('span', { class: 'low-name', text: p.name }),
+          el('span', { class: 'low-qty num' + (q === 0 ? ' zero' : ''), text: fmtQty(q) + ' / ' + p.lowStockThreshold }),
+          el('span', { class: 'low-loc', text: App.locationLabel(p.locationId) || 'No location' })));
+      });
+      panel.appendChild(list);
+      panel.appendChild(el('div', { class: 'low-foot' }, el('button', { class: 'link-btn', type: 'button',
+        text: count > 6 ? 'Show all ' + count + ' low-stock parts' : 'Show only low-stock parts',
+        onClick: function () { self.f.lowStock = true; self.update(); } })));
+    }
+    box.appendChild(panel);
+  },
+
+  // ───── table ─────
+
+  headRow: function () {
+    const self = this;
+    const h = function (label, sortAsc, sortDesc, cls) {
+      const b = el('button', { type: 'button', text: label });
+      b.dataset.sorts = [sortAsc, sortDesc].filter(Boolean).join(',');
+      if (sortAsc) b.addEventListener('click', function () {
+        self.sort = self.sort === sortAsc && sortDesc ? sortDesc : sortAsc;
+        store.set('partsSort', self.sort);
+        self.update();
+      });
+      return el('div', { class: cls || '', role: 'columnheader' }, sortAsc ? b : label);
+    };
+    return el('div', { class: 'row head', role: 'row' },
+      h('Part', 'name'), h('Category', null, null, 'col-cat'), h('Location', 'location', null, 'col-loc'),
+      h('Supplier', null, null, 'col-supplier'), el('div', { style: { justifySelf: 'end' }, role: 'columnheader' }, h('Quantity', 'qtyAsc', 'qtyDesc')));
+  },
+
+  updateHead: function () {
+    const self = this;
+    this.refs.head.querySelectorAll('button').forEach(function (b) {
+      const on = b.dataset.sorts && b.dataset.sorts.split(',').indexOf(self.sort) >= 0;
+      b.classList.toggle('sorted', Boolean(on));
+      if (b.lastChild && b.lastChild.nodeType === 1) b.removeChild(b.lastChild);
+      if (on) b.appendChild(icon(self.sort === 'qtyDesc' ? 'arrowDown' : 'arrowUp'));
+    });
+  },
+
+  signature: function (p) {
+    return [p.version, p.name, p.imageId, App.qty.display('parts', p), App.qty.state('parts', p.id), p.lowStockThreshold, p.needsCheck,
+      App.name('categories', p.categoryId), App.locationLabel(p.locationId), App.name('suppliers', p.supplierId),
+      p.tagIds.map(function (t) { return App.name('tags', t); }).join('|')].join('\u0001');
+  },
+
+  renderRows: function (list) {
+    const self = this, body = this.refs.body;
+    const ids = list.map(function (p) { return p.id; });
+    const sameOrder = ids.length === this.order.length && ids.every(function (id, i) { return id === self.order[i]; });
+    const fresh = {};
+    list.forEach(function (p) {
+      const sig = self.signature(p);
+      const old = self.rows[p.id];
+      if (old && (old.sig === sig || self.isEditing(old.el))) fresh[p.id] = old;
+      else {
+        const rowEl = self.rowEl(p);
+        if (old && sameOrder && old.el.parentNode === body) body.replaceChild(rowEl, old.el);
+        fresh[p.id] = { el: rowEl, sig: sig };
+      }
+    });
+    this.rows = fresh;
+    if (!sameOrder || body.children.length !== list.length) {
+      const frag = document.createDocumentFragment();
+      list.forEach(function (p) { frag.appendChild(fresh[p.id].el); });
+      clear(body).appendChild(frag);
+    }
+    this.order = ids;
+  },
+
+  isEditing: function (rowEl) {
+    const a = document.activeElement;
+    return a && a.tagName === 'INPUT' && rowEl.contains(a);
+  },
+
+  /** Re-draws one row after a quantity change (without re-running search). */
+  refreshRow: function (id) {
+    if (!this.refs) return;
+    const old = this.rows[id], p = App.get('parts', id);
+    if (!old || !p || this.isEditing(old.el)) return;
+    const sig = this.signature(p);
+    if (sig === old.sig) return;
+    const n = this.rowEl(p);
+    if (old.el.parentNode) old.el.parentNode.replaceChild(n, old.el);
+    this.rows[id] = { el: n, sig: sig };
+    const lowCount = App.rows('parts').filter(function (x) { return isLowStock('parts', x); }).length;
+    const lowPill = this.refs.filters.querySelector('[data-low-pill]');
+    if (lowPill && lowPill.lastChild) lowPill.lastChild.textContent = lowCount;
+    if (!(this.f.q.trim() || this.activeCount())) this.renderLowPanel(lowCount);
+  },
+
+  rowEl: function (p) {
+    const self = this;
+    const low = isLowStock('parts', p);
+    const tagNames = p.tagIds.map(function (t) { return App.name('tags', t); }).filter(Boolean);
+    const cat = App.name('categories', p.categoryId), loc = App.locationLabel(p.locationId), sup = App.name('suppliers', p.supplierId);
+    const shownTags = tagNames.slice(0, 4);
+    const sub = el('div', { class: 'item-sub' },
+      low ? el('span', { class: 'badge low', text: 'Low' }) : null,
+      p.needsCheck ? el('span', { class: 'badge check', text: 'Needs check' }) : null,
+      shownTags.map(function (t) { return el('span', { class: 'tag', text: t }); }),
+      tagNames.length > 4 ? el('span', { class: 'tag', text: '+' + (tagNames.length - 4) }) : null);
+    const mMeta = [cat, loc || 'No location'].filter(Boolean).join(' · ');
+    const row = el('div', { class: 'row item' + (low ? ' low' : ''), role: 'row', tabindex: '0', 'aria-label': p.name },
+      el('div', { class: 'cell-name has-thumb', role: 'cell' },
+        p.imageId ? el('div', { class: 'thumb' }, App.imgEl(p.imageId, 120)) : el('div', { class: 'thumb empty' }, icon('parts')),
+        el('div', { class: 'name-wrap' },
+          el('div', { class: 'item-name', text: p.name }),
+          el('div', { class: 'm-meta', text: mMeta }),
+          sub.children.length ? sub : null)),
+      el('div', { class: 'cell col-cat' + (cat ? '' : ' empty'), role: 'cell', text: cat || '—' }),
+      el('div', { class: 'cell col-loc' + (loc ? '' : ' empty'), role: 'cell', text: loc || '—' }),
+      el('div', { class: 'cell col-supplier' + (sup ? '' : ' empty'), role: 'cell', text: sup || '—' }),
+      el('div', { class: 'cell-qty', role: 'cell' }, this.syncEl('parts', p.id), qtyControl('parts', p)));
+    row.addEventListener('click', function (e) { if (!e.target.closest('.qty')) self.openEditor(App.get('parts', p.id)); });
+    row.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === row) self.openEditor(App.get('parts', p.id)); });
+    return row;
+  },
+
+  syncEl: function (key, id) {
+    const st = App.qty.state(key, id);
+    return el('span', { class: 'sync ' + st, title: st === 'pending' ? 'Saving…' : (st === 'saved' ? 'Saved' : '') }, st === 'saved' ? icon('check') : null);
+  },
+
+  // ───── add / edit drawer ─────
+
+  openEditor: function (rec, prefill) {
+    const self = this;
+    const isNew = !rec;
+    const snapshot = rec ? JSON.parse(JSON.stringify(rec)) : null;
+    const v = Object.assign({ name: '', quantity: 0, categoryId: '', tagIds: [], locationId: '', supplierId: '', description: '', aliases: '', lowStockThreshold: null },
+      rec ? snapshot : {}, prefill || {});
+    if (rec) v.quantity = App.qty.display('parts', rec);
+
+    const name = el('input', { class: 'input', type: 'text', value: v.name, maxlength: 150, autofocus: true });
+    const qty = el('input', { class: 'input num', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: v.quantity });
+    const low = el('input', { class: 'input num', type: 'number', min: 0, step: 1, inputmode: 'numeric', value: v.lowStockThreshold === null ? '' : v.lowStockThreshold, placeholder: 'No warning' });
+    const cat = App.selectEl(App.sorted('categories').map(function (c) { return { value: c.id, label: c.name }; }), v.categoryId, 'No category');
+    const tags = tagPicker(v.tagIds);
+    let loc = App.selectEl(App.locationSelectOptions(), v.locationId, 'No location');
+    let sup = App.selectEl(App.sorted('suppliers').map(function (s) { return { value: s.id, label: s.name }; }), v.supplierId, 'No supplier');
+    const aliases = el('input', { class: 'input', type: 'text', value: v.aliases, maxlength: 500, placeholder: 'e.g. ball bearing, 1/2 hex bearing' });
+    const desc = el('textarea', { class: 'textarea', maxlength: 2000, text: v.description });
+
+    const locWrap = el('div', { style: { display: 'contents' } }, loc);
+    const supWrap = el('div', { style: { display: 'contents' } }, sup);
+    const fields = {
+      name: App.field('Name', name, { required: true, full: true }),
+      quantity: App.field('Quantity', qty, { required: true }),
+      lowStockThreshold: App.field('Low-stock warning at', low, { hint: 'Flag when quantity is at or below this.' }),
+      categoryId: App.field('Category', cat),
+      supplierId: App.field('Supplier', supWrap),
+      tagIds: App.field('Tags', tags.el, { full: true, hint: 'Type to search, or create a new tag.' }),
+      locationId: App.field('Storage location', locWrap, { full: true }),
+      aliases: App.field('Search aliases', aliases, { full: true, hint: 'Other names people might search for, separated by commas.' }),
+      description: App.field('Description', desc, { full: true })
+    };
+    fields.locationId.appendChild(el('button', { class: 'link-btn', type: 'button', text: '+ New location', style: { alignSelf: 'flex-start' },
+      onClick: function () { newLocationPrompt().then(function (id) {
+        if (!id) return;
+        const n = App.selectEl(App.locationSelectOptions(), id, 'No location');
+        locWrap.replaceChild(n, loc); loc = n;
+      }); } }));
+    fields.supplierId.appendChild(el('button', { class: 'link-btn', type: 'button', text: '+ New supplier', style: { alignSelf: 'flex-start' },
+      onClick: function () { newSettingPrompt('suppliers', 'New supplier', 'Supplier name').then(function (id) {
+        if (!id) return;
+        const n = App.selectEl(App.sorted('suppliers').map(function (s) { return { value: s.id, label: s.name }; }), id, 'No supplier');
+        supWrap.replaceChild(n, sup); sup = n;
+      }); } }));
+
+    const body = [];
+    if (rec && rec.needsCheck) {
+      body.push(el('div', { class: 'notice' }, el('b', { text: 'Needs check. ' }),
+        'An audit couldn’t find this part. Its quantity was left unchanged. ',
+        el('button', { class: 'link-btn', type: 'button', text: 'Mark as found', onClick: function (e) {
+          const btn = e.currentTarget;
+          btn.disabled = true;
+          App.write('apiSetNeedsCheck', ['parts', rec.id, false]).then(function (data) {
+            App.applyWrite('parts', data);
+            snapshot.version = data.record.version;
+            btn.parentNode.remove();
+            App.toast('Marked as found.', { type: 'ok' });
+          }, function (err) { btn.disabled = false; App.toast(err.message, { type: 'error' }); });
+        } })));
+    }
+    const photo = App.imageField('parts', rec);
+    body.push(el('div', { class: 'field' }, el('div', { class: 'field-label', text: 'Photo' }), photo.el));
+    body.push(el('div', { class: 'form-grid' }, Object.keys(fields).map(function (k) { return fields[k]; })));
+    if (rec) body.push(el('div', { class: 'meta-line', text: 'Last updated ' + new Date(rec.updatedAt).toLocaleString() }));
+
+    const read = function () {
+      return {
+        name: name.value.trim(),
+        quantity: qty.value === '' ? null : Number(qty.value),
+        lowStockThreshold: low.value === '' ? null : Number(low.value),
+        categoryId: cat.value, tagIds: tags.value(), locationId: loc.value, supplierId: sup.value,
+        aliases: aliases.value.trim(), description: desc.value.trim()
+      };
+    };
+    const original = JSON.stringify(Object.assign(read(), {}));
+    const isDirty = function () { return JSON.stringify(read()) !== original || photo.hasPending(); };
+
+    const save = el('button', { class: 'btn primary', type: 'button', text: isNew ? 'Add part' : 'Save changes' });
+    const foot = [];
+    if (!isNew) foot.push(el('button', { class: 'btn danger', type: 'button', onClick: function () { self.archive(rec, m); } }, icon('archive'), el('span', { class: 'label', text: 'Archive' })));
+    foot.push(el('div', { class: 'spacer' }),
+      el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(); } }),
+      save);
+
+    const m = App.modal({
+      kind: 'drawer', title: isNew ? 'Add part' : 'Edit part', body: body, foot: foot,
+      beforeClose: function () {
+        return isDirty() ? App.confirm({ title: 'Discard changes?', message: 'Your changes to this part haven’t been saved.', confirmLabel: 'Discard', cancelLabel: 'Keep editing', danger: true }) : true;
+      }
+    });
+
+    const showErrors = function (errs) {
+      Object.keys(fields).forEach(function (k) { fields[k].setError(errs[k] || ''); });
+      const first = Object.keys(errs)[0];
+      if (first && fields[first]) fields[first].scrollIntoView({ block: 'center' });
+    };
+
+    const submit = function () {
+      const val = read();
+      const errs = {};
+      if (!val.name) errs.name = 'Give the part a name.';
+      if (val.quantity === null || !Number.isInteger(val.quantity) || val.quantity < 0) errs.quantity = 'Enter a whole number, 0 or more.';
+      if (val.lowStockThreshold !== null && (!Number.isInteger(val.lowStockThreshold) || val.lowStockThreshold < 0)) errs.lowStockThreshold = 'Enter a whole number, or leave blank.';
+      showErrors(errs);
+      if (Object.keys(errs).length) return;
+      save.disabled = true;
+      save.textContent = 'Saving…';
+      const done = function (data) {
+        App.applyWrite('parts', data);
+        if (isNew && photo.hasPending()) {
+          save.textContent = 'Uploading photo…';
+          photo.uploadAfterCreate(data.record.id).then(function () { m.close(true); });
+        } else m.close(true);
+        App.toast(isNew ? 'Added “' + data.record.name + '”.' : 'Saved.', { type: 'ok' });
+      };
+      const fail = function (err) {
+        save.disabled = false;
+        save.textContent = isNew ? 'Add part' : 'Save changes';
+        if (err.code === 'VALIDATION' && err.details && err.details.fields) showErrors(err.details.fields);
+        else App.toast(err.message, { type: 'error' });
+      };
+      if (isNew) { App.write('apiCreate', ['parts', val]).then(done, fail); return; }
+
+      const changes = {};
+      const orig = JSON.parse(original);
+      Object.keys(val).forEach(function (k) { if (JSON.stringify(val[k]) !== JSON.stringify(orig[k])) changes[k] = val[k]; });
+      if (!Object.keys(changes).length) { m.close(true); return; }
+      App.qty.flush('parts', rec.id);
+      App.queue(rec.id, function () {
+        return App.write('apiUpdate', ['parts', rec.id, changes, snapshot.version]).catch(function (err) {
+          if (err.code !== 'CONFLICT') throw err;
+          return resolveConflict(err.details.current, snapshot, changes, orig);
+        });
+      }).then(function (data) { if (data) done(data); else fail({ message: 'Not saved.' }); }, fail);
+    };
+    save.addEventListener('click', submit);
+    m.root.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.target.closest('.chips')) { e.preventDefault(); submit(); }
+    });
+  },
+
+  archive: function (rec, modal) {
+    App.confirm({
+      title: 'Archive this part?',
+      message: '“' + rec.name + '” will be hidden from the inventory. You can restore it from Settings → Archive for ' + 30 + ' days.',
+      confirmLabel: 'Archive', danger: true
+    }).then(function (yes) {
+      if (!yes) return;
+      App.write('apiArchive', ['parts', rec.id]).then(function (data) {
+        App.applyWrite('parts', data);
+        if (modal) modal.close(true);
+        App.toast('Archived “' + rec.name + '”.', { action: { label: 'Undo', fn: function () {
+          App.write('apiRestore', ['parts', rec.id]).then(function (d) { App.applyWrite('parts', d); App.toast('Restored.', { type: 'ok' }); },
+            function (e) { App.toast(e.message, { type: 'error' }); });
+        } } });
+      }, function (err) { App.toast(err.message, { type: 'error' }); });
+    });
+  }
+};
+
+/**
+ * Someone else saved this item while it was open. If they changed different
+ * fields, merge automatically. Otherwise ask.
+ */
+function resolveConflict(current, snapshot, changes, orig) {
+  const fields = Object.keys(changes);
+  const clash = fields.filter(function (f) {
+    const now = f === 'quantity' ? current.quantity : current[f];
+    return JSON.stringify(now) !== JSON.stringify(f === 'quantity' ? snapshot.quantity : snapshot[f]);
+  });
+  App.upsert('parts', current);
+  if (!clash.length) return App.write('apiUpdate', ['parts', current.id, changes, current.version]);
+  const names = { quantity: 'quantity', name: 'name', categoryId: 'category', tagIds: 'tags', locationId: 'location', supplierId: 'supplier', description: 'description', aliases: 'aliases', lowStockThreshold: 'low-stock warning' };
+  return App.confirm({
+    title: 'Someone else edited this part',
+    message: 'While you were editing, someone changed the ' + clash.map(function (f) { return names[f] || f; }).join(', ') +
+      (clash.indexOf('quantity') >= 0 ? ' (quantity is now ' + fmtQty(current.quantity) + ')' : '') + '. Save your version anyway?',
+    confirmLabel: 'Save mine', cancelLabel: 'Cancel'
+  }).then(function (yes) {
+    return yes ? App.write('apiUpdate', ['parts', current.id, changes, null]) : null;
+  });
+}
+
+// ───────────────────────── shared widgets ─────────────────────────
+
+/** − [ 12 ] + stepper. Click the number to type an exact amount. */
+function qtyControl(key, rec) {
+  const val = App.qty.display(key, rec);
+  const box = el('div', { class: 'qty' + (val === 0 ? ' zero' : ''), role: 'group', 'aria-label': 'Quantity' });
+  const minus = el('button', { type: 'button', 'aria-label': 'Remove one', onClick: function (e) { e.stopPropagation(); App.qty.bump(key, rec.id, -1); } }, icon('minus'));
+  const plus = el('button', { type: 'button', 'aria-label': 'Add one', onClick: function (e) { e.stopPropagation(); App.qty.bump(key, rec.id, 1); } }, icon('plus'));
+  const shown = el('button', { class: 'val', type: 'button', text: fmtQty(val), title: 'Click to type an amount', 'aria-label': 'Quantity ' + fmtQty(val) + ', click to edit' });
+  shown.addEventListener('click', function (e) {
+    e.stopPropagation();
+    const decimal = Boolean(TABLES_CLIENT[key].decimal);
+    const input = el('input', { class: 'val', type: 'number', min: 0, step: decimal ? 'any' : 1, inputmode: decimal ? 'decimal' : 'numeric', value: App.qty.display(key, App.get(key, rec.id)), 'aria-label': 'New amount' });
+    let finished = false;
+    const finish = function (commit) {
+      if (finished) return;
+      finished = true;
+      const n = Number(input.value);
+      const ok = commit && input.value !== '' && isFinite(n) && (decimal || Number.isInteger(n)) && n >= 0 && n <= 1000000;
+      if (commit && !ok && input.value !== '') App.toast(decimal ? 'Enter a number, 0 or more.' : 'Enter a whole number, 0 or more.', { type: 'error' });
+      if (input.parentNode) input.parentNode.replaceChild(shown, input);
+      if (ok && n !== App.qty.display(key, App.get(key, rec.id))) App.qty.set(key, rec.id, n);
+      else App.qty.changed(key, rec.id);
+    };
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+      if (ev.key === 'Escape') { ev.stopPropagation(); finish(false); }
+    });
+    input.addEventListener('blur', function () { finish(true); });
+    input.addEventListener('click', function (ev) { ev.stopPropagation(); });
+    box.replaceChild(input, shown);
+    input.focus();
+    input.select();
+  });
+  box.append(minus, shown, plus);
+  return box;
+}
+
+App.on('qty', function (e) {
+  const v = App.views[e.key];
+  if (App.current === e.key && v && v.refreshRow) v.refreshRow(e.id);
+});
+
+/** Tag picker: chips + type-ahead, grouped by category, with "Create tag". */
+function tagPicker(initial) {
+  let selected = initial.slice();
+  let active = 0;
+  const input = el('input', { type: 'text', placeholder: 'Add tags…', 'aria-label': 'Add tags', autocomplete: 'off' });
+  const chips = el('div', { class: 'chips', onClick: function () { input.focus(); } });
+  const menu = el('div', { class: 'picker-menu', role: 'listbox' });
+  menu.style.display = 'none';
+  const wrap = el('div', { class: 'picker-list' }, chips, menu);
+  let options = [];
+
+  const drawChips = function () {
+    clear(chips);
+    selected.forEach(function (id) {
+      const name = App.name('tags', id);
+      if (!name) return;
+      chips.appendChild(el('span', { class: 'chip' }, name,
+        el('button', { type: 'button', 'aria-label': 'Remove ' + name, onClick: function (e) {
+          e.stopPropagation(); selected = selected.filter(function (x) { return x !== id; }); drawChips(); drawMenu();
+        } }, icon('x'))));
+    });
+    chips.appendChild(input);
+  };
+
+  const drawMenu = function () {
+    const q = input.value.trim();
+    const nq = Search.normalize(q);
+    clear(menu);
+    options = [];
+    const groups = App.sorted('categories').map(function (c) { return { id: c.id, name: c.name }; }).concat([{ id: '', name: 'Other tags' }]);
+    groups.forEach(function (g) {
+      const tags = App.sorted('tags', function (t) {
+        return (t.categoryId || '') === g.id || (g.id === '' && t.categoryId && !App.get('categories', t.categoryId));
+      }).filter(function (t) { return selected.indexOf(t.id) < 0 && (!nq || Search.normalize(t.name).indexOf(nq) >= 0); });
+      if (!tags.length) return;
+      menu.appendChild(el('div', { class: 'opt-group', text: g.name }));
+      tags.forEach(function (t) {
+        const b = el('button', { class: 'opt', type: 'button', role: 'option', text: t.name, onMouseDown: function (e) { e.preventDefault(); pick(t.id); } });
+        options.push({ el: b, id: t.id });
+        menu.appendChild(b);
+      });
+    });
+    const exact = App.rows('tags').some(function (t) { return t.name.toLowerCase() === q.toLowerCase(); });
+    if (q && !exact) {
+      const b = el('button', { class: 'opt', type: 'button', onMouseDown: function (e) { e.preventDefault(); create(q); } }, icon('plus'), 'Create tag “' + q + '”');
+      options.push({ el: b, create: q });
+      menu.appendChild(b);
+    }
+    if (!options.length) menu.appendChild(el('div', { class: 'opt-empty', text: 'All tags are already added.' }));
+    active = Math.min(active, Math.max(0, options.length - 1));
+    options.forEach(function (o, i) { o.el.classList.toggle('active', i === active); });
+  };
+
+  const pick = function (id) {
+    if (selected.indexOf(id) < 0) selected.push(id);
+    input.value = '';
+    active = 0;
+    drawChips(); drawMenu();
+    input.focus();
+  };
+
+  const create = function (name) {
+    App.write('apiCreate', ['tags', { name: name }]).then(function (data) {
+      App.applyWrite('tags', data);
+      pick(data.record.id);
+      App.toast('Created tag “' + data.record.name + '”. You can group it in Settings → Tags.', { type: 'ok' });
+    }, function (err) { App.toast(err.message, { type: 'error' }); });
+  };
+
+  input.addEventListener('focus', function () { menu.style.display = ''; drawMenu(); });
+  input.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== input) menu.style.display = 'none'; }, 120); });
+  input.addEventListener('input', function () { active = 0; drawMenu(); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, options.length - 1); drawMenu(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); drawMenu(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const o = options[active];
+      if (o) { if (o.create) create(o.create); else pick(o.id); }
+    } else if (e.key === 'Backspace' && !input.value && selected.length) {
+      selected.pop(); drawChips(); drawMenu();
+    } else if (e.key === 'Escape' && menu.style.display !== 'none') {
+      e.stopPropagation(); menu.style.display = 'none';
+    }
+  });
+  drawChips();
+  return { el: wrap, value: function () { return selected.slice(); } };
+}
+
+/** Prompt for a new settings entry with just a name. Resolves the new ID or null. */
+function newSettingPrompt(key, title, label) {
+  return App.prompt({
+    title: title, submitLabel: 'Add',
+    fields: [{ name: 'name', label: label, required: true, autofocus: true }],
+    onSubmit: function (v) {
+      return App.write('apiCreate', [key, { name: v.name }]).then(function (data) { App.applyWrite(key, data); return data.record.id; });
+    }
+  });
+}
+
+/** Prompt for a new location (existing or new area, optional container). Resolves the new ID or null. */
+function newLocationPrompt() {
+  const areas = App.sorted('locations', function (r) { return !r.parentId; });
+  return App.prompt({
+    title: 'New location', submitLabel: 'Add location',
+    intro: 'Locations are an area (like Tool Chest) and, optionally, a labeled container inside it (like A1).',
+    fields: [
+      { name: 'areaId', label: 'Area', type: 'select', emptyLabel: '＋ New area…', value: areas.length ? areas[0].id : '',
+        options: areas.map(function (a) { return { value: a.id, label: a.name }; }) },
+      { name: 'areaName', label: 'New area name', hint: 'Only needed for a new area, e.g. Main Storage.' },
+      { name: 'container', label: 'Container', hint: 'Optional, e.g. A1.' }
+    ],
+    onSubmit: function (v) {
+      const mk = function (rec) { return App.write('apiCreate', ['locations', rec]).then(function (d) { App.applyWrite('locations', d); return d.record.id; }); };
+      if (!v.areaId && !v.areaName) return Promise.reject({ details: { fields: { areaName: 'Name the new area, or pick an existing one.' } } });
+      const areaP = v.areaId ? Promise.resolve(v.areaId) : mk({ name: v.areaName });
+      return areaP.then(function (areaId) { return v.container ? mk({ name: v.container, parentId: areaId }) : areaId; });
+    }
+  });
+}
+
+App.views.parts = PartsView;
+</script>
