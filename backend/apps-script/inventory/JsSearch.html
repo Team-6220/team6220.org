@@ -1,0 +1,114 @@
+<script>
+/* ============================================================================
+   JsSearch.html — Golden Griffins Inventory
+   Local search that runs in the browser (instant, no server calls).
+     - case-insensitive, ignores punctuation:  "hex-shaft" = "hex shaft"
+     - partial words:                          "spac" finds "Spacer"
+     - simple plurals:                         "bearings" finds "Bearing"
+     - small typos (words of 5+ letters):      "bearng" finds "Bearing"
+     - searches name, aliases, tags, category, supplier, location, description
+   Every word typed must match something. Name/alias matches rank highest.
+   ========================================================================== */
+'use strict';
+
+const Search = {
+  normalize: function (s) {
+    return String(s || '').toLowerCase()
+      .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+      .replace(/(\d)\s*\/\s*(\d)/g, '$1/$2')      // keep fractions like 1/2 together
+      .replace(/[^a-z0-9/.#]+/g, ' ')
+      .trim();
+  },
+
+  /** Rough singular form so plurals match: bearings→bearing, pulleys→pulley, boxes→box. */
+  stem: function (w) {
+    if (w.length > 4 && /ies$/.test(w)) return w.slice(0, -3) + 'y';
+    if (w.length > 4 && /(s|x|z|ch|sh)es$/.test(w)) return w.slice(0, -2);
+    if (w.length > 3 && /s$/.test(w) && !/ss$/.test(w)) return w.slice(0, -1);
+    return w;
+  },
+
+  tokens: function (s) {
+    const n = Search.normalize(s);
+    return n ? n.split(' ').filter(Boolean) : [];
+  },
+
+  /** Edit distance, giving up early once it exceeds max. */
+  within: function (a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return false;
+    let prev = [];
+    for (let j = 0; j <= b.length; j++) prev[j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      let best = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1));
+        if (cur[j] < best) best = cur[j];
+      }
+      if (best > max) return false;
+      prev = cur;
+    }
+    return prev[b.length] <= max;
+  },
+
+  /**
+   * Builds an index. fieldsFn(rec) → [[text, weight], ...]
+   * Returns { query(q) → [{ rec, score }] }.
+   */
+  build: function (records, fieldsFn) {
+    const docs = records.map(function (rec) {
+      const fields = fieldsFn(rec).map(function (f) {
+        const text = Search.normalize(f[0]);
+        const words = text ? text.split(' ') : [];
+        return { text: text, words: words, stems: words.map(Search.stem), weight: f[1] };
+      });
+      return { rec: rec, fields: fields };
+    });
+    return {
+      size: docs.length,
+      query: function (q) {
+        const terms = Search.tokens(q);
+        if (!terms.length) return docs.map(function (d) { return { rec: d.rec, score: 0 }; });
+        const out = [];
+        docs.forEach(function (d) {
+          let total = 0;
+          for (let t = 0; t < terms.length; t++) {
+            const s = Search.scoreTerm(terms[t], d.fields);
+            if (!s) return;                   // every term must match
+            total += s;
+          }
+          out.push({ rec: d.rec, score: total });
+        });
+        return out.sort(function (a, b) { return b.score - a.score; });
+      }
+    };
+  },
+
+  scoreTerm: function (term, fields) {
+    const stem = Search.stem(term);
+    // Short words must match exactly ("gear" must not find "bear").
+    const maxEdits = term.length >= 9 ? 2 : (term.length >= 5 ? 1 : 0);
+    let best = 0;
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (!f.text) continue;
+      let s = 0;
+      for (let w = 0; w < f.words.length; w++) {
+        const word = f.words[w];
+        if (word === term || f.stems[w] === stem) { s = Math.max(s, 10); break; }
+        if (word.indexOf(term) === 0 || f.stems[w].indexOf(stem) === 0) s = Math.max(s, 7);
+      }
+      if (!s && f.text.indexOf(term) >= 0) s = 4;                       // inside a word
+      if (!s && maxEdits) {
+        for (let w = 0; w < f.words.length; w++) {
+          const word = f.words[w];
+          if (Search.within(stem, f.stems[w], maxEdits) ||
+              (word.length > term.length && Search.within(term, word.slice(0, term.length), maxEdits))) { s = 2; break; }
+        }
+      }
+      if (s) best = Math.max(best, s * f.weight);
+    }
+    return best;
+  }
+};
+</script>

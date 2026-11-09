@@ -1,0 +1,1029 @@
+<script>
+/* ============================================================================
+   JsCore.html — Golden Griffins Inventory
+   Shared browser code: server calls, the local data store, change polling,
+   the sidebar/router, dialogs, popovers, toasts and the quantity sync queue.
+   Page files (JsParts, JsSettings, ...) register themselves in App.views.
+   ========================================================================== */
+'use strict';
+
+const App = {
+  tables: {},        // tableKey → array of records
+  idx: {},           // tableKey → { id: record }
+  versions: {},      // tableKey → change counter we have
+  views: {},         // registered pages
+  current: null,     // id of the page being shown
+  _listeners: {},
+  POLL_MS: 30000
+};
+
+// ───────────────────────── DOM helpers ─────────────────────────
+
+/** el('div', {class:'x', onClick: fn}, child, 'text', ...) — never uses innerHTML for data. */
+function el(tag, props) {
+  const n = document.createElement(tag);
+  if (props) {
+    Object.keys(props).forEach(function (k) {
+      const v = props[k];
+      if (v === null || v === undefined || v === false) return;
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = v;
+      else if (k === 'style') Object.keys(v).forEach(function (sk) {
+        if (sk.indexOf('--') === 0) n.style.setProperty(sk, v[sk]); else n.style[sk] = v[sk];
+      });
+      else if (k === 'dataset') Object.assign(n.dataset, v);
+      else if (k.indexOf('on') === 0 && typeof v === 'function') n.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (k === 'value') n.value = v;
+      else if (k === 'checked' || k === 'disabled' || k === 'selected') n[k] = Boolean(v);
+      else n.setAttribute(k, v === true ? '' : v);
+    });
+  }
+  for (let i = 2; i < arguments.length; i++) appendKids(n, arguments[i]);
+  return n;
+}
+
+function appendKids(n, kid) {
+  if (kid === null || kid === undefined || kid === false) return;
+  if (Array.isArray(kid)) { kid.forEach(function (k) { appendKids(n, k); }); return; }
+  n.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+}
+
+function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
+
+// The browser's append() turns null into the text "null". Skip empty values
+// everywhere so optional pieces (like a filter pill that isn't needed) vanish.
+(function () {
+  const native = Element.prototype.append;
+  Element.prototype.append = function () {
+    native.apply(this, Array.prototype.filter.call(arguments, function (k) { return k !== null && k !== undefined && k !== false; }));
+  };
+})();
+
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  chevronDown: '<path d="M6 9l6 6 6-6"/>',
+  chevronLeft: '<path d="M15 6l-6 6 6 6"/>',
+  arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  arrowDown: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  parts: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
+  materials: '<path d="M3 8l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4M3 16l9 4 9-4"/>',
+  tools: '<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 0-2-2z"/><path d="M14.5 6.5L17 4"/>',
+  fasteners: '<path d="M12 2.8l7.8 4.6v9.2L12 21.2l-7.8-4.6V7.4z"/><circle cx="12" cy="12" r="3.2"/>',
+  wire: '<circle cx="9" cy="12" r="5.5"/><circle cx="9" cy="12" r="1.8"/><path d="M14.5 12c3 0 2.5 5 6 5"/>',
+  audits: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM8.5 12.5l2.2 2.2 4.8-4.8"/>',
+  settings: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  collapse: '<path d="M15 6l-6 6 6 6"/><path d="M20 4v16"/>',
+  archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  undo: '<path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+  filter: '<path d="M4 5h16l-6 7.5V19l-4 2v-8.5z"/>',
+  production: '<path d="M4 20h16M6 20V9l4 3V9l4 3V5h4v15"/>',
+  packing: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M8.5 13.5l2.5 2.5 4.5-4.5"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>'
+};
+
+function icon(name, cls) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24');
+  s.setAttribute('class', 'icon' + (cls ? ' ' + cls : ''));
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = ICONS[name] || '';   // static strings only
+  return s;
+}
+
+function debounce(fn, ms) {
+  let t = null;
+  return function () {
+    const args = arguments, self = this;
+    clearTimeout(t);
+    t = setTimeout(function () { fn.apply(self, args); }, ms);
+  };
+}
+
+const store = {
+  get: function (k, fallback) { try { const v = localStorage.getItem('ggi.' + k); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } },
+  set: function (k, v) { try { localStorage.setItem('ggi.' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+};
+
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+function fmtQty(n) { return n === null || n === undefined ? '—' : (Math.round(n * 1000) / 1000).toLocaleString(); }
+
+// ───────────────────────── Events ─────────────────────────
+
+App.on = function (evt, fn) { (App._listeners[evt] = App._listeners[evt] || []).push(fn); };
+App.emit = function (evt, data) { (App._listeners[evt] || []).forEach(function (fn) { try { fn(data); } catch (e) { console.error(e); } }); };
+
+// ───────────────────────── Server calls ─────────────────────────
+
+class ApiError extends Error {
+  constructor(e) { super(e.message || 'Something went wrong.'); this.code = e.code; this.details = e.details || null; }
+}
+
+/**
+ * Calls a server function. Returns a Promise of `data`, or rejects with ApiError.
+ * opts.retry: retry on network failure (only for reads / safe calls).
+ * A "busy" reply is always safe to retry: the server did nothing.
+ */
+App.api = function (fn, args, opts) {
+  opts = opts || {};
+  args = args || [];
+  return new Promise(function (resolve, reject) {
+    let attempt = 0;
+    function run() {
+      attempt++;
+      const runner = google.script.run
+        .withSuccessHandler(function (res) {
+          if (res && res.ok) return resolve(res.data);
+          const e = (res && res.error) || { code: 'SERVER', message: 'Unexpected reply from the server.' };
+          if (e.code === 'BUSY' && attempt < 4) return setTimeout(run, 700 * attempt);
+          reject(new ApiError(e));
+        })
+        .withFailureHandler(function (err) {
+          console.error(fn, err);
+          if (opts.retry && attempt < 3) return setTimeout(run, 1200 * attempt);
+          reject(new ApiError({ code: 'NETWORK', message: 'Could not reach the server. Check your connection and try again.' }));
+        });
+      runner[fn].apply(runner, args);
+    }
+    run();
+  });
+};
+
+/** A write: same as api(), but drives the "Saving… / Saved" indicator. */
+App.write = function (fn, args) {
+  App.saveState(+1);
+  return App.api(fn, args).then(function (data) {
+    App.saveState(-1, true);
+    return data;
+  }, function (err) {
+    App.saveState(-1, false, err);
+    throw err;
+  });
+};
+
+App._saving = 0;
+App._saveError = false;
+App.saveState = function (delta, ok, err) {
+  App._saving = Math.max(0, App._saving + delta);
+  if (ok === true) App._saveError = false;
+  if (ok === false && err && err.code === 'NETWORK') App._saveError = true;
+  document.querySelectorAll('.save-status').forEach(function (n) {
+    n.classList.toggle('saving', App._saving > 0);
+    n.classList.toggle('error', App._saving === 0 && App._saveError);
+    const label = App._saving > 0 ? 'Saving…' : (App._saveError ? 'Connection problem' : 'All changes saved');
+    n.querySelector('.label').textContent = label;
+    n.title = label;
+  });
+};
+
+// ───────────────────────── Data store ─────────────────────────
+
+App.setTable = function (key, rows) {
+  App.tables[key] = rows;
+  const m = {};
+  rows.forEach(function (r) { m[r.id] = r; });
+  App.idx[key] = m;
+};
+
+App.get = function (key, id) { return (App.idx[key] || {})[id] || null; };
+
+/** Active (non-archived) records of a table. */
+App.rows = function (key) { return (App.tables[key] || []).filter(function (r) { return !r.archivedAt; }); };
+
+/** Settings rows in display order. */
+App.sorted = function (key, filterFn) {
+  return (App.tables[key] || []).filter(filterFn || function () { return true; }).slice().sort(function (a, b) {
+    return ((a.sortOrder || 0) - (b.sortOrder || 0)) || String(a.name || a.value).localeCompare(String(b.name || b.value));
+  });
+};
+
+App.upsert = function (key, rec) {
+  const list = App.tables[key] || (App.tables[key] = []);
+  const i = list.findIndex(function (r) { return r.id === rec.id; });
+  if (i >= 0) list[i] = rec; else list.push(rec);
+  (App.idx[key] = App.idx[key] || {})[rec.id] = rec;
+};
+
+App.removeLocal = function (key, id) {
+  App.tables[key] = (App.tables[key] || []).filter(function (r) { return r.id !== id; });
+  if (App.idx[key]) delete App.idx[key][id];
+};
+
+/**
+ * Applies a write reply: stores the record(s) and checks whether anything
+ * else changed meanwhile. `key` is the table written, or a list of the
+ * tables the call changes (the first one receives data.record/records).
+ */
+App.applyWrite = function (key, data) {
+  const keys = Array.isArray(key) ? key : [key];
+  if (data && data.record) App.upsert(keys[0], data.record);
+  if (data && data.records) data.records.forEach(function (r) { App.upsert(keys[0], r); });
+  if (data && data.packingMeta) { App.packingMeta = data.packingMeta; if (keys.indexOf('packingMeta') < 0) keys.push('packingMeta'); }
+  let stale = false;
+  if (data && data.versions) {
+    Object.keys(data.versions).forEach(function (k) {
+      const theirs = data.versions[k], ours = App.versions[k];
+      if (theirs === ours) return;
+      if (keys.indexOf(k) >= 0 && theirs === ours + 1) App.versions[k] = theirs;   // only our own change
+      else stale = true;
+    });
+  }
+  App.emit('data', keys);
+  if (stale) App.pollSoon();
+};
+
+/** Loads (or reloads) everything. */
+App.loadAll = function (payload) {
+  Object.keys(payload.tables).forEach(function (k) { App.setTable(k, payload.tables[k]); });
+  App.versions = payload.versions;
+  App.packingMeta = payload.packingMeta || { finalCheck: { state: 'none' } };
+};
+
+/** Asks the server for tables that changed since our versions. */
+App.poll = function () {
+  if (App._polling) return App._polling;
+  App._polling = App.api('apiGetChanges', [App.versions], { retry: true }).then(function (data) {
+    const keys = Object.keys(data.tables);
+    keys.forEach(function (k) {
+      let rows = data.tables[k];
+      // Keep our local copy of anything we're still saving (a quantity change
+      // or an audit count), so a refresh never undoes or doubles it.
+      rows = rows.map(function (r) {
+        return (App.qty.isBusy(k, r.id) || App._queues[r.id]) && App.get(k, r.id) ? App.get(k, r.id) : r;
+      });
+      App.setTable(k, rows);
+    });
+    App.versions = data.versions;
+    if (data.packingMeta) { App.packingMeta = data.packingMeta; keys.push('packingMeta'); }
+    if (App._saveError && App._saving === 0) { App._saveError = false; App.saveState(0); }
+    if (keys.length) App.emit('data', keys);
+  }).catch(function (e) {
+    console.warn('Poll failed', e);
+  }).then(function () { App._polling = null; });
+  return App._polling;
+};
+
+App.pollSoon = debounce(function () { App.poll(); }, 400);
+
+App.fastPoll = false;   // set by the Audits page so counts from other members appear quickly
+App.startPolling = function () {
+  const tick = function () {
+    if (document.visibilityState === 'visible') App.poll();
+    setTimeout(tick, App.fastPoll ? 8000 : App.POLL_MS);
+  };
+  setTimeout(tick, App.POLL_MS);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') App.poll(); });
+  window.addEventListener('focus', function () { App.pollSoon(); });
+};
+
+// ───────────────────────── Lookups ─────────────────────────
+
+App.name = function (key, id) {
+  const r = id ? App.get(key, id) : null;
+  return r ? (r.name !== undefined ? r.name : r.value) : '';
+};
+
+App.locationLabel = function (id) {
+  const loc = id ? App.get('locations', id) : null;
+  if (!loc) return '';
+  const parent = loc.parentId ? App.get('locations', loc.parentId) : null;
+  return parent ? parent.name + ' → ' + loc.name : loc.name;
+};
+
+/** [{ area, children: [...] }] in display order. */
+App.locationTree = function () {
+  const areas = App.sorted('locations', function (r) { return !r.parentId; });
+  return areas.map(function (a) {
+    return { area: a, children: App.sorted('locations', function (r) { return r.parentId === a.id; }) };
+  });
+};
+
+App.listOptions = function (listKey) {
+  return App.sorted('lists', function (r) { return r.listKey === listKey; });
+};
+
+// ───────────────────────── Per-item queue & quantity sync ─────────────────────────
+
+App._queues = {};
+/** Runs fn after any earlier queued work for the same item, so its saves happen in order. */
+App.queue = function (id, fn) {
+  const prev = App._queues[id] || Promise.resolve();
+  const next = prev.catch(function () {}).then(fn);
+  App._queues[id] = next;
+  next.catch(function () {}).then(function () { if (App._queues[id] === next) delete App._queues[id]; });
+  return next;
+};
+
+/**
+ * Quantity changes from +/- buttons are combined (5 quick taps → one "+5"
+ * save) and sent as a change, not a total, so simultaneous users never
+ * overwrite each other.
+ */
+App.qty = {
+  pending: {},   // "key:id" → change not yet sent
+  inflight: {},  // "key:id" → change sent, waiting for reply
+  setting: {},   // "key:id" → a typed total is being saved
+  timers: {},
+  savedAt: {},
+  k: function (key, id) { return key + ':' + id; },
+  display: function (key, rec) {
+    const field = TABLES_CLIENT[key].qtyField;
+    const k = this.k(key, rec.id);
+    return (Number(rec[field]) || 0) + (this.pending[k] || 0) + (this.inflight[k] || 0);
+  },
+  isBusy: function (key, id) { const k = this.k(key, id); return Boolean(this.pending[k] || this.inflight[k] || this.setting[k]); },
+  hasBusy: function (key) {
+    const p = key + ':';
+    return Object.keys(this.pending).concat(Object.keys(this.inflight), Object.keys(this.setting))
+      .some(function (k) { return k.indexOf(p) === 0; });
+  },
+  state: function (key, id) {
+    const k = this.k(key, id);
+    if (this.isBusy(key, id)) return 'pending';
+    return this.savedAt[k] && Date.now() - this.savedAt[k] < 1800 ? 'saved' : '';
+  },
+  changed: function (key, id) { App.emit('qty', { key: key, id: id }); },
+
+  bump: function (key, id, delta) {
+    const rec = App.get(key, id);
+    if (!rec) return;
+    const k = this.k(key, id);
+    if (this.display(key, rec) + delta < 0) { App.toast('Quantity can’t go below 0.'); return; }
+    this.pending[k] = (this.pending[k] || 0) + delta;
+    if (Math.abs(this.pending[k]) < 1e-9) delete this.pending[k];
+    this.changed(key, id);
+    clearTimeout(this.timers[k]);
+    this.timers[k] = setTimeout(this.flush.bind(this, key, id), 450);
+  },
+
+  flush: function (key, id) {
+    const self = this, k = this.k(key, id);
+    clearTimeout(this.timers[k]);
+    const d = this.pending[k];
+    if (!d) return Promise.resolve();
+    delete this.pending[k];
+    this.inflight[k] = (this.inflight[k] || 0) + d;
+    return App.queue(id, function () {
+      return App.write('apiAdjustQuantity', [key, id, d]).then(function (data) {
+        self.inflight[k] -= d;
+        if (Math.abs(self.inflight[k]) < 1e-9) delete self.inflight[k];
+        self.savedAt[k] = Date.now();
+        App.applyWrite(key, data);
+        if (data.clamped) App.toast('Someone else used some too — quantity is now 0.');
+        self.changed(key, id);
+        setTimeout(function () { self.changed(key, id); }, 1900);
+      }, function (err) {
+        self.inflight[k] -= d;
+        if (Math.abs(self.inflight[k]) < 1e-9) delete self.inflight[k];
+        self.changed(key, id);
+        App.toast(err.code === 'NOT_FOUND' || err.code === 'ARCHIVED' ? err.message : 'Couldn’t save quantity: ' + err.message, { type: 'error' });
+        if (err.code === 'NOT_FOUND') App.poll();
+      });
+    });
+  },
+
+  /** Typing a number: sets the total, with an edit-conflict check. */
+  set: function (key, id, value) {
+    const self = this, k = this.k(key, id);
+    const field = TABLES_CLIENT[key].qtyField;
+    this.flush(key, id);
+    return App.queue(id, function () {
+      const rec = App.get(key, id);
+      if (!rec || rec[field] === value) return null;
+      self.setting[k] = true;
+      self.changed(key, id);
+      const changes = {}; changes[field] = value;
+      return App.write('apiUpdate', [key, id, changes, rec.version]).catch(function (err) {
+        if (err.code !== 'CONFLICT') throw err;
+        const cur = err.details.current;
+        App.upsert(key, cur);
+        return App.confirm({
+          title: 'Changed by someone else',
+          message: 'While you were typing, this changed to ' + fmtQty(cur[field]) + '. Set it to ' + fmtQty(value) + ' anyway?',
+          confirmLabel: 'Set to ' + fmtQty(value), cancelLabel: 'Keep ' + fmtQty(cur[field])
+        }).then(function (yes) {
+          return yes ? App.write('apiUpdate', [key, id, changes, null]) : { record: cur, versions: App.versions };
+        });
+      }).then(function (data) {
+        delete self.setting[k];
+        self.savedAt[k] = Date.now();
+        if (data) App.applyWrite(key, data);
+        self.changed(key, id);
+        setTimeout(function () { self.changed(key, id); }, 1900);
+      }, function (err) {
+        delete self.setting[k];
+        self.changed(key, id);
+        App.toast('Couldn’t save quantity: ' + err.message, { type: 'error' });
+      });
+    });
+  }
+};
+
+/** Client-side copy of the bits of the schema the browser needs. */
+const TABLES_CLIENT = {
+  parts: { qtyField: 'quantity', label: 'Parts Inventory', one: 'part', images: true },
+  rawMaterials: { qtyField: 'quantity', label: 'Raw Materials', one: 'piece' },
+  tools: { qtyField: 'quantity', label: 'Tools & Equipment', one: 'tool', images: true },
+  fasteners: { qtyField: null, label: 'Fastener Reference', one: 'fastener' },
+  wire: { qtyField: 'approxLength', label: 'Wire Inventory', one: 'wire', decimal: true }
+};
+
+window.addEventListener('beforeunload', function (e) {
+  Object.keys(App.qty.pending).forEach(function (k) {
+    const p = k.split(':'); App.qty.flush(p[0], p[1]);
+  });
+  if (App._saving > 0) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// ───────────────────────── Photos ─────────────────────────
+
+App._imgCache = {};
+/**
+ * <img> for a Drive photo. Loads straight from Drive; if that's blocked
+ * (link sharing off, or a browser privacy setting), asks the server for it.
+ */
+App.imgEl = function (fileId, size, cls) {
+  const img = el('img', { class: cls || '', alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
+  if (App._imgCache[fileId]) { img.src = App._imgCache[fileId]; return img; }
+  let fellBack = false;
+  img.addEventListener('error', function () {
+    if (fellBack) return;
+    fellBack = true;
+    App.api('apiGetImage', [fileId], { retry: true }).then(function (d) {
+      App._imgCache[fileId] = d.dataUrl;
+      img.src = d.dataUrl;
+    }, function () { img.classList.add('broken'); });
+  });
+  img.src = 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w' + (size || 400);
+  return img;
+};
+
+/** Loads a chosen photo as a working copy (at most 1600 px) for cropping. Resolves a data URL. */
+App.prepareImage = function (file) {
+  return new Promise(function (resolve, reject) {
+    if (!file || !/^image\//.test(file.type)) { reject(new Error('Please choose an image file.')); return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      const max = 1600;
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.9));
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That image couldn’t be read. Try a JPEG or PNG.')); };
+    img.src = url;
+  });
+};
+
+/**
+ * Square crop tool. Drag to move, pinch / scroll / slider to zoom.
+ * Resolves a 900×900 JPEG data URL, or null if cancelled. Every photo is
+ * square, so the list thumbnail and the edit preview always show the same thing.
+ */
+App.cropImage = function (src) {
+  return new Promise(function (resolve) {
+    const img = new Image();
+    img.onload = function () {
+      const VIEW = Math.max(220, Math.min(380, window.innerWidth - 72));
+      const nw = img.naturalWidth, nh = img.naturalHeight;
+      const minScale = VIEW / Math.min(nw, nh);
+      let scale = minScale, x = (VIEW - nw * scale) / 2, y = (VIEW - nh * scale) / 2;
+      const pic = el('img', { src: src, alt: '', draggable: 'false' });
+      const stage = el('div', { class: 'crop-stage', style: { width: VIEW + 'px', height: VIEW + 'px' } }, pic, el('div', { class: 'crop-grid' }));
+      const slider = el('input', { type: 'range', min: 100, max: 400, value: 100, 'aria-label': 'Zoom', class: 'crop-zoom' });
+      const apply = function () {
+        x = Math.min(0, Math.max(VIEW - nw * scale, x));
+        y = Math.min(0, Math.max(VIEW - nh * scale, y));
+        pic.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + scale + ')';
+        slider.value = Math.round(scale / minScale * 100);
+      };
+      const zoomAt = function (s, px, py) {
+        const ns = Math.max(minScale, Math.min(minScale * 4, s));
+        x = px - (px - x) * (ns / scale);
+        y = py - (py - y) * (ns / scale);
+        scale = ns;
+        apply();
+      };
+      const pts = {};
+      let last = null, lastDist = null;
+      stage.addEventListener('pointerdown', function (e) { stage.setPointerCapture(e.pointerId); pts[e.pointerId] = { x: e.offsetX, y: e.offsetY }; last = null; lastDist = null; });
+      stage.addEventListener('pointermove', function (e) {
+        if (!pts[e.pointerId]) return;
+        const r = stage.getBoundingClientRect();
+        pts[e.pointerId] = { x: e.clientX - r.left, y: e.clientY - r.top };
+        const ids = Object.keys(pts);
+        if (ids.length === 1) {
+          const p = pts[ids[0]];
+          if (last) { x += p.x - last.x; y += p.y - last.y; apply(); }
+          last = p;
+        } else if (ids.length >= 2) {
+          const a = pts[ids[0]], b = pts[ids[1]];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (lastDist) zoomAt(scale * d / lastDist, (a.x + b.x) / 2, (a.y + b.y) / 2);
+          lastDist = d;
+        }
+      });
+      const up = function (e) { delete pts[e.pointerId]; last = null; lastDist = null; };
+      stage.addEventListener('pointerup', up);
+      stage.addEventListener('pointercancel', up);
+      stage.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        const r = stage.getBoundingClientRect();
+        zoomAt(scale * (e.deltaY < 0 ? 1.1 : 1 / 1.1), e.clientX - r.left, e.clientY - r.top);
+      }, { passive: false });
+      slider.addEventListener('input', function () { zoomAt(minScale * slider.value / 100, VIEW / 2, VIEW / 2); });
+      apply();
+      let done = false;
+      const use = el('button', { class: 'btn primary', type: 'button', text: 'Use photo' });
+      const m = App.modal({
+        title: 'Crop photo',
+        body: [el('p', { class: 'meta-line', text: 'Drag to move and zoom in so the item fills the square. This is exactly what the list will show.' }),
+          stage, el('div', { class: 'crop-controls' }, el('span', { text: '−' }), slider, el('span', { text: '+' }))],
+        foot: [el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(true); } }), use],
+        onClose: function () { if (!done) resolve(null); }
+      });
+      use.addEventListener('click', function () {
+        const OUT = 900, c = document.createElement('canvas');
+        c.width = OUT; c.height = OUT;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, OUT, OUT);
+        ctx.drawImage(img, -x / scale, -y / scale, VIEW / scale, VIEW / scale, 0, 0, OUT, OUT);
+        let q = 0.85, out = c.toDataURL('image/jpeg', q);
+        while (out.length * 0.75 > 600 * 1024 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+        done = true;
+        resolve(out);
+        m.close(true);
+      });
+    };
+    img.onerror = function () { resolve(null); App.toast('That image couldn’t be read.', { type: 'error' }); };
+    img.src = src;
+  });
+};
+
+/**
+ * Photo box for the edit drawer. For an existing item, changes save
+ * immediately. For a new item, the photo is held and uploaded after the
+ * item is created (call .uploadAfterCreate(id)).
+ */
+App.imageField = function (key, rec) {
+  let pending = null;
+  const box = el('div', { class: 'photo' });
+  const input = el('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
+  const draw = function (busy) {
+    clear(box);
+    const cur = rec && App.get(key, rec.id);
+    const fileId = cur && cur.imageId;
+    const frame = el('div', { class: 'photo-frame' });
+    if (pending) frame.appendChild(el('img', { src: pending, alt: '' }));
+    else if (fileId) frame.appendChild(App.imgEl(fileId, 800));
+    else frame.appendChild(el('span', { class: 'photo-empty', text: 'No photo' }));
+    if (busy) frame.appendChild(el('div', { class: 'photo-busy' }, el('div', { class: 'spinner' }), busy));
+    box.appendChild(frame);
+    const actions = el('div', { class: 'photo-actions' },
+      el('button', { class: 'btn sm', type: 'button', disabled: Boolean(busy), onClick: function () { input.click(); } },
+        icon('plus'), fileId || pending ? 'Replace photo' : 'Add photo'),
+      fileId || pending ? el('button', { class: 'btn sm ghost', type: 'button', disabled: Boolean(busy), text: 'Crop', onClick: recrop }) : null,
+      fileId || pending ? el('button', { class: 'btn sm ghost', type: 'button', disabled: Boolean(busy), text: 'Remove', onClick: remove }) : null);
+    box.appendChild(actions);
+    box.appendChild(input);
+  };
+  const remove = function () {
+    if (pending) { pending = null; draw(); return; }
+    App.confirm({ title: 'Remove photo?', message: 'The photo will be removed from this item.', confirmLabel: 'Remove', danger: true }).then(function (yes) {
+      if (!yes) return;
+      draw('Removing…');
+      App.write('apiRemoveImage', [key, rec.id]).then(function (d) { App.applyWrite(key, d); draw(); },
+        function (err) { draw(); App.toast(err.message, { type: 'error' }); });
+    });
+  };
+  const save = function (dataUrl) {
+    if (!dataUrl) { draw(); return null; }
+    if (!rec) { pending = dataUrl; draw(); return null; }
+    draw('Uploading…');
+    return App.write('apiUploadImage', [key, rec.id, dataUrl]).then(function (d) {
+      App._imgCache[d.record.imageId] = dataUrl;
+      App.applyWrite(key, d);
+      draw();
+      App.toast('Photo saved.', { type: 'ok' });
+    });
+  };
+  /** Re-crop the current photo (tighter only — the parts outside were already cut away). */
+  const recrop = function () {
+    const cur = rec && App.get(key, rec.id);
+    const fileId = cur && cur.imageId;
+    const source = pending ? Promise.resolve(pending)
+      : (App._imgCache[fileId] ? Promise.resolve(App._imgCache[fileId])
+        : App.api('apiGetImage', [fileId], { retry: true }).then(function (d) { App._imgCache[fileId] = d.dataUrl; return d.dataUrl; }));
+    draw('Loading…');
+    source.then(App.cropImage).then(save).catch(function (err) { draw(); App.toast(err.message, { type: 'error' }); });
+  };
+  input.addEventListener('change', function () {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    draw('Preparing…');
+    App.prepareImage(file).then(function (big) { draw(); return App.cropImage(big); }).then(save).catch(function (err) { draw(); App.toast(err.message, { type: 'error' }); });
+  });
+  draw();
+  return {
+    el: box,
+    hasPending: function () { return Boolean(pending); },
+    uploadAfterCreate: function (id) {
+      if (!pending) return Promise.resolve();
+      const dataUrl = pending;
+      return App.write('apiUploadImage', [key, id, dataUrl]).then(function (d) {
+        App._imgCache[d.record.imageId] = dataUrl;
+        App.applyWrite(key, d);
+      }, function (err) { App.toast('Item saved, but the photo didn’t upload: ' + err.message, { type: 'error' }); });
+    }
+  };
+};
+
+// ───────────────────────── Toasts ─────────────────────────
+
+App.toast = function (message, opts) {
+  opts = opts || {};
+  const box = document.getElementById('toasts');
+  const t = el('div', { class: 'toast ' + (opts.type || ''), role: opts.type === 'error' ? 'alert' : 'status' }, el('span', { text: message }));
+  let timer;
+  const close = function () { clearTimeout(timer); if (t.parentNode) t.parentNode.removeChild(t); };
+  if (opts.action) {
+    t.appendChild(el('button', { class: 'link-btn', text: opts.action.label, onClick: function () { close(); opts.action.fn(); } }));
+  }
+  box.appendChild(t);
+  while (box.children.length > 4) box.removeChild(box.firstChild);
+  timer = setTimeout(close, opts.timeout || (opts.type === 'error' ? 7000 : 4000));
+  return close;
+};
+
+// ───────────────────────── Modals ─────────────────────────
+
+/**
+ * App.modal({ title, body, foot, kind: 'dialog'|'drawer', beforeClose }) → { close, root }
+ * beforeClose(): return false or a Promise<false> to keep it open.
+ */
+App.modal = function (opts) {
+  const root = document.getElementById('modal-root');
+  const prevFocus = document.activeElement;
+  const kind = opts.kind || 'dialog';
+  const closeBtn = el('button', { class: 'icon-btn', 'aria-label': 'Close', onClick: function () { api.close(); } }, icon('x'));
+  const box = el('div', { class: kind, role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title },
+    el('div', { class: 'modal-head' }, el('h2', { class: 'modal-title', text: opts.title }), closeBtn),
+    el('div', { class: 'modal-body' }, opts.body),
+    opts.foot ? el('div', { class: 'modal-foot' }, opts.foot) : null
+  );
+  const scrim = el('div', { class: 'scrim' + (kind === 'drawer' ? ' drawer-scrim' : '') }, box);
+  scrim.addEventListener('mousedown', function (e) { if (e.target === scrim) api.close(); });
+  const onKey = function (e) {
+    if (e.key === 'Escape' && root.lastChild === scrim) { e.stopPropagation(); api.close(); }
+  };
+  document.addEventListener('keydown', onKey, true);
+  let closed = false;
+  const api = {
+    root: box,
+    close: function (force) {
+      if (closed) return Promise.resolve(true);
+      const go = function (ok) {
+        if (!ok) return false;
+        closed = true;
+        document.removeEventListener('keydown', onKey, true);
+        if (scrim.parentNode) scrim.parentNode.removeChild(scrim);
+        if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus();
+        if (opts.onClose) opts.onClose();
+        return true;
+      };
+      if (force || !opts.beforeClose) return Promise.resolve(go(true));
+      return Promise.resolve(opts.beforeClose()).then(function (ok) { return go(ok !== false); });
+    }
+  };
+  root.appendChild(scrim);
+  setTimeout(function () {
+    const f = box.querySelector('[autofocus]') || box.querySelector('.modal-body input, .modal-body select, .modal-body textarea') || closeBtn;
+    f.focus();
+  }, 30);
+  return api;
+};
+
+/** Yes/no question. Resolves true or false. */
+App.confirm = function (o) {
+  return new Promise(function (resolve) {
+    let answered = false;
+    const yes = el('button', { class: 'btn ' + (o.danger ? 'danger-solid' : 'primary'), text: o.confirmLabel || 'OK',
+      onClick: function () { answered = true; resolve(true); m.close(true); } });
+    const no = el('button', { class: 'btn ghost', text: o.cancelLabel || 'Cancel', onClick: function () { m.close(true); } });
+    const m = App.modal({
+      title: o.title,
+      body: [el('p', { text: o.message }), o.extra || null],
+      foot: [el('div', { class: 'spacer' }), no, yes],
+      onClose: function () { if (!answered) resolve(false); }
+    });
+    setTimeout(function () { (o.danger ? no : yes).focus(); }, 40);
+  });
+};
+
+/**
+ * Small form dialog. fields: [{ name, label, type:'text'|'select', options:[{value,label,group}], value, required, hint }]
+ * onSubmit(values) may return a Promise; if it rejects with a VALIDATION ApiError
+ * the field messages are shown and the dialog stays open.
+ */
+App.prompt = function (o) {
+  return new Promise(function (resolve) {
+    const inputs = {};
+    const fieldEls = {};
+    let done = false;
+    const body = o.fields.map(function (f) {
+      let control;
+      if (f.type === 'select') {
+        control = App.selectEl(f.options, f.value, f.emptyLabel);
+      } else {
+        control = el('input', { class: 'input', type: 'text', value: f.value || '', maxlength: f.max || 80, autofocus: f.autofocus });
+        control.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(e); });
+      }
+      inputs[f.name] = control;
+      fieldEls[f.name] = App.field(f.label, control, { required: f.required, hint: f.hint });
+      return fieldEls[f.name];
+    });
+    if (o.intro) body.unshift(el('p', { text: o.intro }));
+    const submit = el('button', { class: 'btn primary', type: 'submit', text: o.submitLabel || 'Save' });
+    const form = el('form', { style: { display: 'contents' } }, body);
+    const m = App.modal({
+      title: o.title,
+      body: form,
+      foot: [el('div', { class: 'spacer' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onClick: function () { m.close(true); } }), submit],
+      onClose: function () { if (!done) resolve(null); }
+    });
+    const send = function (e) {
+      if (e) e.preventDefault();
+      const values = {};
+      let missing = false;
+      o.fields.forEach(function (f) {
+        values[f.name] = inputs[f.name].value.trim();
+        fieldEls[f.name].setError(f.required && !values[f.name] ? 'This field is required.' : '');
+        if (f.required && !values[f.name]) missing = true;
+      });
+      if (missing) return;
+      submit.disabled = true;
+      Promise.resolve(o.onSubmit ? o.onSubmit(values) : values).then(function (result) {
+        done = true; resolve(result); m.close(true);
+      }, function (err) {
+        submit.disabled = false;
+        const fields = err && err.details && err.details.fields;
+        if (fields) Object.keys(fields).forEach(function (n) {
+          const target = fieldEls[n] || fieldEls[o.fields[0].name];
+          target.setError(fields[n]);
+        });
+        else App.toast(err.message || String(err), { type: 'error' });
+      });
+    };
+    form.addEventListener('submit', send);
+    submit.addEventListener('click', send);
+  });
+};
+
+/** Wraps a control with a label, hint and error line. Returns the wrapper (with .setError). */
+App.field = function (label, control, opts) {
+  opts = opts || {};
+  const id = 'f' + Math.random().toString(36).slice(2, 9);
+  if (control.tagName && /INPUT|SELECT|TEXTAREA/.test(control.tagName)) control.id = id;
+  const err = el('div', { class: 'error', role: 'alert' });
+  const wrap = el('div', { class: 'field' + (opts.full ? ' full' : '') },
+    el('label', { for: id }, label, opts.required ? el('span', { class: 'req', text: ' *' }) : null),
+    control,
+    opts.hint ? el('div', { class: 'hint', text: opts.hint }) : null,
+    err);
+  wrap.setError = function (msg) { err.textContent = msg || ''; wrap.classList.toggle('has-error', Boolean(msg)); };
+  return wrap;
+};
+
+/** <select> from [{value,label,group}] (group → optgroup). */
+App.selectEl = function (options, value, emptyLabel) {
+  const s = el('select', { class: 'select' });
+  if (emptyLabel !== undefined) s.appendChild(el('option', { value: '', text: emptyLabel }));
+  let og = null, ogName = null;
+  options.forEach(function (o) {
+    const opt = el('option', { value: o.value, text: o.label });
+    if (o.group) {
+      if (o.group !== ogName) { og = el('optgroup', { label: o.group }); s.appendChild(og); ogName = o.group; }
+      og.appendChild(opt);
+    } else { s.appendChild(opt); og = null; ogName = null; }
+  });
+  s.value = value || '';
+  return s;
+};
+
+/** Options for a location <select>: each area, then "Area → Container". */
+App.locationSelectOptions = function () {
+  const out = [];
+  App.locationTree().forEach(function (n) {
+    out.push({ value: n.area.id, label: n.area.name + (n.children.length ? ' (whole area)' : ''), group: n.area.name });
+    n.children.forEach(function (c) { out.push({ value: c.id, label: n.area.name + ' → ' + c.name, group: n.area.name }); });
+  });
+  return out;
+};
+
+// ───────────────────────── Popovers (filter menus) ─────────────────────────
+
+App._popover = null;
+App.popover = function (anchor, build) {
+  if (App._popover) {
+    const same = App._popover.anchor === anchor;
+    App._popover.close();
+    if (same) return null;
+  }
+  const box = el('div', { class: 'popover', role: 'dialog' });
+  document.body.appendChild(box);
+  const api = {
+    anchor: anchor, el: box,
+    close: function () {
+      if (box.parentNode) box.parentNode.removeChild(box);
+      document.removeEventListener('mousedown', outside, true);
+      document.removeEventListener('keydown', key, true);
+      window.removeEventListener('resize', api.close);
+      if (App._popover === api) App._popover = null;
+    },
+    place: function () {
+      const r = anchor.getBoundingClientRect();
+      const w = box.offsetWidth;
+      box.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + 'px';
+      box.style.top = Math.min(r.bottom + 6, window.innerHeight - box.offsetHeight - 12) + 'px';
+    }
+  };
+  const outside = function (e) { if (!box.contains(e.target) && !anchor.contains(e.target)) api.close(); };
+  const key = function (e) { if (e.key === 'Escape') { api.close(); anchor.focus(); } };
+  build(box, api);
+  api.place();
+  document.addEventListener('mousedown', outside, true);
+  document.addEventListener('keydown', key, true);
+  window.addEventListener('resize', api.close);
+  App._popover = api;
+  const first = box.querySelector('input, button.opt');
+  if (first && window.innerWidth > 860) first.focus();
+  return api;
+};
+
+/** Multi-select checkbox option row. */
+App.checkOpt = function (label, checked, onToggle, extraClass) {
+  const b = el('button', { class: 'opt' + (checked ? ' checked' : '') + (extraClass ? ' ' + extraClass : ''), type: 'button', role: 'menuitemcheckbox', 'aria-checked': String(checked) },
+    el('span', { class: 'box' }, checked ? icon('check') : null), el('span', { text: label }));
+  b.addEventListener('click', function () {
+    const now = !b.classList.contains('checked');
+    b.classList.toggle('checked', now);
+    b.setAttribute('aria-checked', String(now));
+    clear(b.firstChild);
+    if (now) b.firstChild.appendChild(icon('check'));
+    onToggle(now);
+  });
+  return b;
+};
+
+// ───────────────────────── Shell & navigation ─────────────────────────
+
+const NAV = [
+  { group: 'Inventory', items: [
+    { id: 'parts', label: 'Parts Inventory', icon: 'parts' },
+    { id: 'rawMaterials', label: 'Raw Materials', icon: 'materials' },
+    { id: 'tools', label: 'Tools & Equipment', icon: 'tools' },
+    { id: 'fasteners', label: 'Fastener Reference', icon: 'fasteners' },
+    { id: 'wire', label: 'Wire Inventory', icon: 'wire' }
+  ] },
+  { group: 'Manage', items: [
+    { id: 'audits', label: 'Inventory Audits', icon: 'audits' },
+    { id: 'packing', label: 'Packing List', icon: 'packing' },
+    { id: 'production', label: 'Production', icon: 'production' },
+    { id: 'settings', label: 'Settings', icon: 'settings' }
+  ] }
+];
+
+function markEl(cls) {
+  const s = el('span', { class: cls, 'aria-hidden': 'true' });
+  s.innerHTML = BRAND.markSvg;   // the team's own SVG file (static)
+  const svg = s.querySelector('svg');
+  if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); }
+  return s;
+}
+
+function saveStatusEl() {
+  return el('div', { class: 'save-status', role: 'status' }, el('span', { class: 'dot' }), el('span', { class: 'label', text: 'All changes saved' }));
+}
+
+App.buildShell = function () {
+  const app = document.getElementById('app');
+  const sb = clear(document.getElementById('sidebar'));
+  if (store.get('collapsed', false)) app.classList.add('collapsed');
+
+  sb.appendChild(el('div', { class: 'sidebar-brand' },
+    el('img', { class: 'wings', src: BRAND.wings, alt: 'Team 6220 Golden Griffins' }),
+    markEl('mark'),
+    el('div', { class: 'wordmark' }, 'Inventory ', el('span', { text: '6220' }))
+  ));
+
+  const nav = el('nav', { class: 'nav' });
+  NAV.forEach(function (g) {
+    nav.appendChild(el('div', { class: 'nav-label', text: g.group }));
+    g.items.forEach(function (it) {
+      nav.appendChild(el('a', {
+        href: '#', dataset: { view: it.id }, title: it.label,
+        onClick: function (e) { e.preventDefault(); App.go(it.id); }
+      }, icon(it.icon), el('span', { class: 'label', text: it.label })));
+    });
+  });
+  sb.appendChild(nav);
+
+  sb.appendChild(el('div', { class: 'sidebar-foot' },
+    saveStatusEl(),
+    el('button', { class: 'collapse-btn', type: 'button', onClick: function () {
+      app.classList.toggle('collapsed');
+      store.set('collapsed', app.classList.contains('collapsed'));
+    } }, icon('collapse'), el('span', { class: 'label', text: 'Collapse sidebar' }))
+  ));
+
+  const bar = clear(document.getElementById('mobile-bar'));
+  bar.appendChild(el('button', { class: 'icon-btn', 'aria-label': 'Open menu', onClick: function () { app.classList.add('drawer-open'); } }, icon('menu')));
+  bar.appendChild(markEl('mark'));
+  bar.appendChild(el('div', { class: 'title' }, 'Inventory ', el('span', { text: '6220' })));
+  bar.appendChild(saveStatusEl());
+  document.getElementById('nav-scrim').addEventListener('click', function () { app.classList.remove('drawer-open'); });
+};
+
+App.go = function (id, force) {
+  const v = App.views[id];
+  if (!v) return;
+  const cur = App.current && App.views[App.current];
+  // A page can ask to confirm before leaving (the final check pauses when you leave).
+  if (cur && cur.canLeave && force !== true && App.current !== id) {
+    Promise.resolve(cur.canLeave()).then(function (ok) { if (ok) App.go(id, true); });
+    return;
+  }
+  if (App._popover) App._popover.close();
+  if (App.current && App.views[App.current].leave) App.views[App.current].leave();
+  App.current = id;
+  document.querySelectorAll('.nav a').forEach(function (a) {
+    a.classList.toggle('active', a.dataset.view === id);
+    if (a.dataset.view === id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  document.getElementById('app').classList.remove('drawer-open');
+  const main = clear(document.getElementById('main'));
+  v.render(main);
+  main.scrollTop = 0;
+  window.scrollTo(0, 0);
+};
+
+App.on('data', function (keys) {
+  const v = App.current && App.views[App.current];
+  if (v && v.onData) v.onData(keys);
+});
+
+/** Pages for later phases. */
+function placeholderView(title, phase, text) {
+  return {
+    title: title, soon: phase,
+    render: function (main) {
+      main.appendChild(el('div', { class: 'page' },
+        el('div', { class: 'page-head' }, el('h1', { class: 'page-title', text: title })),
+        el('div', { class: 'placeholder-page' }, el('div', { class: 'card' },
+          el('h2', { text: 'Coming in ' + phase }), el('p', { text: text })))));
+    }
+  };
+}
+
+App.start = function () {
+  App.buildShell();
+  App.saveState(0);
+  const begin = function (data) {
+    App.loadAll(data);
+    App.go('parts');
+    App.startPolling();
+    App.emit('started');
+  };
+  const boot = window.BOOT;
+  if (boot && boot.ok) { begin(boot.data); return; }
+  App.api('apiGetAll', [], { retry: true }).then(begin, function (err) {
+    const main = clear(document.getElementById('main'));
+    main.appendChild(el('div', { class: 'page' }, el('div', { class: 'empty-state' },
+      el('div', { class: 'big', text: 'Can’t load the inventory' }),
+      el('p', { text: (boot && boot.error && boot.error.message) || err.message }),
+      el('button', { class: 'btn primary', text: 'Try again', onClick: function () { location.reload(); } }))));
+  });
+};
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '') && !document.querySelector('.scrim')) {
+    const s = document.querySelector('.search input');
+    if (s) { e.preventDefault(); s.focus(); s.select(); }
+  }
+});
+</script>

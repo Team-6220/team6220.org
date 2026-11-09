@@ -1,0 +1,360 @@
+<script>
+/* ============================================================================
+   JsPlanner.html — Golden Griffins Inventory
+   Cut planner (Raw Materials → Cut planner) and the Production page.
+     Planner: enter rectangular parts → it finds the stock pieces that waste
+     the least, using small offcuts before big sheets, and shows where to cut.
+     Extra stock is added around each part (CUT_RULES). "Send to production"
+     saves the plan as jobs; the spots stay reserved until cut.
+     Production: planned → cut → done. "Mark as cut" updates the stock's shape.
+   All sizes in the planner are inches.
+   ========================================================================== */
+'use strict';
+
+/** Same numbers as CUT_RULES in Config.gs. */
+const CUT_RULES = { handmadeExtra: 0.25, shapeokoThinExtra: 1, shapeokoThickExtra: 0.75, thickFrom: 0.25, roundTo: 0.125 };
+
+function stockExtra(method, thicknessIn) {
+  if (method === 'handmade') return CUT_RULES.handmadeExtra;
+  return thicknessIn >= CUT_RULES.thickFrom - 1e-6 ? CUT_RULES.shapeokoThickExtra : CUT_RULES.shapeokoThinExtra;
+}
+function roundUp8(x) { return Math.ceil(x / CUT_RULES.roundTo - 1e-9) * CUT_RULES.roundTo; }
+function thicknessInches(r) { return (r.thicknessValue || parseMeasureClient(r.thickness) || 0) * Geo.toInches(listVal(r.thicknessUnitId)); }
+function fmtIn(x) { return Geo.fmtLen(x, 'in'); }
+
+/** Every usable stock copy for a material + thickness, outlines in inches, with spots already reserved. */
+function stockCopies(materialId, thickIn) {
+  const out = [];
+  App.rows('rawMaterials').forEach(function (r) {
+    if (r.materialTypeId !== materialId || Math.abs(thicknessInches(r) - thickIn) > 1e-3) return;
+    const pts = rawPoints(r);
+    if (!pts) return;
+    const f = Geo.toInches(rawUnit(r));
+    const inch = pts.map(function (p) { return [p[0] * f, p[1] * f]; });
+    const qty = Math.max(0, Number(r.quantity) || 0);
+    for (let c = 0; c < qty; c++) {
+      const taken = (App.tables.production || []).filter(function (j) {
+        return j.status === 'planned' && j.rawMaterialId === r.id && (j.copyIndex || 0) === c && j.placement && j.placement.w;
+      }).map(function (j) { return Geo.placementPoly(j.placement); });
+      out.push({ id: r.id, copy: c, rec: r, points: inch, taken: taken });
+    }
+  });
+  return out;
+}
+
+// ───────────────────────── Cut planner ─────────────────────────
+
+const Planner = {
+  refs: null,
+  state: { materialId: '', thickness: '', method: 'shapeoko', parts: [{ name: '', length: '', width: '', qty: '1' }] },
+  result: null,
+
+  render: function (main) {
+    const r = this.refs = {};
+    r.form = el('div', { class: 'group-card planner-form' });
+    r.results = el('div', { class: 'planner-results' });
+    main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' }, el('div', null, el('h1', { class: 'page-title', text: 'Raw Materials' }),
+        el('div', { class: 'page-sub', text: 'Find the stock to cut parts from — smallest offcuts first, so big sheets stay whole.' }))),
+      rawTabs('planner'), r.form, r.results));
+    this.drawForm();
+    this.drawResults();
+  },
+  leave: function () { this.refs = null; },
+  onData: function (keys) { if (this.refs && keys.some(function (k) { return k === 'rawMaterials' || k === 'lists'; })) this.drawForm(true); },
+
+  materials: function () {
+    const used = new Set(App.rows('rawMaterials').map(function (r) { return r.materialTypeId; }));
+    return App.listOptions('materialType').filter(function (l) { return used.has(l.id); });
+  },
+  thicknesses: function (materialId) {
+    const seen = {};
+    App.rows('rawMaterials').forEach(function (r) {
+      if (r.materialTypeId !== materialId) return;
+      const t = thicknessInches(r);
+      if (!t) return;
+      const k = String(Math.round(t * 10000) / 10000);
+      if (!seen[k]) seen[k] = { value: k, label: withUnit(r.thickness, r.thicknessUnitId), t: t };
+    });
+    return Object.keys(seen).map(function (k) { return seen[k]; }).sort(function (a, b) { return a.t - b.t; });
+  },
+
+  drawForm: function (keepFocus) {
+    const self = this, s = this.state, box = this.refs.form;
+    if (keepFocus && box.contains(document.activeElement)) return;
+    clear(box);
+    const mats = this.materials();
+    if (!mats.length) {
+      box.appendChild(el('div', { class: 'list-empty', text: 'No stock recorded yet. Add pieces on the Stock pieces tab first.' }));
+      return;
+    }
+    if (!s.materialId || !mats.some(function (m) { return m.id === s.materialId; })) s.materialId = mats[0].id;
+    const ths = this.thicknesses(s.materialId);
+    if (!ths.some(function (t) { return t.value === s.thickness; })) s.thickness = ths.length ? ths[0].value : '';
+    const mat = App.selectEl(mats.map(function (m) { return { value: m.id, label: m.value }; }), s.materialId);
+    mat.addEventListener('change', function () { s.materialId = mat.value; s.thickness = ''; self.result = null; self.drawForm(); self.drawResults(); });
+    const th = App.selectEl(ths.map(function (t) { return { value: t.value, label: t.label }; }), s.thickness);
+    th.addEventListener('change', function () { s.thickness = th.value; self.result = null; self.drawForm(); self.drawResults(); });
+    const tIn = Number(s.thickness) || 0;
+    const methodSeg = el('div', { class: 'seg method-seg', role: 'radiogroup' },
+      el('button', { type: 'button', class: s.method === 'handmade' ? 'on' : '', role: 'radio', 'aria-checked': String(s.method === 'handmade'), text: 'Handmade',
+        onClick: function () { s.method = 'handmade'; self.drawForm(); } }),
+      el('button', { type: 'button', class: s.method === 'shapeoko' ? 'on' : '', role: 'radio', 'aria-checked': String(s.method === 'shapeoko'), text: 'Shapeoko',
+        onClick: function () { s.method = 'shapeoko'; self.drawForm(); } }));
+    const extra = stockExtra(s.method, tIn);
+    const rows = el('div', { class: 'part-rows' },
+      el('div', { class: 'part-row head' }, el('span', { text: 'Part name' }), el('span', { text: 'Length (in)' }), el('span', { text: 'Width (in)' }), el('span', { text: 'Qty' }), el('span', { text: 'Stock needed' }), el('span')));
+    s.parts.forEach(function (p, i) {
+      const L = parseMeasureClient(p.length), W = parseMeasureClient(p.width);
+      const need = L > 0 && W > 0 ? 'cut ' + fmtIn(roundUp8(L + extra)).replace('"', '') + ' × ' + fmtIn(roundUp8(W + extra)) : '—';
+      const inp = function (field, ph, cls) {
+        const x = el('input', { class: 'input ' + (cls || ''), type: 'text', value: p[field], placeholder: ph, inputmode: field === 'name' ? null : 'decimal', 'aria-label': field + ' of part ' + (i + 1) });
+        x.addEventListener('input', function () { p[field] = x.value; self.result = null; needEl.textContent = (function () {
+          const a = parseMeasureClient(p.length), b = parseMeasureClient(p.width);
+          return a > 0 && b > 0 ? 'cut ' + fmtIn(roundUp8(a + extra)).replace('"', '') + ' × ' + fmtIn(roundUp8(b + extra)) : '—';
+        })(); });
+        return x;
+      };
+      const needEl = el('span', { class: 'need num', title: 'Stock needed, with the extra added', text: need });
+      rows.appendChild(el('div', { class: 'part-row' },
+        inp('name', 'e.g. Intake side plate'), inp('length', 'Length', 'num'), inp('width', 'Width', 'num'), inp('qty', 'Qty', 'num qty'),
+        needEl,
+        el('button', { class: 'icon-btn danger', type: 'button', 'aria-label': 'Remove part', disabled: s.parts.length === 1,
+          onClick: function () { s.parts.splice(i, 1); self.result = null; self.drawForm(); } }, icon('trash'))));
+    });
+    box.append(
+      el('div', { class: 'planner-top' },
+        App.field('Material', mat), App.field('Thickness', th),
+        el('div', { class: 'field' }, el('div', { class: 'field-label', text: 'Made by' }), methodSeg,
+          el('div', { class: 'hint', text: s.method === 'handmade'
+            ? 'Adds ' + fmtIn(extra) + ' to length and width for a little tolerance.'
+            : 'Adds ' + fmtIn(extra) + ' to length and width for clamping (' + (tIn >= CUT_RULES.thickFrom ? '1/4" and thicker' : 'under 1/4"') + '). Rounded up to the nearest 1/8".' }))),
+      rows,
+      el('div', { class: 'planner-actions' },
+        el('button', { class: 'btn', type: 'button', onClick: function () { s.parts.push({ name: '', length: '', width: '', qty: '1' }); self.drawForm(); } }, icon('plus'), 'Add part'),
+        el('div', { class: 'spacer' }),
+        el('button', { class: 'btn primary', type: 'button', onClick: function () { self.run(); } }, icon('search'), 'Find stock')));
+  },
+
+  /** Validates the parts and runs the plan. */
+  run: function () {
+    const s = this.state;
+    const tIn = Number(s.thickness);
+    if (!s.materialId || !tIn) { App.toast('Choose a material and thickness.', { type: 'error' }); return; }
+    const extra = stockExtra(s.method, tIn);
+    const parts = [];
+    let bad = '';
+    s.parts.forEach(function (p, i) {
+      const L = parseMeasureClient(p.length), W = parseMeasureClient(p.width), q = Number(p.qty || 1);
+      if (!p.name.trim() && !p.length && !p.width) return;
+      if (!p.name.trim()) bad = bad || 'Part ' + (i + 1) + ' needs a name.';
+      if (!(L > 0) || !(W > 0)) bad = bad || 'Part ' + (i + 1) + ' needs a length and width.';
+      if (!Number.isInteger(q) || q < 1 || q > 50) bad = bad || 'Part ' + (i + 1) + ': quantity must be 1–50.';
+      if (bad) return;
+      for (let c = 0; c < q; c++) {
+        parts.push({ key: i + ':' + c, name: p.name.trim() + (q > 1 ? ' (' + (c + 1) + ' of ' + q + ')' : ''), partL: L, partW: W,
+          w: roundUp8(Math.max(L, W) + extra), h: roundUp8(Math.min(L, W) + extra) });
+      }
+    });
+    if (bad) { App.toast(bad, { type: 'error' }); return; }
+    if (!parts.length) { App.toast('Add at least one part.', { type: 'error' }); return; }
+    const stocks = stockCopies(s.materialId, tIn);
+    const t0 = Date.now();
+    this.result = { plan: Geo.plan(stocks, parts), stocks: stocks, method: s.method, thicknessIn: tIn, materialId: s.materialId, ms: Date.now() - t0 };
+    this.drawResults();
+    this.refs.results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+
+  drawResults: function () {
+    const self = this, box = clear(this.refs.results), res = this.result;
+    if (!res) return;
+    const plan = res.plan;
+    const bySt = {};
+    plan.placed.forEach(function (p) { const k = p.stock.id + '#' + p.stock.copy; (bySt[k] = bySt[k] || { stock: p.stock, items: [] }).items.push(p); });
+    const groups = Object.keys(bySt).map(function (k) { return bySt[k]; });
+    box.appendChild(el('div', { class: 'planner-summary' + (plan.unplaced.length ? ' warn' : '') },
+      el('b', { text: plan.placed.length + ' of ' + (plan.placed.length + plan.unplaced.length) + ' parts placed' }),
+      ' on ' + plural(groups.length, 'stock piece') + '.',
+      plan.unplaced.length ? ' Not enough stock for: ' + plan.unplaced.map(function (p) { return p.name + ' (' + fmtIn(p.w) + ' × ' + fmtIn(p.h) + ' with extra)'; }).join(', ') + '.' : ''));
+    groups.forEach(function (g) {
+      const r = g.stock.rec;
+      const parts = g.stock.taken.map(function (t) { return { poly: t, kind: 'reserved', label: 'reserved' }; })
+        .concat(g.items.map(function (p) { return { poly: Geo.placementPoly(p.placement), label: p.part.name, kind: 'new' }; }));
+      const svgOpts = { width: 520, height: 300, unit: 'in', parts: parts, minLabel: 0.6 };
+      const zoom = el('button', { class: 'stock-preview', type: 'button', title: 'Click to zoom' }, Geo.svg(g.stock.points, svgOpts));
+      zoom.addEventListener('click', function () { showShapeLightbox(listVal(r.materialTypeId) + ' · ' + rawThickness(r), g.stock.points, Object.assign({}, svgOpts, { minLabel: 0.25 })); });
+      box.appendChild(el('div', { class: 'group-card plan-card' },
+        zoom,
+        el('div', { class: 'plan-info' },
+          el('div', { class: 'item-name', text: listVal(r.materialTypeId) + ' · ' + rawThickness(r) + (r.quantity > 1 ? ' · sheet ' + (g.stock.copy + 1) + ' of ' + r.quantity : '') }),
+          el('div', { class: 'meta-line', text: (App.locationLabel(r.locationId) || 'No location') + ' · ' + Math.round(Geo.area(g.stock.points)) + ' sq in' }),
+          el('ul', { class: 'plan-parts' }, g.items.map(function (p) {
+            return el('li', null, el('b', { text: p.part.name }), ' — part ' + fmtIn(p.part.partL) + ' × ' + fmtIn(p.part.partW) + ', cut ' + fmtIn(p.part.w) + ' × ' + fmtIn(p.part.h) +
+              (p.placement.angle ? ' (turned ' + Math.round(p.placement.angle) + '°)' : ''));
+          })))));
+    });
+    if (plan.placed.length) {
+      box.appendChild(el('div', { class: 'planner-actions' }, el('div', { class: 'spacer' }),
+        el('button', { class: 'btn primary', type: 'button', onClick: function (e) { self.send(e.currentTarget); } }, 'Send ' + plural(plan.placed.length, 'part') + ' to Production')));
+    }
+  },
+
+  send: function (btn) {
+    const self = this, res = this.result;
+    const jobs = res.plan.placed.map(function (p) {
+      const r = p.stock.rec;
+      return { partName: p.part.name, materialTypeId: res.materialId, thickness: fmtIn(res.thicknessIn), partLength: p.part.partL, partWidth: p.part.partW,
+        method: res.method, stockLength: p.part.w, stockWidth: p.part.h, rawMaterialId: r.id, copyIndex: p.stock.copy, placement: p.placement };
+    });
+    btn.disabled = true;
+    App.write('apiProductionCreate', [jobs]).then(function (d) {
+      App.applyWrite('production', d);
+      self.result = null;
+      self.state.parts = [{ name: '', length: '', width: '', qty: '1' }];
+      self.drawForm(); self.drawResults();
+      App.toast('Sent ' + plural(jobs.length, 'part') + ' to Production. Those spots are now reserved.', { type: 'ok', action: { label: 'Open Production', fn: function () { App.go('production'); } } });
+    }, function (err) { btn.disabled = false; App.toast(err.message, { type: 'error' }); if (err.code === 'CONFLICT') App.poll(); });
+  }
+};
+
+// ───────────────────────── Production ─────────────────────────
+
+const ProductionView = {
+  title: 'Production',
+  tab: 'planned',
+  refs: null,
+
+  render: function (main) {
+    const r = this.refs = {};
+    r.tabs = el('div', { class: 'tabs' });
+    r.list = el('div');
+    main.appendChild(el('div', { class: 'page' },
+      el('div', { class: 'page-head' }, el('div', null, el('h1', { class: 'page-title', text: 'Production' }),
+        el('div', { class: 'page-sub', text: 'Parts to make. Plan them in Raw Materials → Cut planner.' })),
+        el('div', { class: 'page-actions' }, el('button', { class: 'btn', type: 'button', onClick: function () { RawView.tab = 'planner'; App.go('rawMaterials'); } }, icon('plus'), el('span', { class: 'label', text: 'Plan parts' })))),
+      el('div', { class: 'notice' }, 'This is a simple first version for testing. The full production tracker is still being designed.'),
+      r.tabs, r.list));
+    this.draw();
+  },
+  leave: function () { this.refs = null; },
+  onData: function (keys) { if (this.refs && keys.some(function (k) { return k === 'production' || k === 'rawMaterials'; })) this.draw(); },
+
+  draw: function () {
+    const self = this, r = this.refs;
+    const jobs = App.tables.production || [];
+    const count = function (st) { return jobs.filter(function (j) { return st === 'all' || j.status === st; }).length; };
+    clear(r.tabs);
+    [['planned', 'Planned'], ['cut', 'Cut'], ['done', 'Done'], ['all', 'All']].forEach(function (t) {
+      r.tabs.appendChild(el('button', { type: 'button', class: self.tab === t[0] ? 'on' : '', onClick: function () { self.tab = t[0]; self.draw(); } },
+        t[1], el('span', { class: 'tab-count', text: count(t[0]) })));
+    });
+    clear(r.list);
+    const list = jobs.filter(function (j) { return self.tab === 'all' || j.status === self.tab; })
+      .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
+    if (!list.length) { r.list.appendChild(el('div', { class: 'group-card' }, el('div', { class: 'list-empty', text: 'Nothing here.' }))); return; }
+    if (this.tab === 'planned') this.drawPlanned(list); else r.list.appendChild(el('div', { class: 'group-card' }, list.map(function (j) { return self.jobRow(j); })));
+  },
+
+  /** Planned jobs grouped by the stock piece they come from. */
+  drawPlanned: function (list) {
+    const self = this, box = this.refs.list;
+    const groups = {}, loose = [];
+    list.forEach(function (j) {
+      const piece = j.rawMaterialId && App.get('rawMaterials', j.rawMaterialId);
+      if (!piece || piece.archivedAt || !j.placement || !j.placement.w) { loose.push(j); return; }
+      const k = j.rawMaterialId + '#' + (j.copyIndex || 0);
+      (groups[k] = groups[k] || { piece: piece, copy: j.copyIndex || 0, jobs: [] }).jobs.push(j);
+    });
+    Object.keys(groups).forEach(function (k) {
+      const g = groups[k], r = g.piece, f = Geo.toInches(rawUnit(r));
+      const pts = rawPoints(r).map(function (p) { return [p[0] * f, p[1] * f]; });
+      const svgOpts = { width: 460, height: 260, unit: 'in', minLabel: 0.6,
+        parts: g.jobs.map(function (j) { return { poly: Geo.placementPoly(j.placement), label: j.partName, kind: 'new' }; }) };
+      const zoom = el('button', { class: 'stock-preview', type: 'button', title: 'Click to zoom' }, Geo.svg(pts, svgOpts));
+      zoom.addEventListener('click', function () { showShapeLightbox(listVal(r.materialTypeId) + ' · ' + rawThickness(r), pts, Object.assign({}, svgOpts, { minLabel: 0.25 })); });
+      box.appendChild(el('div', { class: 'group-card plan-card' }, zoom,
+        el('div', { class: 'plan-info' },
+          el('div', { class: 'item-name', text: listVal(r.materialTypeId) + ' · ' + rawThickness(r) + (r.quantity > 1 ? ' · sheet ' + (g.copy + 1) + ' of ' + r.quantity : '') }),
+          el('div', { class: 'meta-line', text: App.locationLabel(r.locationId) || 'No location' }),
+          el('div', { class: 'plan-jobs' }, g.jobs.map(function (j) { return self.jobRow(j, g); })),
+          g.jobs.length > 1 ? el('button', { class: 'btn sm', type: 'button', text: 'Mark all ' + g.jobs.length + ' as cut', onClick: function () { self.cut(g, g.jobs); } }) : null)));
+    });
+    if (loose.length) {
+      box.appendChild(el('h3', { class: 'section-title', text: 'Needs a stock piece' }));
+      box.appendChild(el('div', { class: 'group-card' }, el('div', { class: 'list-empty', text: 'Their stock was used up or changed. Delete them and plan again in the Cut planner.' }),
+        loose.map(function (j) { return self.jobRow(j); })));
+    }
+  },
+
+  jobRow: function (j, group) {
+    const self = this;
+    const actions = [];
+    if (j.status === 'planned' && group) actions.push(el('button', { class: 'btn sm primary', type: 'button', text: 'Mark as cut', onClick: function () { self.cut(group, [j]); } }));
+    if (j.status === 'cut') actions.push(el('button', { class: 'btn sm primary', type: 'button', text: 'Mark done', onClick: function () { self.setStatus(j, 'done'); } }));
+    if (j.status === 'done') actions.push(el('button', { class: 'btn sm ghost', type: 'button', text: 'Back to cut', onClick: function () { self.setStatus(j, 'cut'); } }));
+    if (j.status === 'planned') actions.push(el('button', { class: 'icon-btn danger', type: 'button', 'aria-label': 'Delete job', title: 'Delete (frees the reserved spot)', onClick: function () { self.remove(j); } }, icon('trash')));
+    return el('div', { class: 'job-row' },
+      el('div', { class: 'job-text' },
+        el('div', { class: 'item-name', text: j.partName }),
+        el('div', { class: 'meta-line', text: [listVal(j.materialTypeId) + ' ' + j.thickness, 'part ' + fmtIn(j.partLength) + ' × ' + fmtIn(j.partWidth),
+          'stock ' + fmtIn(j.stockLength) + ' × ' + fmtIn(j.stockWidth), j.method === 'shapeoko' ? 'Shapeoko' : 'Handmade'].join(' · ') })),
+      el('span', { class: 'badge ' + ({ planned: 'check', cut: 'low', done: 'ok' })[j.status], text: j.status }),
+      el('div', { class: 'job-actions' }, actions));
+  },
+
+  setStatus: function (j, status) {
+    App.write('apiProductionUpdate', [j.id, { status: status }]).then(function (d) { App.applyWrite('production', d); }, function (err) { App.toast(err.message, { type: 'error' }); });
+  },
+
+  remove: function (j) {
+    App.confirm({ title: 'Delete “' + j.partName + '”?', message: 'The spot reserved for it on the stock is freed.', confirmLabel: 'Delete', danger: true }).then(function (yes) {
+      if (!yes) return;
+      App.write('apiProductionDelete', [[j.id]]).then(function (d) { App.removeLocal('production', j.id); App.applyWrite('production', d); }, function (err) { App.toast(err.message, { type: 'error' }); });
+    });
+  },
+
+  /**
+   * Mark as cut: removes the jobs' stock rectangles from the piece, shows the
+   * leftover, and saves it. Other planned jobs on the piece move with it.
+   */
+  cut: function (g, cutJobs) {
+    const r = App.get('rawMaterials', g.piece.id);
+    const f = Geo.toInches(rawUnit(r));
+    const pts = rawPoints(r).map(function (p) { return [p[0] * f, p[1] * f]; });
+    const cutSet = new Set(cutJobs.map(function (j) { return j.id; }));
+    const left = Geo.leftovers(pts, cutJobs.map(function (j) { return Geo.placementPoly(j.placement); }));
+    const others = (App.tables.production || []).filter(function (j) {
+      return j.status === 'planned' && j.rawMaterialId === r.id && (j.copyIndex || 0) === g.copy && !cutSet.has(j.id);
+    });
+    const reassign = {};
+    others.forEach(function (j) {
+      const poly = Geo.placementPoly(j.placement);
+      reassign[j.id] = left.findIndex(function (l) { return Geo.containsRect(l, poly); });
+    });
+    const lost = others.filter(function (j) { return reassign[j.id] < 0; });
+    const preview = el('div', { class: 'leftover-previews' }, left.length ? left.map(function (l, li) {
+      const kept = others.filter(function (j) { return reassign[j.id] === li; })
+        .map(function (j) { return { poly: Geo.placementPoly(j.placement), label: j.partName, kind: 'reserved' }; });
+      return el('div', { class: 'leftover' }, Geo.svg(l, { width: 300, height: 200, unit: 'in', minLabel: 1.5, parts: kept }));
+    }) : el('p', { text: 'Nothing usable is left — the piece will be archived (restorable for 30 days).' }));
+    App.confirm({
+      title: 'Mark ' + (cutJobs.length === 1 ? '“' + cutJobs[0].partName + '”' : cutJobs.length + ' parts') + ' as cut?',
+      message: left.length ? 'This updates the stock to what’s left' + (r.quantity > 1 ? ' (one of the ' + r.quantity + ' identical sheets is used)' : '') + ':' : '',
+      extra: [preview, lost.length ? el('p', { class: 'meta-line', text: 'Also un-assigns: ' + lost.map(function (j) { return j.partName; }).join(', ') + ' (their spot is cut away; plan them again).' }) : null,
+        el('p', { class: 'meta-line', text: 'Strips thinner than 3/4" are dropped.' })],
+      confirmLabel: 'Mark as cut'
+    }).then(function (yes) {
+      if (!yes) return;
+      const toUnit = function (poly) { return { points: poly.map(function (p) { return [p[0] / f, p[1] / f]; }) }; };
+      App.write('apiRawCut', [r.id, r.version, g.copy, cutJobs.map(function (j) { return j.id; }), left.map(toUnit), reassign]).then(function (d) {
+        App.upsert('rawMaterials', d.piece);
+        d.newPieces.forEach(function (p) { App.upsert('rawMaterials', p); });
+        d.jobs.forEach(function (j) { App.upsert('production', j); });
+        App.applyWrite(['rawMaterials', 'production'], { versions: d.versions });
+        App.toast('Marked as cut — stock updated.', { type: 'ok' });
+      }, function (err) { App.toast(err.message, { type: 'error' }); App.poll(); });
+    });
+  }
+};
+App.views.production = ProductionView;
+</script>
