@@ -1,0 +1,15 @@
+---
+// Team store page (kept from the one-page site). The "Merch" tab links straight to the store.
+import MainLayout from "../../sites/main/MainLayout.astro";
+import PageHero from "../../sites/main/components/PageHero.astro";
+import Merch from "../../sites/main/sections/merch/Merch.astro";
+import { media } from "../../sites/main/lib/media";
+import { MERCH_STORE_URL } from "../../sites/main/config/site";
+---
+
+<MainLayout page="merch" title="Merch · Golden Griffins" description="Official Los Al Robotics gear.">
+  <PageHero img={media("team/27bdee70e4.webp")} eyebrow="Team store" title="Wear the griffin" lede="Official Los Al Robotics gear from Dogain Gear. A portion of every order goes back to the team.">
+    <div class="ctas" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:var(--s3)"><a class="btn btn-gold" href={MERCH_STORE_URL} target="_blank" rel="noopener">Shop the store ↗</a></div>
+  </PageHero>
+  <Merch />
+</MainLayout>

@@ -6,7 +6,7 @@ Each app is a React package that mounts at its own route under `team6220.org/app
 | --- | --- | --- |
 | `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
 | `apps/attendance` | `/apps/attendance` | **Built, waiting for its server.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; shows "Not connected yet" until that is deployed. Try it with `?demo=admin` |
-| `apps/inventory` | `/apps/inventory` | Moves in from Apps Script |
+| `apps/inventory` | `/apps/inventory` | **Built.** Uses the Wix CMS on the deployed site once the collections exist; mock data in dev. See [inventory/README.md](inventory/README.md) |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
 | `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
 | `apps/scouting`, `apps/pit`, `apps/production` | | Planned |
@@ -114,3 +114,7 @@ example `pnpm preview`), then open `/apps/goldsim/` and `/apps/wingit/`.
 
 GoldSim runs in local/guest mode: the web app has no Supabase client wired in, so it needs no keys or env vars.
 Its `packages/data-layer` Supabase code and `supabase/` folder are unused by the site build and go away with #66.
+
+GoldSim's own lint, typecheck and tests (`npm run check` in `apps/goldsim`, about 8 minutes) run in a separate
+workflow, `.github/workflows/goldsim.yml`, only when files under `apps/goldsim/` change. It is not a required
+check; the site's required check stays `ci`.

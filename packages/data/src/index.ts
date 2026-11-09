@@ -17,3 +17,5 @@ export {
   type SignInStatus,
   type Viewer,
 } from "./attendance/types";
+// Inventory app data (apps/inventory). Also importable as "@team6220/data/inventory".
+export { inventory } from "./inventory/index.ts";

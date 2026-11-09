@@ -22,6 +22,7 @@ export const LOGIN_REDIRECT_PATH: string = LOGIN_CALLBACK_PATH;
 export const BADGES = {
   teamMember: "Team Member",
   attendanceAdmin: "Attendance Admin",
+  // Exists in Wix but unused: every Team Member can edit the inventory (team decision, Nov 2026).
   inventoryManager: "Inventory Manager",
   webAdmin: "Web Admin",
 } as const;

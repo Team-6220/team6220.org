@@ -1,0 +1,38 @@
+# GoldSim's own lint, typecheck and tests. They take about 8 minutes, so they run
+# only when something under apps/goldsim/ changes, as a separate check that is
+# not required to merge. The site's required check is still `ci` in ci.yml.
+name: GoldSim checks
+
+on:
+  pull_request:
+    paths:
+      - "apps/goldsim/**"
+      - ".github/workflows/goldsim.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/goldsim/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goldsim-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  goldsim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/goldsim
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/goldsim/package-lock.json
+      - run: npm ci
+      - run: npm run check

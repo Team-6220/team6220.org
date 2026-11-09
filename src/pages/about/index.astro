@@ -1,0 +1,12 @@
+---
+// About: the main About page (team philosophy and intro, see #69).
+import MainLayout from "../../../sites/main/MainLayout.astro";
+import PageHero from "../../../sites/main/components/PageHero.astro";
+import Story from "../../../sites/main/sections/about/Story.astro";
+import { media } from "../../../sites/main/lib/media";
+---
+
+<MainLayout page="about" title="About · Golden Griffins" description="Who Team 6220 is: a student-led, student-driven FIRST Robotics Competition team at Los Alamitos High School.">
+  <PageHero img={media("team/2d048fe84f.webp")} eyebrow="About" title="Making robots<br>Building leaders" lede="Team 6220 is a student-led FIRST Robotics Competition team at Los Alamitos High School." />
+  <Story />
+</MainLayout>

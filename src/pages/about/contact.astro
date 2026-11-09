@@ -1,0 +1,11 @@
+---
+import MainLayout from "../../../sites/main/MainLayout.astro";
+import PageHero from "../../../sites/main/components/PageHero.astro";
+import Contact from "../../../sites/main/sections/contact/Contact.astro";
+import { media } from "../../../sites/main/lib/media";
+---
+
+<MainLayout page="about" title="Contact · Golden Griffins" description="Contact FRC Team 6220.">
+  <PageHero img={media("team/2d048fe84f.webp")} eyebrow="About" title="Contact" />
+  <Contact />
+</MainLayout>

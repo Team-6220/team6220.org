@@ -55,9 +55,9 @@ A full redesign of today's pages. The current target structure (from issue #69; 
 | --- | --- |
 | Home | |
 | Summer Camp | Only shown when enabled by webmasters, with a banner on the home page during those times |
-| About | Philosophy & Team Intro (default), History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
+| About | The About page itself (team philosophy and intro), plus History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
 | Robots | One page per robot, easy to add to each year, 3D viewer for robots with CAD |
-| Support Us | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF |
+| Sponsors | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF. The home page button says "Support us" |
 | Merch | |
 | Resources | Team resources, technical/team binders with an archive, Media, and every app listed individually (no separate Apps tab) |
 
@@ -71,7 +71,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | --- | --- | --- | --- | --- | --- |
 | Apps dashboard | `/apps` | Home screen linking to every app | New | Team members | None |
 | Attendance | `/apps/attendance` | Members sign in at meetings (once a day, at a kiosk) | Exists on Apps Script (source in `backend/apps-script/attendance`); the new screen is built in `apps/attendance` and saves through a new, separate Apps Script (`backend/apps-script/attendance-api`, not deployed yet) | Team members view; only Attendance Admins open or close the sign-in kiosk | Same Google Sheet and row format as today, through Apps Script |
-| Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script (source in `backend/apps-script/inventory`); moves fully | Team members view; Inventory Managers edit | Wix database (moved from Google Sheets) |
+| Inventory | `/apps/inventory` | Tracks parts, tools and stock audits | Exists on Apps Script (source in `backend/apps-script/inventory`); moves fully | Team members view and edit (no separate inventory role, team decision Nov 2026) | Wix database (moved from Google Sheets) |
 | GoldSim | `/apps/goldsim` | Open-source 2D FRC strategy and robot-design simulator | Imported into `apps/goldsim` with history; old repo archived | Anyone (public) | Local in the browser; cloud saves move from Supabase to Wix CMS (#66) |
 | WingIt | `/apps/wingit` | Small existing team app | Imported into `apps/wingit` with history; old repo archived | Team members | None |
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
@@ -261,7 +261,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 
 1. A student clicks **Log in** on team6220.org and picks Google.
 2. A Web Admin approves the request under Site Members in the dashboard and gives them the `Team Member` badge.
-3. Leads get extra badges (`Attendance Admin`, `Inventory Manager`) as their roles need.
+3. Leads get extra badges (`Attendance Admin`) as their roles need. (`Inventory Manager` exists in Wix but is not used: every Team Member can edit the inventory.)
 4. At the end of each season, remove graduated members and clean up badges.
 
 **What needs a login:** anything that writes data or shows team-internal info. Open-source tools like GoldSim can stay public.
@@ -271,7 +271,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 | Public pages, forms | Anyone | Anyone can submit forms |
 | `/apps` dashboard | Team Member | n/a |
 | Attendance | Team Member (today's list, history, own sign-ins) | Open or close the sign-in kiosk: Attendance Admin only |
-| Inventory | Team Member | Edit items and audits: Inventory Manager |
+| Inventory | Team Member | Team Member (everything: items, quantities, audits, packing list, settings) |
 | GoldSim | Anyone | n/a |
 | WingIt | Team Member | n/a |
 | Production Tracker | Team Member | Designers submit; manufacturers update status |

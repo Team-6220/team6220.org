@@ -1,0 +1,37 @@
+---
+// Site header: wordmark, center logo, main menu (sites/main/data/nav.ts) and Log In.
+// A tab with a dropdown is a real link to its page; the + button next to it (or hover / keyboard focus)
+// opens the dropdown. Menu behaviour is in sites/main/scripts/site-b.js.
+import { LOGIN, NAV } from "../data/nav";
+
+interface Props {
+  /** id of the current tab (see nav.ts) */
+  page: string;
+}
+const { page } = Astro.props;
+const path = Astro.url.pathname.replace(/(\/index)?(\.html)?$/, "").replace(/\/$/, "") || "/";
+const ext = { target: "_blank", rel: "noopener" };
+const here = (href: string) => (href === path ? { "aria-current": "page" as const } : {});
+---
+
+<header class="site-head">
+  <div class="head-row">
+    <a class="wordmark" href="/">Golden Griffins<small>FRC Team 6220</small></a>
+    <a class="center-logo" href="/" aria-label="Team 6220 home"><svg aria-hidden="true"><use href="#griffin"/></svg></a>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-nav">MENU</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <ul class="menu">
+        {NAV.map((t) => t.children ? (
+          <li class:list={["has-sub", { active: t.id === page }]} data-page={t.id}><a href={t.href} {...here(t.href)}>{t.label}</a><button class="sub-btn" type="button" aria-expanded="false" aria-controls={`sub-${t.id}`} aria-label={`${t.label} pages`}><span class="plus" aria-hidden="true">+</span></button>
+            <ul class="sub" id={`sub-${t.id}`}>{t.children.map((c) => (
+              <li><a href={c.href} {...(c.external ? ext : here(c.href))}>{c.label}{c.external && " ↗"}</a></li>
+            ))}</ul></li>
+        ) : (
+          <li class:list={[{ active: t.id === page }]} data-page={t.id}><a href={t.href} {...(t.external ? ext : here(t.href))}>{t.label}{t.external && " ↗"}</a></li>
+        ))}
+        <li class="login" data-page="login"><a href={LOGIN.href}>{LOGIN.label}</a></li>
+      </ul>
+    </nav>
+  </div>
+  <span class="progress" id="progress" aria-hidden="true"></span>
+</header>
