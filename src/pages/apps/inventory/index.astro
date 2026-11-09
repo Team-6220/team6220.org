@@ -25,12 +25,16 @@ const page = assembleIndex(files);
       html:not([data-ggi="ready"]) #app { display: none; }
       html[data-ggi="ready"] #ggi-gate { display: none; }
       #ggi-gate a.btn { text-decoration: none; }
+      /* PLACEHOLDER (#106): plain link back to the main site; placement is for the owner's design pass. */
+      html:not([data-ggi="ready"]) .ggi-back { display: none; }
+      .ggi-back { position: fixed; right: 12px; bottom: 12px; z-index: 50; text-decoration: none; }
       .ggi-gate-wings { display: block; width: min(280px, 70vw); height: auto; margin: 0 auto 20px; }
     </style>
     <script is:inline set:html={stub} />
   </head>
   <body>
     <div id="ggi-gate" role="status"><div class="loading"><div class="spinner"></div>Loading inventory…</div></div>
+    <a class="btn ggi-back" href="/">Team site</a>
     <Fragment set:html={page.body} />
     <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>
     <script>

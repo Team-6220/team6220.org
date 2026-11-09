@@ -36,6 +36,9 @@ export default function Dashboard() {
         <div>
           <p className="dash__eyebrow">Los Al Robotics</p>
           <h1 className="dash__title">Team apps</h1>
+          <a className="t-button t-button--quiet" href="/">
+            Team site
+          </a>
         </div>
         {"member" in view && <MemberBadge member={view.member} />}
       </header>

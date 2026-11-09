@@ -73,6 +73,9 @@ export default function Attendance() {
           {state.kind === "viewer" && state.viewer.kind !== "signed-out" && (
             <span className="att__who">{state.viewer.name}</span>
           )}
+          <a className="t-button t-button--quiet" href="/">
+            Team site
+          </a>
           <a className="t-button t-button--quiet" href="/apps">
             Team apps
           </a>

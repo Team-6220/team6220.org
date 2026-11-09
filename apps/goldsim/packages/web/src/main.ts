@@ -67,6 +67,7 @@ function renderTopbar(): void {
       { id: "nav" },
       NAV.map((n) => h("a", { href: `#${n.path}`, class: routes[path]?.nav === n.path ? "sel" : "" }, n.label)),
     ),
+    h("a", { class: "btn", href: "/", style: "text-decoration:none" }, "Team site"),
     soundBtn,
     themeBtn,
   );
