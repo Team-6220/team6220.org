@@ -77,6 +77,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
 | Pit display | `/apps/pit` | Screen for the pit TV: match schedule from Nexus plus our scouting data and The Blue Alliance / Statbotics stats | Planned | Anyone (public, read-only) | Reads other apps and FRC data sites |
 | Production Tracker | `/apps/production` | Follows each robot part from design to finished. Replaces today's Google Forms and spreadsheets. | Planned | Designers submit parts; manufacturers update status | Wix database; design files stay in Google Drive as links |
+| Site Manager | `/apps/site` | Web Admins edit regular site content (summer camp, sponsors, robots, merch, resources, history) without editing code. Plan: [SITE-MANAGER.md](SITE-MANAGER.md) | Planned (needs Phase 2 server rendering; decisions open) | Web Admins | Wix database (`site_*` collections); images in the Wix Media Manager |
 
 Apps are listed one by one under the **Resources** tab, plus an Apps section on the Resources page (#75). There is no separate Apps tab.
 
@@ -163,6 +164,7 @@ Lessons from the Phase 0 Wix CLI test (details in [WIX-CLI-SPIKE.md](WIX-CLI-SPI
 4. Move admin actions into `/api` endpoints on Wix's server: badge checks, starting/stopping attendance, and Nexus and The Blue Alliance calls.
 5. Release preview builds and have the team test them through **View** in Headless Settings.
 6. Turn off the GitHub Pages deploy. From now on, Wix preview builds are our test site.
+7. Once pages are server-rendered, build the Site Manager app ([SITE-MANAGER.md](SITE-MANAGER.md)) so webmasters can edit regular content without code. It can be built in parallel with the other Phase 2 work, since the content model and admin screens don't need server rendering to be written; only publishing does.
 
 ### Phase 3: Switch over
 
@@ -277,7 +279,7 @@ Everyone signs in once with **Wix Members + "Sign in with Google"**, using any G
 | Production Tracker | Team Member | Designers submit; manufacturers update status |
 | Scouting | Team Member | Team Member submits scouting data |
 | Pit display | Anyone (public, read-only) | n/a |
-| Site admin tools | Web Admin | Web Admin |
+| Site Manager (`/apps/site`) | Web Admin | Web Admin |
 
 **Enforcement differs by phase.**
 
