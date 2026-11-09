@@ -29,7 +29,7 @@ export function toCsv(data) {
 export const MD_START = "<!-- redirects:start (generated from docs/redirects.json by `pnpm redirects:csv`; do not edit by hand) -->";
 export const MD_END = "<!-- redirects:end -->";
 
-const cell = (s) => s.replace(/\|/g, "\\|");
+const cell = (s) => s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 const code = (s) => "`" + s + "`";
 
 export function toMarkdown(data) {
