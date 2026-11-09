@@ -18,12 +18,10 @@ export const LOGIN_CALLBACK_PATH = "/apps/login/callback";
 // http://localhost:4321/apps/login/callback. Add any new origin there before using it.
 export const LOGIN_REDIRECT_PATH: string = LOGIN_CALLBACK_PATH;
 
-// Badge titles as created in Wix (Site Members > Badges). Compare with these, not with typed strings.
+// Badge titles as created in Wix (Site Members > Badges). There is no inventory badge: every Team Member can edit the inventory (team decision, Nov 2026). Compare with these, not with typed strings.
 export const BADGES = {
   teamMember: "Team Member",
   attendanceAdmin: "Attendance Admin",
-  // Exists in Wix but unused: every Team Member can edit the inventory (team decision, Nov 2026).
-  inventoryManager: "Inventory Manager",
   webAdmin: "Web Admin",
 } as const;
 export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
