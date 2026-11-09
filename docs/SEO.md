@@ -13,7 +13,7 @@ still listed below as it was.
 | Setting | Old value | New site |
 | --- | --- | --- |
 | Site name (Wix "site display name", `og:site_name`) | `Los Al Robotics | FRC Team 6220` | Imported (`sites/main/data/seo.ts`) |
-| Title pattern | `<Page> | FRC Team 6220 | Los Alamitos, CA` (home: `Robotics | ...`; summer: `Summer Robotics Program | LAHS FRC 6220`; hidden pages: `<Page> | Los Al Robotics | FRC Team 6220`) | **Not imported:** new pages already have their own titles (`<Page> · Golden Griffins`) |
+| Title pattern | `<Page> | FRC Team 6220 | Los Alamitos, CA` (home: `Robotics | ...`; summer: `Summer Robotics Program | LAHS FRC 6220`; hidden pages: `<Page> | Los Al Robotics | FRC Team 6220`) | **Decided (Nov 2026): keep the old style.** The new pages now use `<Page> \| FRC Team 6220 \| Los Alamitos, CA` (home: `Robotics \| FRC Team 6220 \| Los Alamitos, CA`). The old summer title (`Summer Robotics Program \| LAHS FRC 6220`) was not kept; the summer camp page follows the standard pattern. Earlier note: new pages already have their own titles (`<Page> · Golden Griffins`) |
 | Social image (`og:image`, `twitter:image`) | One image on every page: `static.wixstatic.com/media/14c925_d0e884a9418a4409b5ab8bbc36e42537~mv2.jpg`, 2500x1330 | Imported (still hotlinked from Wix; see gaps) |
 | Twitter card | `summary_large_image` | Imported |
 | `og:type` | `website` | Imported |
@@ -60,18 +60,18 @@ Checked in the built `dist/` (`pnpm build`) before this change.
 
 | New page | Title | Meta description | OG tags | Canonical |
 | --- | --- | --- | --- | --- |
-| `/` | Golden Griffins Homepage | FRC Team 6220, the Golden Griffins: a student-led FIRST Robotics Competition team at Los Alamitos High School since 2016. | none | none |
-| `/about` | About · Golden Griffins | Who Team 6220 is: a student-led, student-driven FIRST Robotics Competition team at Los Alamitos High School. | none | none |
-| `/about/history` | History · Golden Griffins | Team 6220's history since our 2016 rookie season. | none | none |
-| `/about/outreach` | Outreach · Golden Griffins | Team 6220's outreach: summer camp, STEM Expo, and open workshop days. | none | none |
-| `/about/join` | Join · Golden Griffins | How to join FRC Team 6220 at Los Alamitos High School. | none | none |
-| `/about/contact` | Contact · Golden Griffins | Contact FRC Team 6220. | none | none |
-| `/summer-camp` | Summer Camp · Golden Griffins | Team 6220's FRC and LEGO robotics summer camps at Los Alamitos High School. | none | none |
-| `/sponsors` | Sponsors · Golden Griffins | Sponsor or donate to FRC Team 6220. | none | none |
-| `/robots` | Robots · Golden Griffins | Every robot Team 6220 has built, season by season. | none | none |
-| `/merch` | Merch · Golden Griffins | Official Los Al Robotics gear. | none | none |
-| `/resources` | Resources · Golden Griffins | Team 6220's open resources, team apps and media. | none | none |
-| `/resources/media` | Media · Golden Griffins | Photos from Team 6220's competitions and build seasons. | none | none |
+| `/` | Robotics \| FRC Team 6220 \| Los Alamitos, CA | FRC Team 6220, The Golden Griffins: a student-led FIRST Robotics Competition team at Los Alamitos High School since 2016. | none | none |
+| `/about` | About \| FRC Team 6220 \| Los Alamitos, CA | Who Team 6220 is: a student-led, student-driven FIRST Robotics Competition team at Los Alamitos High School. | none | none |
+| `/about/history` | History \| FRC Team 6220 \| Los Alamitos, CA | Team 6220's history since our 2016 rookie season. | none | none |
+| `/about/outreach` | Outreach \| FRC Team 6220 \| Los Alamitos, CA | Team 6220's outreach: summer camp, STEM Expo, and open workshop days. | none | none |
+| `/about/join` | Join \| FRC Team 6220 \| Los Alamitos, CA | How to join FRC Team 6220 at Los Alamitos High School. | none | none |
+| `/about/contact` | Contact \| FRC Team 6220 \| Los Alamitos, CA | Contact FRC Team 6220. | none | none |
+| `/summer-camp` | Summer Camp \| FRC Team 6220 \| Los Alamitos, CA | Team 6220's FRC and LEGO robotics summer camps at Los Alamitos High School. | none | none |
+| `/sponsors` | Sponsors \| FRC Team 6220 \| Los Alamitos, CA | Sponsor or donate to FRC Team 6220. | none | none |
+| `/robots` | Robots \| FRC Team 6220 \| Los Alamitos, CA | Every robot Team 6220 has built, season by season. | none | none |
+| `/merch` | Merch \| FRC Team 6220 \| Los Alamitos, CA | Official Los Al Robotics gear. | none | none |
+| `/resources` | Resources \| FRC Team 6220 \| Los Alamitos, CA | Team 6220's open resources, team apps and media. | none | none |
+| `/resources/media` | Media \| FRC Team 6220 \| Los Alamitos, CA | Photos from Team 6220's competitions and build seasons. | none | none |
 
 Every public page already had a title and a description, so **no old title or description was imported over them**
 (that would replace newer text with older text). Only the missing pieces were added (see the next section).
