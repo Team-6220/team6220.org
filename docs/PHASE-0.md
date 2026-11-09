@@ -52,7 +52,7 @@ GitHub or Wix admin: they are organization or site settings that can't be change
     There is no separate "Member Authentication app" to install. Google sign-in is run by Wix itself (no Google
     keys needed) and is wired up when the login page is built in Phase 1.
 11. Settings → Site member settings → **Member badges** → Manage Badges: create **Team Member**,
-    **Attendance Admin**, **Inventory Manager**, **Web Admin**.
+    **Attendance Admin**, **Web Admin**. (Inventory Manager was dropped: every Team Member edits inventory.)
 
 ## You: one-day Wix CLI test (before building much)
 
