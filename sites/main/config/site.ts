@@ -14,7 +14,7 @@ export const SUMMER_CAMP_ENABLED = false;
 /** Headline on the summer camp page and the home page banner. Update the year each season. */
 export const SUMMER_CAMP_TITLE = "2026 Robotics Summer Camps";
 
-/** The team store. The "Merch" tab and the merch links point here. */
+/** The team store. The /merch page and the merch links point here (the Merch tab opens /merch). */
 export const MERCH_STORE_URL = "https://dogaingear.com/collections/los-alamitos-high-school-robotics";
 
 /** Where "Log In" goes: the team apps dashboard (sign-in happens there). */

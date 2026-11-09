@@ -58,7 +58,7 @@ A full redesign of today's pages. The current target structure (from issue #69; 
 | About | The About page itself (team philosophy and intro), plus History, Outreach, Join, Contact (`/about/outreach` style addresses, no `#`) |
 | Robots | One page per robot, easy to add to each year, 3D viewer for robots with CAD |
 | Sponsors | Sponsors, donations, Amazon wishlist, sponsorship packet as a hosted PDF. The home page button says "Support us" |
-| Merch | |
+| Merch | `/merch`: the merch page from the original site, with a link to the team store |
 | Resources | Team resources, technical/team binders with an archive, Media, and every app listed individually (no separate Apps tab) |
 
 A **Log In** button sits in the top right. The forms on these pages get redesigned too (see Forms).

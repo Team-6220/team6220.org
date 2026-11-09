@@ -1,6 +1,6 @@
 // Main menu. Structure from the team's site review (GitHub issue #69).
 // Clicking a tab opens its page; tabs with `children` also show a dropdown (hover, keyboard focus, or the + button).
-import { LOGIN_URL, MERCH_STORE_URL, SUMMER_CAMP_ENABLED } from "../config/site";
+import { LOGIN_URL, SUMMER_CAMP_ENABLED } from "../config/site";
 import { APPS, APPS_DASHBOARD } from "./apps";
 import { RESOURCES } from "./resources";
 
@@ -33,7 +33,7 @@ const tabs: (NavTab | false)[] = [
   },
   { id: "robots", label: "Robots", href: "/robots" },
   { id: "sponsors", label: "Sponsors", href: "/sponsors" },
-  { id: "merch", label: "Merch", href: MERCH_STORE_URL, external: true },
+  { id: "merch", label: "Merch", href: "/merch" },
   {
     id: "resources",
     label: "Resources",
