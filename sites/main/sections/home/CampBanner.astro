@@ -1,0 +1,13 @@
+---
+// Home page summer camp banner. Shown only while SUMMER_CAMP_ENABLED is on (sites/main/config/site.ts).
+import { SUMMER_CAMP_ENABLED, SUMMER_CAMP_TITLE } from "../../config/site";
+---
+
+{SUMMER_CAMP_ENABLED && (
+  <section class="on-gold camp-banner" aria-label="Summer camp">
+    <div class="wrap">
+      <div><p class="eyebrow">Summer Camp</p><h2 class="title-calm">{SUMMER_CAMP_TITLE}</h2></div>
+      <a class="btn btn-black" href="/summer-camp">See the summer camp →</a>
+    </div>
+  </section>
+)}

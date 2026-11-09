@@ -718,3 +718,50 @@ html.intro-on{overflow:hidden}
 html{--pgl-s:360px}
 @media (max-width:640px){html{--pgl-s:260px;--pgl-lab:96px}}
 .foot-note{margin:14px 0 0;text-align:center;font-size:.72rem;letter-spacing:.04em;color:var(--dim)}
+
+/* ---------- Multi-page site (one page per address) ---------- */
+/* Menu: a tab with a dropdown is a link to its page plus a + button that opens the dropdown */
+.menu>li.has-sub{display:flex;align-items:center}
+.menu>li.has-sub>a{padding-right:4px}
+.menu>li.has-sub>a::after{right:4px}
+.menu>li>.sub-btn{padding:12px 12px 12px 2px;min-height:44px}
+.menu>li>.sub-btn::after{display:none}
+.menu>li.has-sub:hover>.sub-btn,.menu>li.has-sub.active>.sub-btn,.menu>li.has-sub.open>.sub-btn{color:var(--gold)}
+.menu:hover>li.has-sub.active:not(:hover)>.sub-btn{color:var(--paper)}
+.has-sub.shut>.sub{opacity:0;visibility:hidden;transform:translateY(8px)}
+.has-sub.shut .plus{transform:none}
+.sub a{white-space:nowrap}
+.sub a[aria-current="page"]{color:var(--gold)}
+.menu>li.login{margin-left:10px}
+.menu>li.login>a{border:2px solid var(--gold);border-radius:var(--r);color:var(--gold);padding:8px 14px}
+.menu>li.login>a::after{display:none}
+.menu>li.login>a:hover{background:var(--gold);color:var(--ink)}
+@media (max-width:1180px){
+  .menu>li.has-sub{flex-wrap:wrap}
+  .menu>li.has-sub>a{width:auto;flex:1;padding-right:4px}
+  .menu>li>.sub-btn{width:auto;min-width:48px;justify-content:center;padding:16px 4px}
+  .menu>li.has-sub>.sub{flex-basis:100%}
+  .menu>li.login{margin:16px 0 0;border-bottom:0}
+  .menu>li.login>a{justify-content:center;padding:12px 4px}
+}
+/* Robots: hide the CAD button for robots without a CAD link */
+.rs-ctas .btn[hidden]{display:none}
+/* Spots the team still has to fill in (#69) */
+.placeholder{font-family:var(--tech);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);border:1px dashed var(--line);border-radius:var(--r);padding:var(--s4) var(--s3);text-align:center}
+.on-paper .placeholder,.on-gold .placeholder{color:var(--ink);border-color:rgba(0,0,0,.35)}
+/* Resources: card grid on a dark section */
+.res-dark a{color:var(--paper);border-top-color:rgba(255,255,255,.25)}
+.res-dark a::before{background:var(--gold)}
+/* Summer camp banner on the home page (only while SUMMER_CAMP_ENABLED is on) */
+.camp-banner{padding-block:var(--s4)}
+.camp-banner .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s2) var(--s4)}
+.camp-banner h2{font-size:clamp(1.4rem,3vw,2rem)}
+/* Summer camp page: plain text ported from the old site */
+.camp-copy{max-width:72ch}
+.camp-copy h2{margin:var(--s5) 0 var(--s2)}
+.camp-copy h2:first-child{margin-top:0}
+.camp-copy p,.camp-copy ul{margin:0 0 var(--s2)}
+.camp-copy .btn{margin:var(--s1) var(--s1) var(--s2) 0}
+/* Page-change loader: arriving on a new page, keep the cover up from the first paint */
+html.pgl-arrive .pgl{display:block}
+html.pgl-arrive .pgl-vid{opacity:0}

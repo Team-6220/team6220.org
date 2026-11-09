@@ -7,5 +7,8 @@ import syncMedia from "./integrations/sync-media.mjs";
 export default defineConfig({
   site: "https://dev.team6220.org",
   output: "static",
+  // Pages are built as about.html, about/history.html, ... so GitHub Pages serves team6220.org/about
+  // without redirecting to /about/ (page addresses have no trailing slash).
+  build: { format: "file" },
   integrations: [syncMedia()],
 });

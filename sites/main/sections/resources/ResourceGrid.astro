@@ -1,0 +1,33 @@
+---
+// Everything on /resources, in sections. Cards come from sites/main/data/resources.ts and data/apps.ts.
+import { RESOURCES } from "../../data/resources";
+import { APPS, APPS_DASHBOARD } from "../../data/apps";
+import Placeholder from "../../components/Placeholder.astro";
+const ext = { target: "_blank", rel: "noopener" };
+---
+
+<section class="on-gold angled" id="team-resources">
+  <div class="wrap">
+    <div class="res">
+      {RESOURCES.map((r, i) => (
+        <a class="rv" style={`--d:${i}`} href={r.href} {...(r.external ? ext : {})}><span class="k">{r.kind}</span><h3>{r.title}{r.external && " ↗"}</h3><p>{r.blurb}</p></a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="on-ink">
+  <div class="wrap">
+    <div class="sub-head rv" id="apps" style="margin-top:0"><div><h2 class="ruled title-calm">Apps</h2></div><a class="btn btn-line" href={APPS_DASHBOARD.href}>Open the apps dashboard →</a></div>
+    <div class="res res-dark">
+      {APPS.map((a, i) => (
+        <a class="rv" style={`--d:${i}`} href={a.href}><span class="k">APP</span><h3>{a.name}</h3><p>{a.blurb}</p></a>
+      ))}
+    </div>
+
+    <div class="sub-head rv" id="media"><div><h2 class="ruled title-calm">Media</h2></div><a class="btn btn-gold" href="/resources/media">See all media →</a></div>
+
+    <div class="sub-head rv" id="archive"><div><h2 class="ruled title-calm">Archive</h2></div></div>
+    <Placeholder issue="Archive of technical and team binders, kept for future seasons" />
+  </div>
+</section>

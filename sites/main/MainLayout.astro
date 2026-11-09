@@ -1,15 +1,31 @@
 ---
-// Layout for the public team6220.org pages. Owns the main site's styles and
-// fonts so apps don't inherit them.
+// Layout for the public team6220.org pages: fonts, styles, header, footer and scripts.
+// Owns the main site's styles so apps don't inherit them. Each page in src/pages/ passes its tab id
+// (`page`) and puts its sections in the slot.
 import BaseLayout from "../../src/layouts/BaseLayout.astro";
 import "./styles/site.css";
 import earlyScript from "./content/early.js?raw";
+import Sprite from "./components/Sprite.astro";
+import Loader from "./components/Loader.astro";
+import Intro from "./components/Intro.astro";
+import Header from "./components/Header.astro";
+import Footer from "./components/Footer.astro";
+import { MEDIA_BASE } from "./lib/media";
+import { OLD_ANCHORS } from "./data/old-anchors";
 
 interface Props {
+  /** Full page title (shown in the browser tab) */
   title: string;
   description: string;
+  /** Tab id from data/nav.ts ("home", "about", ...); highlights that tab */
+  page: string;
 }
-const { title, description } = Astro.props;
+const { title, description, page } = Astro.props;
+const home = page === "home";
+
+// Home only: old one-page addresses (/#about, /#photos-<album>) go to the new pages, and the intro may play.
+const homeScript = `(function(){var m=${JSON.stringify(OLD_ANCHORS)},go=function(){var h=decodeURIComponent(location.hash.slice(1)),to=m[h]||(h.indexOf('photos-')===0?'/resources/media#'+h.slice(7):null);if(to)location.replace(to);return !!to};
+if(!go())window.G6220_INTRO=1;addEventListener('hashchange',go)})();`;
 ---
 
 <BaseLayout title={title} description={description}>
@@ -20,8 +36,22 @@ const { title, description } = Astro.props;
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&display=swap"
     />
-    <!-- Must run before first paint: sets the intro/reduced-motion classes. -->
+    {home && <script is:inline set:html={homeScript} />}
+    <!-- Must run before first paint: sets the intro/loader/reduced-motion classes. -->
     <script is:inline set:html={earlyScript} />
   </Fragment>
-  <slot />
+  <Sprite />
+  <Loader />
+  {home && <Intro />}
+  <a class="skip" href="#main">Skip to content</a>
+  <Header page={page} />
+  <main id="main">
+    <div class="page current" id={home ? "home" : `page-${page}`}>
+      <slot />
+    </div>
+  </main>
+  <Footer />
+  <script is:inline set:html={`window.MEDIA_BASE=${JSON.stringify(MEDIA_BASE)};`} />
+  <script is:inline src="/assets/main/js/site-a.js"></script>
+  <script is:inline src="/assets/main/js/site-b.js"></script>
 </BaseLayout>
