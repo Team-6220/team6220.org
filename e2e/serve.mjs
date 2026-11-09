@@ -54,7 +54,8 @@ export function startServer({ root, port = 0, base = "/" }) {
       if (s) return serveFile(res, file);
       return send(res, 404, "Not found");
     } catch (e) {
-      return send(res, 500, String(e));
+      console.error(e);
+      return send(res, 500, "Server error");
     }
   });
   return new Promise((ok) => server.listen(port, "127.0.0.1", () => ok(server)));
