@@ -1,12 +1,12 @@
 # Phase 0 checklist
 
-Mirrors Phase 0 of the Headless Migration Plan. **Done** items are in this repo already. **You** items need a
+Mirrors Phase 0 of the [Headless Migration Plan](MIGRATION-PLAN.md), which lives in this repo and is edited by pull request. **Done** items are in this repo already. **You** items need a
 GitHub or Wix admin: they are organization or site settings that can't be changed from code.
 
 ## Done in the repo
 
 - [x] Monorepo: pnpm workspaces, Astro 7 site at the root, `apps/*` and `packages/*` (`ui`, `data`)
-- [x] Homepage ported from the approved preview (markup, CSS, scripts and 33 embedded assets split into files)
+- [x] Homepage ported from the approved preview (markup, CSS, scripts and assets split into files; student photos are served from `PUBLIC_MEDIA_BASE`, not git)
 - [x] `ci.yml`: install, typecheck, tests, build on every pull request (job name `ci`)
 - [x] `pages.yml`: deploys `dist/` to GitHub Pages on every push to `main`
 - [x] `public/CNAME` set to `dev.team6220.org`
@@ -21,8 +21,8 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 2. **Org owners and 2FA.** Org → People: make `losalfrc@gmail.com`, `operations@team6220.org` and
    `programming@team6220.org` owners (use the GitHub accounts tied to those emails). Turn on 2FA for each and
    store recovery codes where two leads or a mentor can reach them.
-3. **Create the `web-admins` team.** Org → Teams → New team, add the web admins, then give it **Write** access to
-   this repo (repo Settings → Collaborators and teams). `CODEOWNERS` points at `@Team-6220/web-admins` and is
+3. **Create the `webmasters` team.** Org → Teams → New team, add the web admins, then give it **Write** access to
+   this repo (repo Settings → Collaborators and teams). `CODEOWNERS` points at `@Team-6220/webmasters` and is
    ignored until the team exists.
 4. **Protect `main`.** Repo Settings → Rules → Rulesets → New branch ruleset:
    - Target: default branch
@@ -44,12 +44,15 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 ## You: Wix
 
 8. Add the three web admin accounts as admins on the Wix site, with 2FA on.
-9. Dashboard → Settings → Development & integrations → **Headless Settings** → create a headless (OAuth) client.
-   Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs. The client ID is safe
-   to commit (it is not a secret); put it in `packages/data` when you wire up login.
-10. **Wix Members:** add the Member Authentication app, turn on Google sign-in, set signups to
-    "only people I approve."
-11. Create badges: **Team Member**, **Attendance Admin**, **Inventory Manager**, **Web Admin**.
+9. Dashboard → Settings → Development & integrations → **Headless settings** → create a headless (OAuth) client.
+   Allow `https://dev.team6220.org` and `http://localhost:4321` as domains and redirect URIs.
+   The client ID is committed in `packages/data/src/config.ts` (it identifies the site and is not a secret).
+10. **Wix Members:** Settings → **Site member settings** → **Signup & login security** → *Who can be a site member?*
+    → **Only people I manually approve** → Save. New members then show up in the Member List for approval.
+    There is no separate "Member Authentication app" to install. Google sign-in is run by Wix itself (no Google
+    keys needed) and is wired up when the login page is built in Phase 1.
+11. Settings → Site member settings → **Member badges** → Manage Badges: create **Team Member**,
+    **Attendance Admin**, **Inventory Manager**, **Web Admin**.
 
 ## You: one-day Wix CLI test (before building much)
 

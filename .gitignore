@@ -8,7 +8,7 @@ dist/
 *.log
 .DS_Store
 
-# Gallery photos show students, mostly minors. They are NOT committed until a
-# mentor confirms photo consent (see docs/PHOTOS.md). Only the placeholder is tracked.
+# Photos of students live in Google Drive / Wix media, not in git (docs/PHOTOS.md).
 /public/gal/*
 !/public/gal/.gitkeep
+/public/media/

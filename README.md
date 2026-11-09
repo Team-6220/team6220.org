@@ -14,6 +14,8 @@ editor to a coded site that uses Wix as the backend (Wix-managed headless). The 
 
 The real `team6220.org` stays on Wix, untouched, until the last step of Phase 3.
 
+The full plan is [docs/MIGRATION-PLAN.md](docs/MIGRATION-PLAN.md).
+
 ## Run it
 
 Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
@@ -33,7 +35,7 @@ public/         Static files: assets/, js/, CNAME (dev.team6220.org)
 apps/           One React package per team app, mounted under /apps (see apps/README.md)
 packages/ui     Shared brand styles and components
 packages/data   The only code that talks to Wix / Apps Script
-docs/           Setup checklist, photo policy
+docs/           Migration plan, Phase 0 checklist, photo policy
 .github/        CI, Pages deploy, CODEOWNERS, Dependabot
 ```
 
@@ -41,7 +43,7 @@ docs/           Setup checklist, photo policy
 
 - Every change goes through a pull request with one review; `main` deploys automatically.
 - This repo is public. **Never commit** API keys, passcodes or `.env` files, and never commit photos of
-  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)).
+  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)). Photos live in Google Drive or Wix media.
 - Apps never import the Wix SDK; they call `@team6220/data`.
 
 ## Version notes
