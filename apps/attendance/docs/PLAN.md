@@ -142,15 +142,22 @@ plan's Phase 2 design: only the passcode is replaced by a server-side secret beh
 If the team decides the backend must not get any new Apps Script code at all, use **A with "Anyone with a Google
 account"** as a stopgap and test it on the kiosk first; avoid "Anyone" on the existing code because of the student IDs.
 
-## Open questions for the team
+## Team decisions (Nov 9, 2026)
 
-1. **Sessions and sign-out.** The plan mentions "check in and out" and admins starting/stopping sessions; the current
-   code only signs in, once per day. Is sign-out or a session needed for kickoff, or later? (Adding it changes the
-   Sheet format, so it's a backend change either way.)
-2. **Who uses the screen?** One shared kiosk at the door, or each student on their own phone? A kiosk suits a passcode;
-   phones suit site login (and Phase 2).
-3. **Registration.** Should unknown IDs still self-register at the kiosk, or should a lead approve new members?
-4. **Today's list.** Should students see who else signed in (names only), or only leads?
-5. **The "Only myself" deployment.** Which device/account runs it today? That device keeps working throughout.
-6. **Small bug to keep in mind:** the old screen builds the list with `innerHTML` from names typed at registration,
+- **Option D is approved:** a new, separate mini Apps Script project that writes the same Sheet in the same format.
+  The current project and its "Only myself" deployment stay untouched as the fallback.
+- **No sessions or sign-out.** Keep today's behaviour: one sign-in per student per day. The Sheet format doesn't change.
+- **Shared kiosk.** An Attendance Admin signs in on the kiosk and opens it up, which enables data entry. Students then
+  enter or scan their IDs there without signing in themselves.
+- **Viewing.** Any approved team member can view attendance on their own phone or laptop to check that they signed in.
+  Nothing is public.
+- **No Inventory Manager role** (that was for Inventory, not Attendance): all Team Members can use Inventory.
+
+## Still open
+
+1. **Registration.** Should unknown IDs still self-register at the kiosk, or should a lead approve new members?
+   (Until decided, the new kiosk keeps today's behaviour.)
+2. **Today's list.** Members can check their own sign-in. Should they also see who else signed in (names only)?
+3. **The "Only myself" deployment.** Which device/account runs it today? That device keeps working throughout.
+4. **Small bug to keep in mind:** the old screen builds the list with `innerHTML` from names typed at registration,
    so a crafted name would run as HTML in the old page. The new screen renders text safely; no action needed on the old one.
