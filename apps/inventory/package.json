@@ -3,18 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Inventory app at /apps/inventory (parts, tools, audits, packing list). Moved from Google Apps Script.",
-  "main": "src/InventoryApp.tsx",
+  "description": "Inventory app at /apps/inventory: the original Apps Script UI (ui/) running on @team6220/data through a google.script shim (shim/).",
+  "main": "shim/main.ts",
   "scripts": {
     "test": "vitest run",
     "import:dry-run": "node scripts/import-from-sheet.mjs --dry-run"
   },
   "dependencies": {
     "@team6220/data": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "vitest": "^5.1.0"

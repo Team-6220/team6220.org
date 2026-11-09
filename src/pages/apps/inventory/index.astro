@@ -1,15 +1,40 @@
 ---
-// /apps/inventory: the Inventory app (apps/inventory). It runs only in the browser (client:only),
-// because it needs the signed-in member's session. Signed-out visitors are sent to /apps.
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import InventoryApp from "../../../../apps/inventory/src/InventoryApp.tsx";
-import "../../../../apps/inventory/src/styles.css";
+// /apps/inventory: the team inventory. This is the ORIGINAL Apps Script UI (apps/inventory/ui, unchanged), put
+// together at build time the way Apps Script did it (Index.html with its includes filled in), plus:
+//   - the google.script stub (apps/inventory/shim/google-script-stub.js), which must run before the UI's scripts;
+//   - a sign-in gate (#ggi-gate) shown until the member's session is checked;
+//   - apps/inventory/shim/main.ts, which checks the session and answers google.script.run with @team6220/data.
+// No site layout on purpose: the original page brings its own fonts, styles and logos.
+import { APP_TITLE, assembleIndex } from "../../../../apps/inventory/shim/assemble.ts";
+import stub from "../../../../apps/inventory/shim/google-script-stub.js?raw";
+
+const files = import.meta.glob<string>("../../../../apps/inventory/ui/*.html", { query: "?raw", import: "default", eager: true });
+const page = assembleIndex(files);
 ---
 
-<BaseLayout title="Inventory | Los Al Robotics" description="Team inventory: parts, tools, audits and the packing list. For team members.">
-  <Fragment slot="head">
+<!doctype html>
+<html lang="en" data-ggi="checking">
+  <head>
+    <Fragment set:html={page.head} />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="robots" content="noindex" />
-  </Fragment>
-  <InventoryApp client:only="react" />
-  <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>
-</BaseLayout>
+    <meta name="description" content="Team inventory: parts, tools, audits and the packing list. For Los Al Robotics team members." />
+    <title>{APP_TITLE}</title>
+    <style is:inline>
+      /* Until the sign-in check is done (and instead of the app when it fails), show #ggi-gate. */
+      html:not([data-ggi="ready"]) #app { display: none; }
+      html[data-ggi="ready"] #ggi-gate { display: none; }
+      #ggi-gate a.btn { text-decoration: none; }
+      .ggi-gate-wings { display: block; width: min(280px, 70vw); height: auto; margin: 0 auto 20px; }
+    </style>
+    <script is:inline set:html={stub} />
+  </head>
+  <body>
+    <div id="ggi-gate" role="status"><div class="loading"><div class="spinner"></div>Loading inventory…</div></div>
+    <Fragment set:html={page.body} />
+    <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>
+    <script>
+      import "../../../../apps/inventory/shim/main.ts";
+    </script>
+  </body>
+</html>

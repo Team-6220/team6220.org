@@ -158,8 +158,9 @@ export const TABLES: Record<TableKey, TableDef> = {
       { name: "width", type: "measure", max: 30, valueColumn: "widthValue" },
       { name: "widthValue", type: "number", system: true },
       { name: "dimUnitId", type: "ref", ref: "lists", listKey: "unit", label: "Dimension unit" },
-      // Outline { kind: 'rect'|'traced', points: [[x,y],...], edges: [...] }. Kept as-is; editing it is not ported yet.
-      { name: "shape", type: "json", check: "shape", empty: "object", system: true, label: "Shape" },
+      // The piece's outline { kind: 'rect'|'traced', points: [[x,y],...], edges: [...] } in the dimension unit.
+      // Length / width / area are filled in from it (bounding box), as in Config.gs and Validate.gs.
+      { name: "shape", type: "json", check: "shape", empty: "object", label: "Shape" },
       { name: "area", type: "number", system: true },
       { name: "quantity", type: "int", required: true, min: 0, max: MAXQ },
       { name: "locationId", type: "ref", ref: "locations", label: "Location" },
@@ -330,7 +331,7 @@ export const TABLES: Record<TableKey, TableDef> = {
   },
 
   // ───────────── Production (cut planner) ─────────────
-  // Imported so no data is lost, but the cut planner / production pages are not ported yet.
+  // One row per physical part to make. The cut planner creates rows; "Mark as cut" updates the stock (service rawCut).
   production: {
     key: "production", sheet: "Production", wix: "inventory_production", prefix: "PR", kind: "production",
     label: "Production",

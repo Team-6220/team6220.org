@@ -155,7 +155,7 @@ section has different fields; one mixed collection would need dozens of mostly-e
 | `inventory_audit_items` | AuditItems | — |
 | `inventory_packing_items` | PackingItems | name |
 | `inventory_packing_notes` | PackingNotes | text |
-| `inventory_production` | Production (imported; UI not ported yet) | partName |
+| `inventory_production` | Production (cut planner jobs) | partName |
 | `inventory_meta` | Script Property `packingMeta` (item `_id: "packingMeta"`, fields `key`, `value`) | key |
 
 `node apps/inventory/scripts/import-from-sheet.mjs --print-schema` prints every collection with every field, type
@@ -203,7 +203,7 @@ Wix collection permissions take a minimum role per action: `ADMIN`, `SITE_MEMBER
 Because Phase 1 is cosmetic, the team should treat the prototype's data as non-sensitive (the plan says the same),
 and member signups must stay "approval required".
 
-Who can do what in the app (`apps/inventory/src/context.tsx`, `permissionsFor`). **Team decision (Nov 2026): there
+Who can do what in the app (the sign-in check in `apps/inventory/shim/main.ts`). **Team decision (Nov 2026): there
 is no Inventory Manager role.** The old app had none either (anyone with the link could edit).
 
 | Who | Can |
@@ -237,34 +237,34 @@ is no Inventory Manager role.** The old app had none either (anyone with the lin
   but multi-record operations are a sequence of writes: finalizing an audit, removing a setting that's in use
   (clearing it from every item), reordering, and moving a packing group. If the connection drops halfway, the earlier
   writes stay. They are all safe to run again. Phase 2 (`/api/inventory`) is the place to make these sturdier.
-- **No change counters.** The new app reloads all collections every 60 s (20 s on a running audit) while visible,
-  instead of asking "what changed". Fine at the team's size (hundreds of items).
+- **No change counters.** `apiGetChanges` re-reads all collections when the UI polls (every 30 s, 8 s on a running
+  audit, only while the tab is visible) and compares them with what the tab last saw, instead of reading counters.
+  Fine at the team's size (hundreds of items, about 17 reads per poll).
 - **No nightly job.** Backups and the 30-day purge of archived items were Apps Script triggers. In the new app,
-  archived items stay until a manager deletes them (Settings → Archive). The migration plan's answer for backups is a
+  archived items stay until someone deletes them (Settings → Archive), even though that page still says "after 30 days". The migration plan's answer for backups is a
   GitHub Actions cron calling an `/api` endpoint in Phase 2; until then Wix's own CMS backups apply.
-- **Photos** were Drive files. `imageId` is imported as-is (Drive file ID) but the new app doesn't show or upload
-  photos yet; moving them to the Wix Media Manager is a separate step.
+- **Photos** were Drive files. `imageId` is imported as-is (Drive file ID). The UI still loads existing photos straight
+  from Drive (works when the file is shared by link), but uploading, re-cropping and removing photos reply
+  "Photos aren't available on the new site yet"; moving them to Wix is a separate step.
 
 ---
 
 ## Part 3: what the new app does today
 
-Code: data functions in `packages/data/src/inventory/` (`service.ts` = the rules from the `Api*.gs` files,
-`memory-store.ts` = mock adapter, `wix-store.ts` = Wix adapter), UI in `apps/inventory/src/`.
+The new app **is the original UI**: `apps/inventory/ui/` holds unchanged copies of the Apps Script HTML files, and a
+shim (`apps/inventory/shim/`) gives them a `google.script.run` whose functions are a port of the `Api*.gs` files
+(`packages/data/src/inventory/script-api.ts`, same arguments, same `{ ok, data }` / `{ ok:false, error }` replies and
+error codes, on top of `service.ts`). So every screen and feature of the old app is there; only the storage changed.
+Details: [apps/inventory/README.md](../README.md#how-its-built-the-original-ui--a-shim).
 
-| Feature | Status |
+| Server function(s) | Status on the new site |
 | --- | --- |
-| Parts / Raw Materials / Tools / Fasteners / Wire lists, search (same algorithm), filters, sorting | Ported |
-| Saved filters ("Collections") on Parts: apply, save; rename/delete in Settings | Ported |
-| +/- quantities (batched, clamped at 0), add / edit / archive, needs-check flag, edit conflicts | Ported |
-| Settings: categories, tags + groups, locations (2 levels), suppliers, dropdown lists, reorder, remove-with-usage | Ported |
-| Archive: restore, delete permanently | Ported (no automatic 30-day purge) |
-| Audits: start, parallel counting, finalize with conflict resolution, cancel, history | Ported |
-| Packing list: sections, nested groups, ticking, hide packed, edit mode (add, rename, nest, move, reorder, link to part/tool, delete), notes, new round, clear season, event/season names | Ported |
-| Raw material shapes: rectangle from length × width | Ported; traced outlines are kept and shown as "traced outline", but can't be drawn or edited |
-| Packing list **final check** (one verifier with a token) | Not yet |
-| **Photos** (upload, crop, show) | Not yet (needs Wix Media upload) |
-| **Cut planner, production jobs, "Mark as cut"** | Not yet (data imported into `inventory_production`) |
-| Inline "new location / new dropdown value" inside the item form | Not yet (use Settings) |
-| Duplicate warning when adding a fastener | Not yet |
-| Nightly backups, 30-day archive purge | Not yet (Phase 2 `/api` + scheduled workflow) |
+| `apiGetAll`, `apiGetChanges` | Ported. Change counters are kept per browser tab (Wix has none): a poll re-reads the collections and sends tables whose content changed |
+| `apiCreate`, `apiUpdate`, `apiAdjustQuantity`, `apiSetNeedsCheck`, `apiArchive`, `apiRestore`, `apiDeletePermanently` | Ported |
+| `apiRemoveSetting`, `apiReorder` | Ported |
+| `apiStartAudit`, `apiSetAuditCount`, `apiFinalizeAudit`, `apiCancelAudit` | Ported |
+| `apiPackingCreate` / `Update` / `Delete`, `apiPackingSetInfo`, `apiPackingReset`, `apiPackingClearSeason`, `apiPackingSetPacked`, `apiPackingNote*` | Ported |
+| `apiFinalCheckClaim` / `Ping` / `Pause` / `Verify` / `Complete` | Ported (token kept in `inventory_meta`, never sent to browsers) |
+| `apiProductionCreate` / `Update` / `Delete`, `apiRawCut` | Ported (cut planner, production jobs, "Mark as cut") |
+| `apiUploadImage`, `apiRemoveImage`, `apiGetImage` | **Not yet**: reply `NOT_SETUP` "Photos aren't available on the new site yet." Existing Drive photos still show when the file is shared by link |
+| Nightly backup, 30-day archive purge (triggers) | **Not yet** (issue #96) |
