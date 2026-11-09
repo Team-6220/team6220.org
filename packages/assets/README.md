@@ -6,6 +6,7 @@ Brand media that **any** part of the site (main site or any app) may use. Nothin
 | --- | --- | --- |
 | `logos/` | `/assets/shared/logos/<file>` | Logo variations from the team's logo kit, with their original file names (`6220LogoGold.png`, `Lockups/DoubleLockup2.svg`, ...) |
 | `fonts/` | `/assets/shared/fonts/<file>` | `Karnivore.ttf` |
+| `loader/` | `/assets/shared/loader/<file>` | The page-change loader's spin video (`pgl-spin.webm`, `.mp4`) |
 | `favicon/` | `/favicon.ico`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png` | Browser tab and home-screen icons |
 
 Any new folder you add here is published automatically at `/assets/shared/<folder>/`. Use the URL straight from

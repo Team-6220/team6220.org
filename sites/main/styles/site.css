@@ -703,20 +703,6 @@ html.intro-on{overflow:hidden}
 .rv{transition:transform .5s var(--ease),opacity .5s var(--ease);transition-delay:calc(var(--d,0) * 70ms)}
 .rv.pre{transform:translateY(16px);opacity:.01}
 
-/* ---- Page-change loader: 2D clockwise spin with speed trails ---- */
-.pgl{position:fixed;inset:0;z-index:190;background:var(--ink);display:none;pointer-events:none}
-.pgl.on{display:block;pointer-events:auto;cursor:progress}
-.pgl-stage{position:absolute;left:50%;top:50%;width:var(--pgl-s);height:var(--pgl-s);transform:translate(-50%,-50%)}
-.pgl-stage svg{width:100%;height:100%;overflow:visible;display:block}
-.pgl-vid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;background:#000;pointer-events:none}
-.pgl-stage{visibility:hidden}
-.pgl-label{position:absolute;left:0;right:0;top:calc(50% + var(--pgl-lab, 120px));text-align:center;font-family:var(--tech);font-weight:700;font-size:.8rem;letter-spacing:.24em;text-transform:uppercase;color:var(--paper)}
-.pgl-label i{font-style:normal;display:inline-block;width:.55em;text-align:left;letter-spacing:0}
-.pgl-edge{position:fixed;left:0;top:-10vh;height:120vh;width:3px;background:var(--gold);z-index:191;display:none;transform:rotate(5deg);pointer-events:none}
-.pgl-fly{position:fixed;left:0;top:0;z-index:192;display:none;pointer-events:none;transform-origin:0 0}
-.pgl-fly svg{display:block;width:100%;height:100%}
-html{--pgl-s:360px}
-@media (max-width:640px){html{--pgl-s:260px;--pgl-lab:96px}}
 .foot-note{margin:14px 0 0;text-align:center;font-size:.72rem;letter-spacing:.04em;color:var(--dim)}
 
 /* ---------- Multi-page site (one page per address) ---------- */
@@ -762,6 +748,3 @@ html{--pgl-s:360px}
 .camp-copy h2:first-child{margin-top:0}
 .camp-copy p,.camp-copy ul{margin:0 0 var(--s2)}
 .camp-copy .btn{margin:var(--s1) var(--s1) var(--s2) 0}
-/* Page-change loader: arriving on a new page, keep the cover up from the first paint */
-html.pgl-arrive .pgl{display:block}
-html.pgl-arrive .pgl-vid{opacity:0}

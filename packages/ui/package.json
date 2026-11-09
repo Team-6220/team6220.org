@@ -7,7 +7,8 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./PageLoader.astro": "./src/PageLoader.astro"
   },
   "scripts": {
     "test": "vitest run"

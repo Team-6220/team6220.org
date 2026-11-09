@@ -15,6 +15,6 @@ const { title, description } = Astro.props;
     <meta name="robots" content="noindex" />
   </Fragment>
   <slot />
-  <!-- Same page-change logic as the main site (hover prefetch; apps have no loader markup yet, see sites/main/README.md). -->
+  <!-- Same page-change logic as the main site (hover prefetch). Only Inventory plays the loader animation, from its own page; see sites/main/README.md. -->
   <script is:inline src="/assets/shared/scripts/page-nav.js"></script>
 </BaseLayout>

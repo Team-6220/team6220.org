@@ -292,7 +292,7 @@
     tlOn=!!tl&&page.contains(tl);if(tlOn){tl.style.setProperty('--p','0');requestAnimationFrame(drawTl)}
   };
 
-  /* ---- Pages: each page is its own address. Same-site links play the page-change loader (site-a.js). ---- */
+  /* ---- Pages: each page is its own address. Same-site links play the page-change loader (page-loader.js). ---- */
   var current=document.querySelector('.page.current');
   if(current){arm(current);onScroll()}
   document.addEventListener('click',function(e){
