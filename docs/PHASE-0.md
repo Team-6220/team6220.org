@@ -1,6 +1,6 @@
 # Phase 0 checklist
 
-Mirrors Phase 0 of the [Headless Migration Plan](MIGRATION-PLAN.md), which lives in this repo and is edited by pull request. **Done** items are in this repo already. **You** items need a
+**Status: done (Nov 9, 2026).** Mirrors Phase 0 of the [Headless Migration Plan](MIGRATION-PLAN.md), which lives in this repo and is edited by pull request. **Done** items are in this repo already. **You** items need a
 GitHub or Wix admin: they are organization or site settings that can't be changed from code.
 
 ## Done in the repo
