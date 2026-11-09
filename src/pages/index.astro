@@ -1,23 +1,22 @@
 ---
-// Home. Sections live in sites/main/sections/home/.
+// Lift-and-shift of the approved homepage preview. The markup lives in
+// sites/main/content/home.html and the scripts in sites/main/scripts/. Phase 1 breaks this
+// into Astro components, one section at a time.
 import MainLayout from "../../sites/main/MainLayout.astro";
-import Hero from "../../sites/main/sections/home/Hero.astro";
-import CampBanner from "../../sites/main/sections/home/CampBanner.astro";
-import Doors from "../../sites/main/sections/home/Doors.astro";
-import LatestRobot from "../../sites/main/sections/home/LatestRobot.astro";
-import FrcBand from "../../sites/main/sections/home/FrcBand.astro";
-import SponsorMarquee from "../../sites/main/sections/home/SponsorMarquee.astro";
+import rawHome from "../../sites/main/content/home.html?raw";
+
+// Team photos live in sites/main/media/team and are served from PUBLIC_MEDIA_BASE
+// (default: the copies in sites/main/media/team; set it to move photos to another host). See docs/PHOTOS.md.
+const mediaBase = (import.meta.env.PUBLIC_MEDIA_BASE ?? "/assets/main").replace(/\/$/, "");
+const homeHtml = rawHome.replaceAll("%MEDIA%", mediaBase);
 ---
 
 <MainLayout
-  page="home"
   title="Golden Griffins Homepage"
   description="FRC Team 6220, the Golden Griffins: a student-led FIRST Robotics Competition team at Los Alamitos High School since 2016."
 >
-  <Hero />
-  <CampBanner />
-  <Doors />
-  <LatestRobot />
-  <FrcBand />
-  <SponsorMarquee />
+  <Fragment set:html={homeHtml} />
+  <script is:inline set:html={`window.MEDIA_BASE=${JSON.stringify(mediaBase)};`} />
+  <script is:inline src="/assets/main/js/site-a.js"></script>
+  <script is:inline src="/assets/main/js/site-b.js"></script>
 </MainLayout>

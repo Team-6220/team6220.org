@@ -41,11 +41,12 @@ export const APPS: AppEntry[] = [
     href: "/apps/inventory",
     status: "live",
     access: "team",
+    note: "Inventory Managers edit",
   },
   {
     id: "goldsim",
     name: "GoldSim",
-    description: "Open-source 2D FRC strategy and robot-design simulator.",
+    description: "2D FRC strategy and robot-design simulator.",
     href: "/apps/goldsim/",
     status: "live",
     access: "public",
@@ -53,10 +54,10 @@ export const APPS: AppEntry[] = [
   {
     id: "wingit",
     name: "WingIt",
-    description: "Build-season roguelite that teaches our design principles.",
+    description: "The team's WingIt app.",
     href: "/apps/wingit/",
     status: "live",
-    access: "public",
+    access: "team",
   },
   {
     id: "scouting",

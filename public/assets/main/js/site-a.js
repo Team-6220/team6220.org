@@ -1,12 +1,9 @@
 /* Page-change loader. G6220Loader.run(swap): cover the page, spin the logo
    clockwise with speed trails, swap the page underneath, then fly the logo
-   into the header while a gold angled wipe reveals the new page.
-   Between pages: G6220Loader.go(url) covers this page, then loads url; the new page
-   (html.pgl-arrive, set by early.js) plays the spin and the reveal. */
+   into the header while a gold angled wipe reveals the new page. */
 (function(){
   var NS='http://www.w3.org/2000/svg',root=document.documentElement;
   var el=document.getElementById('pgl'),fly=document.getElementById('pgl-fly'),edge=document.getElementById('pgl-edge');
-  if(!el||!fly||!edge||!document.getElementById('griffin')){root.classList.remove('pgl-arrive','mh-logo');return}
   var dotsG=document.getElementById('pgl-dots'),arcsG=document.getElementById('pgl-arcs'),ghostG=document.getElementById('pgl-ghosts');
   var label=document.getElementById('pgl-label'),ldots=label.querySelectorAll('i'),status=document.getElementById('pgl-status');
   var clamp=function(x,a,b){return Math.max(a,Math.min(b,x))},lin=function(t,a,b){return clamp((t-a)/(b-a),0,1)};
@@ -66,16 +63,15 @@
   var vidEl=document.getElementById('pgl-vid');
   try{vidEl.load()}catch(e){}
   var easeIO=function(x){x=clamp(x,0,1);return x*x*x*(x*(x*6-15)+10)};   /* smooth start and stop */
-  window.G6220Loader={busy:false,run:function(swap,opt){
-    opt=opt||{};var self=this;if(self.busy){if(!opt.leave)self.queued=swap;return}
+  window.G6220Loader={busy:false,run:function(swap){
+    var self=this;if(self.busy){self.queued=swap;return}
     self.busy=true;self.queued=null;
     var main=document.getElementById('main'),t0=performance.now(),swapped=false,ready=false,phase='in',tSpin=0,tOut=0,raf;
     var vid=vidEl,videoOK=vid.readyState>=2&&!vid.error;
     var menu=[].slice.call(document.querySelectorAll('.wordmark,.menu>li,.menu-btn'));
     var stopScroll=function(e){e.preventDefault()};
     addEventListener('wheel',stopScroll,{passive:false});addEventListener('touchmove',stopScroll,{passive:false});
-    self._unlock=function(){removeEventListener('wheel',stopScroll);removeEventListener('touchmove',stopScroll)};
-    root.classList.add('mh-logo');el.classList.add('on');el.style.clipPath='none';el.style.opacity=opt.arrive?1:0;edge.style.display='none';
+    root.classList.add('mh-logo');el.classList.add('on');el.style.clipPath='none';el.style.opacity=0;edge.style.display='none';
     fly.style.display='block';fly.style.opacity=0;status.textContent='Loading page';
     [fly,el,edge].forEach(function(n){n.style.willChange='transform,opacity'});if(main)main.style.willChange='transform';
     var big=Math.min(170,innerWidth*0.36);         /* logo size on screen */
@@ -102,14 +98,12 @@
     var frame=function(now){
       var t=(now-t0)/1000,W=innerWidth,H=innerHeight,cx=W/2,cy=H/2;
       if(phase==='in'){                            /* 0.22 s: cover fades in, logo appears (video frame 0) */
-        var p=ez(lin(t,0,.22));if(!opt.arrive)el.style.opacity=p;label.style.opacity=opt.arrive?1:p;
+        var p=ez(lin(t,0,.22));el.style.opacity=p;label.style.opacity=p;
         if(videoOK){vid.style.opacity=p}else{setFly(cx,cy,big*(.92+.08*p),0,p)}
-        if(t>=.22&&opt.leave){   /* covered: load the next page, which finishes the animation */
-          try{sessionStorage.setItem('g6220-pgl',String(Date.now()))}catch(e){}location.href=opt.leave;return}
         if(t>=.22){phase='spin';tSpin=t;if(videoOK){var pp;try{pp=vid.play()}catch(e){videoOK=false}if(pp&&pp.catch)pp.catch(function(){videoOK=false;vid.style.opacity=0})}}
       }else if(phase==='spin'){
         var ts_=t-tSpin;
-        if(!swapped&&ts_>.05){swapped=true;try{swap()}catch(e){}if(!opt.arrive)scrollTo(0,0);
+        if(!swapped&&ts_>.05){swapped=true;try{swap()}catch(e){}scrollTo(0,0);
           if(main)main.style.transform='scale(1.02)';
           menu.forEach(function(m){m.style.opacity=0});whenReady()}
         var n=Math.floor(ts_/.25)%4;for(var i=0;i<3;i++)ldots[i].style.opacity=i<n?1:0;
@@ -158,23 +152,11 @@
         if(main){main.style.transform='';main.style.transformOrigin='';main.style.willChange=''}
         [fly,el,edge].forEach(function(n){n.style.willChange=''});
         menu.forEach(function(m){m.style.opacity='';m.style.transform=''});
-        self._unlock();
+        removeEventListener('wheel',stopScroll);removeEventListener('touchmove',stopScroll);
         status.textContent='';self.busy=false;
         if(self.queued){var q=self.queued;self.queued=null;q()}
       });
     };
     raf=requestAnimationFrame(frame);
-  },
-  /* Cover this page, then go to url (same site). */
-  go:function(url){this.run(function(){},{leave:url})},
-  /* Back/forward cache restored a page we were leaving: take the cover down. */
-  reset:function(){
-    root.classList.remove('mh-logo','pgl-arrive');el.classList.remove('on');el.style.opacity='';el.style.clipPath='';
-    fly.style.display='none';edge.style.display='none';vidEl.style.visibility='hidden';vidEl.style.opacity=0;
-    try{vidEl.pause();vidEl.currentTime=0}catch(e){}
-    [].forEach.call(document.querySelectorAll('.wordmark,.menu>li,.menu-btn'),function(m){m.style.opacity='';m.style.transform=''});
-    if(this._unlock)this._unlock();status.textContent='';this.busy=false;this.queued=null}};
-  addEventListener('pageshow',function(e){if(e.persisted&&el.classList.contains('on'))G6220Loader.reset()});
-  /* Arriving from another page (see early.js): finish the animation here. */
-  if(root.classList.contains('pgl-arrive')){root.classList.remove('pgl-arrive');G6220Loader.run(function(){},{arrive:true})}
+  }};
 })();
