@@ -1,5 +1,5 @@
 ---
-// Site header: wordmark, center logo, main menu (sites/main/data/nav.ts) and Log In.
+// Site header: logo, wordmark, main menu (sites/main/data/nav.ts) and Log In.
 // A tab with a dropdown is a real link to its page; the + button next to it (or hover / keyboard focus)
 // opens the dropdown. Menu behaviour is in sites/main/scripts/site-b.js.
 import { LOGIN, NAV } from "../data/nav";
@@ -16,8 +16,8 @@ const here = (href: string) => (href === path ? { "aria-current": "page" as cons
 
 <header class="site-head">
   <div class="head-row">
-    <a class="wordmark" href="/">Los Al Robotics<small>FRC Team 6220</small></a>
     <a class="center-logo" href="/" aria-label="Team 6220 home"><svg aria-hidden="true"><use href="#griffin"/></svg></a>
+    <a class="wordmark" href="/">Los Al Robotics<small>FRC Team 6220</small></a>
     <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-nav">MENU</button>
     <nav class="nav" id="site-nav" aria-label="Main">
       <ul class="menu">

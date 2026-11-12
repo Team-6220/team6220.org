@@ -64,7 +64,7 @@ h3{font-size:1.2rem}
 /* ---------- Header (5669-style: wordmark left, logo centered, menu right) ---------- */
 .site-head{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);transition:box-shadow .35s}
 .progress{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform-origin:left;transform:scaleX(0)}
-.head-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s2);min-height:84px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));transition:min-height .35s var(--ease)}
+.head-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;min-height:84px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));transition:min-height .35s var(--ease)}
 .scrolled .head-row{min-height:64px}
 .wordmark{justify-self:start;text-decoration:none;font-family:var(--display);font-size:1.25rem;line-height:1;color:var(--gold-text);text-transform:uppercase}
 .wordmark small{display:block;font-family:var(--tech);font-size:.66rem;letter-spacing:.24em;color:var(--dim);margin-top:5px}
@@ -88,10 +88,9 @@ h3{font-size:1.2rem}
 .sub a{display:block;padding:12px 24px;font-family:var(--tech);font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;color:var(--paper);text-decoration:underline 3px transparent;text-underline-offset:8px;transition:color .2s,text-decoration-color .2s}
 .sub a:hover,.sub a:focus-visible{color:var(--gold-text);text-decoration-color:var(--gold)}
 .menu-btn{display:none;justify-self:end;background:none;border:2px solid var(--gold);color:var(--gold-text);min-height:44px;padding:0 14px;font-family:var(--tech);font-weight:700;letter-spacing:.1em;border-radius:var(--r);cursor:pointer}
-@media (min-width:1181px) and (max-width:1600px){.head-row{grid-template-columns:auto 1fr auto}.center-logo{justify-self:center}}
 @media (max-width:1180px){
   .head-row{grid-template-columns:auto 1fr auto;min-height:68px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-  .center-logo{order:-1}.center-logo svg{width:44px;height:44px}
+  .center-logo svg{width:44px;height:44px}
   .menu-btn{display:inline-flex;align-items:center}
   .nav{position:absolute;left:0;right:0;top:100%;background:var(--ink);border-bottom:3px solid var(--gold);display:none;max-height:calc(100vh - 110px);overflow-y:auto}
   .nav.open{display:block}
