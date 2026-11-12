@@ -378,6 +378,8 @@ html.intro-on .h1-echo{opacity:0}
 .philosophy p{color:var(--paper)}
 .philosophy .eyebrow{color:var(--gold-text)}
 .biz-mail{margin-top:var(--s3);display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-family:var(--tech);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.9rem}
+/* The shared .copy-row has a top margin for the footer; here it made the email sit lower than its label */
+.biz-mail .copy-row{margin-top:0}
 .on-paper .biz-mail code{font-family:var(--tech);color:var(--ink);user-select:all;text-transform:none;font-size:1rem}
 .on-paper .copy-btn{border-color:var(--ink);color:var(--ink)}
 .give-note{font-size:.92rem;color:var(--dim-paper);margin-top:var(--s2)}
