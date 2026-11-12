@@ -5,6 +5,12 @@ import { meta, saveMeta } from './state.js';
 
 export const C = { gold: '#ffa300', white: '#ffffff', black: '#000000', g1: '#111111', g2: '#1c1c1c', g3: '#2a2a2a', g4: '#444444', g5: '#8a8a8a', blue: '#4054e4', red: '#e0443a', green: '#52b86a' };
 
+/** A team icon when the team website's shared icon set is loaded (see icons.js), else the plain-text fallback. */
+export function icon(name, fallback) {
+  const icons = window.team6220Icons;
+  return icons ? icons.svg(name) : fallback;
+}
+
 export function h(tag, attrs, ...kids) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -92,7 +98,7 @@ export function openVideo(videoId, title) {
   document.addEventListener('keydown', onKey);
   clear(m); m.style.display = 'flex';
   m.append(h('div', { class: 'modal-box' },
-    h('div', { class: 'row', style: 'align-items:center;margin-bottom:6px' }, h('b', { class: 'grow' }, title), h('button', { class: 'ach-x', title: 'Close', onclick: close }, '×')),
+    h('div', { class: 'row', style: 'align-items:center;margin-bottom:6px' }, h('b', { class: 'grow' }, title), h('button', { class: 'ach-x', title: 'Close', onclick: close }, icon('x', '×'))),
     h('iframe', { width: 854, height: 480, src: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`, title, allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen: true, referrerpolicy: 'strict-origin-when-cross-origin', style: 'border:2px solid #444;display:block;background:#000' }),
     h('div', { class: 'small muted', style: 'margin-top:6px' }, 'Press Esc or × to close.')));
 }
@@ -100,7 +106,7 @@ export function openVideo(videoId, title) {
 function card(title, text, sub, sound) {
   const el = h('div', { class: 'ach' },
     h('div', { class: 'grow' }, h('b', {}, title), text ? h('div', { class: 'small' }, text) : null, sub ? h('div', { class: 'small', style: 'font-weight:700' }, sub) : null),
-    h('button', { class: 'ach-x', title: 'Dismiss', onclick: () => el.remove() }, '×'));
+    h('button', { class: 'ach-x', title: 'Dismiss', onclick: () => el.remove() }, icon('x', '×')));
   $('#toast').append(el);
   if (sound) chime();
 }

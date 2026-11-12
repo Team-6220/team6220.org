@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@team6220/content": "workspace:*",
-    "@team6220/data": "workspace:*"
+    "@team6220/data": "workspace:*",
+    "@team6220/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.3.1"

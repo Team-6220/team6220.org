@@ -101,5 +101,6 @@ select, input[type=text], input[type=number], #nav a { border-radius: var(--radi
 .meter .bar { overflow: hidden; }
 
 /* Icon-only button (the light/dark button). Icons are drawn like the Inventory icon set. */
+.toast-x svg.t-icon { width: 14px; height: 14px; } /* the shared icon, when the team website's sidebar styles are loaded */
 .btn.icon-btn { display: inline-grid; place-items: center; padding: 5px 8px; }
 svg.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

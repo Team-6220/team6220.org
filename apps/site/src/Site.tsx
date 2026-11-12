@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, site } from "@team6220/data";
+import { Icon } from "@team6220/ui";
 import Editor from "./Editor";
 
 type State =
@@ -110,7 +111,7 @@ export default function Site() {
               </select>
             </label>
             <a className="site__link" href={site.openPullRequestsUrl()} target="_blank" rel="noopener">
-              Open Site Manager pull requests on GitHub ↗
+              Open Site Manager pull requests on GitHub <Icon name="external" inline />
             </a>
           </div>
           <Editor key={areaId} areaId={areaId} />

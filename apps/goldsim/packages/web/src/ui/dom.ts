@@ -34,6 +34,12 @@ export function clear(el: Element): void {
   while (el.firstChild) el.removeChild(el.firstChild);
 }
 
+/** A team icon when the team website's shared icon set is loaded (see icons.js there), else the plain-text fallback. */
+export function icon(name: string, fallback: string): Node | string {
+  const icons = (window as unknown as { team6220Icons?: { svg(name: string): SVGElement } }).team6220Icons;
+  return icons ? icons.svg(name) : fallback;
+}
+
 export function $(id: string): HTMLElement {
   const el = document.getElementById(id);
   if (!el) throw new Error(`#${id} missing`);
@@ -46,7 +52,7 @@ export function title<K extends keyof HTMLElementTagNameMap>(tag: K, text: strin
 }
 
 export function toast(message: string, ms = 4000): void {
-  const box = h("div", { class: "toast" }, h("div", { class: "grow" }, message), h("button", { class: "toast-x", onclick: () => box.remove(), "aria-label": "Dismiss" }, "×"));
+  const box = h("div", { class: "toast" }, h("div", { class: "grow" }, message), h("button", { class: "toast-x", onclick: () => box.remove(), "aria-label": "Dismiss" }, icon("x", "×")));
   $("toast").appendChild(box);
   setTimeout(() => box.remove(), ms);
 }

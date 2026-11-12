@@ -1,13 +1,18 @@
 /* The team icon set, shared by every app. Published at /assets/shared/scripts/icons.js.
    Each icon is drawn on a 24px grid with a 1.8 stroke (the style the Inventory started).
    Use: team6220Icons.svg("search") returns an <svg> element; style it with the "t-icon" class
-   (packages/assets/styles/app-sidebar.css) or your own width/height.
+   (packages/assets/styles/app-sidebar.css) or your own width/height. team6220Icons.paths("search") returns just the
+   drawing, for frameworks that render the <svg> themselves (React: packages/ui/src/Icon.tsx).
    To add an icon: add one entry to PATHS, keeping the same grid and stroke. */
 (function () {
   var PATHS = {
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    external: '<path d="M7 17L17 7M8 7h9v9"/>',
+    arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
     home: '<path d="M4 11l8-7 8 7M6 10v10h12V10M10 20v-6h4v6"/>',
     grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/>',
     parts: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
@@ -27,6 +32,9 @@
 
   window.team6220Icons = {
     names: Object.keys(PATHS),
+    paths: function (name) {
+      return PATHS[name] || "";
+    },
     svg: function (name) {
       var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       s.setAttribute("viewBox", "0 0 24 24");
