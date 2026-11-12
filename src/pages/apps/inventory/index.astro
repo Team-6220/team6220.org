@@ -39,6 +39,12 @@ const page = assembleIndex(files);
       :root[data-sidebar="compressed"] { --pgl-land-x: 14px; --pgl-land-y: 14px; --pgl-land-size: 36px; }
       html:not(.mh-logo) #pgl-land { animation: ggi-land-out 0.4s 0.3s forwards; }
       @keyframes ggi-land-out { to { opacity: 0; visibility: hidden; } }
+      /* Phones have no sidebar logo to land on. Land on the logo in the top bar instead, and vanish the moment it lands
+         (the top bar's own logo is right underneath). */
+      @media (max-width: 860px) {
+        :root, :root[data-sidebar="compressed"] { --pgl-land-x: 62px; --pgl-land-y: 12px; --pgl-land-size: 32px; }
+        html:not(.mh-logo) #pgl-land { animation-duration: 0.01s; animation-delay: 0s; }
+      }
       .ggi-gate-wings { display: block; width: min(280px, 70vw); height: auto; margin: 0 auto 20px; }
     </style>
     <!-- The sidebar every team app shares (the Inventory's own menu moved to the right; see Styles.html). -->
