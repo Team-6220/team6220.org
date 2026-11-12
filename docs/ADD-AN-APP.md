@@ -20,7 +20,8 @@ Rules you must keep (from the [migration plan](MIGRATION-PLAN.md)):
 - **Apps never import the Wix SDK.** They call functions from `@team6220/data`.
 - **Each app owns its folder** and gets a CODEOWNERS line.
 - **React 18 only** (the Wix integration needs `react ^18.3`).
-- **Brand comes from `@team6220/ui`** ([BRANDING.md](BRANDING.md)).
+- **Brand comes from `@team6220/ui`** ([BRANDING.md](BRANDING.md)). Use the shared classes in `packages/ui/src/app.css` (`t-page`, `t-header`, `t-panel`,
+  `t-button`, ...) before writing your own; the sidebar, light/dark mode and fonts come with `AppLayout`.
 - The route is `/apps/<name>`, never under `/api/auth/*`, `/_api`, `/_wix`, and no service worker called `/sw.js`.
 
 ---

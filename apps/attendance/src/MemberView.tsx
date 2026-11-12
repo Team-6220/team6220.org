@@ -8,7 +8,7 @@ const REMEMBER_KEY = "team6220.attendance.myId";
 export default function MemberView({ isAdmin, onKioskOpened }: { isAdmin: boolean; onKioskOpened: () => void }) {
   if (!attendance.isConfigured()) {
     return (
-      <div className="att__panel att__panel--notice" role="status">
+      <div className="t-panel t-panel--notice" role="status">
         <h2>Not connected yet</h2>
         <p>
           The new attendance screen isn't connected to the attendance sheet yet. Keep using the current attendance app
@@ -31,7 +31,7 @@ function KioskLauncher({ onOpened }: { onOpened: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   return (
-    <section className="att__panel att__panel--admin" aria-labelledby="kiosk-h">
+    <section className="t-panel att__panel--admin" aria-labelledby="kiosk-h">
       <h2 id="kiosk-h">Take attendance</h2>
       <p>
         Opens the sign-in kiosk on <b>this device</b>. Students scan their ID card or type their student ID; they don't
@@ -93,7 +93,7 @@ function Today() {
   const [filter, setFilter] = useState("");
   const shown = (data ?? []).filter((e) => e.name.toLowerCase().includes(filter.trim().toLowerCase()));
   return (
-    <section className="att__panel" aria-labelledby="today-h">
+    <section className="t-panel" aria-labelledby="today-h">
       <div className="att__row">
         <h2 id="today-h">
           Today{data ? <span className="att__count"> · {data.length} signed in</span> : null}
@@ -113,7 +113,7 @@ function Today() {
           <input type="search" value={filter} onChange={(e) => setFilter(e.target.value)} autoComplete="off" />
         </label>
       )}
-      {data && data.length === 0 && <p className="att__muted">Nobody has signed in yet today.</p>}
+      {data && data.length === 0 && <p className="t-muted">Nobody has signed in yet today.</p>}
       {data && data.length > 0 && <EntryList entries={shown} />}
     </section>
   );
@@ -174,7 +174,7 @@ function MyCheck() {
 
   const todayEntry = result?.signedInToday ? result.signIns[0] : undefined;
   return (
-    <section className="att__panel" aria-labelledby="mine-h">
+    <section className="t-panel" aria-labelledby="mine-h">
       <h2 id="mine-h">Did I sign in?</h2>
       <form className="att__inline-form" onSubmit={submit}>
         <label className="att__field">
@@ -221,7 +221,7 @@ function MyCheck() {
               </ul>
             </>
           ) : (
-            <p className="att__muted">No sign-ins found for this ID. Check the number, or sign in at the kiosk.</p>
+            <p className="t-muted">No sign-ins found for this ID. Check the number, or sign in at the kiosk.</p>
           )}
         </div>
       )}
@@ -250,15 +250,15 @@ function History() {
   }, [date]);
 
   return (
-    <section className="att__panel" aria-labelledby="hist-h">
+    <section className="t-panel" aria-labelledby="hist-h">
       <h2 id="hist-h">Past meetings</h2>
-      {busy && <p className="att__muted">Loading…</p>}
+      {busy && <p className="t-muted">Loading…</p>}
       {error && (
         <p className="att__error" role="alert">
           {error}
         </p>
       )}
-      {days && days.length === 0 && <p className="att__muted">No sign-ins yet.</p>}
+      {days && days.length === 0 && <p className="t-muted">No sign-ins yet.</p>}
       {days && days.length > 0 && (
         <label className="att__field">
           <span>Day</span>
@@ -277,7 +277,7 @@ function History() {
           {dayError}
         </p>
       )}
-      {date && !entries && !dayError && <p className="att__muted">Loading…</p>}
+      {date && !entries && !dayError && <p className="t-muted">Loading…</p>}
       {entries && <EntryList entries={entries} />}
     </section>
   );

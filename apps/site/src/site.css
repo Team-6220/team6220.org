@@ -1,80 +1,5 @@
-/* Plain, tidy placeholder styling for /apps/site. Uses the tokens from @team6220/ui/tokens.css;
-   the branding pass only changes the token values. */
-:root {
-  --site-ok: #9be0a9;
-  --site-ok-bg: #173a20;
-  --site-warn: #ffd58a;
-  --site-warn-bg: #3d2d0b;
-  --site-add-bg: #173a20;
-  --site-del-bg: #4a1714;
-}
-:root[data-theme="light"] {
-  --site-ok: #1e7b34;
-  --site-ok-bg: #e3f4e6;
-  --site-warn: #8a5a00;
-  --site-warn-bg: #fff1d6;
-  --site-add-bg: #e3f4e6;
-  --site-del-bg: #fde7e5;
-}
+/* Styles only the Site Manager needs. Colors, fonts and spacing are the shared tokens (@team6220/ui/tokens.css). */
 
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-weight: 500; /* Jura is light; 500 matches the main site */
-  line-height: 1.5;
-}
-
-.site {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-3);
-}
-.site__demo {
-  margin: 0 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
-  background: var(--site-warn-bg);
-  color: var(--site-warn);
-  font-weight: 600;
-}
-.site__demo a {
-  color: inherit;
-}
-.site__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-3);
-  margin-bottom: var(--space-4);
-  border-bottom: 3px solid var(--color-gold);
-}
-.site__eyebrow {
-  margin: 0;
-  color: var(--color-gold);
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.site__title {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin: 0;
-  font-size: 2rem;
-}
-.site__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-.site__who {
-  font-weight: 600;
-}
 .site__bar {
   display: flex;
   flex-wrap: wrap;
@@ -86,32 +11,9 @@ body {
 .site__link {
   color: var(--color-ink);
 }
-.site__panel {
+/* The page column, header and panels come from @team6220/ui/app.css. */
+.site .t-panel {
   margin: var(--space-4) 0;
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow, none);
-}
-.site__panel h2 {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2);
-  font-size: 1.25rem;
-}
-.site__panel p {
-  margin: 0 0 var(--space-3);
-}
-.site__panel--notice {
-  border-left: 6px solid var(--color-gold);
-}
-.site__panel--ok {
-  border-left: 6px solid var(--site-ok);
-}
-.site__muted {
-  color: var(--color-muted);
 }
 .site__hint {
   margin: var(--space-1) 0 0;
@@ -227,19 +129,19 @@ body {
   overflow-wrap: anywhere;
 }
 .site__diff-added {
-  background: var(--site-add-bg);
+  background: var(--color-ok-bg);
 }
 .site__diff-removed {
-  background: var(--site-del-bg);
+  background: var(--color-error-bg);
 }
 .site__diff-changed {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
 }
 .site__diff del {
-  background: var(--site-del-bg);
+  background: var(--color-error-bg);
 }
 .site__diff ins {
-  background: var(--site-add-bg);
+  background: var(--color-ok-bg);
   text-decoration: none;
 }

@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens.css": "./src/tokens.css",
+    "./app.css": "./src/app.css",
     "./PageLoader.astro": "./src/PageLoader.astro"
   },
   "scripts": {
