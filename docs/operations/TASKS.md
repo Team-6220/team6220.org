@@ -98,7 +98,7 @@ Nothing is created until the confirm step. Changing a template later does not ch
   FIRST Events API as a second source) through the backend, because the API keys must stay off the public site.
 - Each event has a **display name** the team can change ("Beach Blitz" in place of the official name).
 - **Add the team's events:** one button lists every event Team 6220 is registered for in a year.
-- Events that are not in either system (local scrimmages) are added by hand with a made-up code.
+- Events that are not in either system (local scrimmages) are added by hand with a made-up code or set as a milestone.
 - Event dates refresh once a day. If an official date changes, tasks tied to that event by a template offset are
   flagged for a lead to review; they do not move by themselves.
 - Nexus and match13 are [later](README.md#later-not-in-the-first-release).
