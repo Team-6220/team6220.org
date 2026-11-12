@@ -11,16 +11,21 @@
   --blue: #4054e4;
   --red: #e0443a;
   --green: #52b86a;
+  --radius: 4px; /* same corner as the main site */
+  --font-title: "Karnivore", "Segoe UI", Arial, sans-serif; /* always UPPERCASE */
+  --font-body: "Jura", "Segoe UI", Arial, sans-serif;
 }
-* { box-sizing: border-box; border-radius: 0; }
+/* Karnivore comes from the team website's shared assets. */
+@font-face { font-family: "Karnivore"; font-display: swap; src: url("/assets/shared/fonts/Karnivore.ttf") format("truetype"); }
+* { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--black); color: var(--white);
-  font-family: "Segoe UI", Arial, sans-serif; font-size: 15px; overflow: hidden; }
+  font-family: var(--font-body); font-weight: 500; font-size: 15px; overflow: hidden; }
 #app { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
   background: var(--gray-1); border: 2px solid var(--gray-4);
   display: flex; flex-direction: column; }
 #topbar { display: flex; align-items: center; height: 44px; padding: 0 12px; background: var(--black);
   border-bottom: 2px solid var(--gold); flex: none; }
-#logo { font-weight: 800; font-size: 22px; letter-spacing: 2px; color: var(--gold); }
+#logo { font-family: var(--font-title); font-weight: normal; font-size: 22px; letter-spacing: 2px; color: var(--gold); }
 #logo span { color: var(--white); }
 #season-name { margin-left: 24px; color: var(--gray-5); flex: 1; }
 #top-buttons { display: flex; gap: 8px; }
@@ -33,6 +38,7 @@ html, body { margin: 0; height: 100%; background: var(--black); color: var(--whi
 .ach-x:hover { background: var(--white); color: var(--black); }
 
 h1, h2, h3 { margin: 0 0 6px 0; }
+h1, h2 { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
 h1 { font-size: 28px; } h2 { font-size: 20px; color: var(--gold); } h3 { font-size: 16px; }
 p { margin: 0 0 8px 0; line-height: 1.4; }
 .muted { color: var(--gray-5); }
@@ -145,3 +151,8 @@ figure.fig .src { color: var(--gold-dark); }
 .delta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 6px 10px; }
 
 .col > figure.fig img { max-height: 190px; }
+
+/* Rounded corners: one radius for every box and control (team branding). */
+.btn, .panel, .card, .tag, .ach, .ach-x, .modal-box, .meter .bar, .video-thumb, .art, figure.fig,
+select, input[type=text], input[type=number] { border-radius: var(--radius); }
+.meter .bar, .video-thumb, .art, figure.fig { overflow: hidden; }

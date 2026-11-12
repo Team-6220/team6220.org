@@ -3,7 +3,7 @@ import "./styles/base.css";
 import "./styles/components.css";
 import { APP_NAME, BASE_PATH } from "./config.js";
 import { $, clear, h } from "./ui/dom.js";
-import { currentTheme, initTheme, onThemeChange, toggleTheme } from "./ui/theme.js";
+import { currentTheme, initTheme, onThemeChange, themeIconSvg, toggleTheme } from "./ui/theme.js";
 import { homeScreen } from "./screens/home.js";
 import { setupScreen } from "./screens/setup.js";
 import { matchScreen } from "./screens/match.js";
@@ -49,12 +49,13 @@ function renderTopbar(): void {
   clear(bar);
   const half = Math.ceil(APP_NAME.length / 2);
   const path = currentPath();
-  const themeBtn = h("button", { class: "btn", title: "Toggle light / dark", onclick: () => toggleTheme() }, currentTheme() === "dark" ? "Light" : "Dark");
+  const themeBtn = h("button", { class: "btn icon-btn", title: "Light / dark mode", "aria-label": "Switch between light and dark mode", onclick: () => toggleTheme() });
+  themeBtn.innerHTML = themeIconSvg(currentTheme());
   const soundLabel = () => (sfx.enabled ? "Sound on" : "Sound off");
   const soundBtn = h("button", { class: "btn", title: "Turn sound effects on or off", onclick: () => sfx.setEnabled(!sfx.enabled) }, soundLabel());
   const unSound = sfx.onChange(() => (soundBtn.isConnected ? (soundBtn.textContent = soundLabel()) : unSound()));
   unTheme?.();
-  unTheme = onThemeChange((t) => (themeBtn.textContent = t === "dark" ? "Light" : "Dark"));
+  unTheme = onThemeChange((t) => (themeBtn.innerHTML = themeIconSvg(t)));
   bar.append(
     h(
       "a",

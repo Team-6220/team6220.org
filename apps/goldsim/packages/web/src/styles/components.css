@@ -94,3 +94,12 @@ select:focus, input:focus { outline: none; border-color: var(--gold); }
 .notice { border: 2px solid var(--gray-4); border-left: 4px solid var(--gold); background: var(--gray-2); padding: 6px 10px; font-size: 13px; line-height: 1.35; }
 .notice b { color: var(--gold); }
 .help-line { font-size: 12px; line-height: 1.3; color: var(--gray-5); }
+
+/* Rounded corners: one radius for every box and control (team branding: same 4px corner as the main site). */
+.btn, .panel, .card, .tag, .toast, .toast-x, .modal-box, .notice, .hubchip, .kbd, .meter .bar,
+select, input[type=text], input[type=number], #nav a { border-radius: var(--radius); }
+.meter .bar { overflow: hidden; }
+
+/* Icon-only button (the light/dark button). Icons are drawn like the Inventory icon set. */
+.btn.icon-btn { display: inline-grid; place-items: center; padding: 5px 8px; }
+svg.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
