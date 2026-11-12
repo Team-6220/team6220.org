@@ -12,13 +12,38 @@
   --red: #e0443a;
   --green: #52b86a;
   --radius: 4px; /* same corner as the main site */
+  /* What the page chrome uses (the light theme below changes these). Canvases, figures, video and the clock stay
+     dark in both themes: they are drawn for a dark background. */
+  --page: #000000;
+  --text: #ffffff;
+  --track: #000000;
+  --primary-hover: #ffffff;
+  --gold-text: #ffa300; /* gold used as TEXT; darker in the light theme so it can be read */
+  color-scheme: dark;
   --font-title: "Karnivore", "Segoe UI", Arial, sans-serif; /* always UPPERCASE */
   --font-body: "Jura", "Segoe UI", Arial, sans-serif;
+}
+/* Light theme: set by the light/dark button in the team website's shared sidebar (data-theme on <html>). */
+:root[data-theme="light"] {
+  --page: #ffffff;
+  --text: #000000;
+  --track: #e6e7eb;
+  --primary-hover: #ffd58a;
+  --gold-text: #8a5a00;
+  --gray-1: #f3f3f5;
+  --gray-2: #ffffff;
+  --gray-3: #e6e7eb;
+  --gray-4: #c5c6cd;
+  --gray-5: #4e4a5b;
+  --gold-dark: #8a5a00;
+  --red: #b3261e;
+  --green: #1e7b34;
+  color-scheme: light;
 }
 /* Karnivore comes from the team website's shared assets. */
 @font-face { font-family: "Karnivore"; font-display: swap; src: url("/assets/shared/fonts/Karnivore.ttf") format("truetype"); }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--black); color: var(--white);
+html, body { margin: 0; height: 100%; background: var(--page); color: var(--text);
   font-family: var(--font-body); font-weight: 500; font-size: 15px; overflow: hidden; }
 /* --sidebar-space is set by the team website's shared sidebar (0 without it). */
 #app { position: absolute; left: var(--sidebar-space, 0px); top: 0; width: calc(100% - var(--sidebar-space, 0px)); height: 100%;
@@ -28,7 +53,8 @@ html, body { margin: 0; height: 100%; background: var(--black); color: var(--whi
   border-bottom: 2px solid var(--gold); flex: none; }
 #logo { font-family: var(--font-title); font-weight: normal; font-size: 22px; letter-spacing: 2px; color: var(--gold); }
 #logo span { color: var(--white); }
-#season-name { margin-left: 24px; color: var(--gray-5); flex: 1; }
+#season-name { margin-left: 24px; color: #c5c6cd; flex: 1; }
+#topbar .btn { background: #33333f; color: #ffffff; border-color: #4e4a5b; } /* the top bar is black in both themes */
 #top-buttons { display: flex; gap: 8px; }
 #hud { flex: none; display: none; padding: 6px 12px; background: var(--gray-2); border-bottom: 2px solid var(--gray-4); }
 #main { flex: 1; min-height: 0; padding: 10px 12px; overflow: auto; }
@@ -40,21 +66,21 @@ html, body { margin: 0; height: 100%; background: var(--black); color: var(--whi
 
 h1, h2, h3 { margin: 0 0 6px 0; }
 h1, h2 { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
-h1 { font-size: 28px; } h2 { font-size: 20px; color: var(--gold); } h3 { font-size: 16px; }
+h1 { font-size: 28px; } h2 { font-size: 20px; color: var(--gold-text); } h3 { font-size: 16px; }
 p { margin: 0 0 8px 0; line-height: 1.4; }
 .muted { color: var(--gray-5); }
-.gold { color: var(--gold); }
+.gold { color: var(--gold-text); }
 .red { color: var(--red); }
 .green { color: var(--green); }
 .blue { color: var(--blue); }
 .small { font-size: 13px; }
 .mono { font-family: Consolas, "Courier New", monospace; }
 
-.btn { background: var(--gray-3); color: var(--white); border: 2px solid var(--gray-4); padding: 7px 14px;
+.btn { background: var(--gray-3); color: var(--text); border: 2px solid var(--gray-4); padding: 7px 14px;
   font: inherit; cursor: pointer; }
 .btn:hover:not(:disabled) { border-color: var(--gold); }
 .btn.primary { background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 700; }
-.btn.primary:hover:not(:disabled) { background: var(--white); border-color: var(--white); }
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .btn:disabled { opacity: 0.35; cursor: default; }
 .btn.sel { border-color: var(--gold); background: var(--gray-4); }
 
@@ -71,14 +97,14 @@ p { margin: 0 0 8px 0; line-height: 1.4; }
 .card.sel { border-color: var(--gold); }
 .tag { display: inline-block; padding: 1px 6px; background: var(--gray-3); border: 1px solid var(--gray-4);
   font-size: 12px; margin: 0 4px 4px 0; }
-.tag.warn { border-color: var(--gold); color: var(--gold); }
+.tag.warn { border-color: var(--gold); color: var(--gold-text); }
 .tag.bad { border-color: var(--red); color: var(--red); }
 .tag.good { border-color: var(--green); color: var(--green); }
 hr { border: 0; border-top: 2px solid var(--gray-4); margin: 10px 0; }
 canvas { background: var(--black); border: 2px solid var(--gray-4); display: block; }
 input[type=range] { width: 100%; accent-color: var(--gold); }
 input[type=checkbox] { accent-color: var(--gold); width: 16px; height: 16px; }
-select, input[type=text], input[type=number] { background: var(--gray-3); color: var(--white); border: 2px solid var(--gray-4);
+select, input[type=text], input[type=number] { background: var(--gray-3); color: var(--text); border: 2px solid var(--gray-4);
   padding: 5px 8px; font: inherit; }
 table { border-collapse: collapse; width: 100%; }
 td, th { border-bottom: 1px solid var(--gray-4); padding: 4px 8px; text-align: left; }
@@ -88,14 +114,14 @@ td, th { border-bottom: 1px solid var(--gray-4); padding: 4px 8px; text-align: l
 .clock { display: flex; height: 12px; border: 2px solid var(--gray-4); background: var(--black); }
 .clock div { height: 100%; }
 .legend { display: flex; gap: 16px; font-size: 12px; margin-top: 3px; }
-.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; outline: 1px solid var(--gray-4); }
 .goal { margin-top: 5px; padding-top: 4px; border-top: 1px solid var(--gray-4); font-size: 13px; }
-a { color: var(--gold); }
+a { color: var(--gold-text); }
 .c-design { background: var(--gold); } .c-mfg { background: var(--white); }
-.c-prog { background: var(--gray-5); } .c-prac { background: var(--blue); }
+.c-prog { background: #c5c6cd; } .c-prac { background: var(--blue); }
 .c-over { background: var(--red); }
 .meter { min-width: 150px; }
-.meter .bar { height: 8px; background: var(--black); border: 1px solid var(--gray-4); }
+.meter .bar { height: 8px; background: var(--track); border: 1px solid var(--gray-4); }
 .meter .bar div { height: 100%; background: var(--gold); }
 .meter.bad .bar div { background: var(--red); }
 .meter .lbl { font-size: 12px; color: var(--gray-5); display: flex; justify-content: space-between; }
@@ -105,7 +131,7 @@ a { color: var(--gold); }
 .map svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
 .node { position: absolute; width: 60px; height: 60px; border: 2px solid var(--gray-4); background: var(--gray-2);
   display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; cursor: default; }
-.node.avail { border-color: var(--gold); color: var(--gold); cursor: pointer; }
+.node.avail { border-color: var(--gold); color: var(--gold-text); cursor: pointer; }
 .node.avail:hover { background: var(--gold); color: var(--black); }
 .node.done { background: var(--gray-4); color: var(--gray-5); }
 .node.locked { opacity: 0.4; }
@@ -129,7 +155,7 @@ a { color: var(--gold); }
 .video-thumb .play::after { content: ""; position: absolute; left: 21px; top: 15px; border-left: 20px solid var(--black); border-top: 13px solid transparent; border-bottom: 13px solid transparent; }
 .video-thumb .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 8px; background: rgba(0,0,0,0.75); font-size: 12px; }
 .feed { max-height: 118px; min-height: 118px; overflow: auto; display: flex; flex-direction: column; gap: 2px; }
-.feed .gold { color: var(--gold); } .feed .blue { color: #8f9cf5; }
+.feed .gold { color: var(--gold-text); } .feed .blue { color: #8f9cf5; }
 .ach .small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ach { padding: 6px 8px; }
 
@@ -137,12 +163,12 @@ a { color: var(--gold); }
 .art { position: relative; margin-bottom: 6px; background: var(--black); border: 1px solid var(--gray-4); }
 .art img { width: 100%; height: 118px; object-fit: cover; display: block; }
 .art canvas { width: 100%; height: 118px; object-fit: contain; border: 0; display: block; }
-.art .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 6px; font-size: 10px; background: rgba(0,0,0,0.78); color: var(--gray-5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.art .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 6px; font-size: 10px; background: rgba(0,0,0,0.78); color: #c5c6cd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 figure.fig { margin: 4px 0; background: var(--black); border: 1px solid var(--gray-4); }
 figure.fig img { display: block; width: 100%; max-height: 170px; object-fit: contain; background: #000; }
 figure.fig.small img { max-height: 110px; }
-figure.fig figcaption { padding: 3px 6px; font-size: 11px; color: var(--gray-5); }
-figure.fig .src { color: var(--gold-dark); }
+figure.fig figcaption { padding: 3px 6px; font-size: 11px; color: #c5c6cd; }
+figure.fig .src { color: #a86c00; }
 .figrow { display: flex; gap: 8px; }
 .figrow figure.fig { flex: 1; min-width: 0; }
 
