@@ -32,13 +32,10 @@ e2e workflow runs it again strictly against the built site.
 Wix may not accept a `#` in the new address (`/#contact`). If it refuses, use `/` for the two Contact rows: visitors
 land on the home page and can scroll to the footer.
 
-## Open item: Contact
+## Contact
 
-The owner decided that "Contact" under About will **not** have its own page: it scrolls to the footer. So `/contact`
-and `/copy-of-contact` go to `/#contact` (the footer's id). But `/about/contact` and the menu item still exist, and the
-home page script (`sites/main/data/old-anchors.ts`) still sends `/#contact` to `/about/contact`. When that page is
-removed, also remove `contact` from `old-anchors.ts` and `redirects.json`; until then `pnpm redirects:check` prints a
-warning about it.
+"Contact" under About has no page of its own: it scrolls to the footer (`id="contact"`). So `/contact` and
+`/copy-of-contact` go to `/#contact`, and `/#contact` itself needs no redirect (the page already has that anchor).
 
 <!-- redirects:start (generated from docs/redirects.json by `pnpm redirects:csv`; do not edit by hand) -->
 
@@ -50,7 +47,7 @@ warning about it.
 | `/our-team` | `/about` | 301 | agreed |  |
 | `/our-team/subteams` | `/about` | 301 | agreed | No subteams page yet. Change this if one is added. |
 | `/sponsors-donations` | `/sponsors` | 301 | agreed |  |
-| `/contact` | `/#contact` | 301 | owner decision | Owner decision: Contact (under About) has no page of its own; it scrolls to the footer. The footer's id is `contact` (sites/main/components/Footer.astro), so the target is /#contact. This replaces the earlier /about/contact in REDIRECTS.md. While /about/contact still exists, the home page script maps #contact to it (see anchors below); remove `contact` from sites/main/data/old-anchors.ts when that page is removed, or this redirect lands on /about/contact. If Wix's redirect manager refuses a # in the new address, use / instead. |
+| `/contact` | `/#contact` | 301 | owner decision | Owner decision: Contact (under About) has no page of its own; it scrolls to the footer. The footer's id is `contact` (sites/main/components/Footer.astro), so the target is /#contact. The /about/contact page is gone. If Wix's redirect manager refuses a # in the new address, use / instead. |
 | `/copy-of-contact` | `/#contact` | 301 | owner decision | Wix page named APPLY, same content as /contact. SEO.md suggested /about/contact; the owner decision for Contact (footer) applies. See /contact. |
 | `/gallery` | `/resources/media` | 301 | agreed |  |
 | `/yearbook` | `/resources/media` | 301 | **proposed** | SEO.md names no target (one-off page of yearbook photo captions, in the old sitemap). Nearest page: Media. |
@@ -95,7 +92,7 @@ in `sites/main/data/old-anchors.ts`) sends them to the new pages. `#photos-<albu
 | About: History | `/about/history` |
 | About: Outreach | `/about/outreach` |
 | About: Join | `/about/join` |
-| About: Contact | `/about/contact` (to be replaced by the footer, see above) |
+| About: Contact | `#contact` (scrolls to the footer on the current page) |
 | Robots | `/robots` (one season: `/robots#2025`) |
 | Sponsors | `/sponsors` |
 | Merch | `/merch` (the merch page, with a link to the team store) |

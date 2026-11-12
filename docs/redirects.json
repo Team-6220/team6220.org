@@ -34,7 +34,7 @@
       "to": "/#contact",
       "status": 301,
       "decision": "owner",
-      "note": "Owner decision: Contact (under About) has no page of its own; it scrolls to the footer. The footer's id is `contact` (sites/main/components/Footer.astro), so the target is /#contact. This replaces the earlier /about/contact in REDIRECTS.md. While /about/contact still exists, the home page script maps #contact to it (see anchors below); remove `contact` from sites/main/data/old-anchors.ts when that page is removed, or this redirect lands on /about/contact. If Wix's redirect manager refuses a # in the new address, use / instead."
+      "note": "Owner decision: Contact (under About) has no page of its own; it scrolls to the footer. The footer's id is `contact` (sites/main/components/Footer.astro), so the target is /#contact. The /about/contact page is gone. If Wix's redirect manager refuses a # in the new address, use / instead."
     },
     {
       "from": "/copy-of-contact",
