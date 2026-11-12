@@ -271,9 +271,9 @@ function markOrdered_(body, actor) {
 /**
  * { items: [{ lineId, quantity, inventoryItemId? }] } -> { lines }
  * Records that ordered items arrived. Part of a line can be received ("6 of 10").
- * inventoryItemId remembers which Inventory part the line refills ("" = not tracked in Inventory). The stock
- * count itself is changed by whoever is receiving, through Inventory (packages/data/src/inventory/stock.ts);
- * this server does not write Inventory yet.
+ * inventoryItemId remembers which Inventory part the line refills ("" = not tracked in Inventory).
+ * The website changes the stock count itself, in the browser (packages/data/src/inventory/stock.ts). Apollo has no
+ * browser, so it sends addToInventory: true and this server adds the quantity to the linked Inventory part.
  */
 function receiveLines_(body, actor) {
   const items = Array.isArray(body.items) ? body.items : [];
@@ -281,7 +281,8 @@ function receiveLines_(body, actor) {
     throw apiError_("bad-request", "Choose between 1 and " + MAX_LINES_PER_REQUEST + " lines.");
   }
   return withLock_(function () {
-    const lines = items.map(function (item) {
+    // Check every item first, so a bad one never leaves the others half-received.
+    const checked = items.map(function (item) {
       const line = getRecord_(COLLECTION_LINES, String(item.lineId), "line");
       if (!line.orderedAt) throw apiError_("conflict", "'" + line.name + "' hasn't been ordered yet.");
       const quantity = Math.floor(Number(item.quantity));
@@ -289,13 +290,19 @@ function receiveLines_(body, actor) {
       if (!(quantity >= 1 && quantity <= left)) {
         throw apiError_("bad-request", "'" + line.name + "' has " + left + " left to receive.");
       }
-      const saved = wixSave_(COLLECTION_LINES, Object.assign({}, line, {
-        receivedQty: (line.receivedQty || 0) + quantity,
+      const inventoryItemId = item.inventoryItemId === undefined ? (line.inventoryItemId || "") : text_(item.inventoryItemId, "inventory item", 100, true);
+      const part = item.addToInventory === true ? inventoryPartFor_(inventoryItemId, line) : null;
+      return { line: line, quantity: quantity, inventoryItemId: inventoryItemId, part: part };
+    });
+    const lines = checked.map(function (c) {
+      const saved = wixSave_(COLLECTION_LINES, Object.assign({}, c.line, {
+        receivedQty: (c.line.receivedQty || 0) + c.quantity,
         receivedAt: new Date().toISOString(),
         receivedBy: person_(actor),
-        inventoryItemId: item.inventoryItemId === undefined ? (line.inventoryItemId || "") : text_(item.inventoryItemId, "inventory item", 100, true),
+        inventoryItemId: c.inventoryItemId,
       }));
-      writeHistory_(actor, { kind: "bomLine", id: line._id }, "received", saved.receivedQty + " of " + saved.quantity);
+      writeHistory_(actor, { kind: "bomLine", id: c.line._id }, "received", saved.receivedQty + " of " + saved.quantity);
+      if (c.part) addInventoryStock_(c.part, c.quantity, actor, c.line);
       return saved;
     });
     return { lines: lines };
@@ -310,6 +317,28 @@ function linkLineToInventory_(body, actor) {
   }));
   writeHistory_(actor, { kind: "bomLine", id: line._id }, "linked to inventory", line.name);
   return { line: saved };
+}
+
+/**
+ * The Inventory part a received line is added to, for Apollo. Only an existing, linked part: if the line isn't linked,
+ * Apollo has to ask a person which part it is (team decision, Nov 12, 2026), so this refuses rather than guesses.
+ * Inventory rows are stored in Wix under their own id ("PT-..."), with quantity and version numbers.
+ */
+function inventoryPartFor_(itemId, line) {
+  if (!itemId) throw apiError_("bad-request", "'" + line.name + "' isn't linked to an Inventory part. Ask a person which part it is, or receive it without adding to Inventory.");
+  const part = wixQuery_("inventory_parts", { _id: itemId }, 1)[0];
+  if (!part || part.archivedAt) throw apiError_("bad-request", "The Inventory part for '" + line.name + "' no longer exists.");
+  return part;
+}
+
+/** Adds received items to an Inventory part (found with inventoryPartFor_). */
+function addInventoryStock_(part, quantity, actor, line) {
+  wixSave_("inventory_parts", Object.assign({}, part, {
+    quantity: (Number(part.quantity) || 0) + quantity,
+    version: (Number(part.version) || 0) + 1,
+    updatedAt: { $date: new Date().toISOString() },
+  }));
+  writeHistory_(actor, { kind: "inventoryItem", id: part._id }, "added stock", quantity + " from BOM line " + line.name);
 }
 
 // ---------------------------------------------------------------------------------------------------------

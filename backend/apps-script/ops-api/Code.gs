@@ -62,6 +62,10 @@ function actions_() {
     // Icarus (Icarus.gs)
     saveIcarusRecord: { who: "lead", run: saveIcarusRecord_ },
     removeIcarusRecord: { who: "lead", run: removeIcarusRecord_ },
+    listTasks: { who: "viewer", agent: true, run: listTasks_ },
+    saveTask: { who: "team", agent: true, run: saveTask_ },
+    addTaskComment: { who: "team", agent: true, run: addTaskComment_ },
+    needsAttention: { who: "viewer", agent: true, run: needsAttention_ },
     lookupEvent: { who: "team", agent: true, run: lookupEvent_ },
     listTeamEvents: { who: "team", agent: true, run: listTeamEvents_ },
   };

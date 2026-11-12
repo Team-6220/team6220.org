@@ -152,7 +152,9 @@ export function makeScript(members: Record<string, Member>) {
     },
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
     UrlFetchApp,
+    Session: { getScriptTimeZone: () => "America/Los_Angeles" },
     Utilities: {
+      formatDate: (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }),
       DigestAlgorithm: { SHA_256: "sha256" },
       Charset: { UTF_8: "utf8" },
       computeDigest: (_a: string, text: string) => [...createHash("sha256").update(text, "utf8").digest()].map((b) => (b > 127 ? b - 256 : b)),

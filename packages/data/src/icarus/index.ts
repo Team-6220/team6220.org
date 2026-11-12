@@ -145,6 +145,15 @@ export async function savePlanning<K extends keyof PlanningRecords>(kind: K, rec
 }
 
 /** Looks an event up on The Blue Alliance by its code ("2027casd"). Nothing is saved. */
+/**
+ * What needs a person's attention across Icarus, BOM and Production (the summary Apollo's reminders use).
+ * The website reads its own data directly; this is here so the demo and tests can call the same action.
+ */
+export async function needsAttention(): Promise<Record<string, unknown[]>> {
+  const { ok: _ok, ...summary } = await callOps<Record<string, unknown[]> & { ok: true }>("needsAttention");
+  return summary;
+}
+
 export async function lookupEvent(code: string): Promise<Draft<TeamEvent>> {
   return (await callOps<{ event: Draft<TeamEvent> }>("lookupEvent", { code })).event;
 }

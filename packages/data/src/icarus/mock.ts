@@ -59,6 +59,24 @@ mockActions({
       return { event };
     },
   },
+  // The same summary the real server gives Apollo, worked out from the demo data.
+  needsAttention: {
+    who: "viewer",
+    run: (_request, _actor, db) => {
+      const today = new Date().toLocaleDateString("en-CA");
+      const tasks = db.rows<Task>("icarus_tasks");
+      const open = (t: Task) => t.status === "not-started" || t.status === "in-progress";
+      const brief = (t: Task) => ({ _id: t._id, number: t.number, title: t.title, dueDate: t.dueDate, ownerIds: t.ownerIds });
+      const lines = db.rows<Record<string, unknown> & { _id: string }>("bom_lines");
+      return {
+        overdueTasks: tasks.filter((t) => open(t) && t.dueDate && t.dueDate < today).map(brief),
+        blockedTasks: tasks.filter((t) => open(t) && t.blockedBy.some((id) => tasks.some((o) => o._id === id && open(o)))).map(brief),
+        linesWaitingForSignatures: lines.filter((l) => !l.orderedAt && (l.signatures as unknown[]).length < 2).map((l) => ({ _id: l._id, name: l.name })),
+        orderedNotReceived: lines.filter((l) => l.orderedAt && Number(l.receivedQty) < Number(l.quantity)).map((l) => ({ _id: l._id, name: l.name })),
+        partsPendingSetup: db.rows<Record<string, unknown> & { _id: string }>("production_parts").filter((p) => p.status === "pending-setup").map((p) => ({ _id: p._id, number: p.number, partName: p.partName })),
+      };
+    },
+  },
   listTeamEvents: { who: "team", run: (request) => ({ events: demoTbaEvents(Math.floor(Number(request.year))) }) },
   saveIcarusRecord: {
     who: "lead",

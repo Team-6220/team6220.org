@@ -120,12 +120,16 @@ function markOrdered(db: MockDb, actor: MockActor, request: ApiRequest) {
 function receiveLines(db: MockDb, actor: MockActor, request: ApiRequest) {
   const items = (Array.isArray(request.items) ? request.items : []) as { lineId?: unknown; quantity?: unknown; inventoryItemId?: unknown }[];
   if (!items.length || items.length > 200) throw new OpsError("bad-request", "Choose between 1 and 200 lines.");
-  const lines = items.map((item) => {
+  // Check every item first, so a bad one never leaves the others half-received (as Bom.gs does).
+  const checked = items.map((item) => {
     const line = get<Line>(db, "bom_lines", String(item.lineId), "line");
     if (!line.orderedAt) throw new OpsError("conflict", `'${line.name}' hasn't been ordered yet.`);
     const quantity = Math.floor(Number(item.quantity));
     const left = line.quantity - line.receivedQty;
     if (!(quantity >= 1 && quantity <= left)) throw new OpsError("bad-request", `'${line.name}' has ${left} left to receive.`);
+    return { item, line, quantity };
+  });
+  const lines = checked.map(({ item, line, quantity }) => {
     const saved = db.save<Line>("bom_lines", {
       ...line,
       receivedQty: line.receivedQty + quantity,
