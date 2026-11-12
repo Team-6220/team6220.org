@@ -1,0 +1,18 @@
+{
+  "name": "@team6220/template",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/template: the example app to copy when you make a new team app. Not listed on the dashboard.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./template.css": "./src/template.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

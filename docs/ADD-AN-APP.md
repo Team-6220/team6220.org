@@ -6,7 +6,11 @@ your app's short lowercase name everywhere.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) first (ten minutes) and have [TOOLS.md](TOOLS.md) handy.
 
-**Real examples to copy from** (they are small and current):
+**Start from `apps/template`.** It is a small working app (open it at `/apps/template` while `pnpm dev` runs) with the four
+sign-in states and one example of each shared piece: buttons, form fields, status messages, a table and images.
+Copy the folder and its page, rename things, and replace the examples with your screens.
+
+**Other real examples to copy from** (they are small and current):
 
 | If your app is like... | Copy from |
 | --- | --- |
