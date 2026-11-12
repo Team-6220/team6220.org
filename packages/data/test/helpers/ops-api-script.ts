@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 // Apps Script loads every file into one global scope, in this order.
-const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs", "Events.gs"].map((name) =>
+const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs", "Events.gs", "GitHub.gs"].map((name) =>
   readFileSync(fileURLToPath(new URL(`../../../../backend/apps-script/ops-api/${name}`, import.meta.url)), "utf8"),
 );
 const CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
@@ -44,19 +44,42 @@ export interface TbaEvent {
   year: number;
 }
 
+export interface GithubIssue {
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  state_reason: string | null;
+  labels: { name: string }[];
+  assignees: { login: string }[];
+  html_url: string;
+  updated_at: string;
+  pull_request?: unknown;
+}
+
 export function makeScript(members: Record<string, Member>) {
   const props = new Map<string, string>([
     ["WIX_API_KEY", API_KEY],
     ["WIX_SITE_ID", "site-1"],
     ["APOLLO_KEY_SHA256", sha(APOLLO_KEY)],
     ["TBA_KEY", "tba-read-key"],
+    ["GITHUB_TOKEN", "gh-token"],
   ]);
   const cache = new Map<string, string>();
+  let lockHeld = false;
   const tbaEvents: TbaEvent[] = [
     { key: "2027casd", name: "San Diego Regional", event_code: "casd", city: "Del Mar", state_prov: "CA", start_date: "2027-03-04", end_date: "2027-03-07", year: 2027 },
     { key: "2027cala", name: "Los Angeles Regional", event_code: "cala", city: "Los Angeles", state_prov: "CA", start_date: "2027-03-25", end_date: "2027-03-28", year: 2027 },
   ];
   const tbaCalls: string[] = [];
+  /** The fake GitHub: issues per repository, and what the sync sent. Tests edit issues to act as someone on GitHub. */
+  const github = {
+    clock: 0,
+    repos: {} as Record<string, GithubIssue[]>,
+    patches: [] as Record<string, unknown>[],
+    comments: [] as { repo: string; number: number; body: string }[],
+    gets: [] as string[],
+  };
   const collections = new Map<string, Row[]>();
   const rows = (name: string) => collections.get(name) ?? collections.set(name, []).get(name)!;
   let nextId = 1;
@@ -65,6 +88,37 @@ export function makeScript(members: Record<string, Member>) {
 
   const UrlFetchApp = {
     fetch(url: string, opts: { method?: string; headers?: Record<string, string>; payload?: string }) {
+      // ----- GitHub (a tiny fake of the issues API) -----
+      if (url.startsWith("https://api.github.com/")) {
+        if (opts.headers?.Authorization !== "Bearer gh-token") return res(401, {});
+        const [path, query = ""] = url.slice("https://api.github.com".length).split("?");
+        const m = path.match(/^\/repos\/([^/]+\/[^/]+)\/issues(?:\/(\d+))?(\/comments)?$/);
+        if (!m) return res(404, {});
+        const issues = github.repos[m[1]] ?? (github.repos[m[1]] = []);
+        const payload = opts.payload ? JSON.parse(opts.payload) : {};
+        const stamp = () => new Date(Date.parse("2027-01-10T00:00:00Z") + ++github.clock * 1000).toISOString();
+        if (m[3]) {
+          github.comments.push({ repo: m[1], number: Number(m[2]), body: payload.body });
+          return res(201, {});
+        }
+        if (m[2] && opts.method === "patch") {
+          const issue = issues.find((i) => i.number === Number(m[2]))!;
+          Object.assign(issue, { title: payload.title, body: payload.body, state: payload.state, state_reason: payload.state === "closed" ? payload.state_reason : null,
+            assignees: payload.assignees.map((login: string) => ({ login })), updated_at: stamp() });
+          github.patches.push({ repo: m[1], number: issue.number, ...payload });
+          return res(200, issue);
+        }
+        if (opts.method === "post") {
+          const issue = { number: issues.length + 1, title: payload.title, body: payload.body, state: "open", state_reason: null, labels: [],
+            assignees: (payload.assignees ?? []).map((login: string) => ({ login })), html_url: `https://github.com/${m[1]}/issues/${issues.length + 1}`, updated_at: stamp() };
+          issues.push(issue);
+          return res(201, issue);
+        }
+        const since = new URLSearchParams(query).get("since") ?? "";
+        const page = Number(new URLSearchParams(query).get("page")) || 1;
+        github.gets.push(m[1]);
+        return res(200, page === 1 ? issues.filter((i) => i.updated_at >= since) : []);
+      }
       // ----- The Blue Alliance (made-up answers in its real shape) -----
       if (url.startsWith("https://www.thebluealliance.com/api/v3/")) {
         tbaCalls.push(url);
@@ -142,7 +196,13 @@ export function makeScript(members: Record<string, Member>) {
 
   const context = vm.createContext({
     console: { log() {}, error() {} },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k: string) => props.get(k) ?? null }) },
+    PropertiesService: {
+      getScriptProperties: () => ({
+        getProperty: (k: string) => props.get(k) ?? null,
+        setProperty: (k: string, v: string) => void props.set(k, v),
+        deleteProperty: (k: string) => void props.delete(k),
+      }),
+    },
     CacheService: {
       getScriptCache: () => ({
         get: (k: string) => cache.get(k) ?? null,
@@ -150,7 +210,13 @@ export function makeScript(members: Record<string, Member>) {
         remove: (k: string) => cache.delete(k),
       }),
     },
-    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
+    // Refuses to be taken twice at once, so code that would take it twice in one run fails the tests.
+    LockService: {
+      getScriptLock: () => ({
+        tryLock: () => (lockHeld ? (() => { throw new Error("script lock taken twice in one run"); })() : (lockHeld = true)),
+        releaseLock: () => void (lockHeld = false),
+      }),
+    },
     UrlFetchApp,
     Session: { getScriptTimeZone: () => "America/Los_Angeles" },
     Utilities: {
@@ -165,6 +231,6 @@ export function makeScript(members: Record<string, Member>) {
 
   const post = (body: unknown) =>
     JSON.parse((context.doPost({ postData: { contents: JSON.stringify(body) } }) as { s: string }).s);
-  return { post, rows, props, members, tbaEvents, tbaCalls, context };
+  return { post, rows, props, members, tbaEvents, tbaCalls, context, github };
 }
 

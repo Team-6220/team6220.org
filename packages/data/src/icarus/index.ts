@@ -81,7 +81,8 @@ export async function saveTask(task: Draft<Task>, me: Me, allTasks: Task[]): Pro
       number = `${parent.number}.${Math.max(0, ...siblings) + 1}`;
     } else number = String(await nextNumber("task"));
   }
-  const saved = await store().save<Task>("icarus_tasks", { ...task, title, number, createdBy: task.createdBy || me.id });
+  // updatedAt tells the GitHub sync this task changed in Icarus since it last synced.
+  const saved = await store().save<Task>("icarus_tasks", { ...task, title, number, createdBy: task.createdBy || me.id, updatedAt: new Date().toISOString() });
   await logHistory({ kind: "task", id: saved._id }, isNew ? "created" : "edited", `${taskLabel(saved)} ${saved.title} (${STATUS_LABELS[saved.status]})`);
   return saved;
 }
@@ -161,6 +162,19 @@ export async function lookupEvent(code: string): Promise<Draft<TeamEvent>> {
 /** Every event the team is registered for in a year, from The Blue Alliance. Nothing is saved. */
 export async function teamEvents(year: number): Promise<Draft<TeamEvent>[]> {
   return (await callOps<{ events: Draft<TeamEvent>[] }>("listTeamEvents", { year })).events;
+}
+
+// ----- GitHub (two-way issue sync runs on the server every 5 minutes) -----
+
+/** Opens a GitHub issue for a task whose project is connected to a Team-6220 repository, and links them. */
+export async function createGithubIssue(taskId: string): Promise<Task> {
+  return (await callOps<{ task: Task }>("createGithubIssue", { taskId })).task;
+}
+
+/** Runs GitHub sync now instead of waiting for the next 5-minute run. */
+export async function syncGithubNow(): Promise<{ repos: number; pulled: number; pushed: number }> {
+  const { repos, pulled, pushed } = await callOps<{ repos: number; pulled: number; pushed: number }>("syncGithubNow");
+  return { repos, pulled, pushed };
 }
 
 export async function removePlanning(kind: keyof PlanningRecords, id: string): Promise<void> {

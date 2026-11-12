@@ -19,12 +19,17 @@ function nextNumber_(body) {
 }
 
 function takeNumber_(kind, count) {
-  return withLock_(function () {
-    const row = wixQuery_(COLLECTION_COUNTERS, { key: kind }, 1)[0] || { key: kind, next: 1 };
-    const number = Number(row.next) || 1;
-    wixSave_(COLLECTION_COUNTERS, Object.assign({}, row, { next: number + (count || 1) }));
-    return number;
-  });
+  return withLock_(function () { return takeNumberLocked_(kind, count); });
+}
+
+/**
+ * The same, for code that already holds the script lock (taking the lock twice in one run isn't safe to rely on).
+ */
+function takeNumberLocked_(kind, count) {
+  const row = wixQuery_(COLLECTION_COUNTERS, { key: kind }, 1)[0] || { key: kind, next: 1 };
+  const number = Number(row.next) || 1;
+  wixSave_(COLLECTION_COUNTERS, Object.assign({}, row, { next: number + (count || 1) }));
+  return number;
 }
 
 // ---------------------------------------------------------------------------------------------------------

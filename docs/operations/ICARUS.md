@@ -1,6 +1,7 @@
 # Icarus, the tasks and Gantt app (`/apps/icarus`): plan
 
-> **Plan only, not built.** Part of the [Team Operations plan](README.md). Source: issue
+> **Built (steps 0–6, Nov 2026); the "Not in the first release" items are still to do.** The real-data setup is in [SETUP.md](SETUP.md).
+> Part of the [Team Operations plan](README.md). Source: issue
 > [#141](https://github.com/Team-6220/team6220.org/issues/141) and the Gantt chart sheets in Google Drive
 > ("Gantt Chart Template", "2026 Competition Gantt Chart", "2027 Competition Gantt Chart").
 >
@@ -181,12 +182,18 @@ Rules that keep it safe:
 
 - Dates, relations, materials and parts live only on the task. GitHub has no place for them.
 - If both sides changed since the last sync, **the newer edit wins** and the other is kept in the task's history.
-- Synced changes are written to GitHub by a team bot account, and each one says who made it ("Closed from
-  team6220.org by Alex").
-- Sync runs every few minutes (see [ARCHITECTURE.md](ARCHITECTURE.md#github-sync)), so a change can take up to about
-  five minutes to appear on the other side. A "Sync now" button is on each linked task.
-- Deleting a task never deletes an issue, and the other way round. The link is just removed.
-- Pull requests are not synced. A linked task shows the pull requests that close its issue, read-only.
+- Synced changes are written to GitHub by a team bot account. Closing or reopening from Icarus also posts a comment
+  saying who did it ("Closed from Icarus (team6220.org) by Alex.").
+- Sync runs every 5 minutes, so a change can take up to five minutes to appear on the other side. **Sync with GitHub
+  now** on Icarus → Projects runs it at once.
+- Deleting a task never deletes an issue, and the other way round.
+- Pull requests are not synced.
+- Each member sets their GitHub username on Icarus → People (Leads, Mentors and Web Admins can set anyone's). Without
+  it, issues assigned to them come in without an owner.
+- Only repositories in the Team-6220 organization can be connected.
+
+**Built (step 6).** Not yet: showing a task's linked pull requests, and syncing subteam labels back to GitHub
+(labels are read from GitHub only).
 
 ## Needs materials and needs part
 

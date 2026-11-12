@@ -5,7 +5,7 @@
 // so this file only knows the shared parts: people, projects, numbers, history and subteams.
 import { BADGES, SUBTEAM_BADGE_PREFIX } from "../config";
 import { rolesFor, subteamsOf } from "./roles";
-import { OpsError, type ApiRequest, type Draft, type Item, type Store, type Transport } from "./types";
+import { OpsError, type ApiRequest, type Draft, type Item, type Person, type Store, type Transport } from "./types";
 
 export type MockRole = "member" | "lead" | "mentor" | "booster" | "supervisor" | "pending";
 export const MOCK_ROLES: MockRole[] = ["member", "lead", "mentor", "booster", "supervisor", "pending"];
@@ -198,6 +198,18 @@ const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; r
       changeSubteams(db, actor.id, subteams);
       db.writeHistory(actor, { kind: "person", id: actor.id }, "subteams", subteams.join(", ") || "none");
       return { subteams };
+    },
+  },
+  setGithubLogin: {
+    who: "team",
+    run: (request, actor, db) => {
+      const memberId = request.memberId ? String(request.memberId) : actor.id;
+      if (memberId !== actor.id && !rolesFor(actor.badges).peopleAdmin) throw new OpsError("forbidden", "You can only set your own GitHub username.");
+      const login = String(request.login ?? "").trim().replace(/^@/, "");
+      if (login && !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(login)) throw new OpsError("bad-request", "That isn't a GitHub username.");
+      const person = db.rows<Person>("ops_people").find((p) => p.memberId === memberId);
+      if (!person) throw new OpsError("bad-request", "That person hasn't opened the apps yet.");
+      return { person: db.save("ops_people", { ...person, githubLogin: login }) };
     },
   },
   setSubteams: {

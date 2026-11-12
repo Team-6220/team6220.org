@@ -77,6 +77,35 @@ mockActions({
       };
     },
   },
+  // Demo GitHub: links a made-up issue number and never calls GitHub.
+  createGithubIssue: {
+    who: "team",
+    run: (request, _actor, db) => {
+      const task = existing(db, "icarus_tasks", request.taskId, "task") as Task;
+      if (task.githubIssue) throw new OpsError("conflict", "This task already has a GitHub issue.");
+      const project = db.rows<{ _id: string; githubRepo: string }>("ops_projects").find((p) => p._id === task.projectId);
+      if (!project || !/^Team-6220\/[A-Za-z0-9._-]+$/.test(project.githubRepo)) {
+        throw new OpsError("bad-request", "Put the task in a project that is connected to a GitHub repository first.");
+      }
+      const number = 100 + db.rows<Task>("icarus_tasks").filter((t) => t.githubIssue?.repo === project.githubRepo).length;
+      const now = new Date().toISOString();
+      const saved: Task = {
+        ...task,
+        updatedAt: now,
+        githubIssue: { repo: project.githubRepo, number, url: `https://github.com/${project.githubRepo}/issues/${number}`, updatedAt: now, syncedAt: now, closed: false },
+      };
+      db.save("icarus_tasks", saved);
+      return { task: saved };
+    },
+  },
+  syncGithubNow: {
+    who: "team",
+    run: (_request, _actor, db) => ({
+      repos: db.rows<{ _id: string; githubRepo: string }>("ops_projects").filter((p) => p.githubRepo.startsWith("Team-6220/")).length,
+      pulled: 0,
+      pushed: 0,
+    }),
+  },
   listTeamEvents: { who: "team", run: (request) => ({ events: demoTbaEvents(Math.floor(Number(request.year))) }) },
   saveIcarusRecord: {
     who: "lead",

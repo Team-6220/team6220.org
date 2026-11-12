@@ -14,6 +14,7 @@ interface PeopleProps {
 
 export function People({ me, people, subteams, run }: PeopleProps) {
   const [mine, setMine] = useState(me.subteams);
+  const [myGithub, setMyGithub] = useState(people.find((p) => p.memberId === me.id)?.githubLogin ?? "");
   const [chosen, setChosen] = useState<string[]>([]);
   const [forChosen, setForChosen] = useState<string[]>([]);
   const toggle = (id: string) => setChosen(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id]);
@@ -26,6 +27,20 @@ export function People({ me, people, subteams, run }: PeopleProps) {
         <button className="t-button" type="button" onClick={() => run(async () => `Saved: ${(await ops.setMySubteams(mine)).join(", ") || "no subteams"}.`)}>
           Save my subteams
         </button>
+      </section>
+
+      <section className="t-panel">
+        <h2>My GitHub username</h2>
+        <p className="t-muted">So GitHub issues assigned to you show up as your tasks, and tasks assigned to you are assigned to you on GitHub.</p>
+        <div className="icr__relation-add">
+          <input value={myGithub} onChange={(e) => setMyGithub(e.target.value)} placeholder="octocat" aria-label="My GitHub username" maxLength={40} />
+          <button className="t-button" type="button" onClick={() => run(async () => {
+            const person = await ops.setGithubLogin(myGithub);
+            return person.githubLogin ? `Saved: @${person.githubLogin} on GitHub.` : "GitHub username removed.";
+          })}>
+            Save
+          </button>
+        </div>
       </section>
 
       <section className="t-panel">
@@ -70,6 +85,7 @@ export function People({ me, people, subteams, run }: PeopleProps) {
               <tr>
                 {me.roles.peopleAdmin && <th aria-label="Choose" />}
                 <th>Name</th>
+                <th>GitHub</th>
                 {subteams.map((s) => <th key={s}>{s}</th>)}
               </tr>
             </thead>
@@ -83,6 +99,18 @@ export function People({ me, people, subteams, run }: PeopleProps) {
                   )}
                   <td>
                     {person.name} {person.username && <span className="t-muted">@{person.username}</span>}
+                  </td>
+                  <td>
+                    {person.githubLogin ? <a href={`https://github.com/${person.githubLogin}`} target="_blank" rel="noreferrer">{person.githubLogin}</a> : null}
+                    {me.roles.peopleAdmin && (
+                      <button type="button" className="icr__link" aria-label={`Set ${person.name}'s GitHub username`}
+                        onClick={() => {
+                          const login = window.prompt(`${person.name}'s GitHub username`, person.githubLogin ?? "");
+                          if (login !== null) void run(async () => void (await ops.setGithubLogin(login, person.memberId)));
+                        }}>
+                        {person.githubLogin ? "edit" : "set"}
+                      </button>
+                    )}
                   </td>
                   {subteams.map((subteam) => {
                     const on = person.subteams.includes(subteam);

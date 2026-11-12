@@ -237,6 +237,20 @@ export async function syncPeople(): Promise<{ people: number; added: number; rem
   return callOps("syncPeople");
 }
 
+/** Sets a member's GitHub username, so GitHub sync can match issue assignees to them. Your own, or anyone's for a Lead, Mentor or Web Admin. */
+export async function setGithubLogin(login: string, memberId?: string): Promise<Person> {
+  return (await callOps<{ person: Person }>("setGithubLogin", { login, memberId })).person;
+}
+
+/**
+ * "https://github.com/Team-6220/robot-2027" or "Team-6220/robot-2027" -> "Team-6220/robot-2027".
+ * Null for anything else: GitHub sync only works with the team's own organization.
+ */
+export function teamRepoFrom(text: string): string | null {
+  const m = text.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/(\.git)?\/?$/, "").match(/^team-6220\/([A-Za-z0-9._-]+)$/i);
+  return m ? `Team-6220/${m[1]}` : null;
+}
+
 /** "p10", "t42.1": how numbers are written everywhere. */
 export function projectLabel(project: Pick<Project, "number">): string {
   return `p${project.number}`;

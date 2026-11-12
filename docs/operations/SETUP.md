@@ -44,11 +44,19 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 | [ ] | Web Admin | Create `production_parts` (read and write: **Site members**). Fields: `number`, `length`, `width`, `quantity` (number); `partName`, `designerId`, `designerName`, `projectId`, `taskId`, `cadLink`, `fileLinks`, `material`, `thickness`, `method`, `accuracy`, `priority`, `dueDate`, `details`, `status`, `setupNotes`, `setupBy`, `createdAt` (text); `work` (array); `print` (object) | Wix → CMS |
 | [ ] | Manufacturing lead | Tell designers to use `/apps/production` and close the Production Form | |
 
-## Still to build
+## Outside connections (steps 5 and 6)
 
-The links between the apps (step 4) need no setup of their own, only the fields listed in the ops-api README
-(`inventoryItemId` on `bom_lines`, `needs` on `icarus_tasks`).
+Each one is optional: the apps work without it, and the button that needs it explains what is missing.
 
-Not built yet, so nothing to set up: the cut planner
-move, Onshape import, event lookup, GitHub sync and the rest of Apollo's actions. Their keys (GitHub, The Blue
-Alliance, FIRST, Onshape, Apollo) will be listed here when they are.
+| Done | Who | What | Where |
+| --- | --- | --- | --- |
+| [ ] | Team Google account | Copy `Events.gs`, `GitHub.gs` and the updated `Code.gs`, `Icarus.gs`, `Shared.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
+| [ ] | Anyone with a TBA account | Make a read key on The Blue Alliance (Account → Read API Keys), add it as Script Property `TBA_KEY`, and add the daily `refreshEvents` trigger | thebluealliance.com, script.google.com |
+| [ ] | Org owner | Make a fine-grained GitHub token on a team bot account (Team-6220, all repositories, Issues read and write), add it as `GITHUB_TOKEN`, and add the 5-minute `syncGithub` trigger. Details in the ops-api README, step 5 | github.com, script.google.com |
+| [ ] | Web Admin | Add `githubLogin` (text) to `ops_people`, and `updatedAt` (text) and `githubIssue` (object) to `icarus_tasks` | Wix → CMS |
+| [ ] | Lead | Connect each project to its repository: Icarus → Projects → Connect a GitHub repository | `/apps/icarus` |
+| [ ] | Everyone who uses GitHub | Set your GitHub username on Icarus → People | `/apps/icarus` |
+| [ ] | Whoever runs Apollo | Make a long random key, store its SHA-256 as `APOLLO_KEY_SHA256`, and give the key to Apollo. Apollo's actions are listed in the ops-api README | script.google.com |
+| [ ] | Manufacturing lead | Use the cut planner in Production at a real meeting; then a programmer removes Inventory's own planner | `/apps/production` |
+
+Not built yet, so nothing to set up: Onshape import (it will need Onshape API keys).

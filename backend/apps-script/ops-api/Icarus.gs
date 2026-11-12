@@ -168,7 +168,7 @@ function saveTask_(body, actor) {
   if (!existing) {
     task.createdBy = actor.id;
     task.number = withLock_(function () {
-      if (!task.parentId) return String(takeNumber_("task"));
+      if (!task.parentId) return String(takeNumberLocked_("task"));
       const parent = getRecord_("icarus_tasks", task.parentId, "parent task");
       const siblings = wixQuery_("icarus_tasks", { parentId: parent._id }).map(function (t) { return Number(String(t.number).split(".").pop()); });
       if (!task.seasonId) task.seasonId = parent.seasonId;
