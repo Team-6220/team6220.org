@@ -71,6 +71,11 @@ export function makeScript(members: Record<string, Member>) {
       }
       // ----- everything below needs the server's API key -----
       if (auth !== API_KEY || opts.headers?.["wix-site-id"] !== "site-1") return res(403, {});
+      if (path.startsWith("/members/v1/members?") && opts.method === "get") {
+        const offset = Number(new URLSearchParams(path.split("?")[1]).get("paging.offset")) || 0;
+        const all = Object.values(members).map((m) => ({ id: m.id, status: m.status, contact: { firstName: "Pat", lastName: m.id }, profile: { slug: `pat-${m.id}` } }));
+        return res(200, { members: all.slice(offset, offset + 100) });
+      }
       if (path === "/badges/v4/assignments" && opts.method === "post") {
         byId(payload.badgeAssignment.memberId)!.badges.push(payload.badgeAssignment.badgeId);
         return res(200, {});

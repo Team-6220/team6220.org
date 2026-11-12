@@ -31,6 +31,7 @@ type OpenForm =
   | { kind: "edit"; lineId: string }
   | { kind: "order"; sectionId: string }
   | { kind: "receive"; lineId: string }
+  | { kind: "paste"; sectionId: string }
   | { kind: "confirm-sign" }
   | null;
 
@@ -115,6 +116,20 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
     </div>
   );
 
+  /** Adds rows from the clipboard to a vendor, after showing what was understood. */
+  function pasteInto(section: BomSection, text: string) {
+    const pasted = bom.parsePastedRows(text);
+    if (!pasted.lines.length) {
+      return run(async () => {
+        throw new Error("Nothing to paste. Copy rows from the BOM sheet (or from here) first: item, link, cost and quantity in the first four columns.");
+      });
+    }
+    const skipped = pasted.skipped.length ? `\n\nLeft out:\n${pasted.skipped.join("\n")}` : "";
+    const total = bom.formatMoney(bom.totalCost(pasted.lines));
+    if (!window.confirm(`Add ${pasted.lines.length} rows (${total}) to ${section.vendor}?${skipped}`)) return;
+    return act(async () => `Added ${(await bom.addLines(section._id, pasted.lines)).length} rows to ${section.vendor}.`);
+  }
+
   // The two functions below are plain functions that return part of the page (not components), so they can use
   // the state above without passing a dozen props.
   function vendorSection(section: BomSection, lines: BomLine[]) {
@@ -122,7 +137,17 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
     const mine = signable.filter((l) => l.sectionId === section._id);
     if (!lines.length && !team) return null; // viewers don't need empty vendors
     return (
-      <section key={section._id} className="t-panel bom__section">
+      <section
+        key={section._id}
+        className="t-panel bom__section"
+        // Ctrl+V while a vendor's box is clicked (and not while typing in a field) pastes rows into that vendor.
+        tabIndex={team ? -1 : undefined}
+        onPaste={(e) => {
+          if (!team || (e.target as HTMLElement).closest("input, textarea, select")) return;
+          e.preventDefault();
+          void pasteInto(section, e.clipboardData.getData("text/plain"));
+        }}
+      >
         <header className="bom__section-head">
           <h3>{section.vendor}</h3>
           <span className="t-muted">
@@ -139,17 +164,29 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
         {lines.length > 0 && (
           <div className="bom__scroll">
             <table className="t-table bom__table">
+              {/* The same widths in every vendor's table, so the columns line up down the page like a sheet. */}
+              <colgroup>
+                <col className="bom__col-item" />
+                <col className="bom__col-money" />
+                <col className="bom__col-qty" />
+                <col className="bom__col-money" />
+                <col className="bom__col-status" />
+                <col className="bom__col-comments" />
+                <col className="bom__col-actions" />
+                {approver && <col className="bom__col-pick" />}
+                <col className="bom__col-signatures" />
+              </colgroup>
               <thead>
                 <tr>
-                  {approver && <th aria-label="Choose" />}
                   <th>Item</th>
                   <th>Item cost</th>
                   <th>Qty</th>
                   <th>Cost</th>
-                  <th>Signatures</th>
                   <th>Status</th>
                   <th>Comments</th>
                   <th aria-label="Actions" />
+                  {approver && <th aria-label="Choose to sign" />}
+                  <th>Signatures</th>
                 </tr>
               </thead>
               <tbody>{lines.map(lineRow)}</tbody>
@@ -166,6 +203,18 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
           {lines.some((l) => l.link) && (
             <button className="t-button t-button--quiet" type="button" onClick={() => openAll(lines)}>
               Open all links
+            </button>
+          )}
+          {lines.length > 0 && (
+            <button className="t-button t-button--quiet" type="button" title="Copies these rows so they can be pasted into Google Sheets or another order"
+              onClick={() => run(async () => (await navigator.clipboard.writeText(bom.linesToTsv(lines)), `Copied ${lines.length} rows from ${section.vendor}. Paste them into a sheet or another vendor.`))}>
+              Copy rows
+            </button>
+          )}
+          {team && (
+            <button className="t-button t-button--quiet" type="button" title="Adds rows copied from Google Sheets or from another order"
+              onClick={() => navigator.clipboard.readText().then((text) => pasteInto(section, text), () => setOpen({ kind: "paste", sectionId: section._id }))}>
+              Paste rows
             </button>
           )}
           {approver && mine.length > 0 && (
@@ -187,6 +236,9 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
 
         {open?.kind === "add" && open.sectionId === section._id && (
           <LineForm sectionId={section._id} prefill={toAdd ?? undefined} onCancel={close} onSave={(input) => act(async () => (await bom.saveLine(input), onAdded?.()))} />
+        )}
+        {open?.kind === "paste" && open.sectionId === section._id && (
+          <PasteBox vendor={section.vendor} onCancel={close} onPaste={(text) => pasteInto(section, text)} />
         )}
         {open?.kind === "order" && open.sectionId === section._id && (
           <OrderForm
@@ -227,21 +279,6 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
     }
     return (
       <tr key={line._id} className={selection.selected.has(line._id) ? "bom__row bom__row--chosen" : "bom__row"} onPointerEnter={() => selection.dragOver(line._id)}>
-        {approver && (
-          <td
-            className="bom__pick"
-            onPointerDown={(e) => {
-              if (!canChoose) return;
-              e.preventDefault(); // no text selection while dragging down the boxes
-              selection.press(line._id, e.shiftKey);
-            }}
-          >
-            {canChoose && (
-              <input type="checkbox" checked={selection.selected.has(line._id)} readOnly aria-label={`Choose ${line.name}`}
-                onKeyDown={(e) => e.key === " " && (e.preventDefault(), selection.press(line._id, e.shiftKey))} />
-            )}
-          </td>
-        )}
         <td>
           {line.link ? <a href={line.link} target="_blank" rel="noreferrer">{line.name}</a> : line.name}
           {line.vendorPartNumber && <span className="t-hint"> {line.vendorPartNumber}</span>}
@@ -249,7 +286,6 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
         <td>{bom.formatMoney(line.unitCost)}</td>
         <td>{line.quantity}</td>
         <td>{bom.formatMoney(bom.lineCost(line))}</td>
-        <td>{line.signatures.map((s) => s.name + (s.imported ? " (imported)" : "")).join(", ") || "—"}</td>
         <td>
           <StatusPill tone={STATE_TONES[state]}>{bom.LINE_STATE_LABELS[state]}</StatusPill>
           {state === "partly-received" && ` ${line.receivedQty} of ${line.quantity}`}
@@ -285,6 +321,22 @@ export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
             )}
           </div>
         </td>
+        {approver && (
+          <td
+            className="bom__pick"
+            onPointerDown={(e) => {
+              if (!canChoose) return;
+              e.preventDefault(); // no text selection while dragging down the boxes
+              selection.press(line._id, e.shiftKey);
+            }}
+          >
+            {canChoose && (
+              <input type="checkbox" checked={selection.selected.has(line._id)} readOnly aria-label={`Choose ${line.name}`}
+                onKeyDown={(e) => e.key === " " && (e.preventDefault(), selection.press(line._id, e.shiftKey))} />
+            )}
+          </td>
+        )}
+        <td>{line.signatures.map((s) => s.name + (s.imported ? " (imported)" : "")).join(", ") || "—"}</td>
       </tr>
     );
   }
@@ -336,6 +388,27 @@ function ReceiveBox({ line, left, onArrived, onCancel }: { line: BomLine; left: 
         Cancel
       </button>
     </span>
+  );
+}
+
+/** Shown when the browser won't let the page read the clipboard: paste into this box instead. */
+function PasteBox({ vendor, onPaste, onCancel }: { vendor: string; onPaste: (text: string) => void; onCancel: () => void }) {
+  const [text, setText] = useState("");
+  return (
+    <div className="bom__paste">
+      <label className="t-field">
+        Paste the rows for {vendor} here (Ctrl+V)
+        <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} autoFocus />
+      </label>
+      <div className="bom__buttons">
+        <button className="t-button" type="button" disabled={!text.trim()} onClick={() => onPaste(text)}>
+          Add these rows
+        </button>
+        <button className="t-button t-button--quiet" type="button" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 

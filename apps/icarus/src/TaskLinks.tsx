@@ -31,8 +31,8 @@ export function TaskLinks({ needs, onChange, canEdit, taskId, projectId }: TaskL
   const count = Number(quantity);
 
   return (
-    <div className="icr__wide">
-      <h3>Needs materials</h3>
+    <div>
+      <span className="icr__side-label">Needs materials</span>
       {needs.length === 0 && <p className="t-muted">Nothing listed.</p>}
       <ul className="icr__plain">
         {needs.map((need) => {
@@ -86,7 +86,7 @@ export function TaskLinks({ needs, onChange, canEdit, taskId, projectId }: TaskL
 
       {taskId && (
         <>
-          <h3>Parts being made</h3>
+          <span className="icr__side-label">Parts being made</span>
           {parts.length === 0 && <p className="t-muted">No parts have been requested for this task.</p>}
           <ul className="icr__plain">
             {parts.map((part) => (

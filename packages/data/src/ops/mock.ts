@@ -94,7 +94,7 @@ function seedShared(db: MockDb): void {
     ["p-katherine", "Katherine Johnson", ["Operations"]],
   ];
   for (const [memberId, name, subteams] of people) {
-    db.save("ops_people", { memberId, name, subteams, active: true });
+    db.save("ops_people", { memberId, name, username: name.toLowerCase().replace(/\s+/g, ""), subteams, active: true });
     if (!db.badges.has(memberId)) db.badges.set(memberId, [BADGES.teamMember, ...subteams.map((s) => SUBTEAM_BADGE_PREFIX + s)]);
   }
   const projects: [string, string[]][] = [
@@ -189,6 +189,8 @@ const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; r
       return { project };
     },
   },
+  // The real server copies the site's approved members into ops_people. The demo already has everyone.
+  syncPeople: { who: "peopleAdmin", run: (_request, _actor, db) => ({ people: db.rows("ops_people").length, added: 0, removed: 0 }) },
   setMySubteams: {
     who: "team",
     run: (request, actor, db) => {

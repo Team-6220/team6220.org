@@ -5,12 +5,20 @@ behind it are in [docs/operations/ICARUS.md](../../docs/operations/ICARUS.md).
 
 ## What is built
 
-- **Tasks** (`t42`), **subtasks** (`t42.1`) and **projects** (`p10`), with owners, subteams, status, start and due
-  dates, notes, "needs completion of", and a history of changes.
+- **Tasks** (`t42`), **subtasks** (`t42.1`) and **projects** (`p10`), laid out like GitHub issues: title and status
+  at the top, description and a **conversation** (comments) on the left, details on the right, **Close as done** /
+  **Reopen**, and a history of changes.
+- **Assignees** by **@mention**: type `@` and part of a name or username; several people per task. The list is the
+  site's approved members (Leads and Mentors press "Update from the members list" on People).
+- **Relations** from a dropdown: needs completion of, blocks, related to. Both tasks show the relation.
+- The task list works like GitHub's: **Open / Closed** with counts, search, filters by assignee, subteam and project,
+  subteams shown as labels.
 - **Gantt chart** laid out like the sheets: days-left and weeks-left countdown rows, month, date and weekday rows,
   the task, owner, status, start and due columns, a group per subteam (General first), bars colored by status,
   Saturdays and today highlighted, events and whole-team target dates as lines, subteam target dates as ◆.
 - **My tasks** and **All tasks** lists with filters and search. On a phone, My tasks opens first.
+- **Click the chart to add**: click an empty day in a subteam's row to add a task there (members), or a target date
+  or event (Leads). Click a bar to open its task.
 - **Seasons**, **target dates** and **events** (Leads), and **templates**: two built-in ones, a preview before
   anything is created, and "Save this season as a template".
 - **Subteams**: members pick their own; Leads and Mentors change anyone's, one at a time or many at once.
@@ -26,6 +34,7 @@ behind it are in [docs/operations/ICARUS.md](../../docs/operations/ICARUS.md).
 In the plan, coming with later build steps:
 
 - Dragging bars to change dates, and dependency arrows (a blocked task shows ⏳ for now).
+- @mentions inside comments and descriptions (assignees use them already), and notifications for them.
 - The board-by-status view.
 - Looking events up by code from The Blue Alliance and FIRST (events are typed in for now), GitHub issue sync and
   the Apollo actions (step 6).

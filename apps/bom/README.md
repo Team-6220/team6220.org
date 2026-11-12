@@ -16,6 +16,10 @@ the reasons behind the rules are in [docs/operations/BOM.md](../../docs/operatio
 - **Add to BOM** from an Icarus task that is short of a material: the link opens the BOM with the item and
   quantity filled in.
 - **Open all links** for a vendor.
+- **Compact table** like the sheet (the default, columns line up across vendors, signatures in the last column), or
+  **Bigger text** for phones. The choice is remembered on each device.
+- **Copy rows** and **Paste rows** (or click a vendor and press Ctrl+V): rows move between this app, other orders and
+  Google Sheets in the sheet's column order. Pasted rows are shown for a check first, and saved all at once.
 - **Export** an order as CSV in the old sheet's layout, and **import** a tab of an old sheet (CSV).
 - Supervisors can look and change nothing.
 

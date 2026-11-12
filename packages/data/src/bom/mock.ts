@@ -216,6 +216,33 @@ mockActions({
     },
   },
   saveLine: { who: "team", run: (request, actor, db) => saveLine(db, actor, (request.line ?? {}) as Record<string, unknown>) },
+  addLines: {
+    who: "team",
+    run: (request, actor, db) => {
+      const inputs = (Array.isArray(request.lines) ? request.lines : []) as Record<string, unknown>[];
+      if (!inputs.length || inputs.length > 100) throw new OpsError("bad-request", "Paste between 1 and 100 rows at a time.");
+      const section = get<Section>(db, "bom_sections", request.sectionId, "vendor section");
+      // Every row is checked before any is saved, so a bad row never leaves half a paste behind.
+      const cleaned = inputs.map((input, i) => {
+        const quantity = Math.floor(Number(input.quantity));
+        if (!(quantity >= 1 && quantity <= 100_000)) throw new OpsError("bad-request", `Row ${i + 1}: quantity must be 1 or more.`);
+        return {
+          sectionId: section._id,
+          name: text(input.name, `item name in row ${i + 1}`),
+          link: text(input.link, "link", true),
+          vendorPartNumber: text(input.vendorPartNumber, "part number", true),
+          unitCost: money(input.unitCost, `Row ${i + 1}: item cost`),
+          quantity,
+          comments: text(input.comments, "comments", true),
+          requestedBy: stamp(actor),
+          signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null, inventoryItemId: "",
+        };
+      });
+      const lines = cleaned.map((line) => db.save<Line>("bom_lines", line));
+      db.writeHistory(actor, { kind: "bomSection", id: section._id }, "pasted lines", `${lines.length} into ${section.vendor}`);
+      return { lines };
+    },
+  },
   removeLine: {
     who: "team",
     run: (request, actor, db) => {

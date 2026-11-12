@@ -232,6 +232,11 @@ export async function setSubteams(memberIds: string[], subteams: string[]): Prom
   await callOps("setSubteams", { memberIds, subteams });
 }
 
+/** A Lead, Mentor or Web Admin copies the site's approved members into the people list, so anyone can be @mentioned. */
+export async function syncPeople(): Promise<{ people: number; added: number; removed: number }> {
+  return callOps("syncPeople");
+}
+
 /** "p10", "t42.1": how numbers are written everywhere. */
 export function projectLabel(project: Pick<Project, "number">): string {
   return `p${project.number}`;

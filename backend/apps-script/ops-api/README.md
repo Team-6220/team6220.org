@@ -60,6 +60,7 @@ together: `roles_` in `Auth.gs` (the real check) and `packages/data/src/ops/role
 | `saveProject` | lead | `project` (`_id` to change one) | `project` |
 | `setMySubteams` | team | `subteams` (names) | `subteams` |
 | `setSubteams` | peopleAdmin | `memberIds` (up to 50), `subteams` | `changed` |
+| `syncPeople` | peopleAdmin | | `people`, `added`, `removed`: copies the site's approved members into `ops_people` (name and @username) |
 
 ### BOM actions (`Bom.gs`)
 
@@ -72,6 +73,7 @@ Members can read the `bom_*` collections but not write them, so every BOM change
 | `importOrder` | lead | `bomId`, `customName`, `sections` read from an old sheet | `order` |
 | `addSection` | team | `orderId`, `vendor` | `section` |
 | `saveLine` | team, Apollo | `line` (`sectionId`, `name`, `link`, `unitCost`, `quantity`, ...) | `line`, `signaturesCleared` |
+| `addLines` | team, Apollo | `sectionId`, `lines` (up to 100, pasted rows) | `lines`; all or none are saved |
 | `removeLine` | team | `lineId` (only a line nobody has signed) | |
 | `reopenLine` | lead | `lineId` | `line` |
 | `signLines` | approver | `lineIds` (up to 200) | `signed`, `skipped` (with reasons), `total` |
@@ -152,7 +154,7 @@ in the same pull request.
    | `ops_counters` | Site members | Admin | `key` (text), `next` (number) |
    | `ops_history` | Site members | Admin | `recordKind`, `recordId`, `actorId`, `actorName`, `action`, `summary`, `at` (text); `actorIsAgent` (boolean) |
    | `ops_projects` | Site members | Admin | `number` (number); `name`, `description`, `status`, `githubRepo`, `startDate`, `endDate` (text); `subteams` (tags) |
-   | `ops_people` | Site members | Admin | `memberId`, `name` (text); `subteams` (tags); `active` (boolean) |
+   | `ops_people` | Site members | Admin | `memberId`, `name`, `username` (text); `subteams` (tags); `active` (boolean) |
 
    BOM (same permissions for all four: read Site members, write Admin):
 
@@ -167,14 +169,15 @@ in the same pull request.
 
    | Collection | Read | Write | Fields |
    | --- | --- | --- | --- |
-   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy` (tags); `needs` (array) |
+   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy`, `related` (tags); `needs` (array) |
+   | `icarus_comments` | Site members | **Site members** | `taskId`, `authorId`, `authorName`, `body`, `at` (text) |
    | `icarus_milestones` | Site members | Admin | `name`, `date`, `seasonId`, `eventId` (text); `subteams` (tags) |
    | `icarus_events` | Site members | Admin | `code`, `displayName`, `officialName`, `startDate`, `endDate`, `location`, `source` (text) |
    | `icarus_seasons` | Site members | Admin | `name`, `startDate`, `endDate` (text); `eventIds` (tags) |
    | `icarus_templates` | Site members | Admin | `name` (text); `tasks`, `milestones` (array) |
 
 3. **Wix API key.** Wix account → API Keys → Generate, with permissions for **Wix Data** (read and write data items)
-   and **Manage Badges**, limited to the team site. Copy the key and the **site ID**. The key is a secret: it goes
+   and **Manage Badges** and **Read Members** (for the people list), limited to the team site. Copy the key and the **site ID**. The key is a secret: it goes
    only into Script Properties, never into this repo.
 4. **Apps Script project.** Create a project named "6220 Operations API" in the team Google account and copy in the
    `.gs` files and `appsscript.json` ([docs/APPS-SCRIPT.md](../../../docs/APPS-SCRIPT.md) has the clicks).

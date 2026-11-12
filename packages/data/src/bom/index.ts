@@ -69,6 +69,11 @@ export async function saveLine(line: LineInput): Promise<{ line: Line; signature
   return callOps("saveLine", { line });
 }
 
+/** Team members. Adds many new lines to one vendor section at once (pasted rows). All or nothing. */
+export async function addLines(sectionId: string, lines: Omit<LineInput, "sectionId" | "_id">[]): Promise<Line[]> {
+  return (await callOps<{ lines: Line[] }>("addLines", { sectionId, lines })).lines;
+}
+
 /** Team members, and only for a line nobody has signed. */
 export async function removeLine(lineId: string): Promise<void> {
   await callOps("removeLine", { lineId });
@@ -182,4 +187,5 @@ export async function importOrder(bomId: string, customName: string, imported: I
 export * from "./rules";
 export { orderToSheetRows, toCsv } from "./export";
 export { parseSheetRows, parseCsv, type ImportedOrder } from "./import";
+export { linesToTsv, parsePastedRows, type PastedRows } from "./paste";
 export type * from "./types";

@@ -12,7 +12,7 @@ import { callOps, logHistory, nextNumber, store } from "../ops";
 import type { Draft, Me, Person } from "../ops/types";
 import { byNumber, STATUS_LABELS } from "./gantt";
 import { previewTemplate } from "./templates";
-import type { MaterialNeed, Milestone, PlanningRecords, Season, Task, TeamEvent, Template } from "./types";
+import type { MaterialNeed, Milestone, PlanningRecords, Season, Task, TaskComment, TeamEvent, Template } from "./types";
 
 export interface IcarusData {
   tasks: Task[];
@@ -52,7 +52,7 @@ export function taskLabel(task: Pick<Task, "number">): string {
 export function emptyTask(seasonId: string, parentId = ""): Draft<Task> {
   return {
     number: "", parentId, title: "", description: "", projectId: "", subteams: [], ownerIds: [], status: "not-started",
-    startDate: "", dueDate: "", notes: "", seasonId, blockedBy: [], needs: [], createdBy: "",
+    startDate: "", dueDate: "", notes: "", seasonId, blockedBy: [], related: [], needs: [], createdBy: "",
   };
 }
 
@@ -91,6 +91,37 @@ export async function removeTask(task: Task, allTasks: Task[]): Promise<void> {
   if (allTasks.some((t) => t.parentId === task._id)) throw new Error("Remove this task's subtasks first.");
   await store().remove("icarus_tasks", task._id);
   await logHistory({ kind: "task", id: task._id }, "removed", `${taskLabel(task)} ${task.title}`);
+}
+
+// ----- relations and comments -----
+
+export type RelationType = "needs" | "blocks" | "related";
+export const RELATION_LABELS: Record<RelationType, string> = {
+  needs: "Needs completion of",
+  blocks: "Blocks",
+  related: "Related to",
+};
+
+/** Every relation of a task, including the ones stored on the OTHER task ("t7 needs this one" shows here as "Blocks t7"). */
+export function relationsOf(task: Pick<Task, "_id" | "blockedBy" | "related">, allTasks: Task[]): { type: RelationType; task: Task }[] {
+  const find = (id: string) => allTasks.find((t) => t._id === id);
+  const out: { type: RelationType; task: Task }[] = [];
+  for (const id of task.blockedBy) if (find(id)) out.push({ type: "needs", task: find(id)! });
+  for (const other of allTasks) if (task._id && other.blockedBy.includes(task._id)) out.push({ type: "blocks", task: other });
+  const relatedIds = new Set([...(task.related ?? []), ...allTasks.filter((t) => task._id && (t.related ?? []).includes(task._id)).map((t) => t._id)]);
+  for (const id of relatedIds) if (find(id)) out.push({ type: "related", task: find(id)! });
+  return out;
+}
+
+/** The comments on one task, oldest first. */
+export async function listComments(taskId: string): Promise<TaskComment[]> {
+  return (await store().list<TaskComment>("icarus_comments")).filter((c) => c.taskId === taskId).sort((a, b) => a.at.localeCompare(b.at));
+}
+
+export async function addComment(task: Pick<Task, "_id">, body: string, me: Me): Promise<TaskComment> {
+  const text = body.trim();
+  if (!text) throw new Error("Write something first.");
+  return store().save<TaskComment>("icarus_comments", { taskId: task._id, authorId: me.id, authorName: me.name, body: text.slice(0, 4000), at: new Date().toISOString() });
 }
 
 /** How many of a needed part are missing, given what Inventory has (0 when there is enough). */

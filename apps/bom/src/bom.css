@@ -130,3 +130,103 @@
   display: block;
   margin-bottom: var(--space-1);
 }
+
+/* Where rows are pasted when the browser won't hand over the clipboard by itself. */
+.bom__paste {
+  margin-top: var(--space-2);
+}
+.bom__section:focus {
+  outline: none;
+}
+.bom__section:focus-within {
+  border-color: var(--color-gold); /* shows which vendor Ctrl+V will paste into */
+}
+
+/* ----- Table view (the default): compact, like the team's BOM sheet -----
+   Smaller text, tight rows, and the same column widths in every vendor's table so the columns line up down the
+   page. "Bigger text" in the top bar turns this off. */
+.bom--table .bom__section {
+  padding: var(--space-2) var(--space-3);
+}
+.bom--table.bom,
+.bom--table .bom__order {
+  gap: var(--space-2);
+}
+.bom--table .bom__section-head {
+  margin-bottom: var(--space-1);
+  font-size: 0.85rem;
+}
+.bom--table .bom__section-head h3 {
+  font-size: 1rem;
+}
+.bom--table .bom__table {
+  table-layout: fixed;
+  min-width: 62rem; /* narrower screens scroll the table sideways inside its box */
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.bom--table .bom__table th,
+.bom--table .bom__table td {
+  padding: 0.2rem 0.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bom--table .bom__table th {
+  font-size: 0.7rem;
+}
+.bom--table .bom__table td:nth-child(2),
+.bom--table .bom__table td:nth-child(3),
+.bom--table .bom__table td:nth-child(4),
+.bom--table .bom__table th:nth-child(2),
+.bom--table .bom__table th:nth-child(3),
+.bom--table .bom__table th:nth-child(4) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.bom--table .bom__col-money {
+  width: 5.5rem;
+}
+.bom--table .bom__col-qty {
+  width: 3rem;
+}
+.bom--table .bom__col-status {
+  width: 8.5rem;
+}
+.bom--table .bom__col-comments {
+  width: 9rem;
+}
+.bom--table .bom__col-actions {
+  width: 9.5rem;
+}
+.bom--table .bom__col-pick {
+  width: 2rem;
+}
+.bom--table .bom__col-signatures {
+  width: 11rem;
+}
+.bom--table .bom__pick input {
+  width: 1rem;
+  height: 1rem;
+}
+.bom--table .t-pill {
+  font-size: 0.7rem;
+}
+.bom--table .bom__row-actions .t-button,
+.bom--table .bom__section > .bom__buttons .t-button {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+}
+.bom--table .bom__section > .bom__buttons {
+  gap: var(--space-1);
+}
+
+/* Fields that are not inside a .t-field label get the shared field look. */
+.bom__receive input,
+.bom__receive select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font: inherit;
+}

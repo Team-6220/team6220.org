@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, bom, icarus, ops, OpsError, production, type Draft, type IcarusData, type OpsViewer, type Part, type Person, type Project, type Task } from "@team6220/data";
 import { AppShell, type AppShellState } from "@team6220/ui";
-import { Gantt } from "./Gantt";
+import { Gantt, type AddKind } from "./Gantt";
 import { People } from "./People";
 import { Plan } from "./Plan";
 import { TaskForm } from "./TaskForm";
@@ -88,6 +88,26 @@ export default function Icarus() {
     }
   }, [data === null]);
 
+  /** What happens after picking "New task", "Target date" or "Event" on an empty day of the chart. */
+  function addFromChart(kind: AddKind, date: string, group: string) {
+    if (!season) return;
+    const subteamsFor = group === icarus.GENERAL ? [] : [group];
+    if (kind === "task") return openTask({ ...icarus.emptyTask(season._id), subteams: subteamsFor, startDate: date, dueDate: date });
+    const what = kind === "milestone" ? `Target date on ${date}${subteamsFor.length ? ` for ${group}` : " for the whole team"}` : `Event starting ${date}`;
+    const name = window.prompt(`${what}. Name:`);
+    if (!name?.trim()) return;
+    void run(async () => {
+      if (kind === "milestone") {
+        await icarus.savePlanning("milestone", { name: name.trim(), date, subteams: subteamsFor, seasonId: season._id, eventId: "" });
+        return `Added the target date "${name.trim()}".`;
+      }
+      // An event added from the chart is a local one with a made-up code; its dates can be changed on the Plan screen.
+      const created = await icarus.savePlanning("event", { code: `local-${date}`, displayName: name.trim(), officialName: "", startDate: date, endDate: date, location: "", source: "manual" });
+      await icarus.savePlanning("season", { ...season, eventIds: [...season.eventIds, created._id] });
+      return `Added the event "${name.trim()}".`;
+    });
+  }
+
   const state: AppShellState = loadError ? "error" : !viewer ? "loading" : viewer.kind !== "member" ? viewer.kind : data ? "ready" : "loading";
   const openTask = (task: Draft<Task>) => (setEditing(task), window.scrollTo({ top: 0 }));
 
@@ -161,7 +181,8 @@ export default function Icarus() {
 
           {tab === "chart" && (chart ? (
             <>
-              <Gantt chart={chart} people={people} onOpenTask={openTask} />
+              <Gantt chart={chart} people={people} onOpenTask={openTask} canAdd={me.roles.lead ? ["task", "milestone", "event"] : me.roles.team ? ["task"] : []}
+                onAdd={(kind, date, group) => addFromChart(kind, date, group)} />
               {chart.unscheduled.length > 0 && (
                 <section className="t-panel">
                   <h2>Not scheduled yet</h2>

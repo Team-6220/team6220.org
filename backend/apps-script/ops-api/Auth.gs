@@ -21,7 +21,7 @@ const MEMBER_CACHE_SECONDS = 300; // a removed badge stops working within 5 minu
 const BADGE_CACHE_SECONDS = 3600;
 
 /** The Apollo user. Everything Apollo does is recorded under this ID and name. */
-const APOLLO = { id: "apollo", name: "Apollo", agent: true, approved: true, badges: [] };
+const APOLLO = { id: "apollo", name: "Apollo", username: "apollo", agent: true, approved: true, badges: [] };
 
 /** Returns the member or agent behind a request. Throws signed-out when there is neither. */
 function actor_(body) {
@@ -116,11 +116,18 @@ function verifyMember_(token) {
   const result = {
     id: member.id,
     name: fullName || (member.profile && member.profile.nickname) || "Team member",
+    username: memberUsername_(member),
     approved: member.status === "APPROVED",
     badges: memberBadgeAssignments_(member.id).map(function (a) { return a.title; }),
   };
   cache.put(cacheKey, JSON.stringify(result), MEMBER_CACHE_SECONDS);
   return result;
+}
+
+/** The short name people type after "@": the member's profile slug, or their nickname without spaces. */
+function memberUsername_(member) {
+  const profile = member.profile || {};
+  return String(profile.slug || profile.nickname || "").replace(/\s+/g, "").toLowerCase();
 }
 
 /** Forget what we cached about a member's token, after their badges changed. */

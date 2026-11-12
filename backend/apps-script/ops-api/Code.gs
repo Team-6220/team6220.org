@@ -40,11 +40,13 @@ function actions_() {
     saveProject: { who: "lead", run: saveProject_ },
     setMySubteams: { who: "team", run: setMySubteams_ },
     setSubteams: { who: "peopleAdmin", run: setSubteams_ },
+    syncPeople: { who: "peopleAdmin", run: syncPeople_ },
     // BOM (Bom.gs)
     saveBom: { who: "lead", run: saveBom_ },
     createOrder: { who: "lead", run: createOrder_ },
     addSection: { who: "team", run: addSection_ },
     saveLine: { who: "team", agent: true, run: saveLine_ },
+    addLines: { who: "team", agent: true, run: addLines_ },
     removeLine: { who: "team", run: removeLine_ },
     reopenLine: { who: "lead", run: reopenLine_ },
     signLines: { who: "approver", run: signLines_ },
