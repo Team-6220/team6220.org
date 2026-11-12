@@ -33,8 +33,24 @@ const page = assembleIndex(files);
       html[data-pgl-hold][data-ggi="checking"] #ggi-gate,
       html[data-pgl-hold] #main > .loading { display: none; }
       #ggi-gate a.btn { text-decoration: none; }
+      /* The loader's logo flies to the griffin in the shared sidebar's logo, then fades so only the sidebar's is left.
+         (Sizes match .sb-brand in packages/assets/styles/app-sidebar.css: open, then compressed.) */
+      :root { --pgl-land-x: 92px; --pgl-land-y: 32px; --pgl-land-size: 48px; }
+      :root[data-sidebar="compressed"] { --pgl-land-x: 14px; --pgl-land-y: 14px; --pgl-land-size: 36px; }
+      html:not(.mh-logo) #pgl-land { animation: ggi-land-out 0.4s 0.3s forwards; }
+      @keyframes ggi-land-out { to { opacity: 0; visibility: hidden; } }
       .ggi-gate-wings { display: block; width: min(280px, 70vw); height: auto; margin: 0 auto 20px; }
     </style>
+    <!-- The sidebar every team app shares (the Inventory's own menu moved to the right; see Styles.html). -->
+    <link rel="stylesheet" href="/assets/shared/styles/app-sidebar.css" />
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark";
+        document.documentElement.dataset.sidebar = localStorage.getItem("team6220.sidebar") || "open";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
     <script is:inline set:html={stub} />
   </head>
   <body>
@@ -43,6 +59,9 @@ const page = assembleIndex(files);
     <div id="ggi-gate" role="status"><div class="loading"><div class="spinner"></div>Loading inventory…</div></div>
     <Fragment set:html={page.body} />
     <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>
+    <script is:inline src="/assets/shared/scripts/icons.js"></script>
+    <script is:inline src="/assets/shared/scripts/account.js"></script>
+    <script is:inline src="/assets/shared/scripts/app-sidebar.js"></script>
     <script>
       import "../../../../apps/inventory/shim/main.ts";
     </script>

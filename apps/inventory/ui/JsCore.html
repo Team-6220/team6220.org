@@ -4,6 +4,7 @@
    Shared browser code: server calls, the local data store, change polling,
    the sidebar/router, dialogs, popovers, toasts and the quantity sync queue.
    Page files (JsParts, JsSettings, ...) register themselves in App.views.
+   team6220.org: the menu has a "Sections" button that opens the full list on a phone.
    ========================================================================== */
 'use strict';
 
@@ -930,6 +931,10 @@ App.buildShell = function () {
     markEl('mark'),
     el('div', { class: 'wordmark' }, 'Inventory ', el('span', { text: '6220' }))
   ));
+
+  // team6220.org: on a phone the menu is a bottom bar; this button opens and closes the full list.
+  sb.appendChild(el('button', { class: 'sheet-btn', type: 'button', onClick: function () { app.classList.toggle('drawer-open'); } },
+    icon('arrowUp'), el('span', { text: 'Sections' })));
 
   const nav = el('nav', { class: 'nav' });
   NAV.forEach(function (g) {

@@ -776,6 +776,74 @@ img.broken { visibility: hidden; }
   .rect-inputs label { max-width: none; }
 }
 
+/* ───────── team6220.org: shared sidebar, this app's menu on the right, light mode ─────────
+   The left edge belongs to the sidebar every team app shares (packages/assets/scripts/app-sidebar.js).
+   This app's own menu sits on the right on a laptop. On a phone it is a bar along the bottom:
+   swipe it sideways, or tap "Sections" to open the full list. */
+.app { grid-template-columns: 1fr var(--sidebar-w); }
+.app.collapsed { grid-template-columns: 1fr var(--sidebar-w-collapsed); }
+.sidebar { order: 2; border-right: 0; border-left: 1px solid var(--line); }
+.sidebar-brand { padding: 20px 20px 14px; }
+.sidebar-brand .wings, .sidebar-brand .mark, .app.collapsed .sidebar-brand .mark { display: none; }
+.sidebar-brand .wordmark { margin-top: 0; }
+.app.collapsed .sidebar-brand { display: none; }
+.sidebar-brand .wordmark, .page-title, .mobile-bar .title { text-transform: uppercase; } /* title font is never mixed case */
+.nav a.active::before { left: auto; right: -10px; border-radius: 3px 0 0 3px; }
+.collapse-btn svg { transform: rotate(180deg); }
+.app.collapsed .collapse-btn svg { transform: none; }
+.sheet-btn { display: none; }
+
+@media (max-width: 860px) {
+  .sidebar {
+    top: auto; right: 0; bottom: 0; width: auto; max-height: 76vh; transform: none;
+    border-left: 0; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .sidebar-brand, .sidebar-foot, .nav-label, .nav a.active::before { display: none; }
+  .sheet-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 30px;
+    background: none; border: 0; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .app.drawer-open .sheet-btn svg { transform: rotate(180deg); }
+  .nav { display: flex; gap: 4px; overflow-x: auto; padding: 0 8px 8px; }
+  .nav a {
+    flex: none; flex-direction: column; justify-content: center; gap: 4px;
+    width: 76px; min-height: 54px; margin: 0; padding: 4px; font-size: 11px;
+  }
+  .nav a .label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  /* Opened with "Sections": the full list, one per row, scrolling up and down. */
+  .app.drawer-open .nav { display: block; overflow-y: auto; }
+  .app.drawer-open .nav-label { display: block; }
+  .app.drawer-open .nav a { flex-direction: row; justify-content: flex-start; gap: 12px; width: auto; min-height: 46px; padding: 0 12px; font-size: 15px; }
+  .page { padding-bottom: 150px; }
+  /* The shared sidebar's menu button takes the place of this app's old one in the top bar. */
+  .mobile-bar { padding-left: 62px; }
+  .mobile-bar > .icon-btn { display: none; }
+  .sb-opener { top: 4px; bottom: auto; left: 8px; z-index: 21; }
+}
+
+:root[data-theme="light"] {
+  --bg: #FFFFFF;
+  --bg-1: #F3F3F5;
+  --panel: #FFFFFF;
+  --panel-2: #F0F1F3;
+  --panel-3: #E6E7EB;
+  --line: #DCDDE2;
+  --line-2: #C5C6CD;
+  --text: #000000;
+  --text-2: #33333F;
+  --muted: #4E4A5B;
+  --white: #000000; /* "white" is the strongest text color; on a light page that is black */
+  --orange-dim: rgba(255, 163, 0, 0.2);
+  --blue-text: #4054E4;
+  --danger: #B3261E;
+  --ok: #1E7B34;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+:root[data-theme="light"] ::selection,
+:root[data-theme="light"] .pcheck.verify.on { color: #FFFFFF; }
+:root[data-theme="light"] .shape-part-label,
+:root[data-theme="light"] .trace-num { fill: #FFFFFF; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation-duration: 0.01s !important; }
 }
