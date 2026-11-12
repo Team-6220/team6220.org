@@ -1,0 +1,14 @@
+---
+// /apps/template: the example app to copy when making a new one (docs/ADD-AN-APP.md). It is not in
+// packages/assets/data/apps.json, so the dashboard and sidebar do not list it; open it by its address.
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Template } from "@team6220/template";
+import "@team6220/template/template.css";
+---
+
+<AppLayout title="Template app | Los Al Robotics" description="The example app to copy when making a new team app.">
+  <Template client:only="react">
+    <main class="t-page tpl" slot="fallback"><p class="t-muted">Loading…</p></main>
+  </Template>
+  <noscript><p class="t-page tpl">This app needs JavaScript turned on.</p></noscript>
+</AppLayout>

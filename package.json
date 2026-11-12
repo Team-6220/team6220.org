@@ -38,6 +38,7 @@
     "@team6220/dashboard": "workspace:*",
     "@team6220/data": "workspace:*",
     "@team6220/site": "workspace:*",
+    "@team6220/template": "workspace:*",
     "@team6220/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

@@ -24,8 +24,9 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - **Sidebar**: every app shows the same sidebar (`packages/assets/scripts/app-sidebar.js`, styles in
   `packages/assets/styles/app-sidebar.css`): main site, all apps, then fullscreen, light/dark and account at the bottom.
   It lists the apps in `packages/assets/data/apps.json`.
-- **Page furniture**: `packages/ui/src/app.css` has the page column, header, panels, status colors and the demo
-  strip (`t-page`, `t-header`, `t-panel`, ...). `AppLayout` loads it, so an app's own CSS only covers what is special
+- **Page furniture**: `packages/ui/src/app.css` has the page column, header, panels, form fields, tables, status
+  messages and the demo strip (`t-page`, `t-header`, `t-panel`, `t-field`, `t-table`, `t-status`, ...). `apps/template` shows
+  one of each. `AppLayout` loads it, so an app's own CSS only covers what is special
   about that app. The top of the file shows a typical page.
 - **Icons**: `packages/assets/scripts/icons.js` is the team icon set (24px grid, 1.8 stroke).
 - **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`).
