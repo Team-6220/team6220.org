@@ -7,7 +7,8 @@ import { describe, expect, it } from "vitest";
 import { leftovers, placementPoly, planSheets, rect, type Polygon, type SheetPart, type Stock } from "../src/index";
 
 const html = readFileSync(fileURLToPath(new URL("../../../apps/inventory/ui/JsGeometry.html", import.meta.url)), "utf8");
-const source = html.replace(/^\s*<script>/, "").replace(/<\/script>\s*$/, "");
+// Our own file, not untrusted HTML: just take what is between its one <script> and </script>.
+const source = html.slice(html.indexOf("<script>") + "<script>".length, html.lastIndexOf("</script>"));
 const context: { module: { exports: unknown } } = { module: { exports: {} } };
 vm.createContext(context);
 vm.runInContext(source, context);
