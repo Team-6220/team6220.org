@@ -8,16 +8,18 @@ describe("sites/main/data/resources", () => {
       "Master link",
       "Team resources",
       "Design resources",
+      "Operations resources",
       "CAD on Onshape",
       "GitHub",
       "The Blue Alliance",
       "Team history",
     ]);
-    expect(RESOURCES.map((r) => r.external === true)).toEqual([true, true, true, true, true, true, false]);
+    expect(RESOURCES.map((r) => r.external === true)).toEqual([true, true, true, true, true, true, true, false]);
     expect(RESOURCES.filter((r) => r.menuLabel).map((r) => r.menuLabel)).toEqual([
       "Master link",
       "Team resources",
       "Design resources",
+      "Operations resources",
       "CAD on Onshape",
       "GitHub",
     ]);
