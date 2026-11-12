@@ -61,6 +61,11 @@ function wixSave_(collection, data) {
   return Object.assign({}, res.dataItem && res.dataItem.data, { _id: res.dataItem && res.dataItem.id });
 }
 
+/** Deletes an item. https://dev.wix.com/docs/api-reference/business-solutions/cms/data-items/remove-data-item */
+function wixRemove_(collection, id) {
+  wixAdmin_("delete", "/wix-data/v2/items/" + encodeURIComponent(id) + "?dataCollectionId=" + encodeURIComponent(collection));
+}
+
 function wixAssignBadge_(badgeId, memberId) {
   wixAdmin_("post", "/badges/v4/assignments", { badgeAssignment: { badgeId: badgeId, memberId: memberId } });
 }

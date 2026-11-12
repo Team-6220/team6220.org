@@ -15,6 +15,7 @@
  *   Auth.gs      who is asking: Wix member token or Apollo key, and what their badges allow
  *   WixData.gs   reading and writing Wix CMS collections with the server's Wix API key
  *   Shared.gs    numbers, history, projects, people and subteam badges
+ *   Bom.gs       BOM: orders, lines, signatures, ordering, receiving
  *
  * Script Properties (Project Settings > Script Properties). See README.md for where each comes from.
  *   WIX_API_KEY         required. Wix API key with "Wix Data" and "Manage Badges" permissions. SECRET.
@@ -38,6 +39,18 @@ function actions_() {
     saveProject: { who: "lead", run: saveProject_ },
     setMySubteams: { who: "team", run: setMySubteams_ },
     setSubteams: { who: "peopleAdmin", run: setSubteams_ },
+    // BOM (Bom.gs)
+    saveBom: { who: "lead", run: saveBom_ },
+    createOrder: { who: "lead", run: createOrder_ },
+    addSection: { who: "team", run: addSection_ },
+    saveLine: { who: "team", agent: true, run: saveLine_ },
+    removeLine: { who: "team", run: removeLine_ },
+    reopenLine: { who: "lead", run: reopenLine_ },
+    signLines: { who: "approver", run: signLines_ },
+    approveSection: { who: "approver", run: approveSection_ },
+    markOrdered: { who: "approver", run: markOrdered_ },
+    receiveLines: { who: "team", agent: true, run: receiveLines_ },
+    importOrder: { who: "lead", run: importOrder_ },
   };
 }
 
@@ -88,8 +101,9 @@ function checkSetup() {
   });
   const subteams = titles.filter(function (t) { return t.indexOf(SUBTEAM_PREFIX) === 0; });
   if (!subteams.length) throw new Error("No subteam badges yet. Create badges named '" + SUBTEAM_PREFIX + "<name>'.");
-  REQUIRED_COLLECTIONS.forEach(function (c) { wixQuery_(c, {}, 1); });
-  console.log("OK. Badges: " + titles.join(", ") + ". Collections: " + REQUIRED_COLLECTIONS.join(", ") + ".");
+  const collections = REQUIRED_COLLECTIONS.concat(BOM_COLLECTIONS);
+  collections.forEach(function (c) { wixQuery_(c, {}, 1); });
+  console.log("OK. Badges: " + titles.join(", ") + ". Collections: " + collections.join(", ") + ".");
 }
 
 // ---------------------------------------------------------------------------------------------------------

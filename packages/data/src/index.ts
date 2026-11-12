@@ -24,3 +24,6 @@ export { inventory } from "./inventory/index.ts";
 // Shared by the operations apps (Icarus, Production, BOM): who is looking, projects, people, history, subteams.
 export * as ops from "./ops";
 export { OpsError, type OpsErrorCode, type OpsViewer, type Me, type Roles, type Person, type Project, type HistoryEntry, type RecordLink, type RecordKind } from "./ops/types";
+// BOM app data (apps/bom).
+export * as bom from "./bom";
+export type { Bom, Order as BomOrder, Section as BomSection, Line as BomLine, LineInput as BomLineInput, LineState as BomLineState, OrderDetail as BomOrderDetail, Stamp } from "./bom/types";
