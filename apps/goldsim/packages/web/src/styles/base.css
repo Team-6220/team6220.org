@@ -1,6 +1,6 @@
-* { box-sizing: border-box; border-radius: 0; }
+* { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--page); color: var(--text);
-  font-family: var(--font-body); font-size: 15px; }
+  font-family: var(--font-body); font-weight: 500; font-size: 15px; }
 body { overflow: hidden; }
 
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gray-1); min-width: 1024px; }
@@ -26,7 +26,7 @@ body { overflow: hidden; }
 #modal.open { display: flex; }
 
 h1, h2, h3 { margin: 0 0 6px 0; }
-h1, h2, .title { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; }
+h1, h2, .title { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
 h1 { font-size: 28px; }
 h2 { font-size: 20px; color: var(--gold); }
 h3 { font-size: 16px; }
