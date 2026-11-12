@@ -20,11 +20,13 @@
       <h3 id="form-h">Interest form</h3>
       <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" aria-describedby="f-name-err" required><span class="err" id="f-name-err" hidden>Enter your name.</span></div>
       <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" aria-describedby="f-email-err" required><span class="err" id="f-email-err" hidden>Enter an email address like name@example.com.</span></div>
-      <div class="field"><label for="f-grade">Grade next year</label><select id="f-grade" name="grade"><option>8th (incoming freshman)</option><option>9th</option><option>10th</option><option>11th</option><option>12th</option><option>Parent / guardian</option></select></div>
+      <div class="field"><label for="f-grade">Student's current grade</label><select id="f-grade" name="grade"><option>8th</option><option>9th</option><option>10th</option><option>11th</option><option>12th</option></select></div>
+      <div class="checks"><label><input type="checkbox" id="f-parent" name="parent" value="yes">I'm a parent or guardian</label></div>
       <fieldset class="checks"><legend>Interested in</legend>
         <label><input type="checkbox" id="i-mech" value="Mechanical">Mechanical</label>
         <label><input type="checkbox" id="i-elec" value="Electrical">Electrical</label>
         <label><input type="checkbox" id="i-prog" value="Programming">Programming</label>
+        <label><input type="checkbox" id="i-design" value="Design">Design</label>
         <label><input type="checkbox" id="i-biz" value="Business">Business &amp; media</label>
         <label><input type="checkbox" id="i-unsure" value="Not sure">Not sure yet</label>
       </fieldset>
