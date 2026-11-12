@@ -125,7 +125,7 @@
     ]);
 
     var brand = el("a", { class: "sb-brand", href: "/", title: "Los Al Robotics main site" }, [
-      el("img", { class: "sb-wings", src: "/assets/shared/logos/6220WingsAndLogoGold.png", alt: "Los Al Robotics" }),
+      el("img", { class: "sb-wings", src: "/assets/shared/logos/6220WingsAndLogoVectorGold.svg", alt: "Los Al Robotics" }),
       el("img", { class: "sb-mark", src: "/assets/shared/logos/6220LogoVectorGold.svg", alt: "Los Al Robotics" }),
     ]);
     var bar = el("aside", { class: "sb", id: "team-sidebar" }, [brand, nav, foot]);

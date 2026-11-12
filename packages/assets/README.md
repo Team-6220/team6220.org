@@ -10,7 +10,10 @@ Brand media that **any** part of the site (main site or any app) may use. Nothin
 | `favicon/` | `/favicon.ico`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png` | Browser tab and home-screen icons |
 
 Any new folder you add here is published automatically at `/assets/shared/<folder>/`. Use the URL straight from
-HTML, CSS or React, for example `<img src="/assets/shared/logos/6220LogoGold.png">`.
+HTML, CSS or React, for example `<img src="/assets/shared/logos/6220LogoVectorGold.svg">`.
+
+**Use the SVG version of a logo whenever there is one** (`...Vector.svg`, `...VectorGold.svg`); PNGs are for places that
+cannot show an SVG, such as favicons.
 
 ## Changing things
 
