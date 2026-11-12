@@ -96,7 +96,7 @@
     if(ws)drawWing(p,ang,R,1,ws.span,ws.sweep,GOLD,ws.alpha);
   };
 
-  var TITLE='GOLDEN GRIFFINS',SUB='FRC TEAM 6220';
+  var TITLE='LOS AL ROBOTICS',SUB='FRC TEAM 6220';
   var DISPLAY='Karnivore, Orbitron, "Arial Black", system-ui, sans-serif',BODY='Jura, "Segoe UI", system-ui, sans-serif';
   var finalFrame=function(t){
     /* Logo: one solid shape (no clipping); spring drop-in with squash & stretch, damped wobble,
