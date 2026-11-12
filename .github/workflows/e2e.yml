@@ -1,0 +1,64 @@
+name: E2E
+
+# Browser smoke tests of the BUILT site (e2e/). Runs on pull requests and can be started by hand.
+# This is a separate workflow on purpose: the required "ci" check (ci.yml) stays fast and is not changed.
+# Do not add "e2e" to the branch protection's required checks unless the web team wants to.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # GoldSim keeps its own npm workspace and lockfile; `pnpm build` builds it into dist/apps/goldsim.
+      - uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: npm-goldsim-${{ runner.os }}-${{ hashFiles('apps/goldsim/package-lock.json') }}
+      - name: Install GoldSim dependencies
+        run: npm ci --no-audit --no-fund
+        working-directory: apps/goldsim
+      - name: Cache Chromium
+        id: browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      # dist/ is the site as deployed; dist-mock/ is the same site with the inventory on made-up data (for ?demo= modes).
+      - name: Build the site
+        run: pnpm build
+      - name: Build the mock-inventory site
+        run: pnpm build:e2e-mock
+      # Only once scripts/redirects exists (it comes in its own pull request): every new address in docs/redirects.json is in the build.
+      - name: Check the old-address redirect map
+        if: hashFiles('scripts/redirects/check.mjs') != ''
+        run: node scripts/redirects/check.mjs --require-dist
+      - name: Smoke tests
+        run: pnpm test:e2e
+      - name: Upload the test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
