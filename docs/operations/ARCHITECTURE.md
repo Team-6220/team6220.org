@@ -238,7 +238,7 @@ token. The key is stored hashed in Script Properties and can be replaced without
 | Icarus | List and search; create and update tasks, subtasks, relations, comments; read projects, milestones and events | Delete tasks; edit templates; change badges |
 | Production | List parts and the print queue; create part requests | Confirm cuts; release Shapeoko jobs |
 | BOM | Read BOMs, lines, totals; add and edit **draft** lines; read "waiting for signatures" and "ordered, not received"; **mark lines received** (`receiveLines`) | Sign, approve, mark ordered |
-| Inventory | Read items and stock; **add stock, create items and edit an item's details** | Archive or delete items; change settings (categories, locations, lists); run audits (**Proposed** limits) |
+| Inventory | Read items and stock; **add stock, create items and edit an item's details** | Archive or delete items; change settings (categories, locations, lists); run audits |
 
 **The Apollo user.** Apollo has its own entry in `ops_people` (name "Apollo", marked as an agent, no Wix login).
 Every write it makes is stored with that user as the actor in `ops_history`, and anywhere the apps show a person

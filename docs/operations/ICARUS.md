@@ -54,9 +54,13 @@ A person with several badges gets the rights of the highest one.
 
 ## Subteams
 
-Each subteam is a **Wix badge** (for example `Subteam: Programming`), so every app on the site can use it, not only
+The team has five subteams: **Design, Manufacturing, Programming, Electrical and Operations**. Each is a **Wix
+badge** (`Subteam: Design`, `Subteam: Manufacturing`, ...), so every app on the site can use it, not only
 Icarus. In Icarus a subteam decides which group of rows a task sits in, which milestones apply to a person, what
 "My subteam" filters to, and which GitHub label maps to it.
+
+On the Gantt the groups appear in that order, after a **General** group for whole-team tasks that belong to no
+subteam (the sheet template has the same heading).
 
 Assigning has to be quick, so there are three ways:
 

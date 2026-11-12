@@ -129,6 +129,12 @@ Added later on Nov 12, 2026:
     across Icarus.
 25. **Apollo** may also mark BOM lines received and write to Inventory. Everything it does is recorded under the
     Apollo user.
+26. **Subteams:** Design, Manufacturing, Programming, Electrical and Operations.
+27. **Apollo and Inventory:** Apollo may add stock, create items and edit item details. It may not archive or
+    delete items, change settings or run audits, and it must ask a person when it is not sure which item a
+    received line matches.
+28. **Badge assignment** is built in Icarus first; Site Manager reuses the same backend calls later. The backend
+    can only change subteam badges.
 
 ## Build order (Proposed)
 
@@ -169,7 +175,7 @@ These did not block the plan, but each needs an answer before its step is built.
 | 3 | #147 says "default BOM orders for certain times". Does this mean saved lists that are suggested at set times of year (kickoff order, pre-competition restock)? The plan assumes yes | BOM saved lists |
 | 4 | What are the exact fields and choices on the Production Form (Accuracy, Priority, Method, Materials)? The connector could not open the Form itself, only the response sheet's headings | Production step 3 |
 | 5 | Which 3D printers does the team have, and which filaments? | Print queue |
-| 6 | What are the exact subteam names? Each becomes a badge and a group of rows on the Gantt. (The sheets show Programming; the plan assumes the subteams in the Team Structure doc.) | Step 0, Icarus templates |
+| 6 | *Answered Nov 12, 2026:* the subteams are Design, Manufacturing, Programming, Electrical and Operations (decision 26) | |
 | 7 | Should the Gantt chart, or a read-only version of it, be visible to parents or the public? The plan assumes Team Members only | Icarus |
 | 8 | Where does Apollo run and how should it hold its API key? | Step 6 |
 | 9 | Who may see BOM prices and totals: every Team Member (as with the sheets today) or only mentors, boosters, supervisors and leads? The plan assumes every Team Member | BOM |
