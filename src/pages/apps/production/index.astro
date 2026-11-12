@@ -1,0 +1,13 @@
+---
+// /apps/production: part requests, the tracker and the print queue (docs/operations/PRODUCTION.md).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Production } from "@team6220/production";
+import "@team6220/production/production.css";
+---
+
+<AppLayout title="Production | Los Al Robotics" description="Parts being designed and made by Los Al Robotics (FRC Team 6220).">
+  <Production client:only="react">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading…</p></main>
+  </Production>
+  <noscript><p class="t-page">Production needs JavaScript turned on.</p></noscript>
+</AppLayout>

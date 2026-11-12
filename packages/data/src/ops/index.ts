@@ -183,8 +183,11 @@ export async function listPeople(): Promise<Person[]> {
 /** The change log of one record, newest first. */
 export async function listHistory(record: RecordLink): Promise<HistoryEntry[]> {
   const all = await store().list<HistoryEntry>("ops_history");
+  // Two changes can land in the same millisecond. Reversing first means such a tie still shows the later one first
+  // (sort keeps the order of equal entries).
   return all
     .filter((h) => h.recordKind === record.kind && h.recordId === record.id)
+    .reverse()
     .sort((a, b) => b.at.localeCompare(a.at));
 }
 

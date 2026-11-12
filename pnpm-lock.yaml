@@ -32,6 +32,9 @@ importers:
       '@team6220/icarus':
         specifier: workspace:*
         version: link:apps/icarus
+      '@team6220/production':
+        specifier: workspace:*
+        version: link:apps/production
       '@team6220/site':
         specifier: workspace:*
         version: link:apps/site
@@ -124,6 +127,18 @@ importers:
       vitest:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@22.20.5)(vite@8.3.6(@types/node@22.20.5)(yaml@2.9.1))
+
+  apps/production:
+    dependencies:
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
 
   apps/site:
     dependencies:

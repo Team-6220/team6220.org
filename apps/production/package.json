@@ -1,0 +1,19 @@
+{
+  "name": "@team6220/production",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/production: part requests, the manufacturing tracker and the 3D print queue.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./production.css": "./src/production.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*",
+    "@team6220/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

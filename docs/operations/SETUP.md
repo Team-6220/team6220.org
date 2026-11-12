@@ -36,7 +36,15 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 | [ ] | Lead | Create the 2027 season on Icarus → Plan, start it from the Season template, correct it, and save it as the team's own template | `/apps/icarus` |
 | [ ] | Everyone | Pick your subteams on Icarus → People | `/apps/icarus` |
 
-## Later steps
+## Production (step 3)
 
-Added here as each app is built: the app's own collections, and the keys for GitHub, The Blue Alliance, FIRST,
-Onshape and Apollo.
+| Done | Who | What | Where |
+| --- | --- | --- | --- |
+| [ ] | Web Admin | Create `production_parts` (read and write: **Site members**). Fields: `number`, `length`, `width`, `quantity` (number); `partName`, `designerId`, `designerName`, `projectId`, `taskId`, `cadLink`, `fileLinks`, `material`, `thickness`, `method`, `accuracy`, `priority`, `dueDate`, `details`, `status`, `setupNotes`, `setupBy`, `createdAt` (text); `work` (array); `print` (object) | Wix → CMS |
+| [ ] | Manufacturing lead | Tell designers to use `/apps/production` and close the Production Form | |
+
+## Still to build
+
+Not built yet, so nothing to set up: receiving into Inventory and the other links between the apps, the cut planner
+move, Onshape import, event lookup, GitHub sync and the rest of Apollo's actions. Their keys (GitHub, The Blue
+Alliance, FIRST, Onshape, Apollo) will be listed here when they are.
