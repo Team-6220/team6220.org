@@ -33,3 +33,6 @@ export type { Task, TaskStatus, Milestone, TeamEvent, Season, Template } from ".
 export type { Gantt, GanttDay, GanttGroup, GanttLine, GanttRow } from "./icarus/gantt";
 export type { IcarusData } from "./icarus";
 export type { Draft } from "./ops/types";
+// Production app data (apps/production): part requests, the tracker, the print queue.
+export * as production from "./production";
+export type { Part, PartRequest, PartStatus, Method as PartMethod, Priority as PartPriority, WorkEntry, PrintDetails } from "./production/types";
