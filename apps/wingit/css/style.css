@@ -15,8 +15,8 @@
 * { box-sizing: border-box; border-radius: 0; }
 html, body { margin: 0; height: 100%; background: var(--black); color: var(--white);
   font-family: "Segoe UI", Arial, sans-serif; font-size: 15px; overflow: hidden; }
-#app { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px;
-  transform-origin: center center; background: var(--gray-1); border: 2px solid var(--gray-4);
+#app { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  background: var(--gray-1); border: 2px solid var(--gray-4);
   display: flex; flex-direction: column; }
 #topbar { display: flex; align-items: center; height: 44px; padding: 0 12px; background: var(--black);
   border-bottom: 2px solid var(--gold); flex: none; }

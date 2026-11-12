@@ -111,10 +111,6 @@ export function canvasPos(canvas, e) {
   const r = canvas.getBoundingClientRect();
   return { x: (e.clientX - r.left) * canvas.width / r.width, y: (e.clientY - r.top) * canvas.height / r.height };
 }
-export function fit() {
-  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
-  $('#app').style.transform = `translate(-50%, -50%) scale(${s})`;
-}
 
 function meter(label, value, max, text, bad) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));

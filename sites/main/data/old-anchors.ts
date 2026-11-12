@@ -15,7 +15,6 @@ export const OLD_ANCHORS: Record<string, string> = {
   outreach: "/about/outreach",
   gallery: "/about/outreach#gallery",
   social: "/about/outreach#social",
-  contact: "/about/contact",
   merch: "/merch",
   photos: "/resources/media",
 };

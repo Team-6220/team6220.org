@@ -12,6 +12,7 @@ import Header from "./components/Header.astro";
 import Footer from "./components/Footer.astro";
 import { MEDIA_BASE } from "./lib/media";
 import { OLD_ANCHORS } from "./data/old-anchors";
+import { SEO } from "./data/seo";
 
 interface Props {
   /** Full page title (shown in the browser tab) */
@@ -30,6 +31,20 @@ if(!go())window.G6220_INTRO=1;addEventListener('hashchange',go)})();`;
 
 <BaseLayout title={title} description={description}>
   <Fragment slot="head">
+    <!-- SEO values imported as-is from the old Wix site (docs/SEO.md). Social title/description repeat the page's own, as on the old site. -->
+    <meta name="google-site-verification" content={SEO.googleSiteVerification} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SEO.siteName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={SEO.image} />
+    <meta property="og:image:width" content={String(SEO.imageWidth)} />
+    <meta property="og:image:height" content={String(SEO.imageHeight)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={SEO.image} />
+    {home && <script type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org/", "@type": "WebSite", name: SEO.siteName, url: SEO.oldSiteUrl })} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
