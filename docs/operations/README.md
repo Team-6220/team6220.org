@@ -134,7 +134,7 @@ Each step is useful by itself and is its own set of pull requests. Details are i
 
 ## Later (not in the first release)
 
-- Automatic 2D cut planning from STL files (separate issue, label `later`).
+- Automatic 2D cut planning from STL files ([#220](https://github.com/Team-6220/team6220.org/issues/220), label `later`).
 - Live supplier prices, stock and estimated shipping dates.
 - Receipt uploads per order and a tax-form category per purchase (#147).
 - An AI agent that fills vendor carts for a human to check and pay (#147).

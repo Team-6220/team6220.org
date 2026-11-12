@@ -85,7 +85,7 @@ and project are pickers, not typing. A designer can submit several parts at once
 - **STL:** upload a file. The app reads it in the browser, shows a preview and the bounding size, and prefills the
   form. The file itself is linked from Drive, not stored in Wix.
 - Working out the 2D outline of each flat part from an STL and nesting it automatically is **not** in this release
-  (separate issue, label `later`). Until then flat parts use their bounding rectangle or a DXF drawn by the designer.
+  ([#220](https://github.com/Team-6220/team6220.org/issues/220), label `later`). Until then flat parts use their bounding rectangle or a DXF drawn by the designer.
 
 ### Cut planner
 
