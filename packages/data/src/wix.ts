@@ -51,9 +51,22 @@ export function wix() {
   return client;
 }
 
+// The member's name and picture, kept so page chrome (the sidebar, the main site's Log In button) can show
+// who is signed in without calling Wix. Read by packages/assets/scripts/account.js. Cosmetic only.
+const MEMBER_HINT_KEY = "team6220.member";
+
+export function saveMemberHint(hint: { name: string; photoUrl?: string }) {
+  try {
+    window.localStorage.setItem(MEMBER_HINT_KEY, JSON.stringify(hint));
+  } catch {
+    // ignore
+  }
+}
+
 export function clearStoredTokens() {
   try {
     window.localStorage.removeItem(TOKENS_KEY);
+    window.localStorage.removeItem(MEMBER_HINT_KEY);
   } catch {
     // ignore
   }

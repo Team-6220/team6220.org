@@ -3,7 +3,8 @@ html, body { margin: 0; height: 100%; background: var(--page); color: var(--text
   font-family: var(--font-body); font-weight: 500; font-size: 15px; }
 body { overflow: hidden; }
 
-#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--gray-1); min-width: 1024px; }
+/* --sidebar-space is set by the team website's shared sidebar (0 without it). */
+#app { position: fixed; inset: 0; left: var(--sidebar-space, 0px); display: flex; flex-direction: column; background: var(--gray-1); min-width: 1024px; }
 #topbar { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; background: #000;
   border-bottom: 2px solid var(--gold); flex: none; color: #fff; }
 #logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }

@@ -1,7 +1,6 @@
 ---
-// Page shell for team apps under /apps: shared tokens from @team6220/ui, no main-site styles.
+// Page shell for team apps under /apps: shared tokens from @team6220/ui, the shared sidebar, no main-site styles.
 import BaseLayout from "./BaseLayout.astro";
-import ThemeToggle from "@team6220/ui/ThemeToggle.astro";
 import "@team6220/ui/tokens.css";
 
 interface Props {
@@ -17,17 +16,22 @@ const { title, description } = Astro.props;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&display=swap" />
-    <!-- Apply the saved light/dark choice before the page is drawn (the button is ThemeToggle.astro). Default: dark. -->
+    <link rel="stylesheet" href="/assets/shared/styles/app-sidebar.css" />
+    <!-- Apply the saved light/dark choice and sidebar size before the page is drawn, so nothing jumps.
+         The buttons for both are in the sidebar (packages/assets/scripts/app-sidebar.js). Default: dark, open. -->
     <script is:inline>
       try {
         document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark";
+        document.documentElement.dataset.sidebar = localStorage.getItem("team6220.sidebar") || "open";
       } catch (e) {
         document.documentElement.dataset.theme = "dark";
       }
     </script>
   </Fragment>
   <slot />
-  <ThemeToggle />
+  <script is:inline src="/assets/shared/scripts/icons.js"></script>
+  <script is:inline src="/assets/shared/scripts/account.js"></script>
+  <script is:inline src="/assets/shared/scripts/app-sidebar.js"></script>
   <!-- Same page-change logic as the main site (hover prefetch). Only Inventory plays the loader animation, from its own page; see sites/main/README.md. -->
   <script is:inline src="/assets/shared/scripts/page-nav.js"></script>
 </BaseLayout>

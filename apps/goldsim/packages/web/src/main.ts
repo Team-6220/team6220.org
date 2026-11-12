@@ -44,6 +44,17 @@ function currentPath(): string {
   return routes[p] ? p : "/";
 }
 
+/** True when this build is served from the team website (team6220.org/apps/goldsim/). */
+const ON_TEAM_SITE = BASE_PATH === "/apps/goldsim/";
+
+/** Adds the team website's shared sidebar (all apps, main site link, fullscreen, light/dark, account). */
+function loadTeamSidebar(): void {
+  document.head.append(h("link", { rel: "stylesheet", href: "/assets/shared/styles/app-sidebar.css" }));
+  // The sidebar script needs the other two first, so load them in order.
+  const scripts = ["icons.js", "account.js", "app-sidebar.js"].map((file) => h("script", { src: `/assets/shared/scripts/${file}`, async: false }));
+  document.head.append(...scripts);
+}
+
 function renderTopbar(): void {
   const bar = $("topbar");
   clear(bar);
@@ -69,8 +80,8 @@ function renderTopbar(): void {
       NAV.map((n) => h("a", { href: `#${n.path}`, class: routes[path]?.nav === n.path ? "sel" : "" }, n.label)),
     ),
     soundBtn,
-    themeBtn,
   );
+  if (!ON_TEAM_SITE) bar.append(themeBtn); // on the team site the shared sidebar has the light/dark button
 }
 
 function route(): void {
@@ -86,6 +97,7 @@ function route(): void {
 }
 
 initTheme();
+if (ON_TEAM_SITE) loadTeamSidebar();
 setRerouter(route);
 window.addEventListener("hashchange", route);
 route();

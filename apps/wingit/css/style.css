@@ -20,7 +20,8 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--black); color: var(--white);
   font-family: var(--font-body); font-weight: 500; font-size: 15px; overflow: hidden; }
-#app { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+/* --sidebar-space is set by the team website's shared sidebar (0 without it). */
+#app { position: absolute; left: var(--sidebar-space, 0px); top: 0; width: calc(100% - var(--sidebar-space, 0px)); height: 100%;
   background: var(--gray-1); border: 2px solid var(--gray-4);
   display: flex; flex-direction: column; }
 #topbar { display: flex; align-items: center; height: 44px; padding: 0 12px; background: var(--black);

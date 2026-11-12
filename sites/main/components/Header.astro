@@ -29,9 +29,26 @@ const here = (href: string) => (href === path ? { "aria-current": "page" as cons
         ) : (
           <li class:list={[{ active: t.id === page }]} data-page={t.id}><a href={t.href} {...(t.external ? ext : here(t.href))}>{t.label}{t.external && " ↗"}</a></li>
         ))}
-        <li class="login" data-page="login"><a href={LOGIN.href}>{LOGIN.label}</a></li>
+        <li class="login" data-page="login"><a href={LOGIN.href} data-login>{LOGIN.label}</a></li>
       </ul>
     </nav>
   </div>
   <span class="progress" id="progress" aria-hidden="true"></span>
 </header>
+<!-- Signed in: the Log In button becomes the member's picture, still linking to the team apps. -->
+<script is:inline src="/assets/shared/scripts/account.js"></script>
+<script is:inline>
+  (function () {
+    var member = window.team6220Account.member();
+    var link = document.querySelector("[data-login]");
+    if (!member || !link) return;
+    var name = document.createElement("span");
+    name.className = "account-name";
+    name.textContent = member.name;
+    link.textContent = "";
+    link.append(window.team6220Account.avatar(member), name);
+    link.classList.add("account");
+    link.title = member.name + " (team apps)";
+    link.setAttribute("aria-label", "Team apps, signed in as " + member.name);
+  })();
+</script>

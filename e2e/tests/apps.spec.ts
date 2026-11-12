@@ -14,7 +14,9 @@ test.describe("/apps dashboard (signed out)", () => {
     await settle(page);
     await expect(page.getByRole("heading", { level: 1, name: "Team apps" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Sign in to use team apps" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /^sign in$/i }).or(page.getByRole("link", { name: /^sign in$/i }))).toBeVisible();
+    // Inside the page itself: the shared sidebar has its own "Sign in" link.
+    const main = page.getByRole("main");
+    await expect(main.getByRole("button", { name: /^sign in$/i }).or(main.getByRole("link", { name: /^sign in$/i }))).toBeVisible();
     // Signed out, the grid lists the live public apps only.
     const publicLive = APPS.filter((a) => a.access === "public" && a.status === "live");
     expect(publicLive.length).toBeGreaterThan(0);

@@ -712,6 +712,11 @@ html.intro-on{overflow:hidden}
 .menu>li.login>a{border:2px solid var(--gold);border-radius:var(--r);color:var(--gold);padding:8px 14px}
 .menu>li.login>a::after{display:none}
 .menu>li.login>a:hover{background:var(--gold);color:var(--ink)}
+/* Signed in: the Log In button becomes the member's picture (packages/assets/scripts/account.js) */
+.menu>li.login>a.account{border:0;padding:4px;gap:10px}
+.menu>li.login>a.account:hover{background:none;color:var(--gold)}
+.t-avatar{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--gold);color:var(--ink);font-family:var(--tech);font-weight:700}
+.account-name{display:none}
 @media (max-width:1180px){
   .menu>li.has-sub{flex-wrap:wrap}
   .menu>li.has-sub>a{width:auto;flex:1;padding-right:4px}
@@ -719,6 +724,7 @@ html.intro-on{overflow:hidden}
   .menu>li.has-sub>.sub{flex-basis:100%}
   .menu>li.login{margin:16px 0 0;border-bottom:0}
   .menu>li.login>a{justify-content:center;padding:12px 4px}
+  .account-name{display:inline}
 }
 /* Robots: hide the CAD button for robots without a CAD link */
 .rs-ctas .btn[hidden]{display:none}

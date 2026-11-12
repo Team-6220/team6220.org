@@ -1,0 +1,105 @@
+/* Styles for the shared sidebar (packages/assets/scripts/app-sidebar.js) and the shared icons.
+   Published at /assets/shared/styles/app-sidebar.css. Colors are the official palette
+   (packages/ui/src/tokens.css); they are repeated here because GoldSim, WingIt and the Inventory
+   do not load tokens.css.
+
+   An app makes room for the sidebar with var(--sidebar-space): pages in normal flow get it as body padding
+   below; an app that fills the screen with position: fixed uses it for its own left edge. */
+:root {
+  --sb-w: 232px;
+  --sb-w-compressed: 64px;
+  --sb-bg: #000000;
+  --sb-ink: #c5c6cd;
+  --sb-ink-strong: #ffffff;
+  --sb-line: #33333f;
+  --sb-hover: #1c1c23;
+  --sb-gold: #ffa300;
+  --sidebar-space: var(--sb-w);
+}
+:root[data-theme="light"] {
+  --sb-bg: #ffffff;
+  --sb-ink: #4e4a5b;
+  --sb-ink-strong: #000000;
+  --sb-line: #c5c6cd;
+  --sb-hover: #f0f1f3;
+}
+:root[data-sidebar="compressed"] { --sidebar-space: var(--sb-w-compressed); }
+:root[data-sidebar="hidden"] { --sidebar-space: 0px; }
+
+body { padding-left: var(--sidebar-space); }
+
+/* The round member picture (packages/assets/scripts/account.js). */
+.t-avatar { display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; object-fit: cover; background: #ffa300; color: #000000; font-size: 12px; font-weight: 700; }
+.sb-label { overflow: hidden; text-overflow: ellipsis; }
+
+svg.t-icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.sb {
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 90; width: var(--sb-w);
+  display: flex; flex-direction: column;
+  background: var(--sb-bg); color: var(--sb-ink); border-right: 1px solid var(--sb-line);
+  font: 600 14px/1.2 "Jura", "Segoe UI", system-ui, sans-serif;
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.sb, .sb * { box-sizing: border-box; }
+.sb-brand { display: block; padding: 18px 20px 14px; border-bottom: 1px solid var(--sb-line); }
+.sb-wings { display: block; width: 100%; max-width: 170px; height: auto; margin: 0 auto; }
+.sb-mark { display: none; width: 36px; height: 36px; margin: 0 auto; }
+
+.sb-nav { flex: 1; overflow-y: auto; padding: 10px; }
+.sb-group { padding: 14px 12px 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.sb-foot { padding: 10px; border-top: 1px solid var(--sb-line); }
+.sb-sizes { display: flex; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--sb-line); }
+.sb-sizes button { flex: 1; justify-content: center; padding: 0; } /* icon only; the name is the tooltip */
+.sb-sizes .sb-label { display: none; }
+
+.sb a:not(.sb-brand), .sb button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 42px; margin: 2px 0; padding: 0 12px;
+  border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; text-align: left;
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.sb a:not(.sb-brand):hover, .sb button:hover { background: var(--sb-hover); color: var(--sb-ink-strong); }
+.sb a[aria-current="page"] { color: var(--sb-gold); box-shadow: inset 3px 0 0 var(--sb-gold); background: var(--sb-hover); }
+.sb a:focus-visible, .sb button:focus-visible, .sb-opener:focus-visible { outline: 3px solid var(--sb-gold); outline-offset: -3px; }
+
+/* Compressed: icons only. */
+:root[data-sidebar="compressed"] .sb { width: var(--sb-w-compressed); }
+:root[data-sidebar="compressed"] .sb-label,
+:root[data-sidebar="compressed"] .sb-group,
+:root[data-sidebar="compressed"] .sb-wings { display: none; }
+:root[data-sidebar="compressed"] .sb-mark { display: block; }
+:root[data-sidebar="compressed"] .sb-brand { padding: 14px 0; }
+:root[data-sidebar="compressed"] .sb a:not(.sb-brand),
+:root[data-sidebar="compressed"] .sb button { justify-content: center; padding: 0; }
+:root[data-sidebar="compressed"] .sb-sizes { flex-direction: column; }
+:root[data-sidebar="compressed"] .sb-sizes button:first-child svg { transform: rotate(180deg); }
+
+/* Hidden: off screen until the cursor reaches the left edge (.sb-edge) or a finger swipes in. */
+.sb-edge { display: none; position: fixed; left: 0; top: 0; bottom: 0; width: 10px; z-index: 89; }
+:root[data-sidebar="hidden"] .sb { transform: translateX(-100%); }
+:root[data-sidebar="hidden"] .sb-edge { display: block; }
+:root[data-sidebar="hidden"].sb-peek .sb { transform: none; box-shadow: 0 0 40px rgb(0 0 0 / 50%); }
+/* While hidden, the hide button's place is taken by "keep it open": the collapse button brings it back. */
+:root[data-sidebar="hidden"] .sb-sizes button:last-child { display: none; }
+
+.sb-scrim, .sb-opener { display: none; }
+
+/* Phones: always a drawer, opened with the round button. */
+@media (max-width: 860px) {
+  :root, :root[data-sidebar="compressed"] { --sidebar-space: 0px; }
+  .sb, :root[data-sidebar="compressed"] .sb { width: min(var(--sb-w), 84vw); transform: translateX(-100%); }
+  :root.sb-peek .sb { transform: none; box-shadow: 0 0 40px rgb(0 0 0 / 50%); }
+  :root.sb-peek .sb-scrim { display: block; position: fixed; inset: 0; z-index: 88; background: rgb(0 0 0 / 60%); }
+  .sb-edge, .sb-sizes { display: none !important; }
+  :root[data-sidebar="compressed"] .sb-nav .sb-label, :root[data-sidebar="compressed"] .sb-foot > * > .sb-label { display: inline; }
+  :root[data-sidebar="compressed"] .sb a:not(.sb-brand), :root[data-sidebar="compressed"] .sb button { justify-content: flex-start; padding: 0 12px; }
+  .sb-opener {
+    display: grid; place-items: center; position: fixed; left: 12px; bottom: 12px; z-index: 87;
+    width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--sb-line);
+    background: var(--sb-bg); color: var(--sb-gold); cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb { transition: none; }
+}
