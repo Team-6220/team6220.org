@@ -1,0 +1,76 @@
+{
+  "sponsors": [
+    {
+      "name": "RTX (Raytheon)",
+      "logo": "a26bfa3ebe.png",
+      "logoKey": "rtx",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Boeing",
+      "logo": "b3be6afd52.png",
+      "logoKey": "boeing",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "CTC Global",
+      "logo": "da3cc89f9b.png",
+      "logoKey": "ctc",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Los Alamitos Education Foundation",
+      "logo": "8c2f2817ef.png",
+      "logoKey": "laef",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Los Alamitos High School PTSA",
+      "logo": "438993a9c5.png",
+      "logoKey": "ptsa",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Los Alamitos Unified School District",
+      "logo": "62b28bae94.png",
+      "logoKey": "lausd",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Run Seal Beach",
+      "logo": "0a53b7fcd5.png",
+      "logoKey": "runsealbeach",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Terry Simkin",
+      "logo": "13c4548884.png",
+      "logoKey": "simkin",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    },
+    {
+      "name": "Gene Haas Foundation",
+      "logo": "",
+      "logoKey": "",
+      "tier": "",
+      "link": "",
+      "season": "2025–26"
+    }
+  ]
+}

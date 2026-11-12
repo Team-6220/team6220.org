@@ -7,12 +7,14 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./inventory": "./src/inventory/index.ts"
+    "./inventory": "./src/inventory/index.ts",
+    "./site-server": "./src/site/server.ts"
   },
   "scripts": {
     "test": "vitest run"
   },
   "dependencies": {
+    "@team6220/content": "workspace:*",
     "@wix/data": "^1.0.544",
     "@wix/members": "^1.0.541",
     "@wix/sdk": "^1.21.18"

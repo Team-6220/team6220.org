@@ -9,7 +9,10 @@ export type AppAccess =
   /** Anyone, signed in or not (e.g. GoldSim). */
   | "public"
   /** Approved members with the Team Member badge. */
-  | "team";
+  | "team"
+  /** Approved members with the Web Admin badge. The dashboard hides these cards from everyone else, and the
+   *  main site's Resources menu and page leave them out. */
+  | "web-admin";
 
 export interface AppEntry {
   id: string;
@@ -41,6 +44,15 @@ export const APPS: AppEntry[] = [
     href: "/apps/inventory",
     status: "live",
     access: "team",
+  },
+  {
+    id: "site",
+    name: "Site Manager",
+    description: "Change the public website's content with forms. Submitting opens a pull request.",
+    href: "/apps/site",
+    status: "live",
+    access: "web-admin",
+    note: "Web Admins only",
   },
   {
     id: "goldsim",

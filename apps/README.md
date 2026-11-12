@@ -7,6 +7,7 @@ Each app mounts at its own route under `team6220.org/apps`. Most are React packa
 | `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
 | `apps/attendance` | `/apps/attendance` | **Built, waiting for its server.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; shows "Not connected yet" until that is deployed. Try it with `?demo=admin` |
 | `apps/inventory` | `/apps/inventory` | **Built.** The original Apps Script UI (unchanged HTML/CSS/JS in `apps/inventory/ui`) on a `google.script.run` shim; data in the Wix CMS (mock data in dev). Not React. See [inventory/README.md](inventory/README.md) |
+| `apps/site` | `/apps/site` | **Built (demo mode until Phase 2).** The Site Manager: Web Admins edit website content (summer camp first) with forms generated from the schemas in `packages/content`; Submit opens a GitHub pull request through `/api/site`. Without that endpoint it runs against an in-memory mock and says "demo: no pull request is opened". Try it with `?demo=admin`. See [../docs/SITE-MANAGER.md](../docs/SITE-MANAGER.md) |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
 | `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
 | `apps/scouting`, `apps/pit`, `apps/production` | | Planned |
@@ -36,7 +37,8 @@ Rules (from the migration plan):
 Edit [`apps/dashboard/src/apps.ts`](dashboard/src/apps.ts), the one list of team apps (the main site's Resources
 menu can import it too, from `@team6220/dashboard/apps`). Add an entry with a unique `id`, `name`, `description`,
 `href` (its route under `/apps`), `status` (`"live"` or `"planned"`, which greys it out with no link) and `access`
-(`"public"` cards also show to signed-out visitors; `"team"` cards only to approved members).
+(`"public"` cards also show to signed-out visitors; `"team"` cards only to approved members; `"web-admin"` cards only to
+approved members with the Web Admin badge, and they stay out of the main site's Resources menu and page).
 
 ### Page shell for an app
 

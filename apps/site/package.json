@@ -1,0 +1,25 @@
+{
+  "name": "@team6220/site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/site: the Site Manager. Web Admins edit website content with forms; Submit opens a GitHub pull request.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./site.css": "./src/site.css"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@team6220/content": "workspace:*",
+    "@team6220/data": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.0"
+  }
+}

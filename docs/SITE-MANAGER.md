@@ -4,7 +4,53 @@ A Web Admin app at `/apps/site` where webmasters change the website's regular co
 It started as an idea at the end of issue #69 ("Maybe a new app dedicated to site management"). The more
 the backend grows, the more the team needs it, so it now has its own plan.
 
-**Status:** planned. The save model is decided (the app opens GitHub pull requests); a few smaller choices are still open (see "Still open"). Nothing is built yet.
+**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112) and **Merch** (#113) editors and the image uploader are built. Today the app runs in
+**demo mode**: it validates, shows what would change and says "demo: no pull request is opened". It starts opening real
+pull requests once the Phase 2 server (`output: "server"`) and the GitHub App exist (see "Turn on real pull requests").
+Resources follows (#114): each remaining area is one more area (see "Add a new editable area").
+
+| Piece | Where | Real or mocked today |
+| --- | --- | --- |
+| Content files | `sites/main/content/*.json` (`summer-camp.json`, `sponsors.json`, `merch.json`) | Real. Public pages read them at build time |
+| Schemas, diff, rendering | `packages/content` (Zod; `pnpm content:check` in CI) | Real |
+| Branch, commit, pull request logic | `packages/data/src/site/` (`proposeChange`, `GithubSiteStore`) | Real code, tested with a fake GitHub; never run against github.com yet |
+| `/api/site` | `src/server/site-route.ts`, handler `handleSiteRequest` in `packages/data` | Real code and tests; the route is only added when Astro runs with `output: "server"` |
+| Web Admin check | `createWixVerifier` (same Wix calls as the attendance Apps Script) | Real code, tested with a fake Wix; never run against Wix yet |
+| `/apps/site` editor | `apps/site` (form generated from the schema) | Real UI; Submit uses `MockSiteStore` (in memory) |
+
+## Using it (Web Admins)
+
+1. Open `/apps/site` (the **Site Manager** card on `/apps` appears for Web Admins) and sign in.
+2. Pick the part of the site, edit the form. Errors show under the field; **What will change** lists every change.
+3. **Submit**. In a real deployment this opens a pull request named `site-manager/<area>-<yyyymmdd>-<who>` whose
+   description says who asked and what changed. A webmaster reviews and merges it; the site rebuilds. To undo, revert
+   the pull request. The page links to the open Site Manager pull requests on GitHub.
+4. Text fields accept `**bold**` and `[label](https://link)` (links must be `https://` or start with `/`). Nothing else
+   is treated as formatting, and HTML is never allowed.
+
+Developers can try the editor without signing in at `/apps/site?demo=admin` (demo mode: nothing real is touched).
+
+### Editing sponsors
+
+Pick **Sponsors**. Each entry is one sponsor; **Up** and **Down** set the order, which is the order of the logos on the
+Sponsors page and in the scrolling strip on the home page (all three places read the same list).
+
+- **Name** is also the logo's alt text. **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images
+  per change); leave it empty to show the name as plain text, as the Gene Haas Foundation does today.
+- **Link** is optional; when set, the logo on the Sponsors page links there (the home strip never links).
+- **Tier** and **Season** are stored for the list but not shown yet.
+- **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
+  Leave it empty for a new sponsor; the default size applies.
+- The "Your company here" tile and the tier cards are page layout, not part of this list.
+
+### Editing merch
+
+Pick **Merch**. Each entry is one card on `/merch`; **Up** and **Down** set the order (the grid reads left to right, row by
+row, and the page decides the tilt and animation delay from the position). Every field is required: **Photo** (file
+picker, same limits as sponsor logos), **Category** (the small label, e.g. Apparel), **Name**, **Description**, **Price**
+(typed exactly as it should read, e.g. `From $35`) and **Store link**. The price is text because the store sets the
+real price and it does not update from the store. The "Team gear" heading, the note under the grid, "How it works" and the
+sponsor teaser are page text, not part of this list.
 
 ## Why
 
@@ -98,3 +144,63 @@ the page is identical before and after.
 - **Logos and photos** are committed with the pull request when small (sponsor logos, merch photos, robot renders). Large galleries stay in Wix Media / Google Drive (#8).
 
 Nothing is left open for the first batch. These are recorded in [MIGRATION-PLAN.md](MIGRATION-PLAN.md).
+
+## Add a new editable area (sponsors, merch, resources, ...)
+
+An area is one JSON file, one Zod schema and one registry line. The form, validation, preview, API and pull request come
+for free. Do this in one pull request per area (it is its own issue: #112 sponsors, #113 merch, #114 resources).
+
+1. **Write the schema** in `packages/content/src/<area>.ts` (copy `summer-camp.ts`). Use `.meta({ title })` for the
+   label of each field, `.meta({ ui: "textarea" })` for long text, `z.array(...)` for lists (the form adds reorder and
+   remove buttons) and `z.discriminatedUnion("type", [...])` for lists of mixed kinds. Reuse `richText` and the link
+   check (`isSafeHref`) for anything that becomes a link. Keep it to `object`, `array`, `string`, `boolean`, `const` and
+   `oneOf`: those are what the form renders (`apps/site/src/Field.tsx` and `schema.ts`; extend them for new field types).
+2. **Move the content** out of code into `sites/main/content/<area>.json`. Run `pnpm content:check --write` to put the
+   file in the canonical format (two-space JSON, final newline) so later edits make small pull request diffs.
+3. **Register it** in `AREAS` in `packages/content/src/index.ts`: `id` (also the file name and the URL/branch name),
+   `label`, `path`, `schema`, and `initial` (the imported JSON). The area then shows up in the Site Manager's list and
+   `/api/site` accepts it. CI fails if a JSON file has no registered schema or the other way round.
+4. **Make the page read it.** Validate with the schema where the page imports the JSON (see `SUMMER_CAMP` in
+   `sites/main/config/site.ts`: `summerCamp.parse(json)`), so an invalid file fails the build. If the page needs HTML,
+   build it with a pure function in the content package (like `renderBlocks`) so it is unit-testable.
+5. **Prove the page did not change.** Build before your change (`pnpm build`, copy `dist/`), build after, and run
+   `diff -r` on the two `dist/` folders. Only files for pages you meant to change may differ (hashed `_astro` file
+   names under `/apps` change whenever shared app code changes; that is expected). Test the "on" and "off" states if
+   the content has a switch.
+6. **Images** (sponsor logos, merch photos): small ones go in `sites/main/media/` and travel with the pull request.
+   `site.submit(area, value, images)` takes `{ path, base64 }` files; the server accepts only png, jpg, webp, gif and
+   avif under `sites/main/media/`, at most 2 MB each and 10 per change (larger media stays in Wix Media / Drive).
+   Mark an image field with `imageField(...)` from `packages/content/src/image.ts` (a path relative to
+   `sites/main/media/`, served at `/assets/main/<path>`); the form then shows a file picker (`Field.tsx`) that checks the
+   same limits (`IMAGE_RULES`), previews the file, names it after a hash of its content and sends it with
+   `site.submit(area, value, images)` when you Submit. Register the area's `images` function so `pnpm content:check`
+   fails when a file points to an image that isn't in `sites/main/media/`.
+7. **Tests:** add the area to `packages/content/test` (valid, invalid, rendering) and run `pnpm content:check`,
+   `pnpm -r --if-present test`, `pnpm check` and `pnpm build`.
+
+## Turn on real pull requests (needs the owner, Phase 2)
+
+Nothing here can be done from the repo; it needs an org owner and the Phase 2 server.
+
+1. **Create the GitHub App** (org owner): GitHub, Team-6220 org, Settings, Developer settings, GitHub Apps, New GitHub App.
+   Name it for example "Team 6220 Site Manager"; homepage `https://www.team6220.org`; uncheck Webhook "Active".
+   Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**, Metadata: Read (automatic).
+   Install on this account only. Create it.
+2. **Install it** on the Team-6220 org, selecting **only the `team6220.org` repository**. Note the *App ID* (app page)
+   and the *Installation ID* (the number at the end of the installation's settings URL).
+3. **Generate a private key** on the app page (downloads a `.pem`). Convert it once, because the server uses the Web
+   Crypto API: `openssl pkcs8 -topk8 -nocrypt -in downloaded-key.pem -out site-manager-key-pkcs8.pem`.
+4. **Store three secrets in Wix** (server secrets, never in the repo): `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`,
+   `GITHUB_APP_PRIVATE_KEY` (the converted PEM; `\n` for newlines is fine). Alternative for a quick test: one
+   `SITE_MANAGER_GITHUB_TOKEN` with the same two permissions. Optional `SITE_MANAGER_GITHUB_REPO` (default
+   `Team-6220/team6220.org`). The server asks GitHub for a one-hour installation token on each request, so nothing expires.
+5. **Phase 2 build:** set `output: "server"` with the Wix adapter in `astro.config.mjs` (the `site-api` integration then
+   adds `/api/site`), set the build variable `PUBLIC_SITE_MANAGER_API=on`, and check `readEnv()` in
+   `src/server/site-route.ts` reads the secrets the way Wix exposes them (swap that one function if Wix only offers
+   `astro:env/server` `getSecret`).
+6. **Branch protection:** keep `ci` required and a webmaster review on `main`; the app can only open pull requests and
+   can't merge them. Add `/apps/site/`, `packages/content/` and `sites/main/content/` to CODEOWNERS if you want.
+7. **Try it:** sign in as a Web Admin, change the summer camp title, Submit, and open the pull request. Then check that a
+   Team Member without the badge gets "Web Admins only" and that `/api/site` answers 403 to them.
+
+Until then everything above works in demo mode and the tests cover the logic against fake GitHub and Wix servers.

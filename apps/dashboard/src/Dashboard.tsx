@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { auth, type Member } from "@team6220/data";
+import { auth, BADGES, type Member } from "@team6220/data";
 import { APPS, type AppEntry } from "./apps";
 
 type View =
@@ -11,6 +11,8 @@ type View =
 
 export default function Dashboard() {
   const [view, setView] = useState<View>({ kind: "loading" });
+  // Cosmetic: only decides whether the Web Admin cards are shown. The apps and their servers check the badge for real.
+  const [isWebAdmin, setIsWebAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -19,6 +21,7 @@ export default function Dashboard() {
         const member = await auth.getMember();
         if (!member) return setView({ kind: "signed-out" });
         const access = await auth.getAccess();
+        if (access === "approved") setIsWebAdmin(await auth.hasBadge(BADGES.webAdmin).catch(() => false));
         setView(access === "approved" ? { kind: "approved", member } : { kind: "pending", member });
       } catch (err) {
         console.warn("Couldn't load the signed-in member", err);
@@ -50,7 +53,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {view.kind === "approved" && <AppGrid apps={APPS} />}
+      {view.kind === "approved" && <AppGrid apps={APPS.filter((a) => a.access !== "web-admin" || isWebAdmin)} />}
       {(view.kind === "signed-out" || view.kind === "pending" || view.kind === "error") && (
         <>
           <h2 className="dash__section">Open to everyone</h2>

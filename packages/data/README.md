@@ -41,6 +41,24 @@ await attendance.lookup("0123456789"); // "did I sign in?" for your own ID: date
 - Tests: `pnpm --filter @team6220/data test` (vitest). `test/apps-script.test.ts` also runs the Apps Script `Code.gs`
   against fake Apps Script services.
 
+## Site Manager
+
+```ts
+import { site } from "@team6220/data"; // browser side
+const viewer = await site.getViewer(); // signed-out | pending | member | admin (cosmetic)
+const { value } = await site.load("summer-camp"); // current content
+const { pullRequest, changes } = await site.submit("summer-camp", edited); // pullRequest.mock is true in demo mode
+```
+
+- **Server side** (never import in a component): `@team6220/data/site-server` has `handleSiteRequest` (the
+  `/api/site` logic: Wix token + `Web Admin` badge on every request), `GithubSiteStore`, `githubStoreFromEnv`,
+  `MockSiteStore`, `createWixVerifier` and `proposeChange`. This is the only code that talks to GitHub.
+- **Mock vs real:** the browser uses `MockSiteStore` (in memory, no network) unless the build sets
+  `PUBLIC_SITE_MANAGER_API=on`, in which case it POSTs to `/api/site`. Tests use fake `fetch` functions.
+- The server reads `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` (or one ready
+  `SITE_MANAGER_GITHUB_TOKEN`) and optionally `SITE_MANAGER_GITHUB_REPO`. Values are secrets: see
+  [docs/SITE-MANAGER.md](../../docs/SITE-MANAGER.md).
+
 ## How login works (Phase 1, GitHub Pages)
 
 There is no server, so the browser runs Wix's "Wix login page" OAuth flow with PKCE, using the headless client ID

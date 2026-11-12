@@ -77,7 +77,7 @@ One dashboard at `/apps` links to every app. Team members sign in once and can o
 | Scouting | `/apps/scouting` | Collects match data from the stands, even with bad Wi-Fi | Planned | Team members | Wix database |
 | Pit display | `/apps/pit` | Screen for the pit TV: match schedule from Nexus plus our scouting data and The Blue Alliance / Statbotics stats | Planned | Anyone (public, read-only) | Reads other apps and FRC data sites |
 | Production Tracker | `/apps/production` | Follows each robot part from design to finished. Replaces today's Google Forms and spreadsheets. | Planned | Designers submit parts; manufacturers update status | Wix database; design files stay in Google Drive as links |
-| Site Manager | `/apps/site` | Web Admins edit regular site content (summer camp, sponsors, merch, resources, later robots and history) with forms; saving opens a GitHub pull request. Plan: [SITE-MANAGER.md](SITE-MANAGER.md) | Planned (needs Phase 2 `/api` endpoint) | Web Admins | Content JSON files in the repo (`sites/main/content/`); changes are saved by opening a GitHub pull request |
+| Site Manager | `/apps/site` | Web Admins edit regular site content (summer camp, sponsors, merch, resources, later robots and history) with forms; saving opens a GitHub pull request. Plan: [SITE-MANAGER.md](SITE-MANAGER.md) | Foundations and Summer camp built (Nov 2026); runs in demo mode until the Phase 2 `/api/site` endpoint and the GitHub App exist | Web Admins | Content JSON files in the repo (`sites/main/content/`); changes are saved by opening a GitHub pull request |
 
 Apps are listed one by one under the **Resources** tab, plus an Apps section on the Resources page (#75). There is no separate Apps tab.
 

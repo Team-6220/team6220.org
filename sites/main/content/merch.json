@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "image": "b96b316ce1.webp",
+      "kind": "Apparel",
+      "name": "Team T-shirt",
+      "detail": "Gildan Ultra Cotton tee",
+      "price": "From $35",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-gildan-ultra-cotton-t-shirt-g2000-los-al-robotics"
+    },
+    {
+      "image": "b6a3778ad2.webp",
+      "kind": "Apparel",
+      "name": "Long sleeve tee",
+      "detail": "Gildan Ultra Cotton long sleeve",
+      "price": "From $38",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-gildan-ultra-cotton-long-sleeve-tee-g2400-los-al-robotics"
+    },
+    {
+      "image": "ff06c934c5.webp",
+      "kind": "Apparel",
+      "name": "Quarter-zip pullover",
+      "detail": "Sport-Tek PosiCharge Competitor",
+      "price": "From $33",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-sport-tek-posicharge-competitor-1-4-zip-pullover-st357-los-al-robotics"
+    },
+    {
+      "image": "89e5c37082.webp",
+      "kind": "Apparel",
+      "name": "Soft shell jacket",
+      "detail": "Port Authority welded soft shell",
+      "price": "From $73",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-port-authority-welded-soft-shell-jacket-j324-los-al-robotics"
+    },
+    {
+      "image": "f084948085.webp",
+      "kind": "Accessories",
+      "name": "Beanie",
+      "detail": "The North Face circular rib beanie",
+      "price": "$39",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-the-north-face-circular-rib-beanie-nf0a7rgh-los-al-robotics"
+    },
+    {
+      "image": "35ec817472.webp",
+      "kind": "Accessories",
+      "name": "Die-cut stickers",
+      "detail": "Transparent griffin stickers",
+      "price": "From $12",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-die-cut-transparent-stickers-los-al-robotics"
+    },
+    {
+      "image": "1a731ce966.webp",
+      "kind": "Accessories",
+      "name": "Cinch pack",
+      "detail": "Port Authority Ultra-Core, personalized",
+      "price": "$26",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-port-authority-ultra-core-cinch-pack-bg615-los-al-robotics"
+    },
+    {
+      "image": "f374e23748.webp",
+      "kind": "Accessories",
+      "name": "Hip pack",
+      "detail": "Port Authority matte hip pack, personalized",
+      "price": "$30",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-port-authority-matte-hip-pack-bg936-los-al-robotics"
+    },
+    {
+      "image": "173f72b24c.webp",
+      "kind": "Bottles",
+      "name": "32 oz tumbler",
+      "detail": "Polar Camel water bottle tumbler",
+      "price": "$32",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-polar-camel-32-oz-water-bottle-los-al-robotics"
+    },
+    {
+      "image": "721474d0a6.webp",
+      "kind": "Bottles",
+      "name": "32 oz insulated bottle",
+      "detail": "RTIC Outback insulated bottle",
+      "price": "$66",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-rtic-32-oz-outback-bottle-los-al-robotics"
+    },
+    {
+      "image": "aeeb949b03.webp",
+      "kind": "Gift",
+      "name": "eGift card",
+      "detail": "For any item in the store",
+      "price": "From $10",
+      "href": "https://dogaingear.com/products/los-alamitos-high-school-egift-card-los-al-robotics"
+    }
+  ]
+}
