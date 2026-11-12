@@ -150,7 +150,7 @@ function Examples() {
       <section className="t-panel">
         <h2>Images and icons</h2>
         <p>Team logos are shared files: use them straight from the shared assets folder.</p>
-        <img className="tpl__logo" src="/assets/shared/logos/6220LogoGold.png" alt="Team 6220 logo" />
+        <img className="tpl__logo" src="/assets/shared/logos/6220LogoVectorGold.svg" alt="Team 6220 logo" />
         <p className="t-muted">
           Icons come from <code>/assets/shared/scripts/icons.js</code>, the sidebar and light/dark button come with the page
           layout, and your own images go in <code>apps/your-app/media/</code>.
