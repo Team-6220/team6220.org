@@ -10,7 +10,7 @@ export interface Robot {
   game: string;
   /** Robot name (plain text) */
   name: string;
-  /** Best finish, shown on /robots */
+  /** Best finish, shown on /robots. Format: "Event · Alliance N (Rank R)", or "Event · Rank R" if we did not make an alliance. Source: match13.com/team/6220?year=YYYY */
   finish: string;
   /** Shorter best-finish line for the home page card (defaults to `finish`) */
   homeFinish?: string;
@@ -31,7 +31,7 @@ export const ROBOTS: Robot[] = [
     year: "2026",
     game: "REBUILT",
     name: "Goober",
-    finish: "CA District Los Angeles Event · 3rd place",
+    finish: "SoCal Showdown · Alliance 2 (Rank 29)",
     events: [
       "CA District Orange County Event",
       "CA District Los Angeles Event",
@@ -49,7 +49,7 @@ export const ROBOTS: Robot[] = [
     year: "2025",
     game: "REEFSCAPE",
     name: "Nessie",
-    finish: "SoCal Showdown · 7th-place alliance",
+    finish: "SoCal Showdown · Alliance 8 (Rank 21)",
     events: ["Los Angeles Regional", "SoCal Showdown", "Beach Blitz"],
     album: "socal-showdown-2025",
     img: "/assets/main/29c743c6a0.webp",
@@ -61,7 +61,7 @@ export const ROBOTS: Robot[] = [
     year: "2024",
     game: "CRESCENDO",
     name: "George",
-    finish: "Orange County Regional · 2nd pick, Alliance 5",
+    finish: "Orange County Regional · Alliance 5 (Rank 22)",
     events: ["Orange County Regional", "Beach Blitz"],
     album: "oc-regional-2024",
     img: "/assets/main/750ea7b708.webp",
@@ -73,7 +73,7 @@ export const ROBOTS: Robot[] = [
     year: "2019",
     game: "DESTINATION: DEEP SPACE",
     name: "2019 robot",
-    finish: "Orange County Regional · Rank 31",
+    finish: "Beach Blitz · Rank 25",
     events: ["Orange County Regional", "Beach Blitz"],
     album: "oc-regional-2019",
     img: "/assets/main/fc1361c0d9.webp",
