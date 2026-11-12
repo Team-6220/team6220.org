@@ -3,7 +3,7 @@
 //
 // The summer camp values come from sites/main/content/summer-camp.json now; the exports below keep their old names.
 import { summerCamp } from "@team6220/content";
-import summerCampJson from "../content/summer-camp.json";
+import summerCampJson from "../content/summer-camp.json" with { type: "json" };
 
 /**
  * Summer camp content: sites/main/content/summer-camp.json (edited in the Site Manager, /apps/site).
