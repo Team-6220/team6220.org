@@ -19,6 +19,16 @@
     "symbol": "parts"
   },
   {
+    "id": "bom",
+    "name": "BOM",
+    "description": "What we're buying: orders, mentor signatures and deliveries.",
+    "href": "/apps/bom",
+    "status": "live",
+    "access": "team",
+    "note": "Mentors and Boosters sign and buy",
+    "symbol": "parts"
+  },
+  {
     "id": "site",
     "name": "Site Manager",
     "description": "Change the public website's content with forms. Submitting opens a pull request.",

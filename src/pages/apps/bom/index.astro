@@ -1,0 +1,13 @@
+---
+// /apps/bom: the list of things to buy (docs/operations/BOM.md).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Bom } from "@team6220/bom";
+import "@team6220/bom/bom.css";
+---
+
+<AppLayout title="BOM | Los Al Robotics" description="Orders, approvals and deliveries for Los Al Robotics (FRC Team 6220).">
+  <Bom client:only="react">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading…</p></main>
+  </Bom>
+  <noscript><p class="t-page">The BOM needs JavaScript turned on.</p></noscript>
+</AppLayout>

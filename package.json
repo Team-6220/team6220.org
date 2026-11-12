@@ -34,6 +34,7 @@
   "dependencies": {
     "@astrojs/react": "^7.1.4",
     "@team6220/attendance": "workspace:*",
+    "@team6220/bom": "workspace:*",
     "@team6220/content": "workspace:*",
     "@team6220/dashboard": "workspace:*",
     "@team6220/data": "workspace:*",

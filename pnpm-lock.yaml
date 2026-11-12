@@ -17,6 +17,9 @@ importers:
       '@team6220/attendance':
         specifier: workspace:*
         version: link:apps/attendance
+      '@team6220/bom':
+        specifier: workspace:*
+        version: link:apps/bom
       '@team6220/content':
         specifier: workspace:*
         version: link:packages/content
@@ -72,6 +75,18 @@ importers:
       '@team6220/data':
         specifier: workspace:*
         version: link:../../packages/data
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+
+  apps/bom:
+    dependencies:
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: ^18.3.1
         version: 18.3.1

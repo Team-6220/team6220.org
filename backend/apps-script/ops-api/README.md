@@ -14,6 +14,7 @@ only protected actions come here.
 | `Auth.gs` | Who is asking (Wix member token or Apollo's key) and what their badges allow |
 | `WixData.gs` | Reading and writing Wix with the server's API key |
 | `Shared.gs` | Numbers, history, projects, people and subteam badges |
+| `Bom.gs` | BOM: orders, lines, signatures, ordering, receiving, import |
 | `appsscript.json` | Manifest: web app "execute as me / anyone", one scope (outside requests) |
 
 Tests: `packages/data/test/ops-api.test.ts` runs these files in Node with fake Apps Script services
@@ -59,6 +60,29 @@ together: `roles_` in `Auth.gs` (the real check) and `packages/data/src/ops/role
 | `setMySubteams` | team | `subteams` (names) | `subteams` |
 | `setSubteams` | peopleAdmin | `memberIds` (up to 50), `subteams` | `changed` |
 
+### BOM actions (`Bom.gs`)
+
+Members can read the `bom_*` collections but not write them, so every BOM change is one of these.
+
+| Action | Who | Sends | Returns |
+| --- | --- | --- | --- |
+| `saveBom` | lead | `bom` (`name`, `season`, `status`) | `bom` |
+| `createOrder` | lead | `order` (`bomId`, `projectId`, `customName`) | `order`, its default vendor `sections` |
+| `importOrder` | lead | `bomId`, `customName`, `sections` read from an old sheet | `order` |
+| `addSection` | team | `orderId`, `vendor` | `section` |
+| `saveLine` | team, Apollo | `line` (`sectionId`, `name`, `link`, `unitCost`, `quantity`, ...) | `line`, `signaturesCleared` |
+| `removeLine` | team | `lineId` (only a line nobody has signed) | |
+| `reopenLine` | lead | `lineId` | `line` |
+| `signLines` | approver | `lineIds` (up to 200) | `signed`, `skipped` (with reasons), `total` |
+| `approveSection` | approver | `sectionId` | `section` |
+| `markOrdered` | approver | `sectionId`, `orderDate`, `finalTotal`, `expectedArrival` | `section`, `ordered`, `notReady` |
+| `receiveLines` | team, Apollo | `items` (`lineId`, `quantity`) | `lines` |
+
+The rules: two signatures from two different people, each a Mentor or Booster; changing the item, link, cost or
+quantity of a signed line removes its signatures; only fully signed lines in a section with Approval to Order can be
+ordered; an ordered line cannot be edited; a Supervisor can call none of these. `packages/data/test/bom-rules.test.ts`
+runs the same checks against this code and against the demo backend.
+
 Each app adds its own actions as it is built. To add one: write the function in the right file, then add one line to
 `actions_()` in `Code.gs` saying who may call it.
 
@@ -88,6 +112,12 @@ Actions open to Apollo today:
 | Action | Sends | Returns | Example |
 | --- | --- | --- | --- |
 | `nextNumber` | `kind` | `number` | `{ "action": "nextNumber", "apiKey": "...", "kind": "task" }` → `{ "ok": true, "number": 43 }` |
+| `saveLine` | `line`: `sectionId`, `name`, `link`, `vendorPartNumber`, `unitCost`, `quantity`, `comments` (`_id` to change one) | `line`, `signaturesCleared` | `{ "action": "saveLine", "apiKey": "...", "line": { "sectionId": "...", "name": "NEO Vortex", "unitCost": 90, "quantity": 4, "link": "https://..." } }` |
+| `receiveLines` | `items`: list of `lineId`, `quantity` | `lines` | `{ "action": "receiveLines", "apiKey": "...", "items": [{ "lineId": "...", "quantity": 4 }] }` |
+
+Apollo reads BOMs, orders, sections and lines from the Wix collections (`bom_boms`, `bom_orders`, `bom_sections`,
+`bom_lines`). It cannot sign, approve or mark ordered. Writing received items into Inventory comes with the
+Inventory connection (build step 4); until then `receiveLines` only updates the BOM line.
 
 This table is the contract Apollo's tools are written against. When an action is opened to Apollo, add its row here
 in the same pull request.
@@ -106,11 +136,20 @@ in the same pull request.
    | `ops_projects` | Site members | Admin | `number` (number); `name`, `description`, `status`, `githubRepo`, `startDate`, `endDate` (text); `subteams` (tags) |
    | `ops_people` | Site members | Admin | `memberId`, `name` (text); `subteams` (tags); `active` (boolean) |
 
+   BOM (same permissions for all four: read Site members, write Admin):
+
+   | Collection | Fields |
+   | --- | --- |
+   | `bom_boms` | `name`, `season`, `status` (text) |
+   | `bom_orders` | `bomId`, `projectId`, `customName`, `createdAt` (text); `sequence` (number) |
+   | `bom_sections` | `orderId`, `vendor`, `orderDate`, `expectedArrival` (text); `sortOrder`, `finalTotal` (number); `approval`, `orderedBy` (object) |
+   | `bom_lines` | `sectionId`, `name`, `link`, `vendorPartNumber`, `comments`, `orderedAt`, `receivedAt` (text); `unitCost`, `quantity`, `receivedQty` (number); `requestedBy`, `receivedBy` (object); `signatures` (array) |
+
 3. **Wix API key.** Wix account → API Keys → Generate, with permissions for **Wix Data** (read and write data items)
    and **Manage Badges**, limited to the team site. Copy the key and the **site ID**. The key is a secret: it goes
    only into Script Properties, never into this repo.
 4. **Apps Script project.** Create a project named "6220 Operations API" in the team Google account and copy in the
-   four `.gs` files and `appsscript.json` ([docs/APPS-SCRIPT.md](../../../docs/APPS-SCRIPT.md) has the clicks).
+   `.gs` files and `appsscript.json` ([docs/APPS-SCRIPT.md](../../../docs/APPS-SCRIPT.md) has the clicks).
 5. **Script Properties** (Project Settings): `WIX_API_KEY`, `WIX_SITE_ID`. Optional: `APOLLO_KEY_SHA256` (make a long
    random key for Apollo, store its SHA-256 here, give the key itself only to Apollo).
 6. **Run `checkSetup`** from the editor. It asks for permission and checks the badges and collections exist.
