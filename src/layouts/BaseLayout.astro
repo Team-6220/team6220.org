@@ -1,12 +1,16 @@
 ---
 // Shared page shell for the main site and every app: charset, viewport, favicon.
+// The main site shows the gold logo as its favicon; the team apps show the gold wing (pass favicon="wing").
 // Each site or app wraps this in its own layout (see sites/main/MainLayout.astro).
 
 interface Props {
   title: string;
   description: string;
+  /** "logo" (the main site) or "wing" (the team apps) */
+  favicon?: "logo" | "wing";
 }
-const { title, description } = Astro.props;
+const { title, description, favicon = "logo" } = Astro.props;
+const wing = favicon === "wing";
 
 ---
 
@@ -18,9 +22,10 @@ const { title, description } = Astro.props;
     <title>{title}</title>
     <meta name="description" content={description} />
     <!-- Favicons come from packages/assets/favicon/ (copied to the site root at build time). -->
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {!wing && <link rel="icon" href="/favicon.ico" sizes="48x48" />}
+    <link rel="icon" type="image/svg+xml" href={wing ? "/favicon-wing.svg" : "/favicon.svg"} />
+    <link rel="icon" type="image/png" sizes="32x32" href={wing ? "/favicon-wing-32.png" : "/favicon-32.png"} />
+    <link rel="apple-touch-icon" href={wing ? "/apple-touch-icon-wing.png" : "/apple-touch-icon.png"} />
     <slot name="head" />
   </head>
   <body>
