@@ -65,6 +65,8 @@ export interface Line extends Item {
   receivedQty: number;
   receivedAt: string;
   receivedBy: Stamp | null;
+  /** The Inventory part this line refills, or "" when it is not tracked in Inventory (or not decided yet). */
+  inventoryItemId: string;
 }
 
 /** What the form for a line collects. */

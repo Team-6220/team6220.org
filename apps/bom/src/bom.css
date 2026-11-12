@@ -101,6 +101,9 @@
 .bom__receive input {
   width: 4.5rem;
 }
+.bom__receive select {
+  max-width: 16rem;
+}
 .bom__line-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

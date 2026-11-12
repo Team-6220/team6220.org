@@ -51,6 +51,7 @@ function actions_() {
     approveSection: { who: "approver", run: approveSection_ },
     markOrdered: { who: "approver", run: markOrdered_ },
     receiveLines: { who: "team", agent: true, run: receiveLines_ },
+    linkLineToInventory: { who: "team", agent: true, run: linkLineToInventory_ },
     importOrder: { who: "lead", run: importOrder_ },
     // Icarus (Icarus.gs)
     saveIcarusRecord: { who: "lead", run: saveIcarusRecord_ },

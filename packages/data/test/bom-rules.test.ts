@@ -170,6 +170,22 @@ describe.each([
     expect((await receive(1)).lines[0]).toMatchObject({ receivedQty: 3 });
   });
 
+  it("remembers which Inventory part a received line refills", async () => {
+    const line = await addLine("Zip ties", 12.99, 3);
+    expect(line.inventoryItemId).toBe("");
+    await b.send("mentor", "signLines", { lineIds: [line._id] });
+    await b.send("booster", "signLines", { lineIds: [line._id] });
+    await b.send("mentor", "approveSection", { sectionId });
+    await b.send("mentor", "markOrdered", { sectionId, orderDate: "2027-01-12", finalTotal: 42 });
+    const first = await b.send("member", "receiveLines", { items: [{ lineId: line._id, quantity: 1, inventoryItemId: "PT-1" }] });
+    expect(first.lines[0]).toMatchObject({ receivedQty: 1, inventoryItemId: "PT-1" });
+    // Receiving more without naming a part keeps the link.
+    const second = await b.send("member", "receiveLines", { items: [{ lineId: line._id, quantity: 1 }] });
+    expect(second.lines[0]).toMatchObject({ receivedQty: 2, inventoryItemId: "PT-1" });
+    expect(await b.send("supervisor", "linkLineToInventory", { lineId: line._id, inventoryItemId: "PT-2" })).toMatchObject({ ok: false, error: "forbidden" });
+    expect(await b.send("member", "linkLineToInventory", { lineId: line._id, inventoryItemId: "PT-2" })).toMatchObject({ ok: true, line: { inventoryItemId: "PT-2", receivedQty: 2 } });
+  });
+
   it("imports a sheet tab with typed names kept as 'imported', not as real signatures", async () => {
     const { bom } = await b.send("lead", "saveBom", { bom: { name: "2026 Offseason BOM" } });
     const sections = [{

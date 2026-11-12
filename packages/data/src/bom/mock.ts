@@ -67,7 +67,7 @@ function saveLine(db: MockDb, actor: MockActor, input: Record<string, unknown>) 
   const signaturesCleared = changed && existing!.signatures.length > 0;
   const line = db.save<Line>("bom_lines", existing
     ? { ...existing, ...fields, signatures: signaturesCleared ? [] : existing.signatures }
-    : { ...fields, requestedBy: stamp(actor), signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null });
+    : { ...fields, requestedBy: stamp(actor), signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null, inventoryItemId: "" });
   const what = existing ? (signaturesCleared ? "edited (signatures removed)" : "edited") : "added";
   db.writeHistory(actor, { kind: "bomLine", id: line._id }, what, `${line.quantity} x ${line.name}`);
   return { line, signaturesCleared };
@@ -118,7 +118,7 @@ function markOrdered(db: MockDb, actor: MockActor, request: ApiRequest) {
 }
 
 function receiveLines(db: MockDb, actor: MockActor, request: ApiRequest) {
-  const items = (Array.isArray(request.items) ? request.items : []) as { lineId?: unknown; quantity?: unknown }[];
+  const items = (Array.isArray(request.items) ? request.items : []) as { lineId?: unknown; quantity?: unknown; inventoryItemId?: unknown }[];
   if (!items.length || items.length > 200) throw new OpsError("bad-request", "Choose between 1 and 200 lines.");
   const lines = items.map((item) => {
     const line = get<Line>(db, "bom_lines", String(item.lineId), "line");
@@ -131,6 +131,7 @@ function receiveLines(db: MockDb, actor: MockActor, request: ApiRequest) {
       receivedQty: line.receivedQty + quantity,
       receivedAt: new Date().toISOString(),
       receivedBy: stamp(actor),
+      inventoryItemId: item.inventoryItemId === undefined ? line.inventoryItemId : text(item.inventoryItemId, "inventory item", true),
     });
     db.writeHistory(actor, { kind: "bomLine", id: line._id }, "received", `${saved.receivedQty} of ${saved.quantity}`);
     return saved;
@@ -177,6 +178,7 @@ function importOrder(db: MockDb, actor: MockActor, request: ApiRequest) {
         receivedQty: l.received ? quantity : 0,
         receivedAt: "",
         receivedBy: null,
+        inventoryItemId: "",
       });
     }
   });
@@ -248,6 +250,15 @@ mockActions({
   },
   markOrdered: { who: "approver", run: (request, actor, db) => markOrdered(db, actor, request) },
   receiveLines: { who: "team", run: (request, actor, db) => receiveLines(db, actor, request) },
+  linkLineToInventory: {
+    who: "team",
+    run: (request, actor, db) => {
+      const line = get<Line>(db, "bom_lines", request.lineId, "line");
+      const saved = db.save<Line>("bom_lines", { ...line, inventoryItemId: text(request.inventoryItemId, "inventory item", true) });
+      db.writeHistory(actor, { kind: "bomLine", id: line._id }, "linked to inventory", line.name);
+      return { line: saved };
+    },
+  },
   importOrder: { who: "lead", run: (request, actor, db) => importOrder(db, actor, request) },
 });
 

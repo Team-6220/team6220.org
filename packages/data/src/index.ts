@@ -36,3 +36,7 @@ export type { Draft } from "./ops/types";
 // Production app data (apps/production): part requests, the tracker, the print queue.
 export * as production from "./production";
 export type { Part, PartRequest, PartStatus, Method as PartMethod, Priority as PartPriority, WorkEntry, PrintDetails } from "./production/types";
+// A small window into Inventory for the other apps: what parts we have, add stock, create a part.
+export * as stock from "./inventory/stock";
+export type { StockItem } from "./inventory/stock";
+export type { ReceiveInto } from "./bom";
