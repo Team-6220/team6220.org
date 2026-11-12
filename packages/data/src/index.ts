@@ -40,3 +40,6 @@ export type { Part, PartRequest, PartStatus, Method as PartMethod, Priority as P
 export * as stock from "./inventory/stock";
 export type { StockItem } from "./inventory/stock";
 export type { ReceiveInto } from "./bom";
+// Cutting parts from Inventory's raw stock (Production's Cut planner).
+export * as cutting from "./inventory/cutting";
+export type { CutPlan, Material, PartToPlan, Reserved, StockPiece } from "./inventory/cutting";

@@ -10,7 +10,8 @@
 import "./mock"; // registers the demo data (only used in demo mode)
 import { logHistory, nextNumber, store } from "../ops";
 import type { Me } from "../ops/types";
-import { byUrgency, newPart, partLabel, STATUS_LABELS } from "./rules";
+import * as cutting from "../inventory/cutting";
+import { byUrgency, cancel, cutWord, markCut, newPart, partLabel, STATUS_LABELS } from "./rules";
 import type { Part, PartRequest } from "./types";
 
 const COLLECTION = "production_parts";
@@ -57,5 +58,43 @@ export async function needsMe(me: Me): Promise<{ claimed: number; pendingSetup: 
   };
 }
 
+// ----- with Inventory's raw stock (the Cut planner) -----
+
+/** After the Cut planner reserved spots: remembers on each part which Inventory cut jobs hold its spots. */
+export async function rememberCutJobs(spots: { partId: string; jobIds: string[]; stock: string }[], me: Me): Promise<void> {
+  for (const spot of spots) {
+    await step(spot.partId, me, (p) => ({ ...p, cutJobIds: spot.jobIds, cutStock: spot.stock }));
+  }
+}
+
+/** True when a part's stock has been planned on Inventory pieces. Parts saved before this existed have no list. */
+export function isPlanned(part: Pick<Part, "cutJobIds">): boolean {
+  return (part.cutJobIds ?? []).length > 0;
+}
+
+/**
+ * Confirm cut. When the part has a reserved spot on Inventory stock, the stock piece becomes what is left of it first
+ * (Inventory's "Mark as cut" rule); then the part is marked cut. Returns a sentence saying what happened.
+ */
+export async function confirmCut(part: Part, me: Me): Promise<string> {
+  let stockNote = "";
+  if (isPlanned(part)) {
+    let left = 0;
+    for (const jobId of part.cutJobIds) left = (await cutting.confirmCut(jobId)).leftovers;
+    stockNote = left
+      ? " Inventory updated to what is left; leftovers are flagged to measure at the next audit."
+      : " Inventory updated: the stock piece was used up.";
+  }
+  const saved = await step(part._id, me, markCut);
+  return `${partLabel(saved)} ${cutWord(saved).toLowerCase()}.${stockNote}`;
+}
+
+/** Cancel a part, giving its reserved spot on the stock back. */
+export async function cancelPart(part: Part, me: Me): Promise<void> {
+  for (const jobId of part.cutJobIds ?? []) await cutting.release(jobId).catch(() => undefined); // already gone is fine
+  await step(part._id, me, (p) => ({ ...cancel(p), cutJobIds: [], cutStock: "" }));
+}
+
 export * from "./rules";
+export { stlSize, type StlSize } from "./stl";
 export type * from "./types";

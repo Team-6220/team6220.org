@@ -1,0 +1,17 @@
+{
+  "name": "@team6220/cut-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Works out where to cut parts from stock: sheets and plates (2D, any outline) and tube or shaft (1D). Plain math, no screens, no database.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.0"
+  }
+}

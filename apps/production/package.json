@@ -10,6 +10,7 @@
     "./production.css": "./src/production.css"
   },
   "dependencies": {
+    "@team6220/cut-engine": "workspace:*",
     "@team6220/data": "workspace:*",
     "@team6220/ui": "workspace:*"
   },

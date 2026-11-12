@@ -96,3 +96,31 @@ describe("Production in demo mode", () => {
     for (const status of ["pending-setup", "ready", "in-progress", "handed-back", "cut"]) expect(statuses).toContain(status);
   });
 });
+
+describe("reading a part's size from an STL file", () => {
+  it("reads text STL and gives the sizes longest first", () => {
+    const text = `solid plate
+facet normal 0 0 1
+ outer loop
+  vertex 0 0 0
+  vertex 8 0 0.25
+  vertex 0 5 0.25
+ endloop
+endfacet
+endsolid plate`;
+    expect(production.stlSize(new TextEncoder().encode(text).buffer)).toEqual({ dims: [8, 5, 0.25], triangles: 1 });
+  });
+
+  it("reads binary STL", () => {
+    const buffer = new ArrayBuffer(84 + 50);
+    const view = new DataView(buffer);
+    view.setUint32(80, 1, true);
+    const corners = [[0, 0, 0], [120, 0, 3], [0, 40, 3]];
+    corners.forEach((c, v) => c.forEach((value, k) => view.setFloat32(84 + 12 + v * 12 + k * 4, value, true)));
+    expect(production.stlSize(buffer)).toEqual({ dims: [120, 40, 3], triangles: 1 });
+  });
+
+  it("refuses a file that isn't STL", () => {
+    expect(() => production.stlSize(new TextEncoder().encode("hello").buffer)).toThrow(/doesn't look like an STL/);
+  });
+});

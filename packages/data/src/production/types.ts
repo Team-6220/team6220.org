@@ -73,6 +73,13 @@ export interface Part extends Item {
   setupNotes: string;
   setupBy: string;
   print: PrintDetails | null;
+  /**
+   * The Inventory cut jobs that reserve this part's spots on stock pieces (one per copy of the part), set by the Cut
+   * planner. Empty when it has not been planned on Inventory stock. Confirm cut uses them to update the stock.
+   */
+  cutJobIds: string[];
+  /** Which stock, for showing on the card: "6061 Aluminum, 1/8\"". */
+  cutStock: string;
   createdAt: string;
 }
 

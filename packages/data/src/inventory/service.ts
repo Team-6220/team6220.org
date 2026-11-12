@@ -1033,6 +1033,8 @@ export function createInventoryService(store: InventoryStore, opts: ServiceOptio
    *   cutJobIds:             planned jobs on that copy being cut now
    *   leftovers:             [{ points }] what remains (worked out in the browser), largest first
    *   reassign:              { jobId: leftoverIndex | -1 } for the OTHER planned jobs on that copy
+   *   flagLeftovers:         mark the leftover pieces "needs check", so the next audit measures them (the Production
+   *                          app does this; Inventory's own screen leaves it off, as the old app did)
    * Quantity 1: the piece's shape becomes the biggest leftover, other leftovers become new pieces, nothing left
    * archives it. Quantity > 1 (identical sheets): quantity goes down by 1 and the leftovers become new pieces.
    */
@@ -1043,6 +1045,7 @@ export function createInventoryService(store: InventoryStore, opts: ServiceOptio
     cutJobIds: string[],
     leftovers: { points?: unknown }[],
     reassign: Record<string, number> | null,
+    flagLeftovers = false,
   ): Promise<WriteResult<{ piece: Row; newPieces: Row[]; jobs: Row[] }>> {
     assertId(pieceId);
     checkIdList(cutJobIds, 500);
@@ -1096,7 +1099,7 @@ export function createInventoryService(store: InventoryStore, opts: ServiceOptio
         createdAt: now,
         updatedAt: now,
         archivedAt: "",
-        needsCheck: false,
+        needsCheck: flagLeftovers,
       });
       deriveShapeFields(r);
       newRows.push(r);
@@ -1107,6 +1110,7 @@ export function createInventoryService(store: InventoryStore, opts: ServiceOptio
       shapes.forEach((s) => leftoverIds.push(makeRow(s)));
     } else if (shapes.length) {
       piece.shape = shapes[0];
+      if (flagLeftovers) piece.needsCheck = true;
       deriveShapeFields(piece);
       leftoverIds.push(pieceId);
       shapes.slice(1).forEach((s) => leftoverIds.push(makeRow(s)));

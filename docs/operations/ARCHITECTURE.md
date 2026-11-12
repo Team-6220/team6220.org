@@ -288,6 +288,13 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 - **PDF:** the cut list and layout print through the browser's print-to-PDF from a print stylesheet. No PDF library
   unless that proves not good enough.
 
+**As built (step 5).** The geometry is a TypeScript port of Inventory's planner (`geometry.ts`, `sheets.ts`,
+`leftovers.ts`) plus a new 1D planner (`linear.ts`). `test/parity.test.ts` runs the old `JsGeometry.html` and the port
+on the same inputs and checks they agree exactly. No packing library was needed. Production reserves spots as
+Inventory's own cut jobs (`inventory_production`) and confirms cuts with Inventory's own `rawCut` rule (through
+`packages/data/src/inventory/cutting.ts`), so there is one rule that changes stock. `rawCut` gained one optional
+argument, `flagLeftovers`, which marks leftovers "needs check" for the next audit.
+
 ## Screens and shared UI
 
 - React 18, `AppLayout`, shared classes from `@team6220/ui` (`t-page`, `t-panel`, `t-button`), app-prefixed class

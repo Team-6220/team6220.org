@@ -22,6 +22,22 @@ export function RequestForm({ projects, forTask, onSubmit }: RequestFormProps) {
   const set = (changes: Partial<PartRequest>) => setDraft({ ...draft, ...changes });
   const setPrint = (changes: NonNullable<PartRequest["print"]>) => set({ print: { ...draft.print, ...changes } });
   const number = (value: string) => Number(value) || 0;
+  const [stlUnit, setStlUnit] = useState<"in" | "mm">("in");
+  const [stlNote, setStlNote] = useState("");
+
+  /** Fills in the size from an STL file: longest side is the length, then width, and the thinnest is the thickness. */
+  async function fromStl(file: File | undefined) {
+    if (!file) return;
+    try {
+      const { dims } = production.stlSize(await file.arrayBuffer());
+      const toIn = stlUnit === "mm" ? 1 / 25.4 : 1;
+      const [length, width, thick] = dims.map((d) => Math.round(d * toIn * 1000) / 1000);
+      set({ length, width, thickness: `${thick}"`, partName: draft.partName || file.name.replace(/\.stl$/i, ""), fileLinks: draft.fileLinks || file.name });
+      setStlNote(`From ${file.name}: ${length} × ${width} × ${thick} in. Check these match the CAD.`);
+    } catch (err) {
+      setStlNote(err instanceof Error ? err.message : "That file couldn't be read.");
+    }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -39,6 +55,20 @@ export function RequestForm({ projects, forTask, onSubmit }: RequestFormProps) {
     <form className="t-panel" onSubmit={submit}>
       <h2>Request a part</h2>
       {draft.taskId && <p className="t-status t-status--ok">This part will be linked to the Icarus task you came from.</p>}
+      <div className="prod__stl">
+        <label className="t-button t-button--quiet">
+          Fill in the size from an STL file
+          <input type="file" accept=".stl" hidden onChange={(e) => void fromStl(e.target.files?.[0])} />
+        </label>
+        <label>
+          exported in{" "}
+          <select value={stlUnit} onChange={(e) => setStlUnit(e.target.value as "in" | "mm")} aria-label="STL units">
+            <option value="in">inches</option>
+            <option value="mm">millimetres</option>
+          </select>
+        </label>
+        {stlNote && <span className="t-hint">{stlNote}</span>}
+      </div>
       <div className="prod__fields">
         <label className="t-field prod__wide">
           Part name (same as in CAD)
