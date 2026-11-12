@@ -1,5 +1,6 @@
 // Main menu. Structure from the team's site review (GitHub issue #69).
 // Clicking a tab opens its page; tabs with `children` also show a dropdown (hover, keyboard focus, or the + button).
+// An item inside a dropdown can have `children` too (a second dropdown, like Apps under Resources).
 import { LOGIN_URL, SUMMER_CAMP_ENABLED } from "../config/site";
 import { APPS, APPS_DASHBOARD } from "./apps";
 import { RESOURCES } from "./resources";
@@ -11,10 +12,15 @@ export interface NavLink {
   external?: boolean;
 }
 
+/** A dropdown item that opens a second dropdown of its own */
+export interface NavGroup extends NavLink {
+  children: NavLink[];
+}
+
 export interface NavTab extends NavLink {
   /** Matches the `page` prop of MainLayout to highlight the current tab */
   id: string;
-  children?: NavLink[];
+  children?: (NavLink | NavGroup)[];
 }
 
 const tabs: (NavTab | false)[] = [
@@ -40,8 +46,8 @@ const tabs: (NavTab | false)[] = [
     href: "/resources",
     children: [
       { label: "Media", href: "/resources/media" },
-      { label: APPS_DASHBOARD.name, href: APPS_DASHBOARD.href },
-      ...APPS.map((a) => ({ label: a.name, href: a.href })),
+      // "Apps" goes to the dashboard and opens a second dropdown with every app.
+      { label: APPS_DASHBOARD.name, href: APPS_DASHBOARD.href, children: APPS.map((a) => ({ label: a.name, href: a.href })) },
       ...RESOURCES.filter((r) => r.menuLabel).map((r) => ({ label: r.menuLabel!, href: r.href, external: r.external })),
     ],
   },

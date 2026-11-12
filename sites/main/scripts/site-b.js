@@ -242,7 +242,8 @@
 
   /* ---- Menu ---- */
   var btn=document.getElementById('menu-btn'),nav=document.getElementById('site-nav');
-  var closeSubs=function(except){nav.querySelectorAll('.has-sub.open').forEach(function(li){if(li!==except){li.classList.remove('open');li.querySelector('.sub-btn').setAttribute('aria-expanded','false')}})};
+  var closeSubs=function(except){nav.querySelectorAll('.has-sub.open').forEach(function(li){if(li!==except){li.classList.remove('open');li.querySelector('.sub-btn').setAttribute('aria-expanded','false')}});
+    nav.querySelectorAll('.sub-group.open').forEach(function(g){g.classList.remove('open');g.querySelector('.sub2-btn').setAttribute('aria-expanded','false')})};
   var closeMenu=function(){nav.classList.remove('open');btn.setAttribute('aria-expanded','false');btn.textContent='MENU';closeSubs()};
   btn.addEventListener('click',function(){var o=nav.classList.toggle('open');btn.setAttribute('aria-expanded',o);btn.textContent=o?'CLOSE':'MENU'});
   nav.querySelectorAll('.has-sub>.sub-btn').forEach(function(b){b.addEventListener('click',function(){var li=b.parentNode,o=!li.classList.contains('open');closeSubs(li);li.classList.toggle('open',o);b.setAttribute('aria-expanded',o)})});
@@ -254,6 +255,11 @@
     li.addEventListener('mouseleave',function(){li.classList.remove('shut');syncSub(li)});
     li.addEventListener('focusin',function(e){if(e.target!==li.querySelector(':scope>a'))li.classList.remove('shut');syncSub(li)});
     li.addEventListener('focusout',function(){setTimeout(function(){if(!li.contains(document.activeElement))li.classList.remove('shut');syncSub(li)},0)})});
+  /* A second dropdown inside a dropdown (Apps under Resources): same pattern, opened by its + button, hover or focus */
+  nav.querySelectorAll('.sub-group').forEach(function(g){var b=g.querySelector('.sub2-btn');
+    b.addEventListener('click',function(){var o=!g.classList.contains('open');g.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});
+    var sync=function(){b.setAttribute('aria-expanded',String(g.classList.contains('open')||!mobileMenu()&&(g.matches(':hover')||g.matches(':focus-within'))))};
+    g.addEventListener('mouseenter',sync);g.addEventListener('mouseleave',sync);g.addEventListener('focusin',sync);g.addEventListener('focusout',function(){setTimeout(sync,0)})});
   document.addEventListener('click',function(e){if(!e.target.closest('.nav')&&!e.target.closest('#menu-btn'))closeSubs()});
   document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;
     if(root.classList.contains('intro-on')){skipIntro();return}

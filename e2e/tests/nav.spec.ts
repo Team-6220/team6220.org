@@ -1,9 +1,10 @@
 // The main menu matches sites/main/data/nav.ts, and each link goes to the right page.
-import { LOGIN, NAV } from "../../sites/main/data/nav";
+import { LOGIN, NAV, type NavGroup, type NavLink } from "../../sites/main/data/nav";
 import { SUMMER_CAMP_ENABLED } from "../../sites/main/config/site";
 import { expect, normPath, settle, sitePath, test } from "../helpers";
 
 const nav = (page: import("@playwright/test").Page) => page.locator("nav#site-nav");
+const isGroup = (c: NavLink | NavGroup): c is NavGroup => "children" in c;
 
 test("the menu lists every tab and dropdown link from nav.ts, in order, plus Log In", async ({ page, collected }) => {
   await page.goto("./");
@@ -11,7 +12,11 @@ test("the menu lists every tab and dropdown link from nav.ts, in order, plus Log
   const expected: string[] = [];
   for (const t of NAV) {
     expected.push(`${t.label}|${t.href}`);
-    for (const c of t.children ?? []) expected.push(`${c.label}${c.external ? " ↗" : ""}|${c.href}`);
+    for (const c of t.children ?? []) {
+      expected.push(`${c.label}${c.external ? " ↗" : ""}|${c.href}`);
+      // A dropdown item can open a second dropdown (Apps under Resources)
+      for (const g of isGroup(c) ? c.children : []) expected.push(`${g.label}${g.external ? " ↗" : ""}|${g.href}`);
+    }
   }
   expected.push(`${LOGIN.label}|${LOGIN.href}`);
   const actual = await nav(page).locator("a").evaluateAll((as) =>
@@ -91,3 +96,19 @@ test("the Summer Camp page exists and works whether or not the switch is on", as
   expect(new URL(page.url()).pathname).toMatch(/\/summer-camp\/$/);
   expect(collected.errors).toEqual([]);
 });
+
+// A second dropdown inside a dropdown (Apps under Resources): hover the tab, then the item, then pick a link.
+for (const tab of NAV) {
+  for (const group of (tab.children ?? []).filter(isGroup)) {
+    for (const item of group.children) {
+      test(`"${tab.label}" > "${group.label}" > "${item.label}" opens ${item.href}`, async ({ page }) => {
+        await page.goto("./");
+        await settle(page);
+        await nav(page).locator(`li[data-page="${tab.id}"]`).hover();
+        await nav(page).locator(`li[data-page="${tab.id}"] li.sub-group`, { hasText: group.label }).hover();
+        await nav(page).locator(`li[data-page="${tab.id}"] ul.sub2 a`, { hasText: item.label }).first().click();
+        await page.waitForURL((u) => normPath(sitePath(u.pathname)) === normPath(item.href));
+      });
+    }
+  }
+}

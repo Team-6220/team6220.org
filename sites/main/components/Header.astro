@@ -23,7 +23,12 @@ const here = (href: string) => (href === path ? { "aria-current": "page" as cons
       <ul class="menu">
         {NAV.map((t) => t.children ? (
           <li class:list={["has-sub", { active: t.id === page }]} data-page={t.id}><a href={t.href} {...here(t.href)}>{t.label}</a><button class="sub-btn" type="button" aria-expanded="false" aria-controls={`sub-${t.id}`} aria-label={`${t.label} pages`}><span class="plus" aria-hidden="true">+</span></button>
-            <ul class="sub" id={`sub-${t.id}`}>{t.children.map((c) => (
+            <ul class="sub" id={`sub-${t.id}`}>{t.children.map((c) => "children" in c && c.children ? (
+              <li class="sub-group"><a href={c.href} {...here(c.href)}>{c.label}</a><button class="sub2-btn" type="button" aria-expanded="false" aria-controls={`sub-${t.id}-${c.label.toLowerCase()}`} aria-label={`${c.label} pages`}><span class="plus" aria-hidden="true">+</span></button>
+                <ul class="sub2" id={`sub-${t.id}-${c.label.toLowerCase()}`}>{c.children.map((g) => (
+                  <li><a href={g.href} {...(g.external ? ext : here(g.href))}>{g.label}{g.external && " ↗"}</a></li>
+                ))}</ul></li>
+            ) : (
               <li><a href={c.href} {...(c.external ? ext : here(c.href))}>{c.label}{c.external && " ↗"}</a></li>
             ))}</ul></li>
         ) : (
