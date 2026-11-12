@@ -42,8 +42,8 @@ that project.
 | Leads (subteam leads, captains) | Plan: milestones, target dates, templates, other people's tasks |
 | Designers | Submit parts (from Onshape, an STL or by hand), plan cuts |
 | Manufacturers | Claim parts, mark them cut or done; CNC-trained members set up Shapeoko jobs |
-| Mentors | Sign BOM lines (two mentors per line) |
-| Supervisors / purchasers (parents, boosters) | Place orders, mark them ordered, record totals |
+| Mentors and Boosters | Approve BOM lines (two different people per line) and buy: place orders, mark them ordered, record totals |
+| Supervisors | View BOMs only |
 | Apollo (the team's Hermes agent) | Reads and writes tasks, parts and BOMs through the API; posts reminders |
 
 ## The three apps at a glance
@@ -52,7 +52,7 @@ that project.
 | --- | --- | --- | --- |
 | **Tasks** | `/apps/tasks` | The Gantt chart sheets | Tasks (`t42`), subtasks (`t42.1`), projects (`p10`), relations, Gantt view with countdown, target dates, season templates, events from FIRST / The Blue Alliance, two-way GitHub issue sync, Apollo API |
 | **Production** | `/apps/production` | Production Form, Production List, the to-do doc, Inventory's cut planner | Design side (parts request, Onshape / STL import, cut planner) and Manufacturing side (tracker, Shapeoko pending list, 3D print queue), stock updates on "cut" |
-| **BOM** | `/apps/bom` | The BOM sheets | Orders with vendor sections, two-mentor approval (single, range and whole-section), ordered / received, receiving into Inventory, remembered prices, saved lists, CSV export in today's exact format, import of old BOMs, Apollo API |
+| **BOM** | `/apps/bom` | The BOM sheets | Orders with vendor sections, two-signature approval by mentors or boosters (single, range and whole-section), ordered / received, receiving into Inventory, remembered prices, saved lists, CSV export in today's exact format, import of old BOMs, Apollo API |
 
 ## How they connect
 
@@ -91,8 +91,9 @@ Answers from the team account in the planning session. These are settled unless 
 3. **Cut optimizer:** "Ryan's version" is a free cut-list website (like opticutter.com), not team code. Reuse the
    planner already in Inventory where it helps and prefer an open-source library over writing our own.
 4. **Real permission checks now, through an Apps Script backend** (the Attendance pattern), not waiting for Phase 2.
-5. **BOM approval:** two mentors per line, with ways to approve many at once: drag over lines, shift-click from line
-   A to line B, or approve a whole vendor section.
+5. **BOM approval:** two different people per line, each a Mentor or a Booster, who can also place the order.
+   Supervisors can only view. Many lines can be approved at once: drag over lines, shift-click from line A to
+   line B, or approve a whole vendor section.
 6. **BOM and Google Sheets:** the website is the source of truth. Export in the exact current format and import old
    BOMs. No live sync.
 7. **Tasks first release** includes everything in #141: core tasks and Gantt, season templates, event
@@ -123,7 +124,7 @@ Each step is useful by itself and is its own set of pull requests. Details are i
 
 | Step | What | Why this order |
 | --- | --- | --- |
-| 0 | Mentor, Supervisor, Lead and CNC badges (#156); the `ops-api` backend skeleton; the shared `projects` and people pickers | Everything else needs them |
+| 0 | Mentor, Booster, Supervisor, Lead and CNC badges (#156); the `ops-api` backend skeleton; the shared `projects` and people pickers | Everything else needs them |
 | 1 | **BOM** core: orders, lines, approval, ordered/received, export, import of 2026 BOMs | Smallest app, replaces a sheet mentors use every week, proves the approval backend |
 | 2 | **Tasks** core: tasks, projects, relations, Gantt, target dates, templates | Kickoff is in January; the 2027 Gantt sheet is already empty and waiting |
 | 3 | **Production** tracker and parts request (replaces the Form and List) | Needed once build season parts start |
@@ -158,5 +159,5 @@ These did not block the plan, but each needs an answer before its step is built.
 | 6 | Which subteams should the Gantt have rows for? (The sheets show Programming; the plan assumes the subteams in the Team Structure doc.) | Tasks templates |
 | 7 | Should the Gantt chart, or a read-only version of it, be visible to parents or the public? The plan assumes Team Members only | Tasks |
 | 8 | Where does Apollo run and how should it hold its API key? | Step 6 |
-| 9 | Who may see BOM prices and totals: every Team Member (as with the sheets today) or only mentors, supervisors and leads? The plan assumes every Team Member | BOM |
+| 9 | Who may see BOM prices and totals: every Team Member (as with the sheets today) or only mentors, boosters, supervisors and leads? The plan assumes every Team Member | BOM |
 | 10 | Should old seasons' Gantt charts and production trackers be imported, or only linked? The plan imports the 2026 BOMs and links the rest | Steps 1 to 3 |

@@ -163,10 +163,10 @@ the same number or both become "the second signature".
 | --- | --- | --- |
 | Shared | `nextNumber`, `logHistory`, `saveProject` | Team Member; Lead for projects |
 | Tasks | `saveMilestone`, `saveEvent`, `saveSeason`, `saveTemplate`, `startSeasonFromTemplate` | Lead |
-| BOM | `saveLine`, `removeLine` | Team Member, only while the line is unsigned |
-| BOM | `signLines(lineIds)` | Mentor. Skips lines already signed by this mentor; the confirm total is recomputed on the server |
-| BOM | `approveSection`, `markOrdered`, `setFinalTotal` | Supervisor |
-| BOM | `receiveLines([{lineId, qty, inventory: add / create / none}])` | Team Member. Writes `bom_lines` and Inventory in one request |
+| BOM | `saveLine`, `removeLine` | Team Member, Mentor or Booster, only while the line is unsigned |
+| BOM | `signLines(lineIds)` | Mentor or Booster. Skips lines already signed by this person; the confirm total is recomputed on the server |
+| BOM | `approveSection`, `markOrdered`, `setFinalTotal` | Mentor or Booster |
+| BOM | `receiveLines([{lineId, qty, inventory: add / create / none}])` | Team Member, Mentor or Booster. Writes `bom_lines` and Inventory in one request |
 | BOM | `reopenLine`, `saveBom`, `saveOrder` | Lead |
 | Production | `releaseShapeokoJob` | CNC |
 | Outside APIs | `lookupEvent`, `listTeamEvents`, `readOnshapeParts`, `syncGithubNow` | Team Member or Lead; keys stay in Script Properties |
@@ -178,8 +178,9 @@ New Wix badges, added to `BADGES` in `packages/data/src/config.ts` and to the sc
 
 | Badge | Used for | Issue |
 | --- | --- | --- |
-| `Mentor` | Signing BOM lines | #156 |
-| `Supervisor` | Approval to Order, marking ordered | #156 |
+| `Mentor` | Approving (signing lines, Approval to Order) and buying (marking ordered, totals) in BOM | #156 |
+| `Booster` | The same BOM rights as Mentor | new (team decision, Nov 12, 2026) |
+| `Supervisor` | View only in BOM: no adding, signing, approving, ordering or receiving. Used by other apps (#156) | #156 |
 | `Lead` | Planning in Tasks, managing BOMs and projects | new, **Proposed** name |
 | `CNC` | Releasing Shapeoko jobs | new, **Proposed** name |
 
@@ -283,7 +284,7 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
   choice, template date offsets. `packages/cut-engine` has its own tests with fixed inputs and expected waste.
 - `ops-api` is tested the way attendance-api is: the `.gs` files run in Node with fake Apps Script services.
 - BOM export has a "golden file" test against an imported 2026 order.
-- One Playwright path per app in `e2e/` ([E2E-TESTS.md](../E2E-TESTS.md)): sign two lines as two mentors; start a
+- One Playwright path per app in `e2e/` ([E2E-TESTS.md](../E2E-TESTS.md)): sign two lines as a mentor and a booster; start a
   season from a template; request, claim and confirm-cut a part.
 
 ## Build order
@@ -291,7 +292,7 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 Each bullet is roughly one pull request. Steps match the [overview](README.md#build-order-proposed).
 
 **Step 0: foundations**
-- Badges in Wix and `config.ts` (#156, plus Lead and CNC).
+- Badges in Wix and `config.ts` (#156, plus Booster, Lead and CNC).
 - `ops-api` skeleton: token and badge check, Wix API key, `nextNumber`, `logHistory`, tests, deploy doc.
 - `packages/data/src/ops` (projects, people, links, history, mock) and the shared UI pickers.
 

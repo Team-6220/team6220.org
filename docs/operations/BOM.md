@@ -40,12 +40,14 @@ and is then named after it with its own count: `Summer Bot 1`, `Summer Bot 2`. O
 | Who | Can |
 | --- | --- |
 | Team Member | See BOMs; add, edit and remove lines that are not yet signed; comment; mark lines received |
-| Mentor (badge, #156) | Sign lines. Two **different** mentors are needed per line |
-| Supervisor (badge, #156) | Give "Approval to Order", mark vendor sections ordered, enter order date and the final total |
+| Mentor (badge, #156) or Booster (badge) | **Approve:** sign lines (two **different** people are needed per line) and give "Approval to Order". **Buy:** mark vendor sections ordered, enter the order date and the final total |
+| Supervisor (badge, #156) | View only. A supervisor cannot add or change lines, sign, approve, order or receive |
 | Lead | Create BOMs and orders, edit saved lists, reopen a signed line |
 
-Mentor and Supervisor are new Wix badges and give no other permissions (#156). These checks are real: they run in
-the backend, not only in the browser ([ARCHITECTURE.md](ARCHITECTURE.md#who-can-do-what)).
+Mentors and Boosters have exactly the same rights here; below, "approver" means either. Mentor, Supervisor and
+Booster are new Wix badges and give no other permissions (#156 covers the first two; Booster was added on
+Nov 12, 2026). If a person holds Supervisor together with another badge, the other badge decides what they can do
+(**Proposed**). These checks are real: they run in the backend, not only in the browser ([ARCHITECTURE.md](ARCHITECTURE.md#who-can-do-what)).
 
 ## A line's life
 
@@ -56,15 +58,15 @@ Draft ─▶ Signed 1/2 ─▶ Signed 2/2 (approved) ─▶ Ordered ─▶ Recei
 ```
 
 - A line needs a name, a link (or "in person"), a unit cost and a quantity before it can be signed.
-- A mentor cannot sign the same line twice. A mentor who added a line may sign it; the second signature must be
+- An approver cannot sign the same line twice. An approver who added a line may sign it; the second signature must be
   someone else.
-- Only approved lines can be marked Ordered. A vendor section also needs a supervisor's Approval to Order.
+- Only approved lines can be marked Ordered. A vendor section also needs an approver's Approval to Order.
 - Editing a signed line clears its signatures and says so before saving, so nobody approves one price and orders
   another.
 
 ### Signing many lines at once
 
-Mentors rarely sign one line at a time, so (decision 5):
+Approvers rarely sign one line at a time, so (decision 5):
 
 - **Drag** down the signature column to select a run of lines.
 - **Click** one line, then **shift-click** another to select everything between them.
@@ -72,11 +74,11 @@ Mentors rarely sign one line at a time, so (decision 5):
 - Then one **Sign selected (12 lines, $431.20)** button with a confirm step that lists the lines and the total.
 - On a phone: long-press to start selecting, then tap or drag.
 
-Lines the mentor has already signed, or that are not ready, are skipped and counted in the confirm step.
+Lines the approver has already signed, or that are not ready, are skipped and counted in the confirm step.
 
 ### Ordering
 
-The supervisor's view of a vendor section has:
+The buyer's view of a vendor section (a Mentor or Booster) has:
 
 - **Open all links** for that vendor (#147), and a copyable list of part numbers and quantities.
 - A short checklist for whoever is ordering, including future booster volunteers (#147): the options (size, color,
@@ -117,11 +119,11 @@ how many units to add.
 
 - **Export** one order or a whole BOM as CSV or XLSX in **exactly today's layout**: the same columns in the same
   order, vendor heading rows, the Order Date and Approval to Order cells, Store Subtotal, Store Total and the grand
-  total, with one tab per order in the XLSX. Signatures export as the mentors' names ("Tamas V"), as in the sheets.
+  total, with one tab per order in the XLSX. Signatures export as the signers' names ("Tamas V"), as in the sheets.
   A test compares the export of an imported 2026 BOM with the original sheet.
 - **Import** an existing BOM sheet (downloaded as XLSX or CSV): the importer reads tabs as orders and heading rows
   as vendors, shows what it understood, and saves after a confirm step. Imported signatures are kept as text and
-  marked "imported", since they were not made by a signed-in mentor.
+  marked "imported", since they were not made by a signed-in approver.
 - The website is the source of truth. There is no live sync with Google Sheets (decision 6).
 
 ## Connections
@@ -146,9 +148,10 @@ sync, vendor accounts or payment of any kind. The app never stores card numbers 
 
 ## Done means
 
-- A mentor can sign thirty lines in one action by dragging or shift-clicking, and cannot provide both signatures
-  for a line.
-- A line cannot be marked Ordered without two mentor signatures, even by someone calling the backend directly.
+- A Supervisor can open every BOM and cannot change anything, even by calling the backend directly.
+- A mentor or booster can sign thirty lines in one action by dragging or shift-clicking, and cannot provide both
+  signatures for a line.
+- A line cannot be marked Ordered without two signatures from different mentors or boosters, even by someone calling the backend directly.
 - Receiving a linked line raises the Inventory count with no second entry.
 - The exported file for an imported 2026 order matches the original sheet's layout cell for cell.
 - Someone who has never ordered for the team can place a vendor order using only the app's checklist.
