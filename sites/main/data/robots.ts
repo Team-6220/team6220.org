@@ -31,8 +31,7 @@ export const ROBOTS: Robot[] = [
     year: "2026",
     game: "REBUILT",
     name: "Goober",
-    finish: "CA District playoffs · Southern State Championship",
-    homeFinish: "CA District playoffs · State Championship",
+    finish: "CA District Los Angeles Event · 3rd place",
     events: [
       "CA District Orange County Event",
       "CA District Los Angeles Event",
