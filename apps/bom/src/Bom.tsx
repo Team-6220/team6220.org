@@ -7,6 +7,23 @@ import { OrderView } from "./OrderView";
 
 type Message = { tone: "ok" | "error"; text: string } | null;
 
+// The chosen look is remembered on this device. If storage is blocked, the default is used.
+const VIEW_KEY = "team6220.bom.view";
+function readSetting(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function saveSetting(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // not remembered: fine
+  }
+}
+
 export default function Bom() {
   const [viewer, setViewer] = useState<OpsViewer | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -18,6 +35,9 @@ export default function Bom() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [newOrderOpen, setNewOrderOpen] = useState(false);
+  // Two looks: a compact table like the sheet (the default), or bigger text that is easier on a phone.
+  const [view, setView] = useState<"table" | "large">(() => (readSetting(VIEW_KEY) === "large" ? "large" : "table"));
+  const chooseView = (next: "table" | "large") => (setView(next), saveSetting(VIEW_KEY, next));
   // Opened from "Add to BOM" in another app: /apps/bom?add=<item name>&qty=<how many>
   const [toAdd, setToAdd] = useState(() => {
     const query = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
@@ -78,7 +98,7 @@ export default function Bom() {
       onSignIn={() => void auth.login("/apps/bom")}
     >
       {me && (
-        <div className="bom">
+        <div className={view === "table" ? "bom bom--table" : "bom"}>
           <div className="bom__bar">
             <label className="t-field">
               BOM
@@ -91,6 +111,9 @@ export default function Bom() {
                 ))}
               </select>
             </label>
+            <button className="t-button t-button--quiet" type="button" onClick={() => chooseView(view === "table" ? "large" : "table")}>
+              {view === "table" ? "Bigger text" : "Compact table"}
+            </button>
             {me.roles.lead && (
               <button
                 className="t-button t-button--quiet"

@@ -170,6 +170,15 @@ describe.each([
     expect((await receive(1)).lines[0]).toMatchObject({ receivedQty: 3 });
   });
 
+  it("adds pasted rows all at once, or none of them if one is bad", async () => {
+    const row = (name: string, unitCost: unknown, quantity: unknown) => ({ name, link: "", unitCost, quantity, comments: "" });
+    expect(await b.send("supervisor", "addLines", { sectionId, lines: [row("A", 1, 1)] })).toMatchObject({ ok: false, error: "forbidden" });
+    const good = await b.send("member", "addLines", { sectionId, lines: [row("Bearing", 2.5, 4), row("Belt", 9.99, 1)] });
+    expect(good.lines).toMatchObject([{ name: "Bearing", quantity: 4, signatures: [] }, { name: "Belt", unitCost: 9.99 }]);
+    const bad = await b.send("member", "addLines", { sectionId, lines: [row("Fine", 1, 1), row("Broken", 1, 0)] });
+    expect(bad).toMatchObject({ ok: false, error: "bad-request", message: expect.stringContaining("Row 2") });
+  });
+
   it("remembers which Inventory part a received line refills", async () => {
     const line = await addLine("Zip ties", 12.99, 3);
     expect(line.inventoryItemId).toBe("");

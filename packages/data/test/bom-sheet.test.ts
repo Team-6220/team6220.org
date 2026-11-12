@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { orderToSheetRows, toCsv } from "../src/bom/export";
 import { parseCsv, parseSheetRows } from "../src/bom/import";
+import { linesToTsv, parsePastedRows } from "../src/bom/paste";
 import { cantSign, lineState, orderName, totalCost } from "../src/bom/rules";
 import type { Line, OrderDetail, Section, Stamp } from "../src/bom/types";
 
@@ -95,5 +96,25 @@ describe("BOM sheet layout", () => {
     expect(() => parseSheetRows([["Name", "Email"]])).toThrow(/doesn't look like a BOM sheet/);
     const read = parseSheetRows([orderToSheetRows(detail)[0], ["Amazon"], ["Mystery item", "", "call for price", "2"]]);
     expect(read.warnings.join(" ")).toContain("Mystery item");
+  });
+});
+
+describe("copying and pasting rows", () => {
+  it("copies lines as tab-separated text in the sheet's column order", () => {
+    const text = linesToTsv([line({ name: "Zip\tties", link: "https://a.example/1", unitCost: 12.99, quantity: 3, signatures: [stamp("Tamas V")], comments: "gold" })]);
+    expect(text.split("\t")).toEqual(["Zip ties", "https://a.example/1", "$12.99", "3", "$38.97", "Tamas V", "", "FALSE", "FALSE", "", "", "", "gold"]);
+  });
+
+  it("pastes rows copied from the sheet, from this app, or a short list", () => {
+    const fromApp = linesToTsv([line({ name: "NEO Vortex", unitCost: 90, quantity: 4, comments: "shooter" })]);
+    const fromSheet = "Item Name\tLink\tItem Cost\tQty\nAmazon\t\t\t\nGloves\thttps://a.example/2\t$1,017.98\t1\t$1,017.98\tTamas V\tLaura H\tTRUE\tTRUE";
+    const shortList = "Bearing\t\t2.5\t4\r\nMystery\t\tcall\t2\n\n";
+    const pasted = parsePastedRows([fromApp, fromSheet, shortList].join("\n"));
+    expect(pasted.lines).toEqual([
+      { name: "NEO Vortex", link: "", vendorPartNumber: "", unitCost: 90, quantity: 4, comments: "shooter" },
+      { name: "Gloves", link: "https://a.example/2", vendorPartNumber: "", unitCost: 1017.98, quantity: 1, comments: "" },
+      { name: "Bearing", link: "", vendorPartNumber: "", unitCost: 2.5, quantity: 4, comments: "" },
+    ]);
+    expect(pasted.skipped).toEqual(['"Mystery": the cost or quantity isn\'t a number']);
   });
 });

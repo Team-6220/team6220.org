@@ -137,6 +137,35 @@ function saveLine_(body, actor) {
   return { line: saved, signaturesCleared: signaturesCleared };
 }
 
+/**
+ * { sectionId, lines: [{ name, link, vendorPartNumber, unitCost, quantity, comments }] } -> { lines }
+ * Adds many new lines to one vendor section in one request (pasting rows from a spreadsheet).
+ * Every row is checked before any is saved, so a bad row never leaves half a paste behind.
+ */
+function addLines_(body, actor) {
+  const inputs = Array.isArray(body.lines) ? body.lines : [];
+  if (!inputs.length || inputs.length > 100) throw apiError_("bad-request", "Paste between 1 and 100 rows at a time.");
+  const section = getRecord_(COLLECTION_SECTIONS, body.sectionId, "vendor section");
+  const cleaned = inputs.map(function (input, i) {
+    const quantity = Math.floor(Number(input.quantity));
+    if (!(quantity >= 1 && quantity <= 100000)) throw apiError_("bad-request", "Row " + (i + 1) + ": quantity must be 1 or more.");
+    return {
+      sectionId: section._id,
+      name: text_(input.name, "item name in row " + (i + 1), 300),
+      link: text_(input.link, "link", 2000, true),
+      vendorPartNumber: text_(input.vendorPartNumber, "part number", 80, true),
+      unitCost: money_(input.unitCost, "Row " + (i + 1) + ": item cost"),
+      quantity: quantity,
+      comments: text_(input.comments, "comments", 500, true),
+      requestedBy: person_(actor),
+      signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null, inventoryItemId: "",
+    };
+  });
+  const lines = cleaned.map(function (line) { return wixInsert_(COLLECTION_LINES, line); });
+  writeHistory_(actor, { kind: "bomSection", id: section._id }, "pasted lines", lines.length + " into " + section.vendor);
+  return { lines: lines };
+}
+
 /** { lineId } -> {}. Only a line nobody has signed can be removed. */
 function removeLine_(body, actor) {
   const line = getRecord_(COLLECTION_LINES, body.lineId, "line");
