@@ -174,13 +174,51 @@ function Events({ lead, data, season, run }: Pick<PlanProps, "data" | "season" |
   const [displayName, setDisplayName] = useState("");
   const [startDate, setStart] = useState("");
   const [endDate, setEnd] = useState("");
+  // Filled in by "Look up": the official name, location and where the dates came from.
+  const [found, setFound] = useState<{ officialName: string; location: string } | null>(null);
+  const [lookupMessage, setLookupMessage] = useState("");
+  // "Our events this year" from The Blue Alliance, to add with one click.
+  const [year, setYear] = useState(() => Number((season?.endDate || icarus.today()).slice(0, 4)));
+  const [teamList, setTeamList] = useState<Awaited<ReturnType<typeof icarus.teamEvents>> | null>(null);
+
+  /** Adds an event, and shows it on the chosen season's chart. */
+  const addEvent = (event: Parameters<typeof icarus.savePlanning<"event">>[1]) =>
+    run(async () => {
+      const created = await icarus.savePlanning("event", event);
+      if (season) await icarus.savePlanning("season", { ...season, eventIds: [...season.eventIds, created._id] });
+      return `Added ${created.displayName}.`;
+    });
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    void run(async () => {
-      const created = await icarus.savePlanning("event", { code, displayName, officialName: "", startDate, endDate: endDate || startDate, location: "", source: "manual" });
-      if (season) await icarus.savePlanning("season", { ...season, eventIds: [...season.eventIds, created._id] });
-    }).then(() => (setCode(""), setDisplayName("")));
+    void addEvent({
+      code, displayName, officialName: found?.officialName ?? "", startDate, endDate: endDate || startDate, location: found?.location ?? "",
+      source: found ? "tba" : "manual",
+    }).then(() => (setCode(""), setDisplayName(""), setFound(null), setLookupMessage("")));
   };
+
+  async function lookUp() {
+    try {
+      const event = await icarus.lookupEvent(code);
+      setFound({ officialName: event.officialName, location: event.location });
+      setDisplayName((name) => name || event.displayName);
+      setStart(event.startDate);
+      setEnd(event.endDate);
+      setLookupMessage(`Found: ${event.officialName}, ${event.location}, ${event.startDate} to ${event.endDate}. Change the display name if the team calls it something else.`);
+    } catch (err) {
+      setFound(null);
+      setLookupMessage(err instanceof Error ? err.message : "That event couldn't be looked up. Type the dates in by hand.");
+    }
+  }
+
+  async function loadTeamEvents() {
+    try {
+      setTeamList(await icarus.teamEvents(year));
+    } catch (err) {
+      setTeamList(null);
+      setLookupMessage(err instanceof Error ? err.message : "The team's events couldn't be loaded.");
+    }
+  }
   /** Shows or hides an event on the chosen season's chart. */
   const toggle = (eventId: string) =>
     season && run(async () => void (await icarus.savePlanning("season", {
@@ -190,7 +228,10 @@ function Events({ lead, data, season, run }: Pick<PlanProps, "data" | "season" |
   return (
     <section className="t-panel">
       <h2>Events</h2>
-      <p className="t-muted">Events are known by their code and shown by the name the team gives them. Looking codes up automatically comes later; for now type the dates.</p>
+      <p className="t-muted">
+        Events are known by their code (like 2027casd) and shown by the name the team gives them. Look a code up on The Blue
+        Alliance, or type the dates for a local scrimmage. Dates of looked-up events are refreshed every day.
+      </p>
       <ul className="icr__plain">
         {data.events.length === 0 && <li className="t-muted">None yet.</li>}
         {data.events.map((event) => (
@@ -213,7 +254,12 @@ function Events({ lead, data, season, run }: Pick<PlanProps, "data" | "season" |
           <div className="icr__fields">
             <label className="t-field">
               Event code
-              <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="2027casd, or a made-up one" required />
+              <span className="icr__inline">
+                <input value={code} onChange={(e) => (setCode(e.target.value), setFound(null))} placeholder="2027casd, or a made-up one" required />
+                <button className="t-button t-button--quiet" type="button" disabled={!/^\d{4}\w+$/.test(code.trim())} onClick={() => void lookUp()}>
+                  Look up
+                </button>
+              </span>
             </label>
             <label className="t-field">
               Display name
@@ -228,8 +274,40 @@ function Events({ lead, data, season, run }: Pick<PlanProps, "data" | "season" |
               <input type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEnd(e.target.value)} />
             </label>
           </div>
+          {lookupMessage && <p className="t-hint">{lookupMessage}</p>}
           <button className="t-button" type="submit">Add event{season ? ` to ${season.name}` : ""}</button>
         </form>
+      )}
+      {lead && (
+        <div className="icr__team-events">
+          <h3>Our events on The Blue Alliance</h3>
+          <div className="icr__buttons">
+            <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Year" className="icr__qty" />
+            <button className="t-button t-button--quiet" type="button" onClick={() => void loadTeamEvents()}>
+              Show Team 6220's {year} events
+            </button>
+          </div>
+          {teamList && teamList.length === 0 && <p className="t-muted">The Blue Alliance lists no {year} events for the team yet.</p>}
+          {teamList && teamList.length > 0 && (
+            <ul className="icr__plain">
+              {teamList.map((event) => {
+                const already = data.events.some((e) => e.code === event.code);
+                return (
+                  <li key={event.code}>
+                    <strong>{event.officialName}</strong> <span className="t-muted">({event.code}) {event.location} · {event.startDate} to {event.endDate}</span>{" "}
+                    {already ? (
+                      <span className="t-muted">added</span>
+                    ) : (
+                      <button className="t-button t-button--quiet icr__small" type="button" onClick={() => void addEvent(event)}>
+                        Add
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
     </section>
   );

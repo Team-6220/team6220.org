@@ -144,6 +144,16 @@ export async function savePlanning<K extends keyof PlanningRecords>(kind: K, rec
   return (await callOps<{ record: PlanningRecords[K] }>("saveIcarusRecord", { kind, record })).record;
 }
 
+/** Looks an event up on The Blue Alliance by its code ("2027casd"). Nothing is saved. */
+export async function lookupEvent(code: string): Promise<Draft<TeamEvent>> {
+  return (await callOps<{ event: Draft<TeamEvent> }>("lookupEvent", { code })).event;
+}
+
+/** Every event the team is registered for in a year, from The Blue Alliance. Nothing is saved. */
+export async function teamEvents(year: number): Promise<Draft<TeamEvent>[]> {
+  return (await callOps<{ events: Draft<TeamEvent>[] }>("listTeamEvents", { year })).events;
+}
+
 export async function removePlanning(kind: keyof PlanningRecords, id: string): Promise<void> {
   await callOps("removeIcarusRecord", { kind, id });
 }

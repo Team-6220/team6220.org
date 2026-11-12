@@ -1,7 +1,7 @@
 // Demo backend for Icarus: made-up data, and the same rules for planning records as
 // backend/apps-script/ops-api/Icarus.gs. Change both together.
 import { mockActions, mockWantedSubteams, seedMock, type MockDb } from "../ops/mock";
-import { OpsError } from "../ops/types";
+import { OpsError, type Draft } from "../ops/types";
 import { addDays, isDate } from "./dates";
 import { BUILT_IN_TEMPLATES, previewTemplate } from "./templates";
 import type { Milestone, Season, Task, TeamEvent } from "./types";
@@ -40,7 +40,26 @@ function existing(db: MockDb, collection: string, id: unknown, what: string) {
   return row;
 }
 
+/** Made-up events standing in for The Blue Alliance in demo mode (codes start with "demo" so they can't be confused). */
+function demoTbaEvents(year: number): Draft<TeamEvent>[] {
+  return [
+    { code: `${year}demosd`, officialName: "San Diego Regional (demo)", displayName: "San Diego Regional (demo)", startDate: `${year}-03-04`, endDate: `${year}-03-07`, location: "Del Mar, CA", source: "tba" },
+    { code: `${year}demola`, officialName: "Los Angeles Regional (demo)", displayName: "Los Angeles Regional (demo)", startDate: `${year}-03-25`, endDate: `${year}-03-28`, location: "Los Angeles, CA", source: "tba" },
+  ];
+}
+
 mockActions({
+  lookupEvent: {
+    who: "team",
+    run: (request) => {
+      const code = String(request.code ?? "").trim().toLowerCase();
+      if (!/^\d{4}[a-z0-9]+$/.test(code)) throw new OpsError("bad-request", "Event codes look like 2027casd: the year, then the event's short code.");
+      const event = demoTbaEvents(Number(code.slice(0, 4))).find((e) => e.code === code);
+      if (!event) throw new OpsError("bad-request", `The Blue Alliance has no event called ${code}. (Demo: try ${code.slice(0, 4)}demosd.)`);
+      return { event };
+    },
+  },
+  listTeamEvents: { who: "team", run: (request) => ({ events: demoTbaEvents(Math.floor(Number(request.year))) }) },
   saveIcarusRecord: {
     who: "lead",
     run: (request, actor, db) => {

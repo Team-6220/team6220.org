@@ -17,14 +17,18 @@
  *   Shared.gs    numbers, history, projects, people and subteam badges
  *   Bom.gs       BOM: orders, lines, signatures, ordering, receiving
  *   Icarus.gs    Icarus: milestones, events, seasons and templates (tasks are written straight to Wix)
+ *   Events.gs    looking events up on The Blue Alliance, and the daily refreshEvents trigger
  *
  * Script Properties (Project Settings > Script Properties). See README.md for where each comes from.
  *   WIX_API_KEY         required. Wix API key with "Wix Data" and "Manage Badges" permissions. SECRET.
  *   WIX_SITE_ID         required. The site's ID.
  *   WIX_CLIENT_ID       optional. Headless client ID (public). Defaults to the team's.
  *   APOLLO_KEY_SHA256   optional. SHA-256 (hex) of Apollo's API key. Without it Apollo cannot call anything.
+ *   TBA_KEY             optional. The Blue Alliance read key, for looking events up. SECRET.
+ *   TEAM_NUMBER         optional. Defaults to 6220.
  *
- * Functions ending in "_" are private in Apps Script. The only entry points are doPost, doGet and checkSetup.
+ * Functions ending in "_" are private in Apps Script. The entry points are doPost, doGet, checkSetup and the
+ * time-trigger functions (refreshEvents).
  */
 
 /**
@@ -58,6 +62,8 @@ function actions_() {
     // Icarus (Icarus.gs)
     saveIcarusRecord: { who: "lead", run: saveIcarusRecord_ },
     removeIcarusRecord: { who: "lead", run: removeIcarusRecord_ },
+    lookupEvent: { who: "team", agent: true, run: lookupEvent_ },
+    listTeamEvents: { who: "team", agent: true, run: listTeamEvents_ },
   };
 }
 

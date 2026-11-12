@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 // Apps Script loads every file into one global scope, in this order.
-const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs"].map((name) =>
+const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs", "Events.gs"].map((name) =>
   readFileSync(fileURLToPath(new URL(`../../../../backend/apps-script/ops-api/${name}`, import.meta.url)), "utf8"),
 );
 const CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
@@ -32,13 +32,31 @@ export interface Member {
 }
 type Row = Record<string, unknown> & { _id: string };
 
+/** Made-up events, in The Blue Alliance's "simple" shape. Tests can change them (for example a date) to see a refresh. */
+export interface TbaEvent {
+  key: string;
+  name: string;
+  event_code: string;
+  city: string;
+  state_prov: string;
+  start_date: string;
+  end_date: string;
+  year: number;
+}
+
 export function makeScript(members: Record<string, Member>) {
   const props = new Map<string, string>([
     ["WIX_API_KEY", API_KEY],
     ["WIX_SITE_ID", "site-1"],
     ["APOLLO_KEY_SHA256", sha(APOLLO_KEY)],
+    ["TBA_KEY", "tba-read-key"],
   ]);
   const cache = new Map<string, string>();
+  const tbaEvents: TbaEvent[] = [
+    { key: "2027casd", name: "San Diego Regional", event_code: "casd", city: "Del Mar", state_prov: "CA", start_date: "2027-03-04", end_date: "2027-03-07", year: 2027 },
+    { key: "2027cala", name: "Los Angeles Regional", event_code: "cala", city: "Los Angeles", state_prov: "CA", start_date: "2027-03-25", end_date: "2027-03-28", year: 2027 },
+  ];
+  const tbaCalls: string[] = [];
   const collections = new Map<string, Row[]>();
   const rows = (name: string) => collections.get(name) ?? collections.set(name, []).get(name)!;
   let nextId = 1;
@@ -47,6 +65,19 @@ export function makeScript(members: Record<string, Member>) {
 
   const UrlFetchApp = {
     fetch(url: string, opts: { method?: string; headers?: Record<string, string>; payload?: string }) {
+      // ----- The Blue Alliance (made-up answers in its real shape) -----
+      if (url.startsWith("https://www.thebluealliance.com/api/v3/")) {
+        tbaCalls.push(url);
+        if (opts.headers?.["X-TBA-Auth-Key"] !== "tba-read-key") return res(401, {});
+        const tbaPath = url.slice("https://www.thebluealliance.com/api/v3".length);
+        const found = tbaEvents.find((e) => tbaPath === `/event/${e.key}/simple`);
+        if (found) return res(200, found);
+        if (tbaPath.startsWith("/team/frc6220/events/")) {
+          const year = Number(tbaPath.split("/")[4]);
+          return res(200, tbaEvents.filter((e) => e.year === year));
+        }
+        return res(404, { Errors: [{ event_key: "not found" }] });
+      }
       const path = url.replace("https://www.wixapis.com", "");
       const auth = opts.headers?.Authorization;
       const payload = opts.payload ? JSON.parse(opts.payload) : {};
@@ -132,6 +163,6 @@ export function makeScript(members: Record<string, Member>) {
 
   const post = (body: unknown) =>
     JSON.parse((context.doPost({ postData: { contents: JSON.stringify(body) } }) as { s: string }).s);
-  return { post, rows, props, members };
+  return { post, rows, props, members, tbaEvents, tbaCalls, context };
 }
 
