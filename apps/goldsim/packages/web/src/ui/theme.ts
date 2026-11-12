@@ -25,7 +25,6 @@ export function setTheme(t: Theme): void {
   } catch {
     // storage unavailable (private window); the theme still applies for this session
   }
-  for (const l of listeners) l(t);
 }
 
 export function toggleTheme(): Theme {
@@ -41,4 +40,6 @@ export function onThemeChange(fn: (t: Theme) => void): () => void {
 
 export function initTheme(): void {
   document.documentElement.dataset.theme = currentTheme();
+  // The team website's shared sidebar also has a light/dark button; redraw when it changes the theme.
+  new MutationObserver(() => listeners.forEach((l) => l(currentTheme()))).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 }

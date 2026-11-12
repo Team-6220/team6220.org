@@ -13,8 +13,8 @@
   --brand-panel: color-mix(in srgb, var(--brand-grey) 35%, var(--brand-black));
   --brand-panel-2: color-mix(in srgb, var(--brand-grey) 55%, var(--brand-black));
 
-  /* What the apps use. Dark is the default look; the theme toggle sets data-theme="light" on <html>
-     (see ThemeToggle.astro). The look never follows the device setting. */
+  /* What the apps use. Dark is the default look; the light/dark button in the shared sidebar
+     (packages/assets/scripts/app-sidebar.js) sets data-theme="light" on <html>. The look never follows the device setting. */
   --color-gold: var(--brand-gold);
   --color-gold-strong: var(--brand-gold-secondary);
   --color-on-gold: var(--brand-black);
@@ -61,45 +61,6 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1.05;
-}
-
-/* The one light/dark button (ThemeToggle.astro). It shows the sun in dark mode and the moon in light mode. */
-.t-theme-toggle {
-  position: fixed;
-  left: var(--space-3);
-  bottom: var(--space-3);
-  z-index: 40;
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  cursor: pointer;
-}
-.t-theme-toggle:hover {
-  border-color: var(--color-gold);
-  color: var(--color-gold);
-}
-.t-theme-toggle:focus-visible {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 2px;
-}
-.t-theme-toggle svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-:root[data-theme="light"] .t-theme-toggle__sun,
-:root:not([data-theme="light"]) .t-theme-toggle__moon {
-  display: none;
 }
 
 .t-button {

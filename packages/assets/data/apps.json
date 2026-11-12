@@ -1,0 +1,73 @@
+[
+  {
+    "id": "attendance",
+    "name": "Attendance",
+    "description": "Sign in at meetings and check who's here.",
+    "href": "/apps/attendance",
+    "status": "live",
+    "access": "team",
+    "note": "Attendance Admins open the sign-in kiosk",
+    "symbol": "audits"
+  },
+  {
+    "id": "inventory",
+    "name": "Inventory",
+    "description": "Parts, tools and stock audits.",
+    "href": "/apps/inventory",
+    "status": "live",
+    "access": "team",
+    "symbol": "parts"
+  },
+  {
+    "id": "site",
+    "name": "Site Manager",
+    "description": "Change the public website's content with forms. Submitting opens a pull request.",
+    "href": "/apps/site",
+    "status": "live",
+    "access": "web-admin",
+    "note": "Web Admins only",
+    "symbol": "edit"
+  },
+  {
+    "id": "goldsim",
+    "name": "GoldSim",
+    "description": "Open-source 2D FRC strategy and robot-design simulator.",
+    "href": "/apps/goldsim/",
+    "status": "live",
+    "access": "public",
+    "symbol": "production"
+  },
+  {
+    "id": "wingit",
+    "name": "WingIt",
+    "description": "Build-season roguelite that teaches our design principles.",
+    "href": "/apps/wingit/",
+    "status": "live",
+    "access": "public",
+    "symbol": "wing"
+  },
+  {
+    "id": "scouting",
+    "name": "Scouting",
+    "description": "Match data from the stands, even with bad Wi-Fi.",
+    "status": "planned",
+    "access": "team",
+    "symbol": "search"
+  },
+  {
+    "id": "pit",
+    "name": "Pit display",
+    "description": "Match schedule and stats for the pit TV.",
+    "status": "planned",
+    "access": "public",
+    "symbol": "image"
+  },
+  {
+    "id": "production",
+    "name": "Production Tracker",
+    "description": "Follow each robot part from design to finished.",
+    "status": "planned",
+    "access": "team",
+    "symbol": "tools"
+  }
+]

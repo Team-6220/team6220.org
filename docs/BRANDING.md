@@ -16,10 +16,13 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - **Karnivore** text is always all UPPERCASE or all lowercase, never mixed. The site uses uppercase.
 - Write **6220**, never "622o".
 - **No feather** decoration. Shadows, animations and dot patterns from the main site are welcome in apps.
-- **Icons**: every app uses the icon set the Inventory uses.
 - **Light and dark**: everything gets one light/dark button. Dark is the default and the device setting is ignored. The
-  button is `packages/ui/src/ThemeToggle.astro`; the choice is saved in the browser as `team6220.theme` and put on
-  `<html data-theme="...">`. Done for the dashboard, Attendance and Site Manager; other apps and the main site follow.
+  button is in the shared sidebar; the choice is saved in the browser as `team6220.theme` and put on
+  `<html data-theme="...">`.
+- **Sidebar**: every app shows the same sidebar (`packages/assets/scripts/app-sidebar.js`, styles in
+  `packages/assets/styles/app-sidebar.css`): main site, all apps, then fullscreen, light/dark and account at the bottom.
+  It lists the apps in `packages/assets/data/apps.json`.
+- **Icons**: `packages/assets/scripts/icons.js` is the team icon set (24px grid, 1.8 stroke).
 - **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`).
 
 ## The short version

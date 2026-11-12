@@ -1,8 +1,8 @@
 # Archive of the old team website (issue #82)
 
-A copy of the old Wix site, team6220.org, as it was on **Nov 9, 2026**, taken before Phase 2 of the
+A copy of the old Wix site, team6220.org, as it was on **Nov 12, 2026**, taken before Phase 2 of the
 [migration plan](MIGRATION-PLAN.md) so future teams can see what the site looked like. The files are **not in this repo**:
-they are about 40 MB and show students. This page describes the bundle.
+they are about 32 MB and show students. This page describes the bundle.
 
 ## What was captured
 
@@ -19,7 +19,7 @@ search-engine settings of each page are in [SEO.md](SEO.md).
 
 ## Pages
 
-All returned 200 on Nov 9, 2026. File names are the address with `/` replaced by `__`; the home page is `home`.
+All returned 200 on Nov 12, 2026. File names are the address with `/` replaced by `__`; the home page is `home`.
 
 | Old address | Title | Notes |
 | --- | --- | --- |
@@ -56,16 +56,9 @@ nothing on Wix was changed. The script is a short Playwright loop; rerun it agai
   `-phone.png` files are wider than a phone and the menu is cut off. That is how the live site behaves.
 - The Wix blog, members area and the Wix dashboard are not included.
 
-## Where the files are and where to keep them
+## Where the files are
 
-The bundle is a folder `archive-2026-site/` and a zip of it, `archive-2026-site.zip` (about 40 MB), made in the Claude Code
-session's scratchpad. The session's scratchpad is temporary, so **the owner should copy it somewhere permanent now**.
+The bundle is `archive-2026-site.zip` (about 32 MB) in the team Google Drive: `Archive / 2026`. It is **not** in this
+repo (size, and it shows students). Share it only with the team: the screenshots show students' photos and names.
 
-Recommended:
-
-1. Put the zip and the unzipped folder in the team's Google Drive, in a shared team folder (for example
-   `Team 6220 / Archive / Website 2026`), owned by the team Workspace (team6220.org) rather than a person's account.
-2. Keep the zip as the master copy; the folder is for browsing.
-3. Do **not** commit it to the repo (size, and it shows students). Link to the Drive folder from this page once it exists.
-4. Share it only with the team: the screenshots show students' photos and names.
-5. Repeat the capture after Phase 3 if the team also wants a picture of the site at the switch date.
+Repeat the capture after Phase 3 if the team also wants a picture of the site at the switch date.
