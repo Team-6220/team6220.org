@@ -13,7 +13,7 @@ In Phase 3, step 2 of the [migration plan](MIGRATION-PLAN.md), add these as 301 
 | `/our-team` | `/about` | |
 | `/our-team/subteams` | `/about` | No subteams page yet. Change this if one is added |
 | `/sponsors-donations` | `/sponsors` | |
-| `/contact` | `/about/contact` | |
+| `/contact` | `/#contact` | Contact has no page of its own; the footer on every page is the contact section |
 | `/gallery` | `/resources/media` | |
 
 ## Old one-page addresses on dev.team6220.org
@@ -33,7 +33,7 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | `/#resources` | `/resources` |
 | `/#outreach` | `/about/outreach` |
 | `/#gallery`, `/#social` | `/about/outreach#gallery`, `/about/outreach#social` |
-| `/#contact` | `/about/contact` |
+| `/#contact` | stays `/#contact` | Scrolls to the footer, so no redirect is needed |
 | `/#merch` | `/merch` |
 | `/#photos` | `/resources/media` |
 | `/#photos-<album>` | `/resources/media#<album>` |
@@ -48,7 +48,7 @@ The prototype was one page with `#` addresses. A small script on the home page (
 | About: History | `/about/history` |
 | About: Outreach | `/about/outreach` |
 | About: Join | `/about/join` |
-| About: Contact | `/about/contact` |
+| About: Contact | `#contact` (scrolls to the footer on the current page) |
 | Robots | `/robots` (one season: `/robots#2025`) |
 | Sponsors | `/sponsors` |
 | Merch | `/merch` (the merch page, with a link to the team store) |
