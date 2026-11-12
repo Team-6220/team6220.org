@@ -16,6 +16,8 @@ The real `team6220.org` stays on Wix, untouched, until the last step of Phase 3.
 
 The full plan is [docs/MIGRATION-PLAN.md](docs/MIGRATION-PLAN.md).
 
+**New here, or need to change something?** Start with the [documentation index](docs/README.md): how it all fits together, a "how do I change X" cookbook, adding an app, Wix and Apps Script setup, deploys, troubleshooting and branding.
+
 ## Run it
 
 Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
@@ -38,7 +40,7 @@ packages/assets/    Shared logos, fonts and favicon that anyone may use
 packages/ui         Shared brand styles and components
 packages/data       The only code that talks to Wix / Apps Script
 integrations/       Build helpers (sync-media copies media to where the browser finds it; build-apps builds the imported apps)
-docs/               Migration plan, Phase 0 checklist, photo policy
+docs/               Migration plan, Phase 0 checklist, redirects, Site Manager plan
 .github/            CI, Pages deploy, CODEOWNERS, Dependabot
 ```
 
@@ -48,8 +50,12 @@ It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/.
 ## Working here
 
 - Every change goes through a pull request with one review; `main` deploys automatically.
-- This repo is public. **Never commit** API keys, passcodes or `.env` files, and never commit photos of
-  students that haven't been cleared ([docs/PHOTOS.md](docs/PHOTOS.md)). Photos currently live in `sites/main/media/team` (see [docs/PHOTOS.md](docs/PHOTOS.md)).
+- This repo is public. **Never commit** API keys, passcodes or `.env` files.
+- Photos: most site media is hosted in Wix and Google Drive because that is easier and keeps the repo small.
+  The team has consent for the photos on the site, and photos may live in git for now: the homepage photos are in
+  `sites/main/media/team`, and the gallery albums (`/public/gal/*`) are not in git yet. Moving media out of git is
+  tracked in issue #8. `PUBLIC_MEDIA_BASE` (default `/assets/main`) is the base URL the homepage uses for its photos;
+  point it at another host to move them without touching the markup.
 - Apps never import the Wix SDK; they call `@team6220/data`.
 
 ## Version notes

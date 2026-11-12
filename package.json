@@ -15,10 +15,15 @@
     "check": "astro check",
     "test": "vitest run",
     "redirects:csv": "node scripts/redirects/csv.mjs",
-    "redirects:check": "node scripts/redirects/check.mjs"
+    "redirects:check": "node scripts/redirects/check.mjs",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "build:e2e-mock": "node e2e/build-mock.mjs",
+    "test:e2e:build": "pnpm build && pnpm build:e2e-mock && pnpm test:e2e"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^22.20.5",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "astro": "^7.4.7",

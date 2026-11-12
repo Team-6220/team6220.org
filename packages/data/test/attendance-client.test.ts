@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAttendanceClient } from "../src/attendance/client";
 import { httpTransport } from "../src/attendance/http";
 import { mockTransport } from "../src/attendance/mock";
@@ -19,6 +19,16 @@ function clientAs(token: string | null) {
 }
 
 describe("attendance client with the mock", () => {
+  // The mock runs on a fixed clock (2026-11-09 18:00) and the client checks kiosk expiry against Date.now(),
+  // so pin the real clock to the same moment or the kiosk looks expired once that day has passed.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 9, 18, 0));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("runs the kiosk flow for an Attendance Admin", async () => {
     const a = clientAs("mock:admin");
     expect(a.currentKiosk()).toBeNull();

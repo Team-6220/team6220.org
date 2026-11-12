@@ -12,7 +12,7 @@ Served at `/apps/wingit/` on the team website (copied in by the site build, see 
 Add `?debug` to the URL to see which principles a run has not met yet.
 
 ## Layout
-- `index.html`, `css/style.css`: 1280x720 shell, scaled to the window. Gold `#ffa300`, white, black, grays; square corners.
+- `index.html`, `css/style.css`: shell that fills the window at the device's own resolution (no fixed 1280x720 stage). Gold `#ffa300`, white, black, grays; square corners.
 - `js/main.js`: screen router. `js/state.js`: run + meta state (localStorage). `js/rng.js`: seeded RNG.
 - `js/data/`: seasons, mechanism archetypes, principles codex, mentor cards.
 - `js/plan.js`: the season phase hub (Kickoff, Design, Build, Regional, Rework, Championship). `js/nodes/`: one module per step. `js/widgets/`: sketch/gear/packaging widgets.

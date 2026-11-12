@@ -8,7 +8,7 @@ dist/
 *.log
 .DS_Store
 
-# Photos of students live in Google Drive / Wix media, not in git (docs/PHOTOS.md).
+# Gallery photos are hosted in Google Drive / Wix media because that is easier and keeps the repo small (issue #8).
 /public/gal/*
 !/public/gal/.gitkeep
 /public/media/
@@ -24,5 +24,8 @@ dist/
 /public/favicon-32.png
 /public/apple-touch-icon.png
 /public/icon-*.png
+
+# Playwright smoke tests (pnpm test:e2e)
 /dist-mock/
+/playwright-report/
 /test-results/

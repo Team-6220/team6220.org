@@ -76,7 +76,6 @@ warning about it.
 | `/#outreach` | `/about/outreach` |  |
 | `/#gallery` | `/about/outreach#gallery` |  |
 | `/#social` | `/about/outreach#social` |  |
-| `/#contact` | `/about/contact` | Owner decision: Contact has no page of its own and scrolls to the footer (#contact on the home page). Until /about/contact is removed this still goes there. When it is removed, delete the `contact` entry from sites/main/data/old-anchors.ts and set this target to /#contact (the home page then simply stays put). |
 | `/#merch` | `/merch` |  |
 | `/#photos` | `/resources/media` |  |
 | `/#photos-<album>` | `/resources/media#<album>` | An album in the old gallery: any #photos-<name>. The check tests the pattern, not each album. |

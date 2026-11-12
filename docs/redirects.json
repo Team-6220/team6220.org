@@ -179,13 +179,6 @@
       "note": ""
     },
     {
-      "from": "/#contact",
-      "to": "/about/contact",
-      "via": "home page script",
-      "decision": "confirmed",
-      "note": "Owner decision: Contact has no page of its own and scrolls to the footer (#contact on the home page). Until /about/contact is removed this still goes there. When it is removed, delete the `contact` entry from sites/main/data/old-anchors.ts and set this target to /#contact (the home page then simply stays put)."
-    },
-    {
       "from": "/#merch",
       "to": "/merch",
       "via": "home page script",
