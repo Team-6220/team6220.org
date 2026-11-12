@@ -17,6 +17,10 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - Write **6220**, never "622o".
 - **No feather** decoration. Shadows, animations and dot patterns from the main site are welcome in apps.
 - **Icons**: every app uses the icon set the Inventory uses.
+- **Light and dark**: everything gets one light/dark button. Dark is the default and the device setting is ignored. The
+  button is `packages/ui/src/ThemeToggle.astro`; the choice is saved in the browser as `team6220.theme` and put on
+  `<html data-theme="...">`. Done for the dashboard, Attendance and Site Manager; other apps and the main site follow.
+- **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`).
 
 ## The short version
 

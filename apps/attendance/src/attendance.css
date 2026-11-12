@@ -1,6 +1,14 @@
 /* Plain, tidy placeholder styling for /apps/attendance. Uses the tokens from @team6220/ui/tokens.css;
    the branding pass only changes the token values. */
 :root {
+  --att-ok: #9be0a9;
+  --att-ok-bg: #173a20;
+  --att-warn: #ffd58a;
+  --att-warn-bg: #3d2d0b;
+  --att-error: #f2b8b5;
+  --att-error-bg: #4a1714;
+}
+:root[data-theme="light"] {
   --att-ok: #1e7b34;
   --att-ok-bg: #e3f4e6;
   --att-warn: #8a5a00;
@@ -8,22 +16,13 @@
   --att-error: #b3261e;
   --att-error-bg: #fde7e5;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --att-ok: #9be0a9;
-    --att-ok-bg: #173a20;
-    --att-warn: #ffd58a;
-    --att-warn-bg: #3d2d0b;
-    --att-error: #f2b8b5;
-    --att-error-bg: #4a1714;
-  }
-}
 
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body);
+  font-weight: 500; /* Jura is light; 500 matches the main site */
   line-height: 1.5;
 }
 
@@ -55,13 +54,16 @@ body {
 }
 .att__eyebrow {
   margin: 0;
-  color: var(--color-gold-strong);
+  color: var(--color-gold);
   font-weight: 700;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .att__title {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
   margin: 0;
   font-size: 2rem;
 }
@@ -85,6 +87,9 @@ body {
   box-shadow: var(--shadow);
 }
 .att__panel h2 {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
   margin: 0 0 var(--space-2);
   font-size: 1.25rem;
 }
@@ -279,7 +284,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .kiosk__input:focus {
-  outline: 4px solid var(--color-gold-strong);
+  outline: 4px solid var(--color-gold);
   outline-offset: 2px;
 }
 .kiosk__go {

@@ -1,6 +1,14 @@
 /* Plain, tidy placeholder styling for /apps/site. Uses the tokens from @team6220/ui/tokens.css;
    the branding pass only changes the token values. */
 :root {
+  --site-ok: #9be0a9;
+  --site-ok-bg: #173a20;
+  --site-warn: #ffd58a;
+  --site-warn-bg: #3d2d0b;
+  --site-add-bg: #173a20;
+  --site-del-bg: #4a1714;
+}
+:root[data-theme="light"] {
   --site-ok: #1e7b34;
   --site-ok-bg: #e3f4e6;
   --site-warn: #8a5a00;
@@ -8,22 +16,13 @@
   --site-add-bg: #e3f4e6;
   --site-del-bg: #fde7e5;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --site-ok: #9be0a9;
-    --site-ok-bg: #173a20;
-    --site-warn: #ffd58a;
-    --site-warn-bg: #3d2d0b;
-    --site-add-bg: #173a20;
-    --site-del-bg: #4a1714;
-  }
-}
 
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body);
+  font-weight: 500; /* Jura is light; 500 matches the main site */
   line-height: 1.5;
 }
 
@@ -55,13 +54,16 @@ body {
 }
 .site__eyebrow {
   margin: 0;
-  color: var(--color-gold-strong);
+  color: var(--color-gold);
   font-weight: 700;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .site__title {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
   margin: 0;
   font-size: 2rem;
 }
@@ -93,6 +95,9 @@ body {
   box-shadow: var(--shadow, none);
 }
 .site__panel h2 {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
   margin: 0 0 var(--space-2);
   font-size: 1.25rem;
 }
@@ -197,7 +202,7 @@ body {
 }
 .site__item-title {
   font-weight: 700;
-  color: var(--color-gold-strong);
+  color: var(--color-gold);
 }
 .site__item-actions {
   display: flex;
