@@ -14,7 +14,7 @@
 // Badge checks here are COSMETIC (they hide buttons). Real enforcement is Wix CMS collection permissions
 // in Phase 1 and badge checks inside /api endpoints in Phase 2.
 import { APPS_HOME_PATH, BADGES, LOGIN_REDIRECT_PATH, type BadgeName } from "./config";
-import { clearStoredTokens, wix } from "./wix";
+import { clearStoredTokens, saveMemberHint, wix } from "./wix";
 
 const OAUTH_DATA_KEY = "team6220.wix.oauthData";
 
@@ -124,13 +124,15 @@ export function getMember(): Promise<Member | null> {
     const { member: m } = await members.getCurrentMember({ fieldsets: ["FULL"] });
     if (!m?._id) return null;
     const fullName = [m.contact?.firstName, m.contact?.lastName].filter(Boolean).join(" ").trim();
-    return {
+    const member: Member = {
       id: m._id,
       name: fullName || m.profile?.nickname || m.loginEmail || "Team member",
       email: m.loginEmail ?? undefined,
       photoUrl: m.profile?.photo?.url ?? undefined,
       status: (m.status as MemberStatus) ?? "UNKNOWN",
     };
+    saveMemberHint({ name: member.name, photoUrl: member.photoUrl });
+    return member;
   })().catch((err) => {
     memberPromise = undefined;
     throw err;

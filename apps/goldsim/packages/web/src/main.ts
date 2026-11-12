@@ -50,9 +50,9 @@ const ON_TEAM_SITE = BASE_PATH === "/apps/goldsim/";
 /** Adds the team website's shared sidebar (all apps, main site link, fullscreen, light/dark, account). */
 function loadTeamSidebar(): void {
   document.head.append(h("link", { rel: "stylesheet", href: "/assets/shared/styles/app-sidebar.css" }));
-  const icons = h("script", { src: "/assets/shared/scripts/icons.js" });
-  icons.onload = () => document.head.append(h("script", { src: "/assets/shared/scripts/app-sidebar.js" }));
-  document.head.append(icons);
+  // The sidebar script needs the other two first, so load them in order.
+  const scripts = ["icons.js", "account.js", "app-sidebar.js"].map((file) => h("script", { src: `/assets/shared/scripts/${file}`, async: false }));
+  document.head.append(...scripts);
 }
 
 function renderTopbar(): void {

@@ -1,5 +1,5 @@
 /* The sidebar every team app shares. Published at /assets/shared/scripts/app-sidebar.js.
-   Needs icons.js (loaded before this file) and /assets/shared/styles/app-sidebar.css.
+   Needs icons.js and account.js (loaded before this file) and /assets/shared/styles/app-sidebar.css.
 
    What it holds
      top:     the main site link, the apps dashboard, then one link per live app (from /assets/shared/data/apps.json)
@@ -16,7 +16,6 @@
 (function () {
   var SIZE_KEY = "team6220.sidebar";
   var THEME_KEY = "team6220.theme";
-  var TOKENS_KEY = "team6220.wix.tokens"; // written by packages/data when a member signs in
   var root = document.documentElement;
   var icons = window.team6220Icons;
 
@@ -66,14 +65,6 @@
   }
   setSize(size, false);
 
-  // ---- Is a member signed in? (Only decides which account link to show.)
-  function signedIn() {
-    try {
-      return JSON.parse(read(TOKENS_KEY) || "{}").refreshToken.role === "member";
-    } catch (e) {
-      return false;
-    }
-  }
 
   function samePage(href) {
     var here = location.pathname.replace(/\/$/, "");
@@ -86,6 +77,14 @@
   }
   function button(iconName, text, onClick) {
     return el("button", { type: "button", title: text, onClick: onClick }, [icons.svg(iconName), label(text)]);
+  }
+
+  // The account row: the member's picture and name when signed in, else "Sign in".
+  // Both go to the dashboard, which has the sign-in and sign-out buttons.
+  function accountLink() {
+    var member = window.team6220Account.member();
+    if (!member) return link("/apps/", "user", "Sign in", false);
+    return el("a", { href: "/apps/", title: member.name }, [window.team6220Account.avatar(member), label(member.name)]);
   }
 
   function build(apps) {
@@ -114,8 +113,7 @@
         else if (root.requestFullscreen) root.requestFullscreen();
       }),
       themeButton,
-      // The dashboard shows who is signed in and has the sign-in and sign-out buttons.
-      link("/apps/", "user", signedIn() ? "Account" : "Sign in", false),
+      accountLink(),
       el("div", { class: "sb-sizes" }, [
         button("collapse", "Collapse sidebar", function () {
           setSize(size === "open" ? "compressed" : "open", true);
