@@ -18,5 +18,5 @@ HTML, CSS or React, for example `<img src="/assets/shared/logos/6220LogoGold.png
   `6220LogoBlackGoldBackgroundBig.png` resized to 16/32/48 (the `.ico`), 32, 180, 192 and 512 pixels.
 - **Never edit `public/assets/`.** It is generated from these folders (see `integrations/sync-media.mjs`).
 
-Rules: no photos of students here (see [../../docs/PHOTOS.md](../../docs/PHOTOS.md)); those live with the site that uses them. Media that only one
+Photos don't belong here; they live with the site that uses them. Media that only one
 site or app uses goes in that site's or app's own `media/` folder instead.

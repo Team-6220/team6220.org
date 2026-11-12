@@ -30,4 +30,4 @@ repo root). Each page file only picks a layout, a banner and sections from here.
 Old addresses and their new pages are listed in [docs/REDIRECTS.md](../../docs/REDIRECTS.md).
 
 Shared brand media (logos, fonts) is not here: it is in [`packages/assets`](../../packages/assets/README.md).
-Team photos are in `media/team/` ([docs/PHOTOS.md](../../docs/PHOTOS.md)).
+Team photos are in `media/team/`.
