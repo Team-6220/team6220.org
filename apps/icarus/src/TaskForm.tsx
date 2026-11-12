@@ -2,6 +2,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { icarus, ops, type Draft, type HistoryEntry, type Me, type Person, type Project, type Task, type TaskStatus } from "@team6220/data";
 import { HistoryList, ProjectPicker, SubteamPicker } from "@team6220/ui";
+import { TaskLinks } from "./TaskLinks";
 
 interface TaskFormProps {
   task: Draft<Task>;
@@ -101,6 +102,7 @@ export function TaskForm({ task, tasks, people, projects, subteams, me, onSave, 
             </select>
             <span className="t-hint">Hold Ctrl (or ⌘) to choose more than one. Leave empty if this task waits on nothing.</span>
           </label>
+          <TaskLinks needs={draft.needs ?? []} onChange={(needs) => set({ needs })} canEdit={canEdit} taskId={saved?._id ?? ""} projectId={draft.projectId} />
           <label className="t-field icr__wide">
             Description
             <textarea rows={3} value={draft.description} onChange={(e) => set({ description: e.target.value })} maxLength={4000} />

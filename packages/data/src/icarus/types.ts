@@ -23,7 +23,16 @@ export interface Task extends Item {
   seasonId: string;
   /** _ids of tasks that must be done before this one ("needs completion of"). */
   blockedBy: string[];
+  /** Inventory parts this task needs. A link and a warning only: a task never changes stock. */
+  needs: MaterialNeed[];
   createdBy: string;
+}
+
+/** "This task needs 4 of that Inventory part." The name is kept so the task still reads well if the part is renamed. */
+export interface MaterialNeed {
+  itemId: string;
+  name: string;
+  quantity: number;
 }
 
 /** A target date, for the whole team (no subteams) or for some subteams (collection icarus_milestones). */

@@ -11,7 +11,10 @@ the reasons behind the rules are in [docs/operations/BOM.md](../../docs/operatio
   them, shift-click from one to another, drag down the tick boxes, or use **Choose section** / **Choose all I can
   sign**, then **Sign chosen**.
 - **Approval to Order** per vendor, then **Mark ordered** with the buyer's checklist, order date and final total.
-- **Receive**, in full or in part.
+- **Receive**, in full or in part, and choose where it goes in Inventory: add to an existing part (the count is
+  shown before and after), create a new part, or "don't track". The line remembers its part for next time.
+- **Add to BOM** from an Icarus task that is short of a material: the link opens the BOM with the item and
+  quantity filled in.
 - **Open all links** for a vendor.
 - **Export** an order as CSV in the old sheet's layout, and **import** a tab of an old sheet (CSV).
 - Supervisors can look and change nothing.
@@ -20,8 +23,9 @@ the reasons behind the rules are in [docs/operations/BOM.md](../../docs/operatio
 
 These are in the plan and come with later build steps:
 
-- Adding received items to Inventory, the catalog of remembered prices, saved lists, **Add to BOM** from Inventory
-  and from tasks (step 4).
+- The catalog of remembered prices, saved lists, and an **Add to BOM** button inside the Inventory app itself.
+- Undoing a receive. Apollo can mark lines received, but cannot change Inventory stock yet: the stock change is
+  made by the browser of the person receiving, not by the server.
 - XLSX export with one tab per order, and exporting a whole BOM at once.
 - Sending a line back for signatures when the checkout price differs.
 - A budget per BOM.

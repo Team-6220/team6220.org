@@ -48,5 +48,14 @@ export async function step(partId: string, me: Me, change: (part: Part) => Part)
   return saved;
 }
 
+/** For the "Needs you" list on the dashboard: parts this person has claimed, and Shapeoko parts waiting for setup. */
+export async function needsMe(me: Me): Promise<{ claimed: number; pendingSetup: number }> {
+  const parts = await store().list<Part>(COLLECTION);
+  return {
+    claimed: parts.filter((p) => p.status === "in-progress" && p.work.some((w) => !w.endedAt && w.memberId === me.id)).length,
+    pendingSetup: parts.filter((p) => p.status === "pending-setup").length,
+  };
+}
+
 export * from "./rules";
 export type * from "./types";

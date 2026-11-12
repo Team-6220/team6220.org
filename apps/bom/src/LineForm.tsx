@@ -6,16 +6,18 @@ interface LineFormProps {
   sectionId: string;
   /** The line being changed, or undefined for a new one. */
   line?: BomLine;
+  /** For a new line: the name and quantity another app asked for. */
+  prefill?: { name: string; quantity: number };
   onSave: (input: BomLineInput) => Promise<void>;
   onCancel: () => void;
 }
 
-export function LineForm({ sectionId, line, onSave, onCancel }: LineFormProps) {
-  const [name, setName] = useState(line?.name ?? "");
+export function LineForm({ sectionId, line, prefill, onSave, onCancel }: LineFormProps) {
+  const [name, setName] = useState(line?.name ?? prefill?.name ?? "");
   const [link, setLink] = useState(line?.link ?? "");
   const [vendorPartNumber, setPartNumber] = useState(line?.vendorPartNumber ?? "");
   const [unitCost, setUnitCost] = useState(line ? String(line.unitCost) : "");
-  const [quantity, setQuantity] = useState(line ? String(line.quantity) : "1");
+  const [quantity, setQuantity] = useState(String(line?.quantity ?? prefill?.quantity ?? 1));
   const [comments, setComments] = useState(line?.comments ?? "");
   const [saving, setSaving] = useState(false);
 

@@ -127,6 +127,7 @@ function saveLine_(body, actor) {
     line.receivedQty = 0;
     line.receivedAt = "";
     line.receivedBy = null;
+    line.inventoryItemId = "";
   } else if (signaturesCleared) {
     line.signatures = [];
   }
@@ -239,8 +240,11 @@ function markOrdered_(body, actor) {
 }
 
 /**
- * { items: [{ lineId, quantity }] } -> { lines }
+ * { items: [{ lineId, quantity, inventoryItemId? }] } -> { lines }
  * Records that ordered items arrived. Part of a line can be received ("6 of 10").
+ * inventoryItemId remembers which Inventory part the line refills ("" = not tracked in Inventory). The stock
+ * count itself is changed by whoever is receiving, through Inventory (packages/data/src/inventory/stock.ts);
+ * this server does not write Inventory yet.
  */
 function receiveLines_(body, actor) {
   const items = Array.isArray(body.items) ? body.items : [];
@@ -260,12 +264,23 @@ function receiveLines_(body, actor) {
         receivedQty: (line.receivedQty || 0) + quantity,
         receivedAt: new Date().toISOString(),
         receivedBy: person_(actor),
+        inventoryItemId: item.inventoryItemId === undefined ? (line.inventoryItemId || "") : text_(item.inventoryItemId, "inventory item", 100, true),
       }));
       writeHistory_(actor, { kind: "bomLine", id: line._id }, "received", saved.receivedQty + " of " + saved.quantity);
       return saved;
     });
     return { lines: lines };
   });
+}
+
+/** { lineId, inventoryItemId } -> { line }. Remembers which Inventory part a line refills. Changes nothing else. */
+function linkLineToInventory_(body, actor) {
+  const line = getRecord_(COLLECTION_LINES, body.lineId, "line");
+  const saved = wixSave_(COLLECTION_LINES, Object.assign({}, line, {
+    inventoryItemId: text_(body.inventoryItemId, "inventory item", 100, true),
+  }));
+  writeHistory_(actor, { kind: "bomLine", id: line._id }, "linked to inventory", line.name);
+  return { line: saved };
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -317,6 +332,7 @@ function importOrder_(body, actor) {
           receivedQty: l.received ? quantity : 0,
           receivedAt: "",
           receivedBy: null,
+          inventoryItemId: "",
         });
       });
     });

@@ -9,8 +9,15 @@ const EMPTY: PartRequest = {
   print: { filament: "", color: "", estMinutes: 0, estGrams: 0 },
 };
 
-export function RequestForm({ projects, onSubmit }: { projects: Project[]; onSubmit: (request: PartRequest) => Promise<void> }) {
-  const [draft, setDraft] = useState(EMPTY);
+interface RequestFormProps {
+  projects: Project[];
+  /** Filled in when the form was opened from an Icarus task ("Request a part for this task"). */
+  forTask?: { taskId: string; projectId: string };
+  onSubmit: (request: PartRequest) => Promise<void>;
+}
+
+export function RequestForm({ projects, forTask, onSubmit }: RequestFormProps) {
+  const [draft, setDraft] = useState<PartRequest>({ ...EMPTY, ...forTask });
   const [saving, setSaving] = useState(false);
   const set = (changes: Partial<PartRequest>) => setDraft({ ...draft, ...changes });
   const setPrint = (changes: NonNullable<PartRequest["print"]>) => set({ print: { ...draft.print, ...changes } });
@@ -31,6 +38,7 @@ export function RequestForm({ projects, onSubmit }: { projects: Project[]; onSub
   return (
     <form className="t-panel" onSubmit={submit}>
       <h2>Request a part</h2>
+      {draft.taskId && <p className="t-status t-status--ok">This part will be linked to the Icarus task you came from.</p>}
       <div className="prod__fields">
         <label className="t-field prod__wide">
           Part name (same as in CAD)

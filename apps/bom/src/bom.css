@@ -52,6 +52,15 @@
   border-bottom-color: var(--color-gold);
   color: var(--color-ink);
 }
+.bom__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .bom__totals {
   margin: 0;
   font-weight: 700;
@@ -100,6 +109,9 @@
 }
 .bom__receive input {
   width: 4.5rem;
+}
+.bom__receive select {
+  max-width: 16rem;
 }
 .bom__line-form {
   display: grid;

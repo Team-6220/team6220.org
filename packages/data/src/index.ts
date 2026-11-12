@@ -29,10 +29,14 @@ export * as bom from "./bom";
 export type { Bom, Order as BomOrder, Section as BomSection, Line as BomLine, LineInput as BomLineInput, LineState as BomLineState, OrderDetail as BomOrderDetail, Stamp } from "./bom/types";
 // Icarus app data (apps/icarus): tasks, the Gantt chart, milestones, events, seasons, templates.
 export * as icarus from "./icarus";
-export type { Task, TaskStatus, Milestone, TeamEvent, Season, Template } from "./icarus/types";
+export type { Task, TaskStatus, MaterialNeed, Milestone, TeamEvent, Season, Template } from "./icarus/types";
 export type { Gantt, GanttDay, GanttGroup, GanttLine, GanttRow } from "./icarus/gantt";
 export type { IcarusData } from "./icarus";
 export type { Draft } from "./ops/types";
 // Production app data (apps/production): part requests, the tracker, the print queue.
 export * as production from "./production";
 export type { Part, PartRequest, PartStatus, Method as PartMethod, Priority as PartPriority, WorkEntry, PrintDetails } from "./production/types";
+// A small window into Inventory for the other apps: what parts we have, add stock, create a part.
+export * as stock from "./inventory/stock";
+export type { StockItem } from "./inventory/stock";
+export type { ReceiveInto } from "./bom";

@@ -46,6 +46,7 @@ export function PartCard({ part, me, projects, onStep }: PartCardProps) {
       <p className="t-muted">
         Designer: {part.designerName}
         {project && ` · p${project.number} ${project.name}`}
+        {part.taskId && <> · <a href={`/apps/icarus?task=${encodeURIComponent(part.taskId)}`}>Icarus task</a></>}
         {part.cadLink && <> · <a href={part.cadLink} target="_blank" rel="noreferrer">CAD</a></>}
         {part.fileLinks && ` · Files: ${part.fileLinks}`}
       </p>

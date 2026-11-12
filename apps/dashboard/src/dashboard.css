@@ -103,3 +103,16 @@ a.card:focus-visible {
   background: var(--color-gold);
   color: var(--color-on-gold);
 }
+
+/* "Needs you": what is waiting for this person in the operations apps (NeedsYou.tsx). */
+.dash__needs {
+  margin-bottom: var(--space-4);
+  border-left: 4px solid var(--color-gold);
+}
+.dash__needs ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.dash__needs li {
+  padding: var(--space-1) 0;
+}

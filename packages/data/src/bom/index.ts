@@ -8,8 +8,10 @@
 // Reading goes straight to Wix. Every change goes through the ops API (backend/apps-script/ops-api/Bom.gs),
 // because members can read the bom_* collections but not write them.
 import "./mock"; // registers the demo data and demo rules (only used in demo mode)
+import * as stock from "../inventory/stock";
 import { callOps, store } from "../ops";
-import { bySortOrder } from "./rules";
+import type { Me } from "../ops/types";
+import { bySortOrder, cantSign, totalCost } from "./rules";
 import type { ImportedOrder } from "./import";
 import type { Bom, Line, LineInput, Order, OrderDetail, Section, SignResult } from "./types";
 
@@ -98,8 +100,78 @@ export async function markOrdered(args: {
 }
 
 /** Team members. Records that ordered items arrived; part of a line can be received. */
-export async function receiveLines(items: { lineId: string; quantity: number }[]): Promise<Line[]> {
+export async function receiveLines(items: { lineId: string; quantity: number; inventoryItemId?: string }[]): Promise<Line[]> {
   return (await callOps<{ lines: Line[] }>("receiveLines", { items })).lines;
+}
+
+/** For the "Needs you" list on the dashboard: lines this person could sign, and ordered lines not received yet. */
+export async function needsMe(me: Me): Promise<{ toSign: number; toReceive: number }> {
+  const lines = await store().list<Line>("bom_lines");
+  return {
+    toSign: me.roles.approver ? lines.filter((l) => cantSign(l, me.id) === "").length : 0,
+    toReceive: lines.filter((l) => l.orderedAt && l.receivedQty < l.quantity).length,
+  };
+}
+
+/** Per project: what its orders asked for and what was really paid. For project pages. */
+export async function spendingByProject(): Promise<Map<string, { requested: number; paid: number }>> {
+  const [orders, sections, lines] = await Promise.all([
+    store().list<Order>("bom_orders"),
+    store().list<Section>("bom_sections"),
+    store().list<Line>("bom_lines"),
+  ]);
+  const totals = new Map<string, { requested: number; paid: number }>();
+  for (const order of orders) {
+    if (!order.projectId) continue;
+    const mine = sections.filter((s) => s.orderId === order._id);
+    const sum = totals.get(order.projectId) ?? { requested: 0, paid: 0 };
+    sum.requested += totalCost(lines.filter((l) => mine.some((s) => s._id === l.sectionId)));
+    sum.paid += mine.reduce((n, s) => n + (s.finalTotal ?? 0), 0);
+    totals.set(order.projectId, sum);
+  }
+  return totals;
+}
+
+/** What to do in Inventory when a line arrives. */
+export type ReceiveInto =
+  | { kind: "existing"; itemId: string }
+  | { kind: "new" }
+  | { kind: "none" };
+
+/**
+ * Receives part or all of one line AND puts it into Inventory, as the person chose:
+ * add to an existing part, create a new part, or don't track it. Returns a sentence saying what happened.
+ *
+ * The BOM is marked first, then Inventory is changed. If the second step fails, the message says so plainly,
+ * so the stock can be added by hand instead of being silently wrong.
+ */
+export async function receiveIntoInventory(line: Line, quantity: number, into: ReceiveInto): Promise<string> {
+  if (into.kind === "none") {
+    await receiveLines([{ lineId: line._id, quantity, inventoryItemId: "" }]);
+    return `Received ${quantity} × ${line.name}. Not tracked in Inventory.`;
+  }
+  if (into.kind === "existing") {
+    await receiveLines([{ lineId: line._id, quantity, inventoryItemId: into.itemId }]);
+    try {
+      const item = await stock.add(into.itemId, quantity);
+      return `Received ${quantity} × ${line.name}. Inventory: ${item.name} is now ${item.quantity}.`;
+    } catch {
+      throw new Error(`Marked as received, but Inventory could not be updated. Add ${quantity} to the part by hand in Inventory.`);
+    }
+  }
+  await receiveLines([{ lineId: line._id, quantity }]);
+  try {
+    const item = await stock.create({ name: line.name, quantity, description: line.link });
+    await receiveLinesLink(line._id, item.id);
+    return `Received ${quantity} × ${line.name}. Added "${item.name}" to Inventory; set its category and location there.`;
+  } catch {
+    throw new Error(`Marked as received, but the Inventory part could not be created. Add "${line.name}" by hand in Inventory.`);
+  }
+}
+
+/** Remembers which Inventory part a received line refills, without receiving any more of it. */
+async function receiveLinesLink(lineId: string, inventoryItemId: string): Promise<void> {
+  await callOps("linkLineToInventory", { lineId, inventoryItemId });
 }
 
 /** Leads. Saves one tab of an old BOM sheet (already read with parseSheetRows) as a new order. */

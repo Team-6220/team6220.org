@@ -12,7 +12,7 @@ import { callOps, logHistory, nextNumber, store } from "../ops";
 import type { Draft, Me, Person } from "../ops/types";
 import { byNumber, STATUS_LABELS } from "./gantt";
 import { previewTemplate } from "./templates";
-import type { Milestone, PlanningRecords, Season, Task, TeamEvent, Template } from "./types";
+import type { MaterialNeed, Milestone, PlanningRecords, Season, Task, TeamEvent, Template } from "./types";
 
 export interface IcarusData {
   tasks: Task[];
@@ -52,7 +52,7 @@ export function taskLabel(task: Pick<Task, "number">): string {
 export function emptyTask(seasonId: string, parentId = ""): Draft<Task> {
   return {
     number: "", parentId, title: "", description: "", projectId: "", subteams: [], ownerIds: [], status: "not-started",
-    startDate: "", dueDate: "", notes: "", seasonId, blockedBy: [], createdBy: "",
+    startDate: "", dueDate: "", notes: "", seasonId, blockedBy: [], needs: [], createdBy: "",
   };
 }
 
@@ -91,6 +91,19 @@ export async function removeTask(task: Task, allTasks: Task[]): Promise<void> {
   if (allTasks.some((t) => t.parentId === task._id)) throw new Error("Remove this task's subtasks first.");
   await store().remove("icarus_tasks", task._id);
   await logHistory({ kind: "task", id: task._id }, "removed", `${taskLabel(task)} ${task.title}`);
+}
+
+/** How many of a needed part are missing, given what Inventory has (0 when there is enough). */
+export function shortfall(need: MaterialNeed, inStock: number | undefined): number {
+  return Math.max(0, need.quantity - (inStock ?? 0));
+}
+
+/** For the "Needs you" list on the dashboard: this person's open tasks, and how many are overdue. */
+export async function needsMe(me: Me, todayDate: string): Promise<{ open: number; overdue: number }> {
+  const mine = (await store().list<Task>("icarus_tasks")).filter(
+    (t) => t.ownerIds.includes(me.id) && (t.status === "not-started" || t.status === "in-progress"),
+  );
+  return { open: mine.length, overdue: mine.filter((t) => t.dueDate && t.dueDate < todayDate).length };
 }
 
 // ----- planning records (Leads) -----

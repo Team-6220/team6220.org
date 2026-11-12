@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { auth, BADGES, type Member } from "@team6220/data";
 import { APPS, type AppEntry } from "./apps";
+import { NeedsYou } from "./NeedsYou";
 
 type View =
   | { kind: "loading" }
@@ -53,6 +54,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {view.kind === "approved" && <NeedsYou />}
       {view.kind === "approved" && <AppGrid apps={APPS.filter((a) => a.access !== "web-admin" || isWebAdmin)} />}
       {(view.kind === "signed-out" || view.kind === "pending" || view.kind === "error") && (
         <>

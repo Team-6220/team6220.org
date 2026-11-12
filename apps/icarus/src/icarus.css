@@ -284,6 +284,9 @@
 .icr__scroll {
   overflow-x: auto;
 }
+.icr__qty {
+  width: 5rem;
+}
 .icr__toggle {
   font-weight: 600;
 }

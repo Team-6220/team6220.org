@@ -8,7 +8,7 @@ import type { Line, OrderDetail, Section, Stamp } from "../src/bom/types";
 const stamp = (name: string): Stamp => ({ memberId: name, name, at: "2027-01-10T00:00:00.000Z" });
 const line = (over: Partial<Line>): Line => ({
   _id: "l1", sectionId: "s1", name: "Item", link: "", vendorPartNumber: "", unitCost: 1, quantity: 1, comments: "",
-  requestedBy: stamp("Student"), signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null, ...over,
+  requestedBy: stamp("Student"), signatures: [], orderedAt: "", receivedQty: 0, receivedAt: "", receivedBy: null, inventoryItemId: "", ...over,
 });
 const section = (over: Partial<Section>): Section => ({
   _id: "s1", orderId: "o1", vendor: "Amazon", sortOrder: 0, approval: null, orderedBy: null, orderDate: "", finalTotal: null,

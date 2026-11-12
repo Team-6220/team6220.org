@@ -1,6 +1,6 @@
 // One order: a table per vendor, laid out like the team's BOM sheet, with the actions each person may take.
-import { useState } from "react";
-import { bom, type BomLine, type BomLineState, type BomOrderDetail, type BomSection, type Me } from "@team6220/data";
+import { useEffect, useState } from "react";
+import { bom, stock, type BomLine, type BomLineState, type BomOrderDetail, type BomSection, type Me, type ReceiveInto, type StockItem } from "@team6220/data";
 import { StatusPill, type StatusTone } from "@team6220/ui";
 import { LineForm } from "./LineForm";
 import { OrderForm } from "./OrderForm";
@@ -20,6 +20,9 @@ interface OrderViewProps {
   me: Me;
   /** Runs a change, then reloads the order. Shows the error if the server says no. */
   run: (change: () => Promise<string | void>) => Promise<void>;
+  /** An item another app asked to add ("Add to BOM"). It prefills the next new line. */
+  toAdd?: { name: string; quantity: number } | null;
+  onAdded?: () => void;
 }
 
 /** Which form is open, if any. Only one at a time, so the page stays readable. */
@@ -31,7 +34,7 @@ type OpenForm =
   | { kind: "confirm-sign" }
   | null;
 
-export function OrderView({ detail, me, run }: OrderViewProps) {
+export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
   const [open, setOpen] = useState<OpenForm>(null);
   const { team, lead, approver } = me.roles;
 
@@ -183,7 +186,7 @@ export function OrderView({ detail, me, run }: OrderViewProps) {
         </div>
 
         {open?.kind === "add" && open.sectionId === section._id && (
-          <LineForm sectionId={section._id} onCancel={close} onSave={(input) => act(async () => void (await bom.saveLine(input)))} />
+          <LineForm sectionId={section._id} prefill={toAdd ?? undefined} onCancel={close} onSave={(input) => act(async () => (await bom.saveLine(input), onAdded?.()))} />
         )}
         {open?.kind === "order" && open.sectionId === section._id && (
           <OrderForm
@@ -255,7 +258,7 @@ export function OrderView({ detail, me, run }: OrderViewProps) {
         <td>
           <div className="bom__row-actions">
             {open?.kind === "receive" && open.lineId === line._id ? (
-              <ReceiveBox left={left} onCancel={close} onArrived={(quantity) => act(async () => void (await bom.receiveLines([{ lineId: line._id, quantity }])))} />
+              <ReceiveBox line={line} left={left} onCancel={close} onArrived={(quantity, into) => act(() => bom.receiveIntoInventory(line, quantity, into))} />
             ) : (
               <>
                 {team && line.orderedAt && left > 0 && (
@@ -287,15 +290,47 @@ export function OrderView({ detail, me, run }: OrderViewProps) {
   }
 }
 
-/** The small "how many arrived?" box that replaces a line's buttons while receiving. */
-function ReceiveBox({ left, onArrived, onCancel }: { left: number; onArrived: (quantity: number) => void; onCancel: () => void }) {
+/**
+ * Replaces a line's buttons while receiving: how many arrived, and where they go in Inventory.
+ * The person has to choose one of: an existing Inventory part, a new part, or "don't track".
+ */
+function ReceiveBox({ line, left, onArrived, onCancel }: { line: BomLine; left: number; onArrived: (quantity: number, into: ReceiveInto) => void; onCancel: () => void }) {
   const [quantity, setQuantity] = useState(String(left));
+  const [parts, setParts] = useState<StockItem[] | null>(null);
+  const [choice, setChoice] = useState(line.inventoryItemId); // a part's id, "new", "none", or "" (not chosen yet)
   const count = Number(quantity);
+
+  useEffect(() => {
+    stock.list().then(
+      (list) => {
+        setParts(list);
+        // Suggest the part with the same name, if this line has no part yet.
+        const sameName = list.find((p) => p.name.toLowerCase() === line.name.toLowerCase());
+        setChoice((current) => current || sameName?.id || "");
+      },
+      () => setParts([]), // Inventory can't be reached: creating a part or "don't track" still work
+    );
+  }, [line._id]);
+
+  const chosenPart = parts?.find((p) => p.id === choice);
+  const into: ReceiveInto | null = chosenPart ? { kind: "existing", itemId: chosenPart.id } : choice === "new" ? { kind: "new" } : choice === "none" ? { kind: "none" } : null;
+  const ready = !!into && Number.isInteger(count) && count >= 1 && count <= left;
+
   return (
     <span className="bom__receive">
       <input type="number" min="1" max={left} value={quantity} onChange={(e) => setQuantity(e.target.value)} aria-label="How many arrived" />
-      <button className="t-button" type="button" disabled={!(Number.isInteger(count) && count >= 1 && count <= left)} onClick={() => onArrived(count)}>
-        Arrived
+      <select value={choice} onChange={(e) => setChoice(e.target.value)} aria-label="Where it goes in Inventory" disabled={!parts}>
+        <option value="">{parts ? "Where does it go in Inventory?" : "Loading Inventory…"}</option>
+        <option value="new">Create a new Inventory part</option>
+        <option value="none">Don't track (used up or one-off)</option>
+        {parts?.map((p) => (
+          <option key={p.id} value={p.id}>
+            Add to: {p.name} (have {p.quantity})
+          </option>
+        ))}
+      </select>
+      <button className="t-button" type="button" disabled={!ready} onClick={() => into && onArrived(count, into)}>
+        {chosenPart && ready ? `Arrived (${chosenPart.quantity} → ${chosenPart.quantity + count})` : "Arrived"}
       </button>
       <button className="t-button t-button--quiet" type="button" onClick={onCancel}>
         Cancel

@@ -183,3 +183,21 @@ describe.each([
     expect(await send("lead", "removeIcarusRecord", { kind: "milestone", id: saved.record._id })).toMatchObject({ ok: true });
   });
 });
+
+describe("links to the other apps", () => {
+  it("works out what is missing for a task", () => {
+    const need = { itemId: "PT-1", name: "NEO Vortex", quantity: 4 };
+    expect(icarus.shortfall(need, 10)).toBe(0);
+    expect(icarus.shortfall(need, 1)).toBe(3);
+    expect(icarus.shortfall(need, undefined)).toBe(4); // the part is no longer in Inventory
+  });
+
+  it("counts what needs a person, for the dashboard", async () => {
+    ops.resetMock();
+    const viewer = await ops.getViewer();
+    if (viewer.kind !== "member") throw new Error("expected the demo lead");
+    const tasks = await icarus.needsMe(viewer.me, icarus.today());
+    expect(tasks.open).toBeGreaterThan(0);
+    expect(tasks.overdue).toBeLessThanOrEqual(tasks.open);
+  });
+});

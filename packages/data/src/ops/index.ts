@@ -70,11 +70,21 @@ function buildUsesMock(): boolean {
   return env?.PROD !== true; // `pnpm dev` and tests: mock. `pnpm build`: Wix.
 }
 
-/** The demo role for this tab, or null when using the real backend. */
+/** True when the ops API's address is filled in (packages/data/src/config.ts). */
+function hasServer(): boolean {
+  return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(OPS_API_URL);
+}
+
+/**
+ * The demo role for this tab, or null when using the real backend.
+ * Demo mode is on when: ?demo=<role> chose one; or this is `pnpm dev` / a test; or the team server isn't
+ * connected yet. In that last case nothing real could work (the Wix collections may not even exist), so the
+ * deployed apps show the demo, signed in as a lead, until the server's address is filled in.
+ */
 export function demoRole(): DemoRole | null {
   const stored = session()?.getItem(DEMO_KEY) as DemoRole | null | undefined;
   if (stored && DEMO_ROLES.includes(stored)) return stored;
-  return buildUsesMock() ? "lead" : null;
+  return buildUsesMock() || !hasServer() ? "lead" : null;
 }
 
 /** True when the apps show made-up data. */
@@ -84,7 +94,15 @@ export function isDemo(): boolean {
 
 /** True when protected actions can reach a server (the real URL is set, or demo mode). */
 export function isConnected(): boolean {
-  return isDemo() || /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(OPS_API_URL);
+  return isDemo() || hasServer();
+}
+
+/** The line every operations app shows under its header while it is on demo data. */
+export function demoNotice(): string | undefined {
+  if (!isDemo()) return undefined;
+  return hasServer() || buildUsesMock()
+    ? "Demo data: nothing here is saved."
+    : "Demo data: the team server isn't connected yet, so nothing here is real or saved. Add ?demo=member, mentor, booster or supervisor to the address to try other roles.";
 }
 
 // ----- the two ways data moves -----
