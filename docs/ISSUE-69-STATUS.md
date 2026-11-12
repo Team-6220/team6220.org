@@ -104,7 +104,7 @@ adds this file. Hoss' checkboxes in #69 are not kept up to date, so this list is
 
 | Item | Status | What is missing | Who |
 | --- | --- | --- | --- |
-| "Build" links assorted; add Chief Delphi; footer categories confusing; Vietnamese text | NEEDS-OWNER | Build column mixes GitHub, TBA, Our robots, FIRST. No Chief Delphi. "Chào cô Trâm :))" is still there. No credits page | needs-owner-design |
+| "Build" links assorted; add Chief Delphi; footer categories confusing; Vietnamese text | DONE (labels proposed) | Footer columns are Follow, Our work, Support, Learn more, with Chief Delphi under Follow. The Vietnamese line is gone. No credits page yet | review the column names |
 | We don't have a Remind (#77) | TODO | Footer and Join form still link Remind. Fixed in open PR #122 for the footer; the Join form note is Join copy | agent-ok (in PR #122) |
 | Defunct `losalfrcbusiness@gmail.com` to operations@team6220.org, add 657-222-6220 (#77) | TODO | Still on `/sponsors`; no phone number anywhere. In open PR #122 | agent-ok (in PR #122) |
 | LinkedIn link (#77) | NEEDS-OWNER | No link. PR #122 notes it has no LinkedIn | needs-assets (LinkedIn URL) |

@@ -657,7 +657,7 @@ html.lb-open{overflow:hidden}
 
 /* Footer */
 footer{background:var(--ink);padding-block:var(--s5) var(--s4);border-top:2px solid var(--gold)}
-.foot-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:var(--s4)}
+.foot-grid{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:var(--s4)}
 .foot-grid>*{min-width:0}
 .foot-grid h3{font-family:var(--tech);font-size:.85rem;letter-spacing:.16em;color:var(--gold-text);margin-bottom:14px}
 .foot-grid ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
