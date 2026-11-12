@@ -5,6 +5,10 @@
 <title>WingIt</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
+<script>
+  /* Light or dark, as chosen with the button in the team website's sidebar. Applied before the page is drawn. */
+  try { document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark"; } catch (e) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&display=swap">

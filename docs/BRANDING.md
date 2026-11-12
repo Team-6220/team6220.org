@@ -19,6 +19,8 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - **Light and dark**: everything gets one light/dark button. Dark is the default and the device setting is ignored. The
   button is in the shared sidebar; the choice is saved in the browser as `team6220.theme` and put on
   `<html data-theme="...">`.
+  WingIt follows it too, but its drawings (match view, diagrams, figures) are made for a dark background, so they stay
+  dark inside the light page.
 - **Sidebar**: every app shows the same sidebar (`packages/assets/scripts/app-sidebar.js`, styles in
   `packages/assets/styles/app-sidebar.css`): main site, all apps, then fullscreen, light/dark and account at the bottom.
   It lists the apps in `packages/assets/data/apps.json`.
