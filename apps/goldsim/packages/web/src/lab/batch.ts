@@ -28,7 +28,7 @@ import {
 import type { Alliance, MatchRobot, RobotDesign } from "@goldsim/schema";
 import { allDesigns, session } from "../app-state.js";
 import { navigate } from "../router.js";
-import { clear, h, title, toast } from "../ui/dom.js";
+import { clear, h, icon, title, toast } from "../ui/dom.js";
 import { importResultsFile, plannedMatches } from "./files.js";
 import { glossaryPanel, help, saveNotice } from "./help.js";
 import { designOptions, fullParamLabel, humanize, knobFor, knobOption, slotName, type ParamOption } from "./names.js";
@@ -401,7 +401,7 @@ function sweepEditor(deps: SweepDeps): HTMLElement {
               owners.map((o) => h("option", { value: String(o.index), selected: o.index === p.robot }, ownerLabel(o))),
             )
           : h("b", { class: "grow" }, owner ? ownerLabel(owner) : ""),
-        h("button", { class: "btn small", onclick: () => (s.params.splice(k, 1), deps.rerender()), "aria-label": "Remove this setting" }, "×"),
+        h("button", { class: "btn small", onclick: () => (s.params.splice(k, 1), deps.rerender()), "aria-label": "Remove this setting" }, icon("x", "×")),
       ),
       h(
         "select",

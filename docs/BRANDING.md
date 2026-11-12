@@ -33,7 +33,9 @@ How the look of the site is controlled today, exactly which files to edit to cha
   messages and the demo strip (`t-page`, `t-header`, `t-panel`, `t-field`, `t-table`, `t-status`, ...). `apps/template` shows
   one of each. `AppLayout` loads it, so an app's own CSS only covers what is special
   about that app. The top of the file shows a typical page.
-- **Icons**: `packages/assets/scripts/icons.js` is the team icon set (24px grid, 1.8 stroke).
+- **Icons**: the team icon set is the Inventory's style (decided in #137): `packages/assets/scripts/icons.js`, 24px grid, 1.8 stroke.
+  Use it everywhere an app needs an icon: `team6220Icons.svg("x")` in plain JavaScript (WingIt and GoldSim fall back to text
+  when it is not loaded), `<Icon name="x" />` from `@team6220/ui` in React. To add one, add a line to the list in that file.
 - **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`).
 
 ## The short version

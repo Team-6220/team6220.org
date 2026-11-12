@@ -63,6 +63,7 @@ html, body { margin: 0; height: 100%; background: var(--page); color: var(--text
 .ach b { font-size: 15px; }
 .ach-x { background: var(--black); color: var(--white); border: 0; width: 26px; height: 26px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
 .ach-x:hover { background: var(--white); color: var(--black); }
+.ach-x svg.t-icon { width: 16px; height: 16px; } /* the shared icon, when the team website's sidebar styles are loaded */
 
 h1, h2, h3 { margin: 0 0 6px 0; }
 h1, h2 { font-family: var(--font-title); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }

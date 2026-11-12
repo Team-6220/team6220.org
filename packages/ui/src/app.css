@@ -165,3 +165,10 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* An icon next to text (the shared set: packages/assets/scripts/icons.js, <Icon name="external" inline /> in React). */
+svg.t-icon.t-icon--inline {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+}

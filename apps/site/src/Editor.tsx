@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AREAS, clip, diffContent, IMAGE_RULES, jsonSchemaOf, parseContent, type AreaId } from "@team6220/content";
 import { site } from "@team6220/data";
+import { Icon } from "@team6220/ui";
 import Field, { ImagesContext } from "./Field";
 import type { PreparedImage } from "./images";
 import { setAt, type Path, type Schema } from "./schema";
@@ -176,7 +177,7 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
               <p>
                 A webmaster has to review and merge it before the site changes.{" "}
                 <a href={sent.result.pullRequest.url} target="_blank" rel="noopener">
-                  View pull request #{sent.result.pullRequest.number} on GitHub ↗
+                  View pull request #{sent.result.pullRequest.number} on GitHub <Icon name="external" inline />
                 </a>
               </p>
             </>
