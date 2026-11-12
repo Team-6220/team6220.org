@@ -22,6 +22,13 @@
       "menuLabel": "Design resources"
     },
     {
+      "kind": "OPERATIONS",
+      "title": "Operations resources",
+      "href": "https://docs.google.com/document/d/1rBFFrpXw95WcFzGR7oadgopnnqlmAL7ooabYNh1sMtE/edit",
+      "blurb": "Links and references for the operations subteam.",
+      "menuLabel": "Operations resources"
+    },
+    {
       "kind": "CAD",
       "title": "CAD on Onshape",
       "href": "https://cad.onshape.com/documents/cfcf30c88841d74e4322e2ee/w/0293e4f8d98a6db63dfa9e5e/e/e391d6c1d5b644ac4d583e63",

@@ -5,9 +5,9 @@ const file = () => structuredClone(AREAS.resources.initial) as Resources;
 const link = (over: Record<string, string> = {}) => ({ kind: "CODE", title: "GitHub", href: "https://github.com/Team-6220", blurb: "Robot code.", menuLabel: "", ...over });
 
 describe("resources schema", () => {
-  it("accepts the current content: 7 links, empty archive", () => {
+  it("accepts the current content: 8 links, empty archive", () => {
     expect(parseContent("resources", file()).ok).toBe(true);
-    expect(file().links).toHaveLength(7);
+    expect(file().links).toHaveLength(8);
     expect(file().archive).toEqual([]);
   });
 
@@ -45,7 +45,7 @@ describe("resource cards", () => {
   });
 
   it("numbers the reveal delay by position (so reordering changes it)", () => {
-    expect([...renderResourceCards(file().links).matchAll(/--d:(\d)/g)].map((m) => m[1])).toEqual(["0", "1", "2", "3", "4", "5", "6"]);
+    expect([...renderResourceCards(file().links).matchAll(/--d:(\d)/g)].map((m) => m[1])).toEqual(["0", "1", "2", "3", "4", "5", "6", "7"]);
   });
 });
 
@@ -55,7 +55,7 @@ describe("resources diff", () => {
     const after = structuredClone(before);
     after.links[1]!.blurb = "New text";
     after.archive.push({ kind: "BINDER", title: "2026 binder", href: "https://x.example/b", blurb: "Technical binder" });
-    [after.links[0], after.links[6]] = [after.links[6]!, after.links[0]!];
+    [after.links[0], after.links[7]] = [after.links[7]!, after.links[0]!];
     const lines = diffContent(before, after).map(describeChange);
     expect(lines).toContain(`archive[0].title: added "2026 binder"`);
     expect(lines).toContain(`links[0].title: "Master link" -> "Team history"`);
