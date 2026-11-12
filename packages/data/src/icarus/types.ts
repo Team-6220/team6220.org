@@ -23,6 +23,8 @@ export interface Task extends Item {
   seasonId: string;
   /** _ids of tasks that must be done before this one ("needs completion of"). */
   blockedBy: string[];
+  /** _ids of tasks this one is related to, in no particular direction. */
+  related: string[];
   /** Inventory parts this task needs. A link and a warning only: a task never changes stock. */
   needs: MaterialNeed[];
   createdBy: string;
@@ -33,6 +35,16 @@ export interface MaterialNeed {
   itemId: string;
   name: string;
   quantity: number;
+}
+
+/** A comment on a task, like a comment on a GitHub issue (collection icarus_comments). */
+export interface TaskComment extends Item {
+  taskId: string;
+  authorId: string;
+  authorName: string;
+  body: string;
+  /** ISO date and time. */
+  at: string;
 }
 
 /** A target date, for the whole team (no subteams) or for some subteams (collection icarus_milestones). */

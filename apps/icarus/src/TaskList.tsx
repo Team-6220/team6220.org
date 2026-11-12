@@ -1,6 +1,8 @@
-// Tasks as a list with filters. "My tasks" is this list with the "mine" filter on.
+// Tasks as a list, like GitHub's issue list: Open / Closed, then filters, then one row per task with its
+// number, subteams as labels, who it is assigned to and when it is due. "My tasks" is this list filtered to you.
 import { useState } from "react";
-import { icarus, type Me, type Person, type Project, type Task, type TaskStatus } from "@team6220/data";
+import { icarus, type Me, type Person, type Project, type Task } from "@team6220/data";
+import { StatusPill } from "@team6220/ui";
 
 interface TaskListProps {
   tasks: Task[];
@@ -8,7 +10,7 @@ interface TaskListProps {
   projects: Project[];
   subteams: string[];
   me: Me;
-  /** Start with only the tasks this person owns. */
+  /** Start with only the tasks assigned to this person. */
   mineOnly: boolean;
   /** Start with one project chosen (from the Projects tab). */
   projectId?: string;
@@ -16,40 +18,37 @@ interface TaskListProps {
   onOpenTask: (task: Task) => void;
 }
 
+const isOpen = (t: Task) => t.status === "not-started" || t.status === "in-progress";
+
 export function TaskList({ tasks, people, projects, subteams, me, mineOnly, projectId = "", today, onOpenTask }: TaskListProps) {
-  const [mine, setMine] = useState(mineOnly);
+  const [closed, setClosed] = useState(false);
+  const [assignee, setAssignee] = useState(mineOnly ? me.id : "");
   const [subteam, setSubteam] = useState("");
   const [project, setProject] = useState(projectId);
-  const [status, setStatus] = useState<TaskStatus | "open" | "">("open");
   const [search, setSearch] = useState("");
 
-  const isOpen = (t: Task) => t.status === "not-started" || t.status === "in-progress";
   const words = search.trim().toLowerCase();
-  const shown = tasks.filter(
+  const filtered = tasks.filter(
     (t) =>
-      (!mine || t.ownerIds.includes(me.id)) &&
+      (!assignee || t.ownerIds.includes(assignee)) &&
       (!subteam || t.subteams.includes(subteam)) &&
       (!project || t.projectId === project) &&
-      (status === "" || (status === "open" ? isOpen(t) : t.status === status)) &&
-      (!words || `${icarus.taskLabel(t)} ${t.title}`.toLowerCase().includes(words)),
+      (!words || `${icarus.taskLabel(t)} ${t.title} ${t.description}`.toLowerCase().includes(words)),
   );
-  const names = (ids: string[]) => ids.map((id) => people.find((p) => p.memberId === id)?.name ?? "").filter(Boolean).join(", ");
-  const projectName = (id: string) => {
-    const p = projects.find((x) => x._id === id);
-    return p ? `p${p.number} ${p.name}` : "";
-  };
+  const openCount = filtered.filter(isOpen).length;
+  const shown = filtered.filter((t) => isOpen(t) !== closed);
+  const person = (id: string) => people.find((p) => p.memberId === id);
+  const projectOf = (id: string) => projects.find((p) => p._id === id);
 
   return (
-    <div>
+    <section className="t-panel icr__issues">
       <div className="icr__filters">
-        <label className="icr__toggle">
-          <input type="checkbox" checked={mine} onChange={() => setMine(!mine)} /> Mine
-        </label>
-        <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} aria-label="Status">
-          <option value="open">Not done yet</option>
-          <option value="">Every status</option>
-          {(Object.keys(icarus.STATUS_LABELS) as TaskStatus[]).map((s) => (
-            <option key={s} value={s}>{icarus.STATUS_LABELS[s]}</option>
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search t42 or words" aria-label="Search tasks" />
+        <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee">
+          <option value="">Anyone</option>
+          <option value={me.id}>Assigned to me</option>
+          {people.filter((p) => p.memberId !== me.id).map((p) => (
+            <option key={p.memberId} value={p.memberId}>@{p.username || p.name}</option>
           ))}
         </select>
         <select value={subteam} onChange={(e) => setSubteam(e.target.value)} aria-label="Subteam">
@@ -60,33 +59,46 @@ export function TaskList({ tasks, people, projects, subteams, me, mineOnly, proj
           <option value="">Every project</option>
           {projects.map((p) => <option key={p._id} value={p._id}>p{p.number} {p.name}</option>)}
         </select>
-        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search t42 or words" aria-label="Search tasks" />
+      </div>
+
+      <div className="icr__issue-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={!closed} className={!closed ? "icr__issue-tab icr__issue-tab--on" : "icr__issue-tab"} onClick={() => setClosed(false)}>
+          ● {openCount} Open
+        </button>
+        <button type="button" role="tab" aria-selected={closed} className={closed ? "icr__issue-tab icr__issue-tab--on" : "icr__issue-tab"} onClick={() => setClosed(true)}>
+          ✓ {filtered.length - openCount} Closed
+        </button>
       </div>
 
       {shown.length === 0 ? (
-        <p className="t-muted">{mine ? "Nothing is assigned to you with these filters." : "No tasks match these filters."}</p>
+        <p className="t-muted icr__empty-list">{closed ? "No closed tasks with these filters." : assignee === me.id ? "Nothing is assigned to you. Nice." : "No open tasks with these filters."}</p>
       ) : (
         <ul className="icr__list">
           {shown.map((t) => {
             const overdue = !!t.dueDate && t.dueDate < today && isOpen(t);
+            const blocked = isOpen(t) && t.blockedBy.some((id) => tasks.some((o) => o._id === id && isOpen(o)));
+            const p = projectOf(t.projectId);
             return (
               <li key={t._id}>
-                <button type="button" className="icr__list-item" onClick={() => onOpenTask(t)}>
-                  <span className="icr__list-title">
-                    {icarus.STATUS_ICONS[t.status]} <span className="icr__number">{icarus.taskLabel(t)}</span> {t.title}
+                <button type="button" className="icr__issue-row" onClick={() => onOpenTask(t)}>
+                  <span className="icr__issue-icon" title={icarus.STATUS_LABELS[t.status]}>{icarus.STATUS_ICONS[t.status]}</span>
+                  <span className="icr__issue-main-line">
+                    <strong>{t.title}</strong>{" "}
+                    {t.subteams.map((s) => <StatusPill key={s} tone="info">{s}</StatusPill>)}
+                    {blocked && <StatusPill tone="warn">Waiting on another task</StatusPill>}
+                    <span className="icr__issue-meta">
+                      {icarus.taskLabel(t)}
+                      {p && ` · p${p.number} ${p.name}`}
+                      {t.dueDate && <span className={overdue ? "icr__overdue" : undefined}> · due {t.dueDate}{overdue && " (overdue)"}</span>}
+                    </span>
                   </span>
-                  <span className="t-muted">
-                    {[t.subteams.join(", "), projectName(t.projectId), names(t.ownerIds)].filter(Boolean).join(" · ")}
-                  </span>
-                  <span className={overdue ? "icr__overdue" : "t-muted"}>
-                    {t.dueDate ? `Due ${t.dueDate}${overdue ? " (overdue)" : ""}` : "No due date"}
-                  </span>
+                  <span className="icr__issue-people">{t.ownerIds.map((id) => `@${person(id)?.username || person(id)?.name || "?"}`).join(" ")}</span>
                 </button>
               </li>
             );
           })}
         </ul>
       )}
-    </div>
+    </section>
   );
 }

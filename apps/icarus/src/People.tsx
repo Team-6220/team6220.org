@@ -30,7 +30,19 @@ export function People({ me, people, subteams, run }: PeopleProps) {
 
       <section className="t-panel">
         <h2>Everyone</h2>
-        <p className="t-muted">People appear here after they open a team app once.</p>
+        <p className="t-muted">
+          Everyone who is an approved member of the site. New members appear after a lead or mentor presses “Update from
+          the members list”, or when they first open a team app.
+        </p>
+        {me.roles.peopleAdmin && (
+          <button className="t-button t-button--quiet" type="button"
+            onClick={() => run(async () => {
+              const result = await ops.syncPeople();
+              return `${result.people} members. ${result.added} added, ${result.removed} no longer members.`;
+            })}>
+            Update from the members list
+          </button>
+        )}
         {me.roles.peopleAdmin && chosen.length > 0 && (
           <div className="icr__bulk">
             <strong>
@@ -69,7 +81,9 @@ export function People({ me, people, subteams, run }: PeopleProps) {
                       <input type="checkbox" checked={chosen.includes(person.memberId)} onChange={() => toggle(person.memberId)} aria-label={`Choose ${person.name}`} />
                     </td>
                   )}
-                  <td>{person.name}</td>
+                  <td>
+                    {person.name} {person.username && <span className="t-muted">@{person.username}</span>}
+                  </td>
                   {subteams.map((subteam) => {
                     const on = person.subteams.includes(subteam);
                     return (

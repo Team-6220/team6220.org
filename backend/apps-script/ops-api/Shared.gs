@@ -100,7 +100,7 @@ function subteamBadges_() {
 /** {} -> { me: { id, name, badges, subteams, roles }, subteams: [names] }. Also keeps the member's ops_people row fresh. */
 function whoAmI_(body, actor) {
   const subteams = subteamsOf_(actor.badges);
-  rememberPerson_(actor.id, actor.name, subteams);
+  rememberPerson_(actor.id, actor.name, subteams, actor.username);
   return {
     me: { id: actor.id, name: actor.name, badges: actor.badges, subteams: subteams, roles: roles_(actor.badges) },
     subteams: subteamBadges_().map(function (s) { return s.name; }),
@@ -167,10 +167,44 @@ function changeSubteams_(memberId, wanted) {
   return wanted;
 }
 
-/** Keeps one ops_people row per member, so pickers can list people without asking Wix Members. */
-function rememberPerson_(memberId, name, subteams) {
+/** Keeps one ops_people row per member, so pickers and @mentions can list people without asking Wix Members. */
+function rememberPerson_(memberId, name, subteams, username) {
   const existing = wixQuery_(COLLECTION_PEOPLE, { memberId: memberId }, 1)[0];
-  const same = existing && existing.name === name && JSON.stringify(existing.subteams || []) === JSON.stringify(subteams);
-  if (same) return;
-  wixSave_(COLLECTION_PEOPLE, Object.assign({}, existing, { memberId: memberId, name: name, subteams: subteams, active: true }));
+  const next = Object.assign({}, existing, {
+    memberId: memberId, name: name, subteams: subteams, active: true,
+    username: username || (existing && existing.username) || "",
+  });
+  if (existing && JSON.stringify(existing) === JSON.stringify(next)) return;
+  wixSave_(COLLECTION_PEOPLE, next);
+}
+
+/**
+ * {} -> { people, added, removed }. Copies the site's approved members into ops_people, so everyone can be
+ * @mentioned even before they have opened an app. People who are no longer approved members are kept (their
+ * name still shows on old tasks) but marked inactive, which hides them from the pickers.
+ * List Members: https://dev.wix.com/docs/api-reference/crm/members-contacts/members/member-management/members/list-members
+ */
+function syncPeople_(body, actor) {
+  const members = [];
+  for (let offset = 0; offset < 2000; offset += 100) {
+    const page = wixAdmin_("get", "/members/v1/members?fieldsets=FULL&paging.limit=100&paging.offset=" + offset).members || [];
+    page.forEach(function (m) { if (m.status === "APPROVED") members.push(m); });
+    if (page.length < 100) break;
+  }
+  const existing = wixQuery_(COLLECTION_PEOPLE, {});
+  const byId = {};
+  existing.forEach(function (p) { byId[p.memberId] = p; });
+  let added = 0;
+  members.forEach(function (m) {
+    const contact = m.contact || {};
+    const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim() || (m.profile && m.profile.nickname) || "Team member";
+    if (!byId[m.id]) added++;
+    rememberPerson_(m.id, name, (byId[m.id] && byId[m.id].subteams) || [], memberUsername_(m));
+    delete byId[m.id];
+  });
+  // Whoever is left in byId is no longer an approved member.
+  const gone = Object.keys(byId).filter(function (id) { return byId[id].active !== false; });
+  gone.forEach(function (id) { wixSave_(COLLECTION_PEOPLE, Object.assign({}, byId[id], { active: false })); });
+  writeHistory_(actor, { kind: "person", id: actor.id }, "synced people", members.length + " members");
+  return { people: members.length, added: added, removed: gone.length };
 }

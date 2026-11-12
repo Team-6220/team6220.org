@@ -3,14 +3,23 @@
 //
 // It is one wide table that scrolls sideways with the task column pinned. Each task row has one long cell
 // (the "track") holding its bar; bars and lines are placed by day using the --day width from icarus.css.
-import { Fragment, type CSSProperties } from "react";
+import { Fragment, useState, type CSSProperties, type MouseEvent } from "react";
 import { icarus, type Gantt as GanttData, type GanttRow, type Person, type Task } from "@team6220/data";
+
+/** What can be added by clicking an empty day on the chart. */
+export type AddKind = "task" | "milestone" | "event";
 
 interface GanttProps {
   chart: GanttData;
   people: Person[];
   onOpenTask: (task: Task) => void;
+  /** Which kinds this person may add (none for viewers). Members add tasks; leads also add target dates and events. */
+  canAdd: AddKind[];
+  /** Called when someone picks what to add on a day. `group` is the subteam row they clicked ("General" for none). */
+  onAdd: (kind: AddKind, date: string, group: string) => void;
 }
+
+const ADD_LABELS: Record<AddKind, string> = { task: "New task", milestone: "Target date", event: "Event" };
 
 /** Runs of neighbouring days that share a value, for header cells that span several days (weeks, months). */
 function runs<T>(items: T[], key: (item: T) => string | number): { label: string | number; length: number }[] {
@@ -29,7 +38,9 @@ const NAME_ROOM_DAYS = 8;
 /** "2027-01-09" -> "1/9", as the sheets write dates. */
 const shortDate = (date: string) => (date ? `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}` : "");
 
-export function Gantt({ chart, people, onOpenTask }: GanttProps) {
+export function Gantt({ chart, people, onOpenTask, canAdd, onAdd }: GanttProps) {
+  // The little "add here" menu: where it was opened, and for which day and subteam row.
+  const [menu, setMenu] = useState<{ date: string; group: string; x: number; y: number } | null>(null);
   const { days, groups, lines } = chart;
   const todayColumn = days.findIndex((d) => d.isToday);
   const firstSaturday = days.findIndex((d) => d.isSaturday);
@@ -38,6 +49,16 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
   const place = (column: number, span = 1): CSSProperties => ({ left: `calc(${column} * var(--day))`, width: `calc(${span} * var(--day))` });
   // Saturdays are tinted with a repeating background that starts at the first Saturday.
   const trackStyle = { "--first-saturday": firstSaturday } as CSSProperties;
+  const trackClass = canAdd.length ? "icr__track icr__track--clickable" : "icr__track";
+  const GENERAL = icarus.GENERAL;
+
+  /** Clicking an empty spot in a row's track opens the "add here" menu for that day. */
+  const openMenu = (group: string) => (event: MouseEvent<HTMLTableCellElement>) => {
+    if (!canAdd.length || (event.target as HTMLElement).closest(".icr__bar, .icr__milestone")) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const column = Math.min(days.length - 1, Math.max(0, Math.floor(((event.clientX - box.left) / box.width) * days.length)));
+    setMenu({ date: days[column].date, group, x: event.clientX, y: event.clientY });
+  };
 
   /** The lines every track shares: today, events and whole-team target dates. */
   const marks = (
@@ -49,7 +70,7 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
     </>
   );
 
-  function taskRow({ task, depth, bar, overdue, blocked }: GanttRow) {
+  function taskRow({ task, depth, bar, overdue, blocked }: GanttRow, group: string) {
     return (
       <tr key={task._id} className="icr__task-row">
         <th scope="row" className="icr__pin">
@@ -62,10 +83,14 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
         <td title={icarus.STATUS_LABELS[task.status]}>{icarus.STATUS_ICONS[task.status]}</td>
         <td>{shortDate(task.startDate)}</td>
         <td className={overdue ? "icr__overdue" : undefined}>{shortDate(task.dueDate)}</td>
-        <td colSpan={days.length} className="icr__track" style={trackStyle}>
+        <td colSpan={days.length} className={trackClass} style={trackStyle} onClick={openMenu(group)}>
           {marks}
           {bar && (
             <span
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpenTask(task)}
+              onKeyDown={(e) => e.key === "Enter" && onOpenTask(task)}
               className={`icr__bar icr__bar--${task.status}${overdue ? " icr__bar--overdue" : ""}`}
               style={place(bar.from, bar.to - bar.from + 1)}
               title={`${icarus.taskLabel(task)} ${task.title}: ${shortDate(task.startDate)} to ${shortDate(task.dueDate)}`}
@@ -118,7 +143,7 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
             <tr className="icr__labels-row">
               <th className="icr__pin">Events and team dates</th>
               <th colSpan={4} />
-              <td colSpan={days.length} className="icr__track icr__track--labels">
+              <td colSpan={days.length} className={`${trackClass} icr__track--labels`} onClick={openMenu(GENERAL)}>
                 {lines.map((line, i) => (
                   <span key={i} className={`icr__line-label icr__line-label--${line.kind}`} style={{ left: `calc(${line.column} * var(--day))` }}>
                     {line.label}
@@ -134,7 +159,7 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
               <tr className="icr__group">
                 <th className="icr__pin" scope="rowgroup">{group.name}</th>
                 <td colSpan={4} />
-                <td colSpan={days.length} className="icr__track" style={trackStyle}>
+                <td colSpan={days.length} className={trackClass} style={trackStyle} onClick={openMenu(group.name)}>
                   {marks}
                   {group.milestones.map((m, i) => {
                     // When two target dates are close together, only the later one shows its name
@@ -149,18 +174,38 @@ export function Gantt({ chart, people, onOpenTask }: GanttProps) {
                   })}
                 </td>
               </tr>
-              {group.rows.map(taskRow)}
+              {group.rows.map((row) => taskRow(row, group.name))}
               {group.rows.length === 0 && (
                 <tr className="icr__task-row">
                   <th className="icr__pin icr__empty">No scheduled tasks</th>
                   <td colSpan={4} />
-                  <td colSpan={days.length} className="icr__track" style={trackStyle}>{marks}</td>
+                  <td colSpan={days.length} className={trackClass} style={trackStyle} onClick={openMenu(group.name)}>{marks}</td>
                 </tr>
               )}
             </Fragment>
           ))}
         </tbody>
       </table>
+      {canAdd.length > 0 && <p className="t-hint icr__gantt-hint">Click an empty day in a row to add a task{canAdd.length > 1 ? ", target date or event" : ""} there. Click a bar to open its task.</p>}
+
+      {menu && (
+        <>
+          {/* Clicking anywhere else closes the menu. */}
+          <button type="button" className="icr__menu-backdrop" aria-label="Close" onClick={() => setMenu(null)} />
+          <div className="icr__menu" role="menu" style={{ left: Math.min(menu.x, window.innerWidth - 230), top: Math.min(menu.y, window.innerHeight - 170) }}
+            onKeyDown={(e) => e.key === "Escape" && setMenu(null)}>
+            <p className="icr__menu-title">
+              {shortDate(menu.date)} · {menu.group}
+            </p>
+            {canAdd.map((kind) => (
+              <button key={kind} type="button" role="menuitem" autoFocus={kind === canAdd[0]} onClick={() => (setMenu(null), onAdd(kind, menu.date, menu.group))}>
+                + {ADD_LABELS[kind]}
+                {kind === "milestone" && (menu.group === GENERAL ? " (whole team)" : ` (${menu.group})`)}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

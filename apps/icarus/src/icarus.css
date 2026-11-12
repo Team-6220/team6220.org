@@ -318,3 +318,300 @@
     position: static;
   }
 }
+
+/* ----- clicking the chart to add things ----- */
+.icr__chart .icr__track--clickable {
+  cursor: copy;
+}
+.icr__bar[role="button"] {
+  cursor: pointer;
+}
+.icr__gantt-hint {
+  margin: var(--space-1) var(--space-2);
+}
+.icr__menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  border: 0;
+  background: transparent;
+}
+.icr__menu {
+  position: fixed;
+  z-index: 21;
+  display: grid;
+  min-width: 13rem;
+  padding: var(--space-1);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+.icr__menu-title {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+.icr__menu button {
+  padding: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.icr__menu button:hover,
+.icr__menu button:focus-visible {
+  background: var(--color-bg);
+}
+
+/* ----- a task, laid out like a GitHub issue ----- */
+.icr__issue-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.icr__issue-title {
+  flex: 1 1 20rem;
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font: 600 1.5rem/1.3 var(--font-body);
+  text-transform: none;
+}
+h2.icr__issue-title {
+  border-color: transparent;
+  background: none;
+}
+.icr__issue-number {
+  color: var(--color-muted);
+  font-size: 1.5rem;
+}
+.icr__issue-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+.icr__issue-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+}
+.icr__issue-side {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+.icr__issue-side > * {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+.icr__side-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.icr__dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+.icr__plainset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.icr__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+.icr__chip-x {
+  margin-left: var(--space-1);
+  padding: 0 0.2rem;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.icr__mention-box {
+  position: relative;
+}
+.icr__mention-box input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.icr__suggestions {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+.icr__suggestion {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.icr__suggestion--on {
+  background: var(--color-bg);
+}
+.icr__relation-add {
+  display: grid;
+  gap: var(--space-1);
+}
+.icr__comments {
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+.icr__comments li {
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.icr__comments p {
+  margin: var(--space-1) 0 0;
+  white-space: pre-wrap;
+}
+.icr__comment-box {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: end;
+}
+.icr__comment-box textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.icr__history {
+  margin-top: var(--space-3);
+}
+.icr__danger {
+  margin-left: auto;
+  color: var(--color-error);
+}
+
+/* ----- the list of tasks, like GitHub's issue list ----- */
+.icr__issue-tabs {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--color-bg);
+}
+.icr__issue-tab {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.icr__issue-tab--on {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+.icr__issues .icr__list {
+  border: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.icr__issue-row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.icr__issue-row:hover {
+  background: var(--color-bg);
+}
+.icr__issue-main-line .t-pill {
+  margin-left: var(--space-1);
+}
+.icr__issue-meta {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+.icr__issue-people {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+.icr__empty-list {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+}
+
+@media (max-width: 800px) {
+  .icr__issue-body {
+    grid-template-columns: 1fr; /* details go under the description on a phone */
+  }
+  .icr__issue-row {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+  }
+  .icr__issue-people {
+    grid-column: 2;
+  }
+}
+
+/* The @mention box, the comment box and the relation and filter dropdowns are not inside a .t-field label,
+   so give them the same look as the shared form fields. */
+.icr__mention-box input,
+.icr__comment-box textarea,
+.icr__relation-add select,
+.icr__filters input,
+.icr__filters select,
+.icr__buttons select,
+.icr__buttons input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font: inherit;
+}
+.icr__mention-box input:focus-visible,
+.icr__comment-box textarea:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
+}
+.icr__issue-side .icr__link {
+  justify-self: start;
+}

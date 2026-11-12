@@ -93,6 +93,18 @@ describe("ops-api", () => {
     expect(s.rows("ops_people")[0].subteams).toEqual(["Design", "Programming"]);
   });
 
+  it("copies the site's approved members into the people list, with their @usernames", () => {
+    s.post({ action: "whoAmI", token: TOKENS.member });
+    expect(s.post({ action: "syncPeople", token: TOKENS.member })).toMatchObject({ ok: false, error: "forbidden" });
+    const answer = s.post({ action: "syncPeople", token: TOKENS.lead });
+    // Every APPROVED member is listed (the pending one is not); the member who had opened an app is not added twice.
+    expect(answer).toMatchObject({ ok: true, people: 5, added: 4, removed: 0 });
+    const people = s.rows("ops_people");
+    expect(people).toHaveLength(5);
+    expect(people.find((p) => p.memberId === "m-member")).toMatchObject({ username: "pat-m-member", subteams: ["Programming"], active: true });
+    expect(people.find((p) => p.memberId === "m-pending")).toBeUndefined();
+  });
+
   it("lets Apollo call only the actions opened to it, under the Apollo user", () => {
     expect(s.post({ action: "nextNumber", apiKey: APOLLO_KEY, kind: "task" })).toMatchObject({ ok: true, number: 1 });
     expect(s.post({ action: "saveProject", apiKey: APOLLO_KEY, project: { name: "x" } })).toMatchObject({ ok: false, error: "forbidden" });

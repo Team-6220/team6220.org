@@ -201,3 +201,33 @@ describe("links to the other apps", () => {
     expect(tasks.overdue).toBeLessThanOrEqual(tasks.open);
   });
 });
+
+describe("relations and comments, like GitHub issues", () => {
+  const t = (number: string, over: Partial<Task> = {}): Task => ({ ...icarus.emptyTask("s1"), _id: `id-${number}`, number, title: `Task ${number}`, ...over }) as Task;
+
+  it("shows every relation from both sides", () => {
+    const a = t("1", { blockedBy: ["id-2"], related: ["id-3"] });
+    const b = t("2");
+    const c = t("3");
+    const d = t("4", { blockedBy: ["id-1"], related: ["id-1"] });
+    const all = [a, b, c, d];
+    const summary = (task: Task) => icarus.relationsOf(task, all).map((r) => `${r.type} ${r.task.number}`).sort();
+    expect(summary(a)).toEqual(["blocks 4", "needs 2", "related 3", "related 4"]);
+    expect(summary(b)).toEqual(["blocks 1"]);
+    expect(summary(c)).toEqual(["related 1"]);
+  });
+
+  it("keeps a conversation on a task, oldest first", async () => {
+    ops.resetMock();
+    const viewer = await ops.getViewer();
+    if (viewer.kind !== "member") throw new Error("expected the demo lead");
+    const [task] = (await icarus.loadAll()).tasks;
+    await icarus.addComment(task, "Started on this", viewer.me);
+    await icarus.addComment(task, "Done with the first half", viewer.me);
+    await expect(icarus.addComment(task, "   ", viewer.me)).rejects.toThrow(/Write something/);
+    expect((await icarus.listComments(task._id)).map((c) => [c.authorName, c.body])).toEqual([
+      ["Demo Lead", "Started on this"],
+      ["Demo Lead", "Done with the first half"],
+    ]);
+  });
+});

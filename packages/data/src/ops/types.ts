@@ -62,6 +62,8 @@ export type OpsViewer =
 export interface Person extends Item {
   memberId: string;
   name: string;
+  /** The short name typed after "@" (from the member's Wix profile). May be "" for older rows. */
+  username: string;
   subteams: string[];
   active: boolean;
 }

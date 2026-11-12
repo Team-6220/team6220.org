@@ -107,7 +107,7 @@ seedMock((db) => {
     const saved = db.save<Task>("icarus_tasks", {
       number, parentId: parent?._id ?? "", title: t.title, description: "", projectId: "", subteams: t.subteams,
       ownerIds: owners[t.subteams[0]] ?? ["demo-lead"], status, startDate: t.startDate, dueDate: t.dueDate, notes: "",
-      seasonId: season._id, blockedBy: [], needs: [], createdBy: "demo-lead",
+      seasonId: season._id, blockedBy: [], related: [], needs: [], createdBy: "demo-lead",
     });
     ids.set(t.key, saved._id);
   }
@@ -117,7 +117,7 @@ seedMock((db) => {
   db.save<Task>("icarus_tasks", {
     number: String(db.takeNumber("task")), parentId: "", title: "Decide on a team shirt design", description: "", projectId: "",
     subteams: ["Operations"], ownerIds: [], status: "not-started", startDate: "", dueDate: "", notes: "", seasonId: season._id,
-    blockedBy: [], needs: [], createdBy: "demo-lead",
+    blockedBy: [], related: [], needs: [], createdBy: "demo-lead",
   });
   for (const m of plan.milestones) {
     db.save<Milestone>("icarus_milestones", { name: m.name, date: m.date, subteams: m.subteams, seasonId: season._id, eventId: "" });
