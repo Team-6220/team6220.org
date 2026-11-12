@@ -5,9 +5,9 @@ const file = () => structuredClone(AREAS.resources.initial) as Resources;
 const link = (over: Record<string, string> = {}) => ({ kind: "CODE", title: "GitHub", href: "https://github.com/Team-6220", blurb: "Robot code.", menuLabel: "", ...over });
 
 describe("resources schema", () => {
-  it("accepts the current content: 4 links, empty archive", () => {
+  it("accepts the current content: 7 links, empty archive", () => {
     expect(parseContent("resources", file()).ok).toBe(true);
-    expect(file().links).toHaveLength(4);
+    expect(file().links).toHaveLength(7);
     expect(file().archive).toEqual([]);
   });
 
@@ -33,7 +33,7 @@ describe("resources schema", () => {
 
 describe("resource cards", () => {
   it("renders an external card exactly like the old template", () => {
-    const html = renderResourceCards(file().links);
+    const html = renderResourceCards(file().links.filter((l) => l.kind === "CAD" || l.kind === "CODE"));
     expect(html.startsWith(`<a class="rv" style="--d:0" href="https://cad.onshape.com/documents/`)).toBe(true);
     expect(html).toContain(`target="_blank" rel="noopener"><span class="k">CODE</span><h3>GitHub ↗</h3><p>Robot code, plus our 2026 robot wiki.</p></a>`);
   });
@@ -45,7 +45,7 @@ describe("resource cards", () => {
   });
 
   it("numbers the reveal delay by position (so reordering changes it)", () => {
-    expect([...renderResourceCards(file().links).matchAll(/--d:(\d)/g)].map((m) => m[1])).toEqual(["0", "1", "2", "3"]);
+    expect([...renderResourceCards(file().links).matchAll(/--d:(\d)/g)].map((m) => m[1])).toEqual(["0", "1", "2", "3", "4", "5", "6"]);
   });
 });
 
@@ -55,10 +55,10 @@ describe("resources diff", () => {
     const after = structuredClone(before);
     after.links[1]!.blurb = "New text";
     after.archive.push({ kind: "BINDER", title: "2026 binder", href: "https://x.example/b", blurb: "Technical binder" });
-    [after.links[0], after.links[3]] = [after.links[3]!, after.links[0]!];
+    [after.links[0], after.links[6]] = [after.links[6]!, after.links[0]!];
     const lines = diffContent(before, after).map(describeChange);
     expect(lines).toContain(`archive[0].title: added "2026 binder"`);
-    expect(lines).toContain(`links[0].title: "CAD on Onshape" -> "Team history"`);
+    expect(lines).toContain(`links[0].title: "Master link" -> "Team history"`);
     expect(lines.some((l) => l.startsWith("links[1].blurb"))).toBe(true);
   });
 });

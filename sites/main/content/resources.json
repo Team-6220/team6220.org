@@ -1,6 +1,27 @@
 {
   "links": [
     {
+      "kind": "TEAM",
+      "title": "Master link",
+      "href": "https://docs.google.com/document/d/1g963Kyxd5feXP6BPrEHOOWjDtAoMnUwWnv2i7WNmcDk/edit",
+      "blurb": "General team links and every subteam's key documents.",
+      "menuLabel": "Master link"
+    },
+    {
+      "kind": "TEAM",
+      "title": "Team resources",
+      "href": "https://docs.google.com/document/d/1XfFD8dmQpxxQ15PFlrlI-8oRYEFn5826C4IvT3F-Kr0/edit",
+      "blurb": "Links and references for the whole team.",
+      "menuLabel": "Team resources"
+    },
+    {
+      "kind": "DESIGN",
+      "title": "Design resources",
+      "href": "https://docs.google.com/document/d/14sMn4feGvl9tRqUnV0s7fV3Yy88iGnWGdMs3j_jz3cQ/edit",
+      "blurb": "Links and references for the design subteam.",
+      "menuLabel": "Design resources"
+    },
+    {
       "kind": "CAD",
       "title": "CAD on Onshape",
       "href": "https://cad.onshape.com/documents/cfcf30c88841d74e4322e2ee/w/0293e4f8d98a6db63dfa9e5e/e/e391d6c1d5b644ac4d583e63",
