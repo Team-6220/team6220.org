@@ -55,6 +55,11 @@ The titles must match **exactly**, because code compares text:
 | `Team Member` | `BADGES.teamMember` | Every approved student/mentor | The apps (dashboard, Attendance view, Inventory) |
 | `Attendance Admin` | `BADGES.attendanceAdmin` | Leads who run meeting sign-in | Opening and closing the attendance kiosk |
 | `Web Admin` | `BADGES.webAdmin` | The webmasters | Reserved for the Site Manager app (not built yet) |
+| `Mentor` | `BADGES.mentor` | Mentors | Operations apps: signing BOM lines and buying; changing anyone's subteams |
+| `Booster` | `BADGES.booster` | Booster club members who order for the team | Operations apps: the same BOM rights as Mentor |
+| `Supervisor` | `BADGES.supervisor` | Adults who only need to look | Operations apps: view only |
+| `Lead` | `BADGES.lead` | Subteam leads and captains | Operations apps: planning (projects, milestones, templates, BOMs) |
+| `Subteam: Design`, `Subteam: Manufacturing`, `Subteam: Programming`, `Subteam: Electrical`, `Subteam: Operations` | (found by the `Subteam: ` prefix) | Members of that subteam | No extra rights. Members pick their own in Icarus; the ops API is the only code that assigns them |
 
 (An `Inventory Manager` badge was created and later dropped: every Team Member can edit inventory, a team decision from
 Nov 2026. You can delete it from Wix if it is still there.)

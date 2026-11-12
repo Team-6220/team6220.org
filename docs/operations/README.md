@@ -18,6 +18,7 @@
 | [PRODUCTION.md](PRODUCTION.md) | Production app (`/apps/production`): parts request, print queue, tracker, cut planner and optimizer |
 | [BOM.md](BOM.md) | BOM app (`/apps/bom`): orders, mentor approval, receiving into Inventory |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Shared design: folders, data collections, the `ops-api` backend, roles, the API for Apollo |
+| [SETUP.md](SETUP.md) | What a person has to do in Wix and Google before the apps use real data |
 
 ## Why
 

@@ -41,6 +41,37 @@ await attendance.lookup("0123456789"); // "did I sign in?" for your own ID: date
 - Tests: `pnpm --filter @team6220/data test` (vitest). `test/apps-script.test.ts` also runs the Apps Script `Code.gs`
   against fake Apps Script services.
 
+## Operations apps (`ops`)
+
+What Icarus, Production and BOM share. The plan is [docs/operations/ARCHITECTURE.md](../../docs/operations/ARCHITECTURE.md).
+
+```ts
+import { ops } from "@team6220/data";
+
+const viewer = await ops.getViewer();           // signed-out | pending | member (me.roles, me.subteams)
+const projects = await ops.listProjects();      // p1, p2, ... shared by all three apps
+await ops.saveProject({ name: "Summer Bot" });  // Leads only; refused by the server for anyone else
+await ops.setMySubteams(["Design"]);            // changes the member's "Subteam: " badges
+const log = await ops.listHistory({ kind: "project", id });
+```
+
+Inside this package there are two ways data moves, and each app's data module uses both:
+
+| | Used for | Real backend | Demo backend |
+| --- | --- | --- | --- |
+| `ops.store()` | Reads, and edits any member may make | Wix CMS as the signed-in member (`ops/wix-store.ts`) | Memory (`ops/mock.ts`) |
+| `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The ops API Apps Script (`backend/apps-script/ops-api`) | The same rules in memory |
+
+**Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. On a deployed page add
+`?demo=member`, `lead`, `mentor`, `booster`, `supervisor`, `pending` or `signed-out` to try each role; `?demo=off`
+leaves it. Call `ops.readDemoFromUrl()` once when the app starts. Demo data resets when the page reloads.
+
+**Roles.** `ops/roles.ts` turns badges into `viewer / team / lead / approver / peopleAdmin`. It only decides what to
+show; the same rules in `ops-api/Auth.gs` are the real check.
+
+**A new data module** (for example `bom/`) adds its made-up data with `seedMock(...)` and its protected actions with
+`mockActions(...)`, both from `ops/mock.ts`, so the demo and the real server follow the same rules.
+
 ## Site Manager
 
 ```ts

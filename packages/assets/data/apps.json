@@ -19,6 +19,35 @@
     "symbol": "parts"
   },
   {
+    "id": "icarus",
+    "name": "Icarus",
+    "description": "Tasks and the team Gantt chart.",
+    "href": "/apps/icarus",
+    "status": "live",
+    "access": "team",
+    "note": "Leads plan seasons and target dates",
+    "symbol": "audits"
+  },
+  {
+    "id": "bom",
+    "name": "BOM",
+    "description": "What we're buying: orders, mentor signatures and deliveries.",
+    "href": "/apps/bom",
+    "status": "live",
+    "access": "team",
+    "note": "Mentors and Boosters sign and buy",
+    "symbol": "parts"
+  },
+  {
+    "id": "production",
+    "name": "Production",
+    "description": "Request parts, see what to make next, and run the print queue.",
+    "href": "/apps/production",
+    "status": "live",
+    "access": "team",
+    "symbol": "tools"
+  },
+  {
     "id": "site",
     "name": "Site Manager",
     "description": "Change the public website's content with forms. Submitting opens a pull request.",
@@ -61,13 +90,5 @@
     "status": "planned",
     "access": "public",
     "symbol": "image"
-  },
-  {
-    "id": "production",
-    "name": "Production Tracker",
-    "description": "Follow each robot part from design to finished.",
-    "status": "planned",
-    "access": "team",
-    "symbol": "tools"
   }
 ]

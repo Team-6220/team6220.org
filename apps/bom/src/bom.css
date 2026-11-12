@@ -1,0 +1,120 @@
+/* Styles only the BOM app needs. Everything else comes from @team6220/ui. */
+.bom,
+.bom__order {
+  display: grid;
+  gap: var(--space-3);
+}
+/* Let wide tables scroll inside their own box instead of stretching the page (needed on phones). */
+.bom > *,
+.bom__order > * {
+  min-width: 0;
+}
+.t-page:has(.bom) {
+  --page-width: 78rem; /* the tables are wide, like the sheet */
+}
+.bom__bar,
+.bom__buttons,
+.bom__sign-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+.bom__sign-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.bom__sign-bar span {
+  flex: 1 1 14rem;
+}
+.bom__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+.bom__tab {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.bom__tab--on {
+  border-bottom-color: var(--color-gold);
+  color: var(--color-ink);
+}
+.bom__totals {
+  margin: 0;
+  font-weight: 700;
+}
+.bom__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.bom__section-head h3 {
+  margin: 0;
+}
+.bom__scroll {
+  overflow-x: auto;
+  margin-bottom: var(--space-2);
+}
+.bom__table td {
+  vertical-align: top;
+}
+.bom__row--chosen {
+  background: var(--color-warn-bg);
+}
+.bom__pick {
+  width: 2.5rem;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none; /* lets a finger drag down the boxes without scrolling the page */
+}
+.bom__pick input {
+  width: 1.2rem;
+  height: 1.2rem;
+  pointer-events: none; /* the cell handles the press, so a drag can start on it */
+}
+.bom__row-actions,
+.bom__receive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.bom__row-actions .t-button,
+.bom__receive .t-button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+.bom__receive input {
+  width: 4.5rem;
+}
+.bom__line-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0 var(--space-3);
+  margin-top: var(--space-2);
+}
+.bom__wide {
+  grid-column: 1 / -1;
+}
+.bom__to-buy {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+}
+.bom__check {
+  display: block;
+  margin-bottom: var(--space-1);
+}

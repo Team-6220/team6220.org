@@ -30,6 +30,7 @@ its tables, it tells you how to get from the files in git to a running web app.
 | Folder | Live name | Bound or standalone | Web app access | Status |
 | --- | --- | --- | --- | --- |
 | `backend/apps-script/attendance-api/` | 6220 Attendance API | **Standalone**, finds the Sheet by `SHEET_ID` | Execute as me, **Anyone** (it checks the Wix sign-in itself on every request) | **The website uses it.** `packages/data/src/config.ts` holds a deployed `/exec` URL |
+| `backend/apps-script/ops-api/` | 6220 Operations API | **Standalone**, talks only to Wix | Execute as me, **Anyone** (it checks the Wix sign-in itself on every request) | **Not deployed yet.** Icarus, Production and BOM will use it; setup is in [its README](../backend/apps-script/ops-api/README.md) |
 | `backend/apps-script/attendance/` | QR Code Scanner ("6220 Attendance") | **Bound** to the attendance Sheet | Execute as me, **Only myself** | Live fallback. **Do not modify** |
 | `backend/apps-script/inventory/` | Inventory Manager (Golden Griffins Inventory) | **Bound** to the inventory Sheet | set in the live deployment; the export has no manifest | Live until the new `/apps/inventory` has run a real meeting |
 

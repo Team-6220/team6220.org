@@ -95,13 +95,13 @@ same check Inventory uses). Field lists are the important fields, not every fiel
 | Collection | Holds | Main fields |
 | --- | --- | --- |
 | `icarus_tasks` | Tasks and subtasks | number, path (`42.1`), parentId, title, description, projectId, subteams, ownerIds, status, startDate, dueDate, notes, seasonId, templateKey, githubIssue `{repo, number, syncedAt}` |
-| `icarus_relations` | Links between tasks | fromTaskId, toTaskId, type (`blocks`, `related`). Parent/child is `parentId` on the task |
+| (no `icarus_relations`) | Built simpler than first planned: "needs completion of" is a `blockedBy` list on the task, and parent/child is `parentId` | |
 | `icarus_needs` | What a task needs | taskId, record link (inventory item, BOM line or part), quantity |
 | `icarus_milestones` | Target dates | name, date, subteams (empty = whole team), seasonId, eventId |
 | `icarus_events` | Competitions and scrimmages | code, displayName, officialName, startDate, endDate, location, source (`tba`, `first`, `manual`) |
 | `icarus_seasons` | One Gantt chart | name, startDate, endDate, eventIds, templateId |
 | `icarus_templates` | Season and offseason templates | name, items (tasks and milestones with date offsets from named anchors) |
-| `icarus_subteams` | The list of subteams | name, badgeId, color, order, githubLabel |
+| `icarus_subteams` | Display settings per subteam (the list itself comes from the `Subteam: ` badges) | name, color, order, githubLabel |
 
 ### Production (`production_`)
 
@@ -201,7 +201,8 @@ Subteams are real Wix badges, so other apps and the Site Manager see the same th
   Booster, Supervisor or any admin badge, whoever asks.
 - `ops_people.subteams` is a copy kept for fast filtering; the badge is the truth, and a daily job fixes any
   difference.
-- The list of subteams is in `icarus_subteams` (name, badge id, color, order, GitHub label).
+- The list of subteams **is** the set of `Subteam: ` badges (built this way in step 0, so there is nothing to keep
+  in step). `icarus_subteams` only holds what Icarus adds per subteam: color, order and GitHub label.
 - Site Manager: when it gains a members screen (#100, #109), it calls the same two actions, so there is one
   implementation.
 
