@@ -19,6 +19,9 @@ Two sections, as the team decided (Nov 12, 2026):
     Big buttons: **Claim**, **Hand back** (what is left, where the piece is), **Confirm cut**, **Done**.
   - **Shapeoko pending**: Shapeoko parts wait here until someone writes the stock size and where the toolpath is.
 
+A part requested from an Icarus task ("Request a part for this task") is linked to it: the task shows the part's
+status and the part links back.
+
 Every Team Member can do every step. Each step is written to the history log under the person who did it, and a
 part keeps the name of everyone who worked on it, including people who did not finish.
 
@@ -29,7 +32,7 @@ part keeps the name of everyone who worked on it, including people who did not f
 - Import from **Onshape** or an **STL**.
 - Materials from Inventory's lists (the form offers a fixed list and accepts any text).
 - Tracking each copy of a part separately ("3 of 4 done"). A part is claimed and finished as a whole for now.
-- Links from Icarus tasks to parts, and **Add to BOM** when stock is missing.
+- **Add to BOM** when stock is missing (that needs the cut planner).
 - Copying Inventory's old cut-planner jobs (`inventory_production`) into this app.
 
 ## Where things are

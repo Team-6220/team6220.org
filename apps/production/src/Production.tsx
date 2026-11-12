@@ -18,7 +18,13 @@ export default function Production() {
   const [loadError, setLoadError] = useState("");
   const [parts, setParts] = useState<Part[] | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [screen, setScreen] = useState<Screen>("tracker");
+  // Opened from an Icarus task: /apps/production?task=<task id>&project=<project id>
+  const [forTask] = useState(() => {
+    const query = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+    const taskId = query.get("task") ?? "";
+    return taskId ? { taskId, projectId: query.get("project") ?? "" } : undefined;
+  });
+  const [screen, setScreen] = useState<Screen>(forTask ? "request" : "tracker");
   const [message, setMessage] = useState<Message>(null);
 
   const reload = useCallback(async () => {
@@ -61,7 +67,7 @@ export default function Production() {
       state={state}
       who={me?.name}
       errorMessage={loadError}
-      notice={ops.isDemo() ? "Demo data: nothing here is saved." : !ops.isConnected() ? "Not connected to the team server yet: you can look, but changes won't save." : undefined}
+      notice={ops.demoNotice()}
       onSignIn={() => void auth.login("/apps/production")}
     >
       {me && parts && (
@@ -84,7 +90,7 @@ export default function Production() {
           {message && <p className={`t-status t-status--${message.tone}`} role="status">{message.text}</p>}
 
           {screen === "request" && (me.roles.team
-            ? <RequestForm projects={projects} onSubmit={(request) => run(async () => `Submitted ${production.partLabel((await production.requestParts([request], me))[0])}.`)} />
+            ? <RequestForm projects={projects} forTask={forTask} onSubmit={(request) => run(async () => `Submitted ${production.partLabel((await production.requestParts([request], me))[0])}.`)} />
             : <p className="t-muted">Your account can look at Production but not request parts.</p>)}
           {screen === "mine" && cards(parts.filter((p) => p.designerId === me.id), "You haven't requested any parts yet.")}
           {screen === "prints" && cards(open.filter((p) => p.method === "print"), "The print queue is empty.")}

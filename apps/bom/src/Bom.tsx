@@ -18,6 +18,12 @@ export default function Bom() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [newOrderOpen, setNewOrderOpen] = useState(false);
+  // Opened from "Add to BOM" in another app: /apps/bom?add=<item name>&qty=<how many>
+  const [toAdd, setToAdd] = useState(() => {
+    const query = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+    const name = query.get("add") ?? "";
+    return name ? { name, quantity: Math.max(1, Math.floor(Number(query.get("qty")) || 1)) } : null;
+  });
 
   // Who is looking, the BOMs and the projects: once, when the page opens.
   useEffect(() => {
@@ -68,7 +74,7 @@ export default function Bom() {
       state={state}
       who={me?.name}
       errorMessage={loadError}
-      notice={ops.isDemo() ? "Demo data: nothing here is saved." : !ops.isConnected() ? "Not connected to the team server yet: you can look, but changes won't save." : undefined}
+      notice={ops.demoNotice()}
       onSignIn={() => void auth.login("/apps/bom")}
     >
       {me && (
@@ -136,7 +142,13 @@ export default function Bom() {
 
           {detail ? (
             <>
-              <OrderView detail={detail} me={me} run={run} />
+              {toAdd && (
+                <p className="t-status t-status--warn">
+                  To add <strong>{toAdd.quantity} × {toAdd.name}</strong>, press <strong>Add item</strong> under the vendor that sells it.{" "}
+                  <button type="button" className="bom__link" onClick={() => setToAdd(null)}>Never mind</button>
+                </p>
+              )}
+              <OrderView detail={detail} me={me} run={run} toAdd={toAdd} onAdded={() => setToAdd(null)} />
               <button className="t-button t-button--quiet" type="button" onClick={() => downloadCsv(detail, bom.orderName(detail.order, projects))}>
                 Export this order (CSV, sheet layout)
               </button>

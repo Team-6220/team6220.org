@@ -20,6 +20,9 @@ interface OrderViewProps {
   me: Me;
   /** Runs a change, then reloads the order. Shows the error if the server says no. */
   run: (change: () => Promise<string | void>) => Promise<void>;
+  /** An item another app asked to add ("Add to BOM"). It prefills the next new line. */
+  toAdd?: { name: string; quantity: number } | null;
+  onAdded?: () => void;
 }
 
 /** Which form is open, if any. Only one at a time, so the page stays readable. */
@@ -31,7 +34,7 @@ type OpenForm =
   | { kind: "confirm-sign" }
   | null;
 
-export function OrderView({ detail, me, run }: OrderViewProps) {
+export function OrderView({ detail, me, run, toAdd, onAdded }: OrderViewProps) {
   const [open, setOpen] = useState<OpenForm>(null);
   const { team, lead, approver } = me.roles;
 
@@ -183,7 +186,7 @@ export function OrderView({ detail, me, run }: OrderViewProps) {
         </div>
 
         {open?.kind === "add" && open.sectionId === section._id && (
-          <LineForm sectionId={section._id} onCancel={close} onSave={(input) => act(async () => void (await bom.saveLine(input)))} />
+          <LineForm sectionId={section._id} prefill={toAdd ?? undefined} onCancel={close} onSave={(input) => act(async () => (await bom.saveLine(input), onAdded?.()))} />
         )}
         {open?.kind === "order" && open.sectionId === section._id && (
           <OrderForm

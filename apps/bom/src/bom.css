@@ -52,6 +52,15 @@
   border-bottom-color: var(--color-gold);
   color: var(--color-ink);
 }
+.bom__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .bom__totals {
   margin: 0;
   font-weight: 700;

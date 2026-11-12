@@ -1,7 +1,7 @@
 // /apps/icarus: tasks and the team Gantt chart. Plan: docs/operations/ICARUS.md.
 // This file loads everything and decides which screen shows; each screen is its own file.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { auth, icarus, ops, OpsError, type Draft, type IcarusData, type OpsViewer, type Person, type Project, type Task } from "@team6220/data";
+import { auth, bom, icarus, ops, OpsError, production, type Draft, type IcarusData, type OpsViewer, type Part, type Person, type Project, type Task } from "@team6220/data";
 import { AppShell, type AppShellState } from "@team6220/ui";
 import { Gantt } from "./Gantt";
 import { People } from "./People";
@@ -78,6 +78,16 @@ export default function Icarus() {
     [data, season, subteams.join("|"), today],
   );
 
+  // A link from another app can open one task: /apps/icarus?task=<its id>
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("task");
+    const task = wanted && data?.tasks.find((t) => t._id === wanted);
+    if (task) {
+      setSeasonId(task.seasonId);
+      setEditing((current) => current ?? task);
+    }
+  }, [data === null]);
+
   const state: AppShellState = loadError ? "error" : !viewer ? "loading" : viewer.kind !== "member" ? viewer.kind : data ? "ready" : "loading";
   const openTask = (task: Draft<Task>) => (setEditing(task), window.scrollTo({ top: 0 }));
 
@@ -87,7 +97,7 @@ export default function Icarus() {
       state={state}
       who={me?.name}
       errorMessage={loadError}
-      notice={ops.isDemo() ? "Demo data: nothing here is saved." : !ops.isConnected() ? "Not connected to the team server yet: you can look, but some changes won't save." : undefined}
+      notice={ops.demoNotice()}
       onSignIn={() => void auth.login("/apps/icarus")}
     >
       {me && data && (
@@ -192,7 +202,7 @@ export default function Icarus() {
   );
 }
 
-/** Projects (p10): one shared list, also used by Production and BOM. */
+/** Projects (p10): one shared list, also used by Production and BOM. Each row shows what all three apps know about it. */
 function Projects({
   projects, tasks, canCreate, run, onShowTasks,
 }: {
@@ -203,6 +213,14 @@ function Projects({
   run: (change: () => Promise<string | void>) => Promise<void>;
   onShowTasks: (projectId: string) => void;
 }) {
+  const [parts, setParts] = useState<Part[]>([]);
+  const [spending, setSpending] = useState<Map<string, { requested: number; paid: number }>>(new Map());
+  useEffect(() => {
+    // The other apps' numbers are extra: if one can't be read, the list still shows the tasks.
+    production.listParts().then(setParts, () => undefined);
+    bom.spendingByProject().then(setSpending, () => undefined);
+  }, []);
+
   return (
     <section className="t-panel">
       <h2>Projects</h2>
@@ -210,11 +228,15 @@ function Projects({
         {projects.map((p) => {
           const mine = tasks.filter((t) => t.projectId === p._id);
           const done = mine.filter((t) => t.status === "done").length;
+          const openParts = parts.filter((part) => part.projectId === p._id && production.isOpen(part)).length;
+          const money = spending.get(p._id);
           return (
             <li key={p._id}>
               <button type="button" className="icr__list-item" onClick={() => onShowTasks(p._id)}>
                 <span className="icr__list-title"><span className="icr__number">{ops.projectLabel(p)}</span> {p.name}</span>
-                <span className="t-muted">{p.subteams.join(", ") || "Whole team"}</span>
+                <span className="t-muted">
+                  {[p.subteams.join(", ") || "Whole team", openParts ? `${openParts} parts being made` : "", money ? `BOM: ${bom.formatMoney(money.paid)} paid of ${bom.formatMoney(money.requested)} requested` : ""].filter(Boolean).join(" · ")}
+                </span>
                 <span className="t-muted">{mine.length ? `${done} of ${mine.length} tasks done` : "No tasks yet"}</span>
               </button>
             </li>

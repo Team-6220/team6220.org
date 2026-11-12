@@ -77,7 +77,8 @@ Members can read the `bom_*` collections but not write them, so every BOM change
 | `signLines` | approver | `lineIds` (up to 200) | `signed`, `skipped` (with reasons), `total` |
 | `approveSection` | approver | `sectionId` | `section` |
 | `markOrdered` | approver | `sectionId`, `orderDate`, `finalTotal`, `expectedArrival` | `section`, `ordered`, `notReady` |
-| `receiveLines` | team, Apollo | `items` (`lineId`, `quantity`) | `lines` |
+| `receiveLines` | team, Apollo | `items` (`lineId`, `quantity`, optional `inventoryItemId`) | `lines` |
+| `linkLineToInventory` | team, Apollo | `lineId`, `inventoryItemId` | `line` |
 
 The rules: two signatures from two different people, each a Mentor or Booster; changing the item, link, cost or
 quantity of a signed line removes its signatures; only fully signed lines in a section with Approval to Order can be
@@ -127,9 +128,14 @@ Actions open to Apollo today:
 | `saveLine` | `line`: `sectionId`, `name`, `link`, `vendorPartNumber`, `unitCost`, `quantity`, `comments` (`_id` to change one) | `line`, `signaturesCleared` | `{ "action": "saveLine", "apiKey": "...", "line": { "sectionId": "...", "name": "NEO Vortex", "unitCost": 90, "quantity": 4, "link": "https://..." } }` |
 | `receiveLines` | `items`: list of `lineId`, `quantity` | `lines` | `{ "action": "receiveLines", "apiKey": "...", "items": [{ "lineId": "...", "quantity": 4 }] }` |
 
+| `linkLineToInventory` | `lineId`, `inventoryItemId` | `line` | `{ "action": "linkLineToInventory", "apiKey": "...", "lineId": "...", "inventoryItemId": "PT-..." }` |
+
 Apollo reads BOMs, orders, sections and lines from the Wix collections (`bom_boms`, `bom_orders`, `bom_sections`,
-`bom_lines`). It cannot sign, approve or mark ordered. Writing received items into Inventory comes with the
-Inventory connection (build step 4); until then `receiveLines` only updates the BOM line.
+`bom_lines`). It cannot sign, approve or mark ordered.
+
+**Not yet:** `receiveLines` records the delivery and which Inventory part it belongs to, but this server does not
+change Inventory stock. On the website the stock change is made by the browser of the person receiving. Until a
+server-side Inventory write is added, Apollo marking a line received leaves the stock count for a person to update.
 
 This table is the contract Apollo's tools are written against. When an action is opened to Apollo, add its row here
 in the same pull request.
@@ -155,13 +161,13 @@ in the same pull request.
    | `bom_boms` | `name`, `season`, `status` (text) |
    | `bom_orders` | `bomId`, `projectId`, `customName`, `createdAt` (text); `sequence` (number) |
    | `bom_sections` | `orderId`, `vendor`, `orderDate`, `expectedArrival` (text); `sortOrder`, `finalTotal` (number); `approval`, `orderedBy` (object) |
-   | `bom_lines` | `sectionId`, `name`, `link`, `vendorPartNumber`, `comments`, `orderedAt`, `receivedAt` (text); `unitCost`, `quantity`, `receivedQty` (number); `requestedBy`, `receivedBy` (object); `signatures` (array) |
+   | `bom_lines` | `sectionId`, `name`, `link`, `vendorPartNumber`, `comments`, `orderedAt`, `receivedAt` (text); `unitCost`, `quantity`, `receivedQty` (number); `requestedBy`, `receivedBy` (object); `signatures` (array); `inventoryItemId` (text) |
 
    Icarus:
 
    | Collection | Read | Write | Fields |
    | --- | --- | --- | --- |
-   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy` (tags) |
+   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy` (tags); `needs` (array) |
    | `icarus_milestones` | Site members | Admin | `name`, `date`, `seasonId`, `eventId` (text); `subteams` (tags) |
    | `icarus_events` | Site members | Admin | `code`, `displayName`, `officialName`, `startDate`, `endDate`, `location`, `source` (text) |
    | `icarus_seasons` | Site members | Admin | `name`, `startDate`, `endDate` (text); `eventIds` (tags) |

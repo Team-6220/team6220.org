@@ -4,7 +4,7 @@ Each app mounts at its own route under `team6220.org/apps`. Most are React packa
 
 | Folder | Route | Status |
 | --- | --- | --- |
-| `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name and a card per app |
+| `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name, a "Needs you" list (tasks assigned to you, BOM lines to sign, parts you claimed) and a card per app |
 | `apps/attendance` | `/apps/attendance` | **Built, waiting for its server.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; shows "Not connected yet" until that is deployed. Try it with `?demo=admin` |
 | `apps/inventory` | `/apps/inventory` | **Built.** The original Apps Script UI (unchanged HTML/CSS/JS in `apps/inventory/ui`) on a `google.script.run` shim; data in the Wix CMS (mock data in dev). Not React. See [inventory/README.md](inventory/README.md) |
 | `apps/icarus` | `/apps/icarus` | **Built, waiting for its server.** Tasks (`t42`), subtasks, projects (`p10`) and the team Gantt chart with the sheet's countdown rows; seasons, target dates, events and templates for Leads; subteam badges. Try it with `?demo=lead` (or `member`, `supervisor`). See [icarus/README.md](icarus/README.md) |

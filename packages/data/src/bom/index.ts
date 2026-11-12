@@ -10,7 +10,8 @@
 import "./mock"; // registers the demo data and demo rules (only used in demo mode)
 import * as stock from "../inventory/stock";
 import { callOps, store } from "../ops";
-import { bySortOrder } from "./rules";
+import type { Me } from "../ops/types";
+import { bySortOrder, cantSign, totalCost } from "./rules";
 import type { ImportedOrder } from "./import";
 import type { Bom, Line, LineInput, Order, OrderDetail, Section, SignResult } from "./types";
 
@@ -101,6 +102,34 @@ export async function markOrdered(args: {
 /** Team members. Records that ordered items arrived; part of a line can be received. */
 export async function receiveLines(items: { lineId: string; quantity: number; inventoryItemId?: string }[]): Promise<Line[]> {
   return (await callOps<{ lines: Line[] }>("receiveLines", { items })).lines;
+}
+
+/** For the "Needs you" list on the dashboard: lines this person could sign, and ordered lines not received yet. */
+export async function needsMe(me: Me): Promise<{ toSign: number; toReceive: number }> {
+  const lines = await store().list<Line>("bom_lines");
+  return {
+    toSign: me.roles.approver ? lines.filter((l) => cantSign(l, me.id) === "").length : 0,
+    toReceive: lines.filter((l) => l.orderedAt && l.receivedQty < l.quantity).length,
+  };
+}
+
+/** Per project: what its orders asked for and what was really paid. For project pages. */
+export async function spendingByProject(): Promise<Map<string, { requested: number; paid: number }>> {
+  const [orders, sections, lines] = await Promise.all([
+    store().list<Order>("bom_orders"),
+    store().list<Section>("bom_sections"),
+    store().list<Line>("bom_lines"),
+  ]);
+  const totals = new Map<string, { requested: number; paid: number }>();
+  for (const order of orders) {
+    if (!order.projectId) continue;
+    const mine = sections.filter((s) => s.orderId === order._id);
+    const sum = totals.get(order.projectId) ?? { requested: 0, paid: 0 };
+    sum.requested += totalCost(lines.filter((l) => mine.some((s) => s._id === l.sectionId)));
+    sum.paid += mine.reduce((n, s) => n + (s.finalTotal ?? 0), 0);
+    totals.set(order.projectId, sum);
+  }
+  return totals;
 }
 
 /** What to do in Inventory when a line arrives. */

@@ -62,7 +62,8 @@ Inside this package there are two ways data moves, and each app's data module us
 | `ops.store()` | Reads, and edits any member may make | Wix CMS as the signed-in member (`ops/wix-store.ts`) | Memory (`ops/mock.ts`) |
 | `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The ops API Apps Script (`backend/apps-script/ops-api`) | The same rules in memory |
 
-**Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. On a deployed page add
+**Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. So does the deployed site until the ops
+API address is filled in (`OPS_API_URL_DEFAULT` in `config.ts`), because nothing real could work before that. On any page add
 `?demo=member`, `lead`, `mentor`, `booster`, `supervisor`, `pending` or `signed-out` to try each role; `?demo=off`
 leaves it. Call `ops.readDemoFromUrl()` once when the app starts. Demo data resets when the page reloads.
 

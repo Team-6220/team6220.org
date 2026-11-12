@@ -45,6 +45,9 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 
 ## Still to build
 
-Not built yet, so nothing to set up: receiving into Inventory and the other links between the apps, the cut planner
+The links between the apps (step 4) need no setup of their own, only the fields listed in the ops-api README
+(`inventoryItemId` on `bom_lines`, `needs` on `icarus_tasks`).
+
+Not built yet, so nothing to set up: the cut planner
 move, Onshape import, event lookup, GitHub sync and the rest of Apollo's actions. Their keys (GitHub, The Blue
 Alliance, FIRST, Onshape, Apollo) will be listed here when they are.

@@ -15,6 +15,11 @@ behind it are in [docs/operations/ICARUS.md](../../docs/operations/ICARUS.md).
   anything is created, and "Save this season as a template".
 - **Subteams**: members pick their own; Leads and Mentors change anyone's, one at a time or many at once.
 - Print the chart, and export tasks as CSV in the sheet's column order.
+- **Needs materials** on a task: Inventory parts with the stock count, a warning when there aren't enough, and
+  **Add to BOM** for what is missing. A task never changes stock.
+- **Parts being made** on a task: the Production parts requested for it with their status, and **Request a part
+  for this task**.
+- **Projects** show their tasks, the parts being made for them and what their BOM orders cost.
 
 ## Not built yet
 
@@ -24,7 +29,6 @@ In the plan, coming with later build steps:
 - The board-by-status view.
 - Looking events up by code from The Blue Alliance and FIRST (events are typed in for now), GitHub issue sync and
   the Apollo actions (step 6).
-- "Needs materials" and "needs part" links to Inventory, BOM and Production (step 4).
 - Editing a template's tasks one by one. For now: start a season from a template, fix it on the chart, then save
   that season as a new template.
 - The built-in templates are a first guess (marked PROPOSED in `templates.ts`). Leads should correct them.

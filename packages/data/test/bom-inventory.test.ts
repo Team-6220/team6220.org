@@ -56,3 +56,23 @@ describe("receiving into Inventory", () => {
     return (await bom.getOrder(order._id))!.sections.flatMap((s) => s.lines).find((l) => l._id === id)!;
   }
 });
+
+describe("what the dashboard and project pages ask the BOM", () => {
+  it("counts lines to sign only for people who can sign, and adds up spending per project", async () => {
+    ops.resetMock();
+    const viewer = await ops.getViewer();
+    if (viewer.kind !== "member") throw new Error("expected the demo lead");
+    const asLead = await bom.needsMe(viewer.me);
+    expect(asLead.toSign).toBe(0); // a lead is not a mentor or booster
+    expect(asLead.toReceive).toBeGreaterThan(0);
+    const mentor = { ...viewer.me, id: "demo-mentor", roles: { ...viewer.me.roles, approver: true } };
+    expect((await bom.needsMe(mentor)).toSign).toBeGreaterThan(0);
+
+    const [first] = await bom.listBoms();
+    const [project] = await ops.listProjects();
+    const order = await bom.createOrder({ bomId: first._id, projectId: project._id });
+    const detail = (await bom.getOrder(order._id))!;
+    await bom.saveLine({ sectionId: detail.sections[0].section._id, name: "Bearing", link: "", vendorPartNumber: "", unitCost: 2.5, quantity: 4, comments: "" });
+    expect((await bom.spendingByProject()).get(project._id)).toEqual({ requested: 10, paid: 0 });
+  });
+});
