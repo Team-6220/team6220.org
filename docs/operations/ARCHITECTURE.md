@@ -1,6 +1,6 @@
 # Team Operations apps: architecture (plan)
 
-> **Plan only, not built.** How Tasks, Production and BOM are put together and how they share data with each other and
+> **Plan only, not built.** How Icarus (tasks), Production and BOM are put together and how they share data with each other and
 > with Inventory. Read the [overview](README.md) first. This follows the site's existing rules
 > ([ARCHITECTURE.md](../ARCHITECTURE.md), [ADD-AN-APP.md](../ADD-AN-APP.md),
 > [APPS-PHILOSOPHY.md](../APPS-PHILOSOPHY.md)); where it adds something new, it says so.
@@ -21,9 +21,9 @@
 ```
  browser                                                         servers
 ┌──────────────────────────────┐
-│ apps/tasks  apps/production  │   reads + simple writes (member token)
+│ apps/icarus  apps/production  │   reads + simple writes (member token)
 │ apps/bom    apps/inventory   │ ───────────────────────────────────────▶  Wix CMS
-│        (React screens)       │                                           tasks_*  production_*  bom_*
+│        (React screens)       │                                           icarus_*  production_*  bom_*
 │             │                │                                           ops_*    inventory_*
 │             ▼                │                                              ▲
 │ packages/data                │   protected actions                         │ Wix API key
@@ -38,8 +38,8 @@
 
 ```
 apps/
-  tasks/                 /apps/tasks       React. Gantt, list, board, project pages, templates
-  production/            /apps/production  React. Design, Manufacturing, Cut optimizer
+  tasks/                 /apps/icarus       React. Gantt, list, board, project pages, templates
+  production/            /apps/production  React. Design, Manufacturing
   bom/                   /apps/bom         React. BOMs, orders, approval, receiving
   inventory/             unchanged, except: links out to the new apps, and its cut planner is removed at the end
 packages/
@@ -52,18 +52,18 @@ packages/
   cut-engine/            NEW package. Pure functions: stock + parts in, layout out. No React, no Wix
   ui/                    existing. Gains shared pieces: PersonPicker, ProjectPicker, RecordLink, HistoryList
 backend/apps-script/
-  ops-api/               NEW. One project: Code.gs split into files by area (Auth, Tasks, Bom, Production,
+  ops-api/               NEW. One project: Code.gs split into files by area (Auth, Icarus, Bom, Production,
                          GitHub, Events, Onshape, Agent). README with setup, like attendance-api
 docs/operations/         these plans
 ```
 
 Each app follows [ADD-AN-APP.md](../ADD-AN-APP.md): its own `package.json`, a page under `src/pages/apps/<name>/`, a
-card in `apps/dashboard/src/apps.ts`, a CODEOWNERS line, a GitHub label (`APP: TASKS`, `APP: PRODUCTION TRACKER`
+card in `apps/dashboard/src/apps.ts`, a CODEOWNERS line, a GitHub label (`APP: ICARUS`, `APP: PRODUCTION TRACKER`
 already exists, `APP: BOM`), and `?demo=` modes backed by `mock.ts`.
 
 ## Rules for keeping the apps connected but separate
 
-1. **An app never imports another app.** `apps/tasks` does not import from `apps/bom`. If Tasks needs to show a BOM
+1. **An app never imports another app.** `apps/icarus` does not import from `apps/bom`. If Icarus needs to show a BOM
    line, it calls `bom.getLineSummary(id)` from `@team6220/data`.
 2. **Each data module owns its collections.** Only `packages/data/src/bom` reads or writes `bom_*`. Other modules
    ask it through exported functions. This is what lets one app's storage change without breaking the others.
@@ -90,17 +90,18 @@ same check Inventory uses). Field lists are the important fields, not every fiel
 | `ops_history` | The change log for all three apps | record link, actor, action, before/after summary, time. Written only by `ops-api` and the data modules |
 | `ops_people` | What the apps need to know about a member beyond Wix | memberId, display name, subteams, githubLogin, active |
 
-### Tasks (`tasks_`)
+### Icarus (`icarus_`)
 
 | Collection | Holds | Main fields |
 | --- | --- | --- |
-| `tasks_tasks` | Tasks and subtasks | number, path (`42.1`), parentId, title, description, projectId, subteams, ownerIds, status, startDate, dueDate, notes, seasonId, templateKey, githubIssue `{repo, number, syncedAt}` |
-| `tasks_relations` | Links between tasks | fromTaskId, toTaskId, type (`blocks`, `related`). Parent/child is `parentId` on the task |
-| `tasks_needs` | What a task needs | taskId, record link (inventory item, BOM line or part), quantity |
-| `tasks_milestones` | Target dates | name, date, subteams (empty = whole team), seasonId, eventId |
-| `tasks_events` | Competitions and scrimmages | code, displayName, officialName, startDate, endDate, location, source (`tba`, `first`, `manual`) |
-| `tasks_seasons` | One Gantt chart | name, startDate, endDate, eventIds, templateId |
-| `tasks_templates` | Season and offseason templates | name, items (tasks and milestones with date offsets from named anchors) |
+| `icarus_tasks` | Tasks and subtasks | number, path (`42.1`), parentId, title, description, projectId, subteams, ownerIds, status, startDate, dueDate, notes, seasonId, templateKey, githubIssue `{repo, number, syncedAt}` |
+| `icarus_relations` | Links between tasks | fromTaskId, toTaskId, type (`blocks`, `related`). Parent/child is `parentId` on the task |
+| `icarus_needs` | What a task needs | taskId, record link (inventory item, BOM line or part), quantity |
+| `icarus_milestones` | Target dates | name, date, subteams (empty = whole team), seasonId, eventId |
+| `icarus_events` | Competitions and scrimmages | code, displayName, officialName, startDate, endDate, location, source (`tba`, `first`, `manual`) |
+| `icarus_seasons` | One Gantt chart | name, startDate, endDate, eventIds, templateId |
+| `icarus_templates` | Season and offseason templates | name, items (tasks and milestones with date offsets from named anchors) |
+| `icarus_subteams` | The list of subteams | name, badgeId, color, order, githubLabel |
 
 ### Production (`production_`)
 
@@ -132,9 +133,9 @@ Wix collection permissions are the real lock in Phase 1, so they are set by how 
 
 | Collections | Read | Write |
 | --- | --- | --- |
-| `tasks_*` except the fields below, `production_parts`, `production_work`, `production_prints`, `bom_catalog`, `bom_lists`, `ops_people` | Site members | Site members (directly from the browser, like Inventory) |
+| `icarus_*` except the fields below, `production_parts`, `production_work`, `production_prints`, `bom_catalog`, `bom_lists`, `ops_people` | Site members | Site members (directly from the browser, like Inventory) |
 | `bom_boms`, `bom_orders`, `bom_sections`, `bom_lines` | Site members | **Admin only.** Every write goes through `ops-api`, which checks the member's badge first |
-| `ops_counters`, `ops_history`, `ops_projects`, `tasks_milestones`, `tasks_events`, `tasks_seasons`, `tasks_templates` | Site members | **Admin only**, through `ops-api` |
+| `ops_counters`, `ops_history`, `ops_projects`, `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates`, `icarus_subteams` | Site members | **Admin only**, through `ops-api` |
 
 The rule: if a change needs a badge, a number or a signature, the collection is Admin-write and the browser asks
 `ops-api`. Everything else is written straight to Wix, which is faster and works when Apps Script is slow.
@@ -162,13 +163,14 @@ the same number or both become "the second signature".
 | Area | Actions (examples) | Who |
 | --- | --- | --- |
 | Shared | `nextNumber`, `logHistory`, `saveProject` | Team Member; Lead for projects |
-| Tasks | `saveMilestone`, `saveEvent`, `saveSeason`, `saveTemplate`, `startSeasonFromTemplate` | Lead |
+| Icarus | `saveMilestone`, `saveEvent`, `saveSeason`, `saveTemplate`, `startSeasonFromTemplate` | Lead |
+| Icarus | `setMySubteams(subteams)` | Team Member, for themselves |
+| Icarus | `setSubteams(memberIds, add, remove)`, `saveSubteamList` | Lead or Mentor (and Web Admin from Site Manager) |
 | BOM | `saveLine`, `removeLine` | Team Member, Mentor or Booster, only while the line is unsigned |
 | BOM | `signLines(lineIds)` | Mentor or Booster. Skips lines already signed by this person; the confirm total is recomputed on the server |
 | BOM | `approveSection`, `markOrdered`, `setFinalTotal` | Mentor or Booster |
 | BOM | `receiveLines([{lineId, qty, inventory: add / create / none}])` | Team Member, Mentor or Booster. Writes `bom_lines` and Inventory in one request |
 | BOM | `reopenLine`, `saveBom`, `saveOrder` | Lead |
-| Production | `releaseShapeokoJob` | CNC |
 | Outside APIs | `lookupEvent`, `listTeamEvents`, `readOnshapeParts`, `syncGithubNow` | Team Member or Lead; keys stay in Script Properties |
 | Agent | everything under [API for Apollo](#api-for-apollo) | Apollo's API key |
 
@@ -181,10 +183,27 @@ New Wix badges, added to `BADGES` in `packages/data/src/config.ts` and to the sc
 | `Mentor` | Approving (signing lines, Approval to Order) and buying (marking ordered, totals) in BOM | #156 |
 | `Booster` | The same BOM rights as Mentor | new (team decision, Nov 12, 2026) |
 | `Supervisor` | View only in BOM: no adding, signing, approving, ordering or receiving. Used by other apps (#156) | #156 |
-| `Lead` | Planning in Tasks, managing BOMs and projects | new, **Proposed** name |
-| `CNC` | Releasing Shapeoko jobs | new, **Proposed** name |
+| `Lead` | Planning in Icarus, managing BOMs and projects, changing anyone's subteams | new |
+| `Subteam: <name>` (one per subteam) | Which subteams a member is on. No extra rights | new |
 
-As #156 says, none of them gives any other permission, and `Web Admin` gives none of these.
+As #156 says, none of them gives any other permission, and `Web Admin` gives none of these. A person with several
+badges gets the rights of the highest one (the backend checks "has any badge that allows this"). Production has no
+badge of its own: every Team Member can do everything there, Shapeoko setup included.
+
+### Subteam badges
+
+Subteams are real Wix badges, so other apps and the Site Manager see the same thing.
+
+- The browser never assigns a badge. It calls `setMySubteams` or `setSubteams`, and `ops-api` checks who is asking,
+  then assigns or removes the badge with its Wix API key (Wix Badges API; **check** the exact calls and that an API
+  key may assign badges).
+- `ops-api` only ever touches badges whose title starts with `Subteam: `. It cannot give Team Member, Lead, Mentor,
+  Booster, Supervisor or any admin badge, whoever asks.
+- `ops_people.subteams` is a copy kept for fast filtering; the badge is the truth, and a daily job fixes any
+  difference.
+- The list of subteams is in `icarus_subteams` (name, badge id, color, order, GitHub label).
+- Site Manager: when it gains a members screen (#100, #109), it calls the same two actions, so there is one
+  implementation.
 
 ### GitHub sync
 
@@ -202,7 +221,7 @@ As #156 says, none of them gives any other permission, and `Web Admin` gives non
 ### Events, Onshape
 
 - **The Blue Alliance** (read key) and **FIRST Events API** (username and token) are called only from `ops-api`,
-  with answers cached for a day in `tasks_events`. This matches the repo rule that TBA and Nexus keys never go in
+  with answers cached for a day in `icarus_events`. This matches the repo rule that TBA and Nexus keys never go in
   the browser ([ADD-AN-APP.md](../ADD-AN-APP.md#keep-secrets-out)).
 - **Onshape:** `readOnshapeParts(documentUrl)` signs a request with the team's Onshape API keys and returns part
   names, materials and bounding boxes for the Production import screen. Which endpoints give bounding boxes and
@@ -216,14 +235,21 @@ token. The key is stored hashed in Script Properties and can be replaced without
 
 | Area | Apollo can | Apollo cannot |
 | --- | --- | --- |
-| Tasks | List and search; create and update tasks, subtasks, relations, comments; read projects, milestones and events | Delete tasks; edit templates |
+| Icarus | List and search; create and update tasks, subtasks, relations, comments; read projects, milestones and events | Delete tasks; edit templates; change badges |
 | Production | List parts and the print queue; create part requests | Confirm cuts; release Shapeoko jobs |
-| BOM | Read BOMs, lines, totals; add and edit **draft** lines; read "waiting for signatures" and "ordered, not received" | Sign, approve, mark ordered, receive |
-| Inventory | Read items and stock | Write |
+| BOM | Read BOMs, lines, totals; add and edit **draft** lines; read "waiting for signatures" and "ordered, not received"; **mark lines received** (`receiveLines`) | Sign, approve, mark ordered |
+| Inventory | Read items and stock; **add stock, create items and edit an item's details** | Archive or delete items; change settings (categories, locations, lists); run audits (**Proposed** limits) |
 
-Everything Apollo writes is logged as actor "Apollo". The actions and their arguments are documented in the
-`ops-api` README, which is the contract Apollo's tools are written against. Reminders ("3 lines are waiting for a
-second signature") are Apollo's job: it reads the "needs attention" actions and posts where the team chats.
+**The Apollo user.** Apollo has its own entry in `ops_people` (name "Apollo", marked as an agent, no Wix login).
+Every write it makes is stored with that user as the actor in `ops_history`, and anywhere the apps show a person
+("Received by", "Created by", an Inventory item's last change) they show "Apollo". When Apollo passes along which
+member asked it to act, that member is stored beside it as "on behalf of". Nothing Apollo does is recorded under a
+real member's name.
+
+**Documentation.** Every action Apollo may call, with its arguments, its answers and an example, is written in the
+"Apollo" section of the `ops-api` README. That section is the contract Apollo's tools are written against, and a
+test fails if an action is open to the Apollo key but missing from it. Reminders ("3 lines are waiting for a second
+signature") are Apollo's job: it reads the "needs attention" actions and posts where the team chats.
 
 ## Inventory
 
@@ -232,10 +258,10 @@ Inventory stays the original UI on its shim. The other apps need four things fro
 
 | Function | Used by |
 | --- | --- |
-| `searchItems(text)`, `getItemSummary(link)` | Tasks (needs materials), BOM (linking lines) |
+| `searchItems(text)`, `getItemSummary(link)` | Icarus (needs materials), BOM (linking lines) |
 | `listRawMaterials()`, `listMaterialTypes()` | Production cut planner |
 | `applyCut(pieceId, version, leftovers, flagForAudit)` | Production "Confirm cut". Wraps the existing `apiRawCut` rule in `service.ts` |
-| `addStock(itemId, qty)`, `createItem(draft)` | BOM receiving, called by `ops-api` |
+| `addStock(itemId, qty)`, `createItem(draft)`, `updateItem(id, changes)` | BOM receiving and Apollo, called by `ops-api` |
 
 Inside Inventory's own screen, the changes are small and marked with `team6220.org:` comments as its README
 requires: an **Add to BOM** button on low-stock items, "Open BOM lines / tasks / parts" on an item, a **Plan cuts**
@@ -264,7 +290,7 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 ## Screens and shared UI
 
 - React 18, `AppLayout`, shared classes from `@team6220/ui` (`t-page`, `t-panel`, `t-button`), app-prefixed class
-  names (`tasks__`, `prod__`, `bom__`).
+  names (`icarus__`, `prod__`, `bom__`).
 - New shared components in `@team6220/ui`: `PersonPicker`, `ProjectPicker`, `RecordLink`, `HistoryList`,
   `StatusPill`. Built once, in the first app that needs each.
 - **Gantt:** drawn by our own component on a CSS grid (one column per day), because the chart has to match the
@@ -273,7 +299,7 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 - **Phones first** for: My tasks, the Production tracker, receiving. **Wide screens first** for: the Gantt, BOM
   approval, the cut planner.
 - **Dashboard:** `/apps` gets a "Needs you" panel fed by one function from each data module
-  (`tasks.needsMe()`, `bom.needsMe()`, `production.needsMe()`).
+  (`icarus.needsMe()`, `bom.needsMe()`, `production.needsMe()`).
 - **Refreshing:** like Inventory, the apps re-read on a timer while the tab is visible and compare `version` on
   save, telling the member if someone else changed the record first.
 
@@ -292,7 +318,7 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 Each bullet is roughly one pull request. Steps match the [overview](README.md#build-order-proposed).
 
 **Step 0: foundations**
-- Badges in Wix and `config.ts` (#156, plus Booster, Lead and CNC).
+- Badges in Wix and `config.ts` (#156, plus Booster, Lead and one per subteam); `setMySubteams` / `setSubteams` and the People table in Icarus.
 - `ops-api` skeleton: token and badge check, Wix API key, `nextNumber`, `logHistory`, tests, deploy doc.
 - `packages/data/src/ops` (projects, people, links, history, mock) and the shared UI pickers.
 
@@ -302,8 +328,8 @@ Each bullet is roughly one pull request. Steps match the [overview](README.md#bu
 - Approval to Order, ordered, final totals, the ordering checklist, open all links.
 - Export in today's format with the golden-file test; import of the 2026 BOMs.
 
-**Step 2: Tasks**
-- Collections and `packages/data/src/tasks` with mock; task list, task page, My tasks, relations.
+**Step 2: Icarus**
+- Collections and `packages/data/src/icarus` with mock; task list, task page, My tasks, relations.
 - Gantt view; milestones; seasons.
 - Templates and "start a season"; first Season and Offseason templates.
 - Project pages.
@@ -317,8 +343,8 @@ Each bullet is roughly one pull request. Steps match the [overview](README.md#bu
 - Needs materials and needs part on tasks; project pages show parts and spending; "Needs you" on the dashboard.
 
 **Step 5: cutting and printing**
-- `packages/cut-engine` ported with tests; Cut optimizer page.
-- Cut planner in Production; Confirm cut through Inventory's `applyCut`; Shapeoko pending; print queue.
+- `packages/cut-engine` ported with tests; Cut optimizer screen (Manufacturing).
+- Cut planner in Production (Manufacturing); Confirm cut through Inventory's `applyCut`; Shapeoko pending; print queue (Design).
 - Onshape and STL import. Remove the planner from Inventory's screen after a real meeting.
 
 **Step 6: outside integrations**
@@ -333,5 +359,5 @@ Each bullet is roughly one pull request. Steps match the [overview](README.md#bu
 | Wix has no transactions | Receiving and signing run under a script lock; each step is safe to repeat; `ops_history` shows what happened |
 | Three apps drift apart in look and behavior | Shared pickers, links and history in `@team6220/ui` and `data/ops`; the rules in this doc |
 | Scope: this is a lot for a student team | The build order ships something usable at every step; BOM alone already replaces a sheet |
-| Phase 2 changes the backend | Apps only call `@team6220/data`; `ops-api` actions map one-to-one to future `/api/tasks`, `/api/production`, `/api/bom` endpoints |
+| Phase 2 changes the backend | Apps only call `@team6220/data`; `ops-api` actions map one-to-one to future `/api/icarus`, `/api/production`, `/api/bom` endpoints |
 | Onshape API access or limits are not what we expect | STL import and the plain form do not depend on it |

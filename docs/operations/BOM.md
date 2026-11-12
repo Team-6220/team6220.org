@@ -46,8 +46,8 @@ and is then named after it with its own count: `Summer Bot 1`, `Summer Bot 2`. O
 
 Mentors and Boosters have exactly the same rights here; below, "approver" means either. Mentor, Supervisor and
 Booster are new Wix badges and give no other permissions (#156 covers the first two; Booster was added on
-Nov 12, 2026). If a person holds Supervisor together with another badge, the other badge decides what they can do
-(**Proposed**). These checks are real: they run in the backend, not only in the browser ([ARCHITECTURE.md](ARCHITECTURE.md#who-can-do-what)).
+Nov 12, 2026). A person with several badges gets the rights of the highest one, so a Supervisor who is also a
+Mentor can approve and buy. These checks are real: they run in the backend, not only in the browser ([ARCHITECTURE.md](ARCHITECTURE.md#who-can-do-what)).
 
 ## A line's life
 
@@ -131,9 +131,23 @@ how many units to add.
 | With | How |
 | --- | --- |
 | Inventory | Receiving adds stock or creates items; low stock starts lines; suppliers are one shared list; an item page shows its open BOM lines |
-| Tasks | A task's "needs materials" can point at a line and shows its state; a project page shows its orders and what was spent |
+| Icarus | A task's "needs materials" can point at a line and shows its state; a project page shows its orders and what was spent |
 | Production | The cut planner can start a line for missing stock |
-| Apollo | Reads BOMs and totals, adds draft lines, reports "what is waiting for signatures" and "what was ordered but not received". Apollo can never sign, approve or mark ordered |
+| Apollo | Reads BOMs and totals, adds draft lines, reports "what is waiting for signatures" and "what was ordered but not received", and can **mark lines received and add them to Inventory**. Apollo can never sign, approve or mark ordered. See [Apollo](#apollo) |
+
+## Apollo
+
+Apollo, the team's Hermes agent, can receive deliveries, for example when someone tells it "the REV order came,
+everything was in the box".
+
+- It uses the same receiving step as a person: for each line it adds the quantity to the linked Inventory item,
+  creates the item, or marks the line "don't track".
+- If a line is not linked and Apollo is not sure which Inventory item it matches, it must ask a person, not guess.
+  The backend refuses a receive request that leaves this choice out.
+- Everything is recorded under the **Apollo user**: the line shows "Received by Apollo", the Inventory item's
+  history shows "Apollo added 10 (BOM line, Order 4)", and the entry names the member who asked Apollo when Apollo
+  passes that along.
+- A person can undo a receive from the line's history, which takes the quantity back out of Inventory.
 
 ## Money shown
 

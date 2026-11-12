@@ -1,4 +1,4 @@
-# Team Operations apps: Tasks, Production and BOM (plan)
+# Team Operations apps: Icarus (tasks), Production and BOM (plan)
 
 > **Status (Nov 12, 2026): plan only, nothing is built.** This is the product plan (PRD) for three new team apps and
 > how they connect to each other and to [Inventory](../../apps/inventory/README.md). It comes from issues
@@ -14,8 +14,8 @@
 | Doc | What it covers |
 | --- | --- |
 | This page | Why, who, the three apps at a glance, how they connect, build order, open questions |
-| [TASKS.md](TASKS.md) | Tasks and Gantt app (`/apps/tasks`) |
-| [PRODUCTION.md](PRODUCTION.md) | Production app (`/apps/production`): parts request, tracker, cut planner, print queue |
+| [ICARUS.md](ICARUS.md) | Icarus, the tasks and Gantt app (`/apps/icarus`) |
+| [PRODUCTION.md](PRODUCTION.md) | Production app (`/apps/production`): parts request, print queue, tracker, cut planner and optimizer |
 | [BOM.md](BOM.md) | BOM app (`/apps/bom`): orders, mentor approval, receiving into Inventory |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Shared design: folders, data collections, the `ops-api` backend, roles, the API for Apollo |
 
@@ -40,27 +40,27 @@ that project.
 | --- | --- |
 | Any Team Member | Sees the Gantt chart, creates and updates their own tasks, requests parts, claims parts to make, adds BOM lines |
 | Leads (subteam leads, captains) | Plan: milestones, target dates, templates, other people's tasks |
-| Designers | Submit parts (from Onshape, an STL or by hand), plan cuts |
-| Manufacturers | Claim parts, mark them cut or done; CNC-trained members set up Shapeoko jobs |
+| Designers | Submit parts (from Onshape, an STL or by hand), run the 3D print queue |
+| Manufacturers | Plan cuts, set up Shapeoko jobs, claim parts, mark them cut or done |
 | Mentors and Boosters | Approve BOM lines (two different people per line) and buy: place orders, mark them ordered, record totals |
 | Supervisors | View BOMs only |
-| Apollo (the team's Hermes agent) | Reads and writes tasks, parts and BOMs through the API; posts reminders |
+| Apollo (the team's Hermes agent) | Reads and writes tasks, parts and BOMs through the API, marks BOM lines received and writes to Inventory; posts reminders. Every write is recorded under the Apollo user |
 
 ## The three apps at a glance
 
 | App | Route | Replaces | First release includes |
 | --- | --- | --- | --- |
-| **Tasks** | `/apps/tasks` | The Gantt chart sheets | Tasks (`t42`), subtasks (`t42.1`), projects (`p10`), relations, Gantt view with countdown, target dates, season templates, events from FIRST / The Blue Alliance, two-way GitHub issue sync, Apollo API |
-| **Production** | `/apps/production` | Production Form, Production List, the to-do doc, Inventory's cut planner | Design side (parts request, Onshape / STL import, cut planner) and Manufacturing side (tracker, Shapeoko pending list, 3D print queue), stock updates on "cut" |
+| **Icarus** (tasks) | `/apps/icarus` | The Gantt chart sheets | Tasks (`t42`), subtasks (`t42.1`), projects (`p10`), relations, Gantt view with countdown, target dates, season templates, events from FIRST / The Blue Alliance, two-way GitHub issue sync, Apollo API |
+| **Production** | `/apps/production` | Production Form, Production List, the to-do doc, Inventory's cut planner | Design side (parts request, Onshape / STL import, 3D print queue) and Manufacturing side (tracker, Shapeoko pending list, 3D print queue), stock updates on "cut" |
 | **BOM** | `/apps/bom` | The BOM sheets | Orders with vendor sections, two-signature approval by mentors or boosters (single, range and whole-section), ordered / received, receiving into Inventory, remembered prices, saved lists, CSV export in today's exact format, import of old BOMs, Apollo API |
 
 ## How they connect
 
 ```
-                    Projects (p10): one shared list, used by Tasks and Production, optional on BOM orders
+                    Projects (p10): one shared list, used by Icarus and Production, optional on BOM orders
 
   GitHub issues ⇄ ┌─────────┐  needs part   ┌────────────┐  picks stock, cut updates  ┌───────────┐
-  FIRST / TBA  ─▶ │  TASKS  │ ────────────▶ │ PRODUCTION │ ─────────────────────────▶ │ INVENTORY │
+  FIRST / TBA  ─▶ │ ICARUS  │ ────────────▶ │ PRODUCTION │ ─────────────────────────▶ │ INVENTORY │
                   │ (Gantt) │ ◀──────────── └────────────┘                            └───────────┘
                   └─────────┘  part status        │ add to BOM                          ▲       │
                      │   │                        ▼                          received   │       │ low stock:
@@ -74,7 +74,7 @@ that project.
 | --- | --- |
 | Task → Inventory item or BOM line ("needs materials") | The task shows each item with its stock count; a warning if stock is short; an **Add to BOM** button. Stock counts do **not** change from a task |
 | Task → Production part ("needs part") | The task shows the part's live status (requested, cutting, done). The part page links back to the task |
-| Production part → Project | Same project list as Tasks (replaces the form's free-text "Project") |
+| Production part → Project | Same project list as Icarus (replaces the form's free-text "Project") |
 | Production part → Inventory raw material | The cut planner picks a stock piece. **Confirm cut** replaces that piece with its leftovers in Inventory and flags them for the next audit |
 | BOM line → Inventory item | Marking a line **Received** opens a confirm step that adds the quantity to the linked item, or offers to create the item |
 | BOM order → Project (optional) | An order is named `Order 3`, `Summer Bot 2` (a project's name plus a number) or a custom name |
@@ -85,7 +85,7 @@ that project.
 
 Answers from the team account in the planning session. These are settled unless the team changes them.
 
-1. **Three apps with shared data** (`/apps/tasks`, `/apps/production`, `/apps/bom`), each with its own folder and
+1. **Three apps with shared data** (Icarus at `/apps/icarus`, `/apps/production`, `/apps/bom`), each with its own folder and
    owners.
 2. **The cut planner moves out of Inventory** into Production. Inventory keeps raw material stock and links over.
 3. **Cut optimizer:** "Ryan's version" is a free cut-list website (like opticutter.com), not team code. Reuse the
@@ -96,26 +96,39 @@ Answers from the team account in the planning session. These are settled unless 
    line B, or approve a whole vendor section.
 6. **BOM and Google Sheets:** the website is the source of truth. Export in the exact current format and import old
    BOMs. No live sync.
-7. **Tasks first release** includes everything in #141: core tasks and Gantt, season templates, event
+7. **Icarus first release** includes everything in #141: core tasks and Gantt, season templates, event
    integrations, GitHub sync and the Apollo API.
 8. **Apollo is the team's Hermes agent** (one agent, one API).
 9. **Parts get into Production** through the Onshape API or an STL import (and a plain form). Automatic 2D cut
    planning from STL files is a separate issue labeled `later`.
-10. **Production permissions:** every Team Member can do everything, and the app records who did each step. Only
-    Shapeoko setup is limited to CNC-trained members.
+10. **Production permissions:** every Team Member can do everything, including Shapeoko setup, and the app records
+    who did each step. There is no CNC badge.
 11. **Materials on tasks and parts:** link and warn only. Stock changes only from a confirmed cut, a received BOM
     line or an edit in Inventory.
 12. **GitHub:** two-way sync, for every repository in the Team-6220 organization.
 13. **Task permissions:** members create tasks and update their own; a Lead badge is needed for milestones, target
     dates, templates and other people's tasks.
 14. **Receiving:** confirm, then add to Inventory (or create the item, or choose "don't track").
-15. **3D printing:** its own print queue screen in Production. Printer hookup comes later.
-16. **Projects:** Production and Tasks share one project list. BOM orders are numbered in order by default and may
+15. **3D printing:** its own print queue screen, in Production's Design section. Printer hookup comes later.
+16. **Projects:** Production and Icarus share one project list. BOM orders are numbered in order by default and may
     belong to a project or have a custom name.
 17. **Prices:** remember each item's supplier options and last price paid and suggest the cheapest known one. Live
     price and shipping lookups come later.
 18. **Notifications:** in the apps ("Needs you") and through Apollo. No built-in email in the first release.
 19. **These plans live in the repo** (`docs/operations/`), reviewed by pull request.
+
+Added later on Nov 12, 2026:
+
+20. **The tasks app is called Icarus**, everywhere: the address, the folder, the collections, the GitHub label.
+21. **BOM roles:** Mentors and Boosters approve and buy. Supervisors can only view.
+22. **Several badges:** a person with more than one badge gets the rights of the highest one.
+23. **Production layout:** the cut planner and cut optimizer are in the Manufacturing section; the print queue is
+    in the Design section.
+24. **Subteam badges:** each subteam is a Wix badge. Members pick their own subteams in Icarus; Leads, Mentors and
+    Web Admins can change anyone's, in Icarus or in the Site Manager app. One Lead badge gives planning rights
+    across Icarus.
+25. **Apollo** may also mark BOM lines received and write to Inventory. Everything it does is recorded under the
+    Apollo user.
 
 ## Build order (Proposed)
 
@@ -124,12 +137,12 @@ Each step is useful by itself and is its own set of pull requests. Details are i
 
 | Step | What | Why this order |
 | --- | --- | --- |
-| 0 | Mentor, Booster, Supervisor, Lead and CNC badges (#156); the `ops-api` backend skeleton; the shared `projects` and people pickers | Everything else needs them |
+| 0 | Mentor, Booster, Supervisor, Lead and subteam badges (#156); the `ops-api` backend skeleton; the shared `projects` and people pickers | Everything else needs them |
 | 1 | **BOM** core: orders, lines, approval, ordered/received, export, import of 2026 BOMs | Smallest app, replaces a sheet mentors use every week, proves the approval backend |
-| 2 | **Tasks** core: tasks, projects, relations, Gantt, target dates, templates | Kickoff is in January; the 2027 Gantt sheet is already empty and waiting |
+| 2 | **Icarus** core: tasks, projects, relations, Gantt, target dates, templates | Kickoff is in January; the 2027 Gantt sheet is already empty and waiting |
 | 3 | **Production** tracker and parts request (replaces the Form and List) | Needed once build season parts start |
 | 4 | Integrations between apps: receiving into Inventory, needs-materials, needs-part, Add to BOM, "Needs you" | Needs steps 1 to 3 |
-| 5 | Cut planner move, Shapeoko pending list, print queue, Onshape / STL import | Largest piece; Inventory's planner keeps working until this ships |
+| 5 | Cut planner move, cut optimizer, Shapeoko pending list, print queue, Onshape / STL import | Largest piece; Inventory's planner keeps working until this ships |
 | 6 | Outside integrations: events (FIRST / TBA), GitHub two-way sync, Apollo API | Need server keys and the most testing |
 | Later | See [Later](#later-not-in-the-first-release) | |
 
@@ -152,12 +165,12 @@ These did not block the plan, but each needs an answer before its step is built.
 | # | Question | Needed for |
 | --- | --- | --- |
 | 1 | Who owns the Onshape API keys, and is the team's Onshape plan (education) allowed to use the API? | Production step 5 |
-| 2 | Which members are CNC-trained today? (Manufacturing Notes lists Ryan, Riece, Aiden, Antony and Sam as learning Shapeoko.) Who can add people to that list? | Step 0 |
+| 2 | The Site Manager app (#109) does not assign badges yet (#100 asks for it). Should badge assignment be built there first, or in Icarus first? The plan builds it in Icarus first | Step 0 |
 | 3 | #147 says "default BOM orders for certain times". Does this mean saved lists that are suggested at set times of year (kickoff order, pre-competition restock)? The plan assumes yes | BOM saved lists |
 | 4 | What are the exact fields and choices on the Production Form (Accuracy, Priority, Method, Materials)? The connector could not open the Form itself, only the response sheet's headings | Production step 3 |
 | 5 | Which 3D printers does the team have, and which filaments? | Print queue |
-| 6 | Which subteams should the Gantt have rows for? (The sheets show Programming; the plan assumes the subteams in the Team Structure doc.) | Tasks templates |
-| 7 | Should the Gantt chart, or a read-only version of it, be visible to parents or the public? The plan assumes Team Members only | Tasks |
+| 6 | What are the exact subteam names? Each becomes a badge and a group of rows on the Gantt. (The sheets show Programming; the plan assumes the subteams in the Team Structure doc.) | Step 0, Icarus templates |
+| 7 | Should the Gantt chart, or a read-only version of it, be visible to parents or the public? The plan assumes Team Members only | Icarus |
 | 8 | Where does Apollo run and how should it hold its API key? | Step 6 |
 | 9 | Who may see BOM prices and totals: every Team Member (as with the sheets today) or only mentors, boosters, supervisors and leads? The plan assumes every Team Member | BOM |
 | 10 | Should old seasons' Gantt charts and production trackers be imported, or only linked? The plan imports the 2026 BOMs and links the rest | Steps 1 to 3 |

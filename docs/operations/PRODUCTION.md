@@ -14,22 +14,22 @@
 | Production Form (Google Form) | **Design → Request a part** |
 | "Production List" sheet (Status, Manufacturer, Submitted, Designer, Part Name, CAD Link, Project, Materials, Quantity, Accuracy, Priority, Due Date, Method, Files) | **Manufacturing → Tracker** |
 | "To do list" doc where people type their name next to a part and "(unfinished)" | Claiming a part, and handing it back with a note |
-| Cut planner and "Mark as cut" inside Inventory (`inventory_production`) | **Design → Cut planner** and **Manufacturing → Confirm cut** |
-| A free cut-list website (like opticutter.com) for manual planning | **Cut optimizer** page |
+| Cut planner and "Mark as cut" inside Inventory (`inventory_production`) | **Manufacturing → Cut planner** and **Confirm cut** |
+| A free cut-list website (like opticutter.com) for manual planning | **Manufacturing → Cut optimizer** |
 
 ## Layout
 
-Two main sections (from #207), plus the optimizer:
+Two main sections (from #207). Which screen goes in which section was set by the team on Nov 12, 2026 and differs
+from the issue: cutting belongs to Manufacturing, printing to Design.
 
 ```
 /apps/production
-  Design          Request a part · Import from Onshape / STL · Cut planner · My requests
-  Manufacturing   Tracker · Shapeoko pending · Print queue
-  Cut optimizer   the planner's brain as a stand-alone tool
+  Design          Request a part · Import from Onshape / STL · Print queue · My requests
+  Manufacturing   Tracker · Shapeoko pending · Cut planner · Cut optimizer
 ```
 
-Every Team Member can use every screen. The app records who did each step. The one limit: only members with the
-**CNC** badge can move a Shapeoko job from Pending to Active.
+Every Team Member can use every screen, including Shapeoko setup. There are no Production badges. The app records
+who did each step.
 
 ## A part
 
@@ -62,8 +62,8 @@ Requested ─▶ (Shapeoko only) Pending setup ─▶ Ready ─▶ In progress �
 any state ─▶ Cancelled
 ```
 
-- **Pending setup** (Shapeoko): a CNC-trained member sets the real stock size and toolpath, attaches the file, then
-  moves it to Ready (#207).
+- **Pending setup** (Shapeoko): a member who knows the Shapeoko sets the real stock size and toolpath, attaches the file, then
+  moves it to Ready (#207). The app records who released it.
 - **In progress:** a member taps **Claim**. Their name is stored even if they do not finish, which is what the
   to-do doc did by hand.
 - **Handed back:** the member says it is unfinished, why, and where they left it.
@@ -87,28 +87,11 @@ and project are pickers, not typing. A designer can submit several parts at once
 - Working out the 2D outline of each flat part from an STL and nesting it automatically is **not** in this release
   ([#220](https://github.com/Team-6220/team6220.org/issues/220), label `later`). Until then flat parts use their bounding rectangle or a DXF drawn by the designer.
 
-### Cut planner
+### Print queue
 
-Moved from Inventory and rebuilt in React.
-
-- For **tube** (and shafts): a 1D plan that fits the requested lengths into the stock lengths in Inventory with the
-  least waste, allowing for the saw's kerf.
-- For **flat parts on polycarbonate or aluminum sheet**: a 2D plan that places rectangles (or traced outlines the
-  planner already supports) on the stock pieces in Inventory, choosing pieces with the least waste.
-- The designer sees the proposed layout drawn to scale, can change which stock piece is used, names the parts, picks
-  **Handmade** or **Shapeoko**, and sends them to the tracker. Shapeoko parts land in **Pending setup**.
-- Stock that is whole (rectangles, full lengths) is preferred over odd scraps, and the stock list can be filtered
-  the same way (#207).
-- **PDF / print export** of the cut list and layout for the shop.
-
-### Cut optimizer
-
-The same engine on its own page: type stock sizes and part sizes by hand, get a layout and a printable cut list,
-with nothing saved to the tracker or Inventory. This replaces the free website for one-off jobs.
-
-The engine is a small package with no screen code, so the planner, the optimizer page and tests all share it. It
-starts from the geometry already in Inventory (`JsPlanner.html`, `JsGeometry.html`) and uses open-source packing
-code where that is better ([ARCHITECTURE.md](ARCHITECTURE.md#cut-engine)).
+A separate screen for 3D printed parts: file link, filament type and color, printer, estimated time and grams,
+order in the queue, who started it and when, result (printed, failed and why). Failed prints go back in the queue.
+Starting or watching a printer from the app comes later.
 
 ## Manufacturing section
 
@@ -122,14 +105,32 @@ Big buttons for the shop floor: **Claim**, **Hand back**, **Confirm cut**, **Don
 
 ### Shapeoko pending
 
-The list of Shapeoko parts waiting for setup. Only members with the CNC badge can set the stock size, attach the
+The list of Shapeoko parts waiting for setup. Any member can set the stock size, attach the
 toolpath and release a part to Ready. Everyone can see the list.
 
-### Print queue
+### Cut planner
 
-A separate screen for 3D printed parts: file link, filament type and color, printer, estimated time and grams,
-order in the queue, who started it and when, result (printed, failed and why). Failed prints go back in the queue.
-Starting or watching a printer from the app comes later.
+Moved from Inventory and rebuilt in React. It works on the parts designers have requested.
+
+- For **tube** (and shafts): a 1D plan that fits the requested lengths into the stock lengths in Inventory with the
+  least waste, allowing for the saw's kerf.
+- For **flat parts on polycarbonate or aluminum sheet**: a 2D plan that places rectangles (or traced outlines the
+  planner already supports) on the stock pieces in Inventory, choosing pieces with the least waste.
+- The member planning the cuts picks requested parts from the tracker, sees the proposed layout drawn to scale, can
+  change which stock piece is used, and confirms. Handmade parts become **Ready**; Shapeoko parts land in
+  **Pending setup**. Parts can also be typed straight into the planner, named there, and added to the tracker.
+- Stock that is whole (rectangles, full lengths) is preferred over odd scraps, and the stock list can be filtered
+  the same way (#207).
+- **PDF / print export** of the cut list and layout for the shop.
+
+### Cut optimizer
+
+The same engine on its own page: type stock sizes and part sizes by hand, get a layout and a printable cut list,
+with nothing saved to the tracker or Inventory. This replaces the free website for one-off jobs.
+
+The engine is a small package with no screen code, so the planner, the optimizer page and tests all share it. It
+starts from the geometry already in Inventory (`JsPlanner.html`, `JsGeometry.html`) and uses open-source packing
+code where that is better ([ARCHITECTURE.md](ARCHITECTURE.md#cut-engine)).
 
 ### Confirm cut updates Inventory
 
@@ -148,7 +149,7 @@ Parts cut from stock that is not in Inventory (a member brought their own piece)
 | With | How |
 | --- | --- |
 | Inventory | Reads raw materials, material lists and locations; writes leftovers on Confirm cut. Inventory's Raw Materials tab gets a **Plan cuts** link here and loses its own planner |
-| Tasks | A part can belong to a task and a project; the task shows the part's status. A part's due date defaults to its task's due date |
+| Icarus | A part can belong to a task and a project; the task shows the part's status. A part's due date defaults to its task's due date |
 | BOM | If no stock piece fits, the planner offers **Add to BOM** for the material |
 | Apollo | Lists parts by status, creates requests, reports "what is unclaimed and due this week" |
 
@@ -170,6 +171,6 @@ tool wear tracking.
 - A designer can request a part from a phone in under a minute, and from an Onshape link without retyping sizes.
 - A manufacturer can see what to make next, claim it, and hand it back unfinished with a note.
 - Confirming a cut changes the stock piece in Inventory with no second entry.
-- A Shapeoko part cannot become Ready without a CNC-trained member.
+- A Shapeoko part shows who set it up and released it.
 - The cut planner's result for a test set of tubes and plates wastes no more material than the Inventory planner
   does today.

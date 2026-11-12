@@ -1,8 +1,11 @@
-# Tasks and Gantt app (`/apps/tasks`): plan
+# Icarus, the tasks and Gantt app (`/apps/icarus`): plan
 
 > **Plan only, not built.** Part of the [Team Operations plan](README.md). Source: issue
 > [#141](https://github.com/Team-6220/team6220.org/issues/141) and the Gantt chart sheets in Google Drive
 > ("Gantt Chart Template", "2026 Competition Gantt Chart", "2027 Competition Gantt Chart").
+>
+> **Icarus** is the team's name for this app (decided Nov 12, 2026). The address, folder, data collections and
+> GitHub label all use it.
 
 ## What it replaces
 
@@ -12,7 +15,8 @@ the date and the weekday. Tasks are grouped under a subteam heading (for example
 "SOCAL SHOWDOWN" and "BEACH BLITZ" are typed onto their day. Status is one of four: 🗒️ Not Started, ✏️ In Progress,
 ✅ Done, 🚫 Cancelled. A row's bar is colored by hand.
 
-The app keeps all of that and removes the hand work.
+Icarus keeps all of that and removes the hand work. The [checklist below](#everything-the-sheet-does) goes through
+the sheet feature by feature.
 
 ## Words
 
@@ -36,6 +40,7 @@ reused. Typing `t42` or `p10` in any description, note or comment in the three a
 - Filter by subteam, project, owner or status; search by number or text.
 - Create a task or subtask; edit tasks they own or are assigned to; change status; comment.
 - Open a project page: its tasks, its parts in Production and its BOM orders with totals.
+- Pick their own subteams ([Subteams](#subteams)).
 
 **Leads (Lead badge)**
 
@@ -43,6 +48,30 @@ reused. Typing `t42` or `p10` in any description, note or comment in the three a
 - Create and edit milestones, events, projects and seasons.
 - Edit templates and start a new season from one.
 - Connect a project to a GitHub repository.
+- Change any member's subteams (Mentors can too).
+
+A person with several badges gets the rights of the highest one.
+
+## Subteams
+
+Each subteam is a **Wix badge** (for example `Subteam: Programming`), so every app on the site can use it, not only
+Icarus. In Icarus a subteam decides which group of rows a task sits in, which milestones apply to a person, what
+"My subteam" filters to, and which GitHub label maps to it.
+
+Assigning has to be quick, so there are three ways:
+
+| Where | Who | How |
+| --- | --- | --- |
+| Icarus → **My subteams** | Any member, for themselves | Tick boxes. Shown the first time a member opens Icarus |
+| Icarus → **People** | Leads and Mentors, for anyone | One table: a row per member, a tick box per subteam, with search and "select many, then set" |
+| Site Manager (`/apps/site`) → Members | Web Admins | The same table next to the other badges, once Site Manager can assign badges (#100, #109) |
+
+A member can be on several subteams. Subteam badges give no planning rights; the single **Lead** badge does. Only
+Web Admins can give Lead, Mentor, Booster or Supervisor. The list of subteams is edited by Leads in Icarus; adding
+one creates its badge.
+
+Badges are changed by the backend, never by the browser
+([ARCHITECTURE.md](ARCHITECTURE.md#subteam-badges)).
 
 ## A task
 
@@ -69,8 +98,8 @@ when a task is due before the task it depends on.
 ## The Gantt view
 
 - One row per task, grouped by subteam, then project; subtasks fold under their parent.
-- Header rows as in the sheets: days left and weeks left to the season's end date, month, date, weekday. Saturdays
-  and today are highlighted.
+- **Countdown rows** above the days, as in the sheets: days left and weeks left to the season's end date, then
+  month, date and weekday. Saturdays and today are highlighted.
 - Bars are drawn from start to due and colored by status (overdue is marked). No hand coloring.
 - Milestones are diamonds on the row of each subteam they belong to; whole-team milestones and events are vertical
   lines across every row with their display name.
@@ -79,6 +108,28 @@ when a task is due before the task it depends on.
 - On a phone the default is the list ("My tasks" first); the chart scrolls sideways with the task column pinned.
 - **Print / export:** a printable chart, and a CSV in the sheet's column order (TASK, OWNER(S), NOTES, STATUS, START,
   DUE).
+
+### Everything the sheet does
+
+Checked against the "Gantt Chart Template" and the 2026 and 2027 Competition sheets. If the team uses something in
+the sheets that is not in this table, it is missing from the plan and should be added here.
+
+| In the sheet | In Icarus | When |
+| --- | --- | --- |
+| Title and "Project Due" / season end date | The season's name and end date | First release |
+| Days-left countdown row (112, 111 ... 0) | Same row, counted to the season's end date | First release |
+| Weeks-left countdown row (16, 15 ... 0) | Same row | First release |
+| Month, date and weekday rows | Same rows | First release |
+| TASK, OWNER(S), NOTES, STATUS, START (START-BY), DUE columns | Same columns, pinned on the left; owners are real members | First release |
+| Subteam heading rows ("Programming", "General") | Groups that fold open and shut | First release |
+| Status key: 🗒️ Not Started, ✏️ In Progress, ✅ Done, 🚫 Cancelled | The same four statuses and icons | First release |
+| A colored bar between start and due | Drawn automatically, colored by status | First release |
+| Events typed on their day ("SOCAL SHOWDOWN", "BEACH BLITZ") | Event lines from the event's code, with the display name | First release (typed by hand until step 6 brings FIRST / TBA) |
+| "Note: color full row..." directions and the Saturday note | Not needed; Saturdays are highlighted | First release |
+| Adding columns to make the chart longer | Change the season's dates | First release |
+| Free choice of bar color per row | A color per project or per subteam, chosen once | Later (**Proposed**; bars are colored by status first) |
+| Typing anything into any day cell | A note pinned to a task on a date | Later (**Proposed**) |
+| A countdown to each event, not only to the season's end | "Days to next event" beside the title, and on each event line | Later (**Proposed**) |
 
 ## Templates and seasons
 
@@ -107,7 +158,7 @@ Nothing is created until the confirm step. Changing a template later does not ch
 
 Covers every repository in the Team-6220 organization. A lead connects a repository to a project; from then on:
 
-| On GitHub | In Tasks |
+| On GitHub | In Icarus |
 | --- | --- |
 | New issue in a connected repository | New task in that project, linked to the issue |
 | Title or description edited | Task title or description updated |
@@ -115,7 +166,7 @@ Covers every repository in the Team-6220 organization. A lead connects a reposit
 | Assignees changed | Task owners changed, for members whose GitHub username is known |
 | Label matching a subteam name | Task subteam set |
 
-| In Tasks | On GitHub |
+| In Icarus | On GitHub |
 | --- | --- |
 | Title or description edited on a linked task | Issue updated |
 | Status set to Done or Cancelled / reopened | Issue closed (completed or not planned) / reopened |
@@ -146,7 +197,7 @@ Rules that keep it safe:
 
 Apollo uses the shared API ([ARCHITECTURE.md](ARCHITECTURE.md#api-for-apollo)) to list, create and update tasks,
 projects and milestones, and to ask "what is overdue", "what is blocked" and "what is assigned to this person".
-Everything Apollo writes is recorded as done by Apollo in the task history.
+Everything Apollo writes is recorded under the Apollo user in the task history.
 
 ## Not in the first release
 
