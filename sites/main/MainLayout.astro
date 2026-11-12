@@ -33,6 +33,14 @@ if(!go())window.G6220_INTRO=1;addEventListener('hashchange',go)})();`;
 <BaseLayout title={title} description={description}>
   <Fragment slot="head">
     <!-- SEO values imported as-is from the old Wix site (docs/SEO.md). Social title/description repeat the page's own, as on the old site. -->
+    <!-- Light or dark, as chosen with the button at the bottom of the footer. Default: dark. Applied before the page is drawn. -->
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark";
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
     <meta name="google-site-verification" content={SEO.googleSiteVerification} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SEO.siteName} />

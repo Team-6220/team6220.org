@@ -1,6 +1,6 @@
 <footer id="contact">
   <div class="wrap">
-    <div class="foot-mark" aria-hidden="true"><span class="wing wing-l" aria-hidden="true"><svg><use href="#wing"/></svg></span><svg class="fm-g"><use href="#griffin"/></svg><span class="wing wing-r" aria-hidden="true"><svg><use href="#wing"/></svg></span></div>
+    <div class="foot-mark" aria-hidden="true"><img src="/assets/shared/logos/6220WingsAndLogoGold.png" alt="" width="1379" height="511" /></div>
     <div class="foot-grid">
       <div>
         <a class="brand" href="/" aria-label="Team 6220 home"><svg aria-hidden="true"><use href="#griffin"/></svg><span>Los Al Robotics<small>FRC Team 6220</small></span></a>
@@ -22,9 +22,20 @@
         <li><a href="https://www.losal.org/" target="_blank" rel="noopener">Los Al High ↗</a></li></ul></div>
     </div>
     <div class="legal">
-      <span>© 2026 Los Al Robotics · FRC Team 6220 · <button class="replay" type="button" id="replay">Replay intro</button></span>
+      <span>© 2026 Los Al Robotics · FRC Team 6220 · <button class="replay" type="button" id="replay">Replay intro</button>&nbsp;· <button class="replay" type="button" data-theme-toggle><span class="tt-to-light">Light mode</span><span class="tt-to-dark">Dark mode</span></button></span>
       <span>Los Al Robotics is a 501(c)(3) nonprofit · EIN 93-3891396</span>
     </div>
-    <p class="foot-note" lang="vi">Chào cô Trâm :))</p>
   </div>
 </footer>
+<!-- The light/dark button (in the footer's bottom line, next to Replay intro). It names the mode it switches to. The choice is saved as team6220.theme, shared with the team apps (MainLayout applies it before the page is drawn). -->
+<script is:inline>
+  document.querySelector("[data-theme-toggle]").addEventListener("click", function () {
+    var next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("team6220.theme", next);
+    } catch (e) {
+      // Storage blocked (private window): the choice still applies until the page is closed.
+    }
+  });
+</script>
