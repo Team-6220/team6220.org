@@ -3,7 +3,7 @@
 // The apps on the same page and in the same menu are NOT in the file: data/apps.ts picks them from
 // apps/dashboard/src/apps.ts, so a new app appears without anyone editing resources.
 import { isExternalHref, resources } from "@team6220/content";
-import json from "../content/resources.json";
+import json from "../content/resources.json" with { type: "json" };
 
 export interface Resource {
   /** Small label above the title */
