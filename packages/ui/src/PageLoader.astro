@@ -1,0 +1,35 @@
+---
+// The page-change loader's markup, shared by the main site (sites/main/MainLayout.astro) and the apps. Styles are in
+// ./page-loader.css, behaviour in packages/assets/scripts/page-loader.js (/assets/shared/scripts/page-loader.js),
+// which each layout loads after this component. The spin video is /assets/shared/loader/ (packages/assets/loader).
+//
+//   landing  pages WITHOUT a header logo (the apps): add a fixed placeholder the logo flies to (#pgl-land).
+//   hold     the page tells the loader when it is ready (G6220Loader.release()); until then the cover stays up from the
+//            first paint. Skipped with reduced motion, so those visitors never see the loader (as on the main site).
+import "./page-loader.css";
+import GriffinSprite from "./GriffinSprite.astro";
+
+interface Props {
+  landing?: boolean;
+  hold?: boolean;
+}
+const { landing = false, hold = false } = Astro.props;
+const holdScript = `(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return}catch(e){}var d=document.documentElement;d.classList.add('pgl-arrive','mh-logo');d.setAttribute('data-pgl-hold','')})();`;
+---
+
+{hold && <script is:inline set:html={holdScript} />}
+<GriffinSprite />
+<!-- Page-change loader (packages/assets/scripts/page-loader.js) -->
+<div class="pgl" id="pgl" aria-hidden="true">
+  <div class="pgl-stage"><svg viewBox="-200 -200 400 400">
+    <g id="pgl-dots"></g>
+    <g id="pgl-arcs"></g>
+    <g id="pgl-ghosts"></g>
+  </svg></div>
+  <video class="pgl-vid" id="pgl-vid" muted playsinline preload="auto" aria-hidden="true"><source src="/assets/shared/loader/pgl-spin.webm" type="video/webm"><source src="/assets/shared/loader/pgl-spin.mp4" type="video/mp4"></video>
+  <div class="pgl-label" id="pgl-label">Loading<i>.</i><i>.</i><i>.</i></div>
+</div>
+<div class="pgl-edge" id="pgl-edge" aria-hidden="true"></div>
+<div class="pgl-fly" id="pgl-fly" aria-hidden="true"><svg><use href="#griffin"/></svg></div>
+{landing && <div class="pgl-land" id="pgl-land" aria-hidden="true"><svg><use href="#griffin"/></svg></div>}
+<div role="status" aria-live="polite" class="pgl-status" id="pgl-status"></div>

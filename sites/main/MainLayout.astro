@@ -6,7 +6,7 @@ import BaseLayout from "../../src/layouts/BaseLayout.astro";
 import "./styles/site.css";
 import earlyScript from "./content/early.js?raw";
 import Sprite from "./components/Sprite.astro";
-import Loader from "./components/Loader.astro";
+import PageLoader from "@team6220/ui/PageLoader.astro";
 import Intro from "./components/Intro.astro";
 import Header from "./components/Header.astro";
 import Footer from "./components/Footer.astro";
@@ -56,7 +56,7 @@ if(!go())window.G6220_INTRO=1;addEventListener('hashchange',go)})();`;
     <script is:inline set:html={earlyScript} />
   </Fragment>
   <Sprite />
-  <Loader />
+  <PageLoader />
   {home && <Intro />}
   <a class="skip" href="#main">Skip to content</a>
   <Header page={page} />
@@ -67,6 +67,7 @@ if(!go())window.G6220_INTRO=1;addEventListener('hashchange',go)})();`;
   </main>
   <Footer />
   <script is:inline set:html={`window.MEDIA_BASE=${JSON.stringify(MEDIA_BASE)};`} />
-  <script is:inline src="/assets/main/js/site-a.js"></script>
+  <script is:inline src="/assets/shared/scripts/page-nav.js"></script>
+  <script is:inline src="/assets/shared/scripts/page-loader.js"></script>
   <script is:inline src="/assets/main/js/site-b.js"></script>
 </BaseLayout>

@@ -1,0 +1,30 @@
+/* Page-change loader styles, shared by the main site and the apps (imported by PageLoader.astro).
+   Markup: PageLoader.astro. Behaviour: packages/assets/scripts/page-loader.js. The animation looks exactly as it
+   did when these rules lived in sites/main/styles/site.css; only the colour/font names changed to loader-owned ones. */
+:root{--pgl-ink:#000;--pgl-paper:#fff;--pgl-gold:#ffa300;--pgl-font:"Apex Mk2","Chakra Petch","Jura",system-ui,sans-serif}
+/* ---- Page-change loader: 2D clockwise spin with speed trails ---- */
+.pgl{position:fixed;inset:0;z-index:190;background:var(--pgl-ink);display:none;pointer-events:none}
+.pgl.on{display:block;pointer-events:auto;cursor:progress}
+.pgl-stage{position:absolute;left:50%;top:50%;width:var(--pgl-s);height:var(--pgl-s);transform:translate(-50%,-50%)}
+.pgl-stage svg{width:100%;height:100%;overflow:visible;display:block}
+.pgl-vid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;background:#000;pointer-events:none}
+.pgl-stage{visibility:hidden}
+.pgl-label{position:absolute;left:0;right:0;top:calc(50% + var(--pgl-lab, 120px));text-align:center;font-family:var(--pgl-font);font-weight:700;font-size:.8rem;letter-spacing:.24em;text-transform:uppercase;color:var(--pgl-paper)}
+.pgl-label i{font-style:normal;display:inline-block;width:.55em;text-align:left;letter-spacing:0}
+.pgl-edge{position:fixed;left:0;top:-10vh;height:120vh;width:3px;background:var(--pgl-gold);z-index:191;display:none;transform:rotate(5deg);pointer-events:none}
+.pgl-fly{position:fixed;left:0;top:0;z-index:192;display:none;pointer-events:none;transform-origin:0 0}
+.pgl-fly svg{display:block;width:100%;height:100%}
+html{--pgl-s:360px}
+@media (max-width:640px){html{--pgl-s:260px;--pgl-lab:96px}}
+/* Page-change loader: arriving on a new page, keep the cover up from the first paint */
+html.pgl-arrive .pgl{display:block}
+html.pgl-arrive .pgl-vid{opacity:0}
+.pgl-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* PLACEHOLDER (apps only): where the loader's logo lands on pages that have no header logo (the main site's header
+   logo `.center-logo svg` is used when it exists). Rendered by <PageLoader landing /> as #pgl-land. A fixed spot in
+   the top-left corner for now; the owner restyles or moves it with the branding guidelines. The three variables
+   below are the whole setting: corner offset and size. The logo is hidden until the animation lands on it. */
+.pgl-land{position:fixed;left:var(--pgl-land-x,12px);top:var(--pgl-land-y,12px);width:var(--pgl-land-size,44px);height:var(--pgl-land-size,44px);z-index:35;pointer-events:none}
+.pgl-land svg{display:block;width:100%;height:100%}
+html.mh-logo .pgl-land svg{opacity:0}
