@@ -43,7 +43,7 @@ export const ROBOTS: Robot[] = [
     img: "/assets/main/1256dd39df.webp",
     alt: "CAD render of Goober, Team 6220's 2026 robot",
     cad: "https://cad.onshape.com/documents/cfcf30c88841d74e4322e2ee/w/0293e4f8d98a6db63dfa9e5e/e/e391d6c1d5b644ac4d583e63",
-    quip: "goober big, goober fat, goober needs to go on ozempic",
+    quip: null,
   },
   {
     year: "2025",
