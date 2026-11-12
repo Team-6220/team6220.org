@@ -53,10 +53,10 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
   }, [check, pending, area]);
   const tooMany = uploads.length > IMAGE_RULES.maxPerChange;
 
-  if (load.kind === "loading") return <p className="site__muted" role="status">Loading {area.label.toLowerCase()}…</p>;
+  if (load.kind === "loading") return <p className="t-muted" role="status">Loading {area.label.toLowerCase()}…</p>;
   if (load.kind === "error") {
     return (
-      <div className="site__panel" role="alert">
+      <div className="t-panel" role="alert">
         <p>{load.message}</p>
         <button type="button" className="t-button" onClick={fetchArea}>
           Try again
@@ -93,7 +93,7 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
 
   return (
     <div className="site__editor">
-      <p className="site__muted">
+      <p className="t-muted">
         Editing <code>{area.path}</code> {load.source === "main" ? "as it is on the main branch." : "as bundled with this build."} Nothing goes live until a webmaster merges the pull request.
       </p>
 
@@ -109,7 +109,7 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
           <Field schema={schema} value={draft} path={[]} errors={errors} onChange={onChange} />
         </ImagesContext.Provider>
 
-        <section className="site__panel" aria-labelledby="site-changes">
+        <section className="t-panel" aria-labelledby="site-changes">
           <h2 id="site-changes">What will change</h2>
           {!valid && (
             <div role="alert">
@@ -123,7 +123,7 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
               </ul>
             </div>
           )}
-          {valid && changes.length === 0 && <p className="site__muted">No changes yet.</p>}
+          {valid && changes.length === 0 && <p className="t-muted">No changes yet.</p>}
           {valid && changes.length > 0 && (
             <ul className="site__diff" aria-label="Changes">
               {changes.map((c) => (
@@ -169,7 +169,7 @@ export default function Editor({ areaId }: { areaId: AreaId }) {
         </p>
       )}
       {sent.kind === "done" && (
-        <div className="site__panel site__panel--ok" role="status">
+        <div className="t-panel t-panel--ok" role="status">
           {sent.real ? (
             <>
               <h2>Pull request opened</h2>

@@ -40,9 +40,9 @@ export default function Site() {
   const real = site.opensRealPullRequests();
 
   return (
-    <main className="site">
+    <main className="t-page site">
       {!real && (
-        <p className="site__demo" role="note">
+        <p className="t-demo" role="note">
           Demo: {demo ? "you're in demo mode, " : ""}no pull request is opened. Submitting only shows what would happen.
           {demo && (
             <>
@@ -52,13 +52,13 @@ export default function Site() {
           )}
         </p>
       )}
-      <header className="site__header">
+      <header className="t-header">
         <div>
-          <p className="site__eyebrow">Los Al Robotics</p>
-          <h1 className="site__title">Site Manager</h1>
+          <p className="t-eyebrow">Los Al Robotics</p>
+          <h1 className="t-title">Site Manager</h1>
         </div>
-        <nav className="site__nav">
-          {state.kind === "viewer" && state.viewer.kind !== "signed-out" && <span className="site__who">{state.viewer.name}</span>}
+        <nav className="t-nav">
+          {state.kind === "viewer" && state.viewer.kind !== "signed-out" && <span className="t-who">{state.viewer.name}</span>}
           <a className="t-button t-button--quiet" href="/apps">
             Team apps
           </a>
@@ -66,12 +66,12 @@ export default function Site() {
       </header>
 
       {state.kind === "loading" && (
-        <p className="site__muted" role="status">
+        <p className="t-muted" role="status">
           Checking sign-in…
         </p>
       )}
       {state.kind === "error" && (
-        <div className="site__panel" role="alert">
+        <div className="t-panel" role="alert">
           <p>{state.message} Try again in a minute.</p>
           <button type="button" className="t-button" onClick={() => void load()}>
             Try again
@@ -80,7 +80,7 @@ export default function Site() {
       )}
       {state.kind === "viewer" && state.viewer.kind === "signed-out" && <SignedOut />}
       {state.kind === "viewer" && state.viewer.kind === "pending" && (
-        <div className="site__panel site__panel--notice">
+        <div className="t-panel t-panel--notice">
           <h2>Waiting for approval</h2>
           <p>
             You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge yet.
@@ -88,7 +88,7 @@ export default function Site() {
         </div>
       )}
       {state.kind === "viewer" && state.viewer.kind === "member" && (
-        <div className="site__panel site__panel--notice">
+        <div className="t-panel t-panel--notice">
           <h2>Web Admins only</h2>
           <p>
             The Site Manager changes what the public website says, so it needs the <b>Web Admin</b> badge. Ask a Web Admin if you need a
@@ -124,7 +124,7 @@ function SignedOut() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   return (
-    <div className="site__panel">
+    <div className="t-panel">
       <h2>Sign in to use the Site Manager</h2>
       <p>
         The Site Manager is for Web Admins. Sign in with Google, then come back here. (Developers can try it without signing in at{" "}

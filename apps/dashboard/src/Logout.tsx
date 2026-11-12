@@ -7,7 +7,7 @@ export default function Logout() {
     void auth.logout("/apps");
   }, []);
   return (
-    <main className="dash">
+    <main className="t-page dash">
       <p className="dash__status" role="status">
         Signing you out…
       </p>

@@ -1,43 +1,8 @@
-/* Plain, tidy placeholder styling. Uses the tokens from @team6220/ui/tokens.css. */
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-weight: 500; /* Jura is light; 500 matches the main site */
-  line-height: 1.5;
-}
+/* Styles only the dashboard needs. Colors, fonts and spacing are the shared tokens (@team6220/ui/tokens.css). */
 
+/* The page column, header and panels come from @team6220/ui/app.css. */
 .dash {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-3);
-}
-
-.dash__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-3);
-  margin-bottom: var(--space-4);
-  border-bottom: 3px solid var(--color-gold);
-}
-.dash__eyebrow {
-  margin: 0;
-  color: var(--color-gold);
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.dash__title {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin: 0;
-  font-size: 2rem;
+  --page-width: 960px;
 }
 .dash__section {
   margin: var(--space-5) 0 var(--space-3);
@@ -74,23 +39,6 @@ body {
   margin-right: var(--space-2);
 }
 
-.dash__panel {
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow);
-}
-.dash__panel h1,
-.dash__panel h2 {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin-top: 0;
-}
-.dash__panel--notice {
-  border-left: 6px solid var(--color-gold);
-}
 
 .dash__grid {
   display: grid;

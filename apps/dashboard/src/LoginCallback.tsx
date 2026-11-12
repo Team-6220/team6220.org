@@ -16,9 +16,9 @@ export default function LoginCallback() {
   }, []);
 
   return (
-    <main className="dash">
+    <main className="t-page dash">
       {error ? (
-        <div className="dash__panel" role="alert">
+        <div className="t-panel" role="alert">
           <h1>Sign-in didn't finish</h1>
           <p>{error}</p>
           <p>

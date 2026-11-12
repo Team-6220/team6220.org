@@ -1,0 +1,100 @@
+/* Page furniture every team app shares: the page column, header, panels and status colors.
+   AppLayout loads this after tokens.css, so an app only writes styles for what is special about it.
+
+   A typical page:
+     <main class="t-page">
+       <header class="t-header">
+         <div><p class="t-eyebrow">Los Al Robotics</p><h1 class="t-title">My app</h1></div>
+         <nav class="t-nav">...</nav>
+       </header>
+       <section class="t-panel">...</section>
+     </main>
+   Buttons are .t-button (tokens.css). Set --page-width on .t-page for a wider or narrower column. */
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 500; /* Jura is light; 500 matches the main site */
+  line-height: 1.5;
+}
+
+.t-page {
+  max-width: var(--page-width, 860px);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3);
+}
+
+.t-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 3px solid var(--color-gold);
+}
+.t-eyebrow {
+  margin: 0;
+  color: var(--color-gold);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.t-header .t-title {
+  margin: 0;
+  font-size: 2rem;
+}
+.t-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.t-who {
+  font-weight: 600;
+}
+
+/* A box of content. --notice marks something to act on, --ok something that went well. */
+.t-panel {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+.t-panel h1,
+.t-panel h2 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-title);
+  font-weight: 400;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+}
+.t-panel p {
+  margin: 0 0 var(--space-3);
+}
+.t-panel--notice {
+  border-left: 6px solid var(--color-gold);
+}
+.t-panel--ok {
+  border-left: 6px solid var(--color-ok);
+}
+
+.t-muted {
+  color: var(--color-muted);
+}
+
+/* The "this is demo data" strip at the top of an app running on made-up data. */
+.t-demo {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-warn-bg);
+  color: var(--color-warn);
+  font-weight: 600;
+}
+.t-demo a {
+  color: inherit;
+}

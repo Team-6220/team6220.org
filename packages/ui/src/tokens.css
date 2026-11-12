@@ -24,6 +24,13 @@
   --color-surface: var(--brand-panel);
   --color-border: var(--brand-grey);
   --color-danger: #f2b8b5;
+  /* Status messages: text color and its background. */
+  --color-ok: #9be0a9;
+  --color-ok-bg: #173a20;
+  --color-warn: #ffd58a;
+  --color-warn-bg: #3d2d0b;
+  --color-error: #f2b8b5;
+  --color-error-bg: #4a1714;
   color-scheme: dark;
 
   --font-title: "Karnivore", "Orbitron", "Arial Black", system-ui, sans-serif; /* always UPPERCASE */
@@ -44,6 +51,12 @@
   --color-surface: var(--brand-white);
   --color-border: var(--brand-grey-light);
   --color-danger: #b3261e;
+  --color-ok: #1e7b34;
+  --color-ok-bg: #e3f4e6;
+  --color-warn: #8a5a00;
+  --color-warn-bg: #fff1d6;
+  --color-error: #b3261e;
+  --color-error-bg: #fde7e5;
   color-scheme: light;
 }
 

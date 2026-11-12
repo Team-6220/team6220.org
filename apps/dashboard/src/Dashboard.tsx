@@ -34,11 +34,11 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <main className="dash">
-      <header className="dash__header">
+    <main className="t-page dash">
+      <header className="t-header">
         <div>
-          <p className="dash__eyebrow">Los Al Robotics</p>
-          <h1 className="dash__title">Team apps</h1>
+          <p className="t-eyebrow">Los Al Robotics</p>
+          <h1 className="t-title">Team apps</h1>
         </div>
         {"member" in view && <MemberBadge member={view.member} />}
       </header>
@@ -47,7 +47,7 @@ export default function Dashboard() {
       {view.kind === "signed-out" && <SignInPrompt />}
       {view.kind === "pending" && <PendingNotice />}
       {view.kind === "error" && (
-        <div className="dash__panel" role="alert">
+        <div className="t-panel" role="alert">
           <p>{view.message} Try again in a minute.</p>
           <SignInButton label="Sign in again" />
         </div>
@@ -125,7 +125,7 @@ function SignInButton({ label = "Sign in" }: { label?: string }) {
 
 function SignInPrompt() {
   return (
-    <div className="dash__panel">
+    <div className="t-panel">
       <h2>Sign in to use team apps</h2>
       <p>
         Team members sign in with Google. New accounts wait for a web admin to approve them, so sign in once and
@@ -138,7 +138,7 @@ function SignInPrompt() {
 
 function PendingNotice() {
   return (
-    <div className="dash__panel dash__panel--notice">
+    <div className="t-panel t-panel--notice">
       <h2>Waiting for approval</h2>
       <p>
         You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge

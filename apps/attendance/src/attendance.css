@@ -1,106 +1,17 @@
-/* Plain, tidy placeholder styling for /apps/attendance. Uses the tokens from @team6220/ui/tokens.css;
-   the branding pass only changes the token values. */
-:root {
-  --att-ok: #9be0a9;
-  --att-ok-bg: #173a20;
-  --att-warn: #ffd58a;
-  --att-warn-bg: #3d2d0b;
-  --att-error: #f2b8b5;
-  --att-error-bg: #4a1714;
-}
-:root[data-theme="light"] {
-  --att-ok: #1e7b34;
-  --att-ok-bg: #e3f4e6;
-  --att-warn: #8a5a00;
-  --att-warn-bg: #fff1d6;
-  --att-error: #b3261e;
-  --att-error-bg: #fde7e5;
-}
+/* Styles only Attendance needs. Colors, fonts and spacing are the shared tokens (@team6220/ui/tokens.css). */
 
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-weight: 500; /* Jura is light; 500 matches the main site */
-  line-height: 1.5;
-}
-
+/* The page column, header and panels come from @team6220/ui/app.css. */
 .att {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-3);
-}
-.att__demo {
-  margin: 0 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
-  background: var(--att-warn-bg);
-  color: var(--att-warn);
-  font-weight: 600;
-}
-.att__demo a {
-  color: inherit;
-}
-.att__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-bottom: var(--space-3);
-  margin-bottom: var(--space-4);
-  border-bottom: 3px solid var(--color-gold);
-}
-.att__eyebrow {
-  margin: 0;
-  color: var(--color-gold);
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.att__title {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin: 0;
-  font-size: 2rem;
-}
-.att__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-.att__who {
-  font-weight: 600;
+  --page-width: 760px;
 }
 .att__stack {
   display: grid;
   gap: var(--space-4);
 }
-.att__panel {
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow);
-}
-.att__panel h2 {
-  font-family: var(--font-title);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2);
-  font-size: 1.25rem;
-}
-.att__panel h3 {
+.t-panel h3 {
   margin: var(--space-3) 0 var(--space-2);
   font-size: 1rem;
 }
-.att__panel p {
-  margin: 0 0 var(--space-3);
-}
-.att__panel--notice,
 .att__panel--admin {
   border-left: 6px solid var(--color-gold);
 }
@@ -115,11 +26,8 @@ body {
   color: var(--color-muted);
   font-weight: 400;
 }
-.att__muted {
-  color: var(--color-muted);
-}
 .att__error {
-  color: var(--att-error);
+  color: var(--color-error);
 }
 .att__flash {
   padding: var(--space-2) var(--space-3);
@@ -179,12 +87,12 @@ body {
   font-weight: 600;
 }
 .att__ok {
-  background: var(--att-ok-bg);
-  color: var(--att-ok);
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
 }
 .att__warn {
-  background: var(--att-warn-bg);
-  color: var(--att-warn);
+  background: var(--color-warn-bg);
+  color: var(--color-warn);
 }
 .att__list {
   margin: 0;
@@ -314,16 +222,16 @@ body {
   color: var(--color-muted);
 }
 .kiosk__feedback--ok {
-  background: var(--att-ok-bg);
-  color: var(--att-ok);
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
 }
 .kiosk__feedback--warn {
-  background: var(--att-warn-bg);
-  color: var(--att-warn);
+  background: var(--color-warn-bg);
+  color: var(--color-warn);
 }
 .kiosk__feedback--error {
-  background: var(--att-error-bg);
-  color: var(--att-error);
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }
 .kiosk__register {
   padding: var(--space-4);
@@ -356,7 +264,7 @@ body {
   min-width: 0;
 }
 .kiosk__inline-error {
-  color: var(--att-error);
+  color: var(--color-error);
   font-weight: 600;
 }
 .kiosk__recent h2 {

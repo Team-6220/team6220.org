@@ -57,21 +57,21 @@ export default function Attendance() {
 
   const demo = attendance.demoRole();
   return (
-    <main className="att">
+    <main className="t-page att">
       {demo && (
-        <p className="att__demo" role="note">
+        <p className="t-demo" role="note">
           Demo mode ({demo}): made-up data, nothing is saved to the real attendance sheet.{" "}
           <a href="?demo=off">Leave demo</a>
         </p>
       )}
-      <header className="att__header">
+      <header className="t-header">
         <div>
-          <p className="att__eyebrow">Los Al Robotics</p>
-          <h1 className="att__title">Attendance</h1>
+          <p className="t-eyebrow">Los Al Robotics</p>
+          <h1 className="t-title">Attendance</h1>
         </div>
-        <nav className="att__nav">
+        <nav className="t-nav">
           {state.kind === "viewer" && state.viewer.kind !== "signed-out" && (
-            <span className="att__who">{state.viewer.name}</span>
+            <span className="t-who">{state.viewer.name}</span>
           )}
           <a className="t-button t-button--quiet" href="/apps">
             Team apps
@@ -85,12 +85,12 @@ export default function Attendance() {
         </p>
       )}
       {state.kind === "loading" && (
-        <p className="att__muted" role="status">
+        <p className="t-muted" role="status">
           Checking sign-in…
         </p>
       )}
       {state.kind === "error" && (
-        <div className="att__panel" role="alert">
+        <div className="t-panel" role="alert">
           <p>{state.message} Try again in a minute.</p>
           <button type="button" className="t-button" onClick={() => void load()}>
             Try again
@@ -99,7 +99,7 @@ export default function Attendance() {
       )}
       {state.kind === "viewer" && state.viewer.kind === "signed-out" && <SignedOut />}
       {state.kind === "viewer" && state.viewer.kind === "pending" && (
-        <div className="att__panel att__panel--notice">
+        <div className="t-panel t-panel--notice">
           <h2>Waiting for approval</h2>
           <p>
             You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge
@@ -124,7 +124,7 @@ function SignedOut() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   return (
-    <div className="att__panel">
+    <div className="t-panel">
       <h2>Sign in to see attendance</h2>
       <p>
         Attendance is for team members. Sign in on the <a href="/apps">team apps page</a> with Google, then come back
@@ -161,7 +161,7 @@ function SignedOut() {
           {error}
         </p>
       )}
-      <p className="att__muted">Signing in at a meeting? Use the kiosk at the door; you don't need to sign in here.</p>
+      <p className="t-muted">Signing in at a meeting? Use the kiosk at the door; you don't need to sign in here.</p>
     </div>
   );
 }
