@@ -28,7 +28,7 @@ npm run validate-game    # if you touched a game module
 - TypeScript strict mode, SI units, headings counter-clockwise from +x.
 - Prettier formatting (`npm run format`), ESLint clean.
 - Comments explain _why_ and point to PRD or manual sections where relevant. Keep them short.
-- UI follows the WingIt design language: tokens in `packages/web/src/styles/tokens.css`, gold `#ffa300`, zero rounded corners, Karnivore for titles (write "6220" as "622o" in Karnivore via `titleText()`).
+- UI follows the WingIt design language: tokens in `packages/web/src/styles/tokens.css`, gold `#ffa300`, zero rounded corners, Karnivore for titles (write "6220" as "6220", never "622o").
 
 ## Adding a new season
 

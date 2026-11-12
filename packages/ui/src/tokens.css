@@ -1,17 +1,31 @@
-/* Starter design tokens for the team apps. The Phase 1 styling pass replaces these with the real
-   brand (fonts, spacing scale, dark mode); keep using the variable names and only the values change. */
+/* Shared design tokens for the main site and every team app.
+   The --brand-* values are the official palette (Branding Standards v2.0). Everything else is built from them. */
 :root {
-  --color-gold: #fa9504;
-  --color-gold-strong: #c97200;
-  --color-ink: #1d1d1f;
-  --color-muted: #5f6368;
-  --color-bg: #f7f7f8;
-  --color-surface: #ffffff;
-  --color-border: #e2e2e6;
+  --brand-gold: #ffa300; /* Primary Gold: the gold to use almost everywhere */
+  --brand-gold-secondary: #fa9504; /* Secondary Gold: only where a second gold is needed, such as hover */
+  --brand-blue: #4054e4; /* Secondary Blue */
+  --brand-black: #000000; /* Primary Black */
+  --brand-white: #ffffff; /* Primary White */
+  --brand-grey: #33333f; /* Secondary Grey */
+  --brand-grey-tertiary: #4e4a5b; /* Tertiary Grey */
+  --brand-grey-light: #c5c6cd; /* Secondary Light Grey */
+  /* Dark panels: Secondary Grey mixed into Primary Black (the palette has no near-black). */
+  --brand-panel: color-mix(in srgb, var(--brand-grey) 35%, var(--brand-black));
+  --brand-panel-2: color-mix(in srgb, var(--brand-grey) 55%, var(--brand-black));
+
+  /* What the apps use (light look). */
+  --color-gold: var(--brand-gold);
+  --color-gold-strong: var(--brand-gold-secondary);
+  --color-on-gold: var(--brand-black);
+  --color-ink: var(--brand-black);
+  --color-muted: var(--brand-grey-tertiary);
+  --color-bg: color-mix(in srgb, var(--brand-grey-light) 25%, var(--brand-white));
+  --color-surface: var(--brand-white);
+  --color-border: var(--brand-grey-light);
   --color-danger: #b3261e;
 
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --radius: 10px;
+  --radius: 4px; /* same corner as the main site */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 1rem;
@@ -22,11 +36,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-ink: #ececf0;
-    --color-muted: #a6a6ad;
-    --color-bg: #141416;
-    --color-surface: #1e1e22;
-    --color-border: #33333a;
+    --color-ink: var(--brand-white);
+    --color-muted: var(--brand-grey-light);
+    --color-bg: var(--brand-black);
+    --color-surface: var(--brand-panel);
+    --color-border: var(--brand-grey);
     --color-danger: #f2b8b5;
   }
 }
@@ -39,14 +53,14 @@
   border: 1px solid transparent;
   border-radius: var(--radius);
   background: var(--color-gold);
-  color: #1d1d1f;
+  color: var(--color-on-gold);
   font: 600 1rem/1.2 var(--font-body);
   text-decoration: none;
   cursor: pointer;
 }
 .t-button:hover {
   background: var(--color-gold-strong);
-  color: #fff;
+  color: var(--color-on-gold);
 }
 .t-button:focus-visible {
   outline: 3px solid var(--color-gold);

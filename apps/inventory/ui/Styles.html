@@ -2,6 +2,7 @@
 /* ============================================================================
    Styles.html — Golden Griffins Inventory
    Dark-only, industrial. All colors are tokens below; change them here only.
+   team6220.org: greys and corner radius follow the official palette (packages/ui/src/tokens.css).
    ========================================================================== */
 :root {
   --bg: #000000;
@@ -10,9 +11,9 @@
   --panel-2: #17171b;
   --panel-3: #1e1e23;
   --line: #24242a;
-  --line-2: #33333b;
+  --line-2: #33333F;
   --text: #f5f5f6;
-  --text-2: #b9b9c2;
+  --text-2: #C5C6CD;
   --muted: #80808a;
   --orange: #FFA300;
   --orange-2: #FA9504;
@@ -31,8 +32,8 @@
   --font-body: 'Jura', 'Segoe UI', system-ui, sans-serif;
   --font-label: 'Azoft Sans', 'Jura', sans-serif;
 
-  --radius: 6px;
-  --radius-lg: 10px;
+  --radius: 4px;
+  --radius-lg: 4px;
   --sidebar-w: 252px;
   --sidebar-w-collapsed: 72px;
   --tap: 44px;
@@ -145,7 +146,7 @@ svg.icon { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: no
   background: var(--panel-2); color: var(--text);
   font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
 }
-.btn:hover { border-color: #4a4a54; background: var(--panel-3); }
+.btn:hover { border-color: #4E4A5B; background: var(--panel-3); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .btn.primary { background: var(--orange); border-color: var(--orange); color: var(--orange-ink); }
 .btn.primary:hover { background: var(--orange-2); border-color: var(--orange-2); }
@@ -180,7 +181,7 @@ svg.icon { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: no
   background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
   background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
 .select option, .select optgroup { background: var(--panel); color: var(--text); }
-.input:hover, .select:hover, .textarea:hover { border-color: #46464f; }
+.input:hover, .select:hover, .textarea:hover { border-color: #4E4A5B; }
 .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-dim); }
 .field.has-error .input, .field.has-error .select, .field.has-error .textarea { border-color: var(--danger); }
 .link-btn { background: none; border: 0; padding: 0; color: var(--blue-text); font-size: 12px; font-weight: 600; }
@@ -212,9 +213,9 @@ svg.icon { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: no
   background: var(--panel); border: 1px solid var(--line-2); border-radius: 999px;
   color: var(--text-2); font-weight: 600; font-size: 13px; white-space: nowrap;
 }
-.pill:hover { border-color: #4a4a54; color: var(--text); }
+.pill:hover { border-color: #4E4A5B; color: var(--text); }
 .pill.on { background: var(--orange-dim); border-color: var(--orange-line); color: var(--orange); }
-.pill .count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--orange); color: var(--orange-ink); font-size: 12px; line-height: 20px; text-align: center; }
+.pill .count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius); background: var(--orange); color: var(--orange-ink); font-size: 12px; line-height: 20px; text-align: center; }
 .pill svg.icon { width: 14px; height: 14px; }
 .filters .spacer { flex: 1; }
 .filters .sort { width: auto; min-height: 36px; height: 36px; padding: 0 34px 0 12px; font-size: 13px; background-position: calc(100% - 18px) 15px, calc(100% - 13px) 15px; }
@@ -446,7 +447,7 @@ img.broken { visibility: hidden; }
 .section-title { margin: 0 0 12px; font-family: var(--font-label); font-weight: bold; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .badge.ok { background: rgba(63, 207, 116, 0.12); color: var(--ok); border: 1px solid rgba(63, 207, 116, 0.4); }
 .audit-progress { margin-bottom: 16px; }
-.audit-progress .bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--panel-3); }
+.audit-progress .bar { display: flex; height: 12px; border-radius: var(--radius); overflow: hidden; background: var(--panel-3); }
 .audit-progress .seg { display: block; height: 100%; }
 .seg.confirmed, .legend i.confirmed { background: var(--ok); }
 .seg.different, .legend i.different { background: var(--orange); }
@@ -468,7 +469,7 @@ img.broken { visibility: hidden; }
 .audit-actions { display: flex; gap: 6px; align-items: center; }
 .audit-actions.editing .input { width: 110px; min-height: 40px; }
 .abtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; min-width: 44px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--bg); color: var(--text-2); font-weight: 700; font-size: 13px; white-space: nowrap; }
-.abtn:hover { color: var(--text); border-color: #4a4a54; }
+.abtn:hover { color: var(--text); border-color: #4E4A5B; }
 .abtn.confirm.on { background: rgba(63, 207, 116, 0.16); border-color: var(--ok); color: var(--ok); }
 .abtn.different.on { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); }
 .abtn.missing.on { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
@@ -528,7 +529,7 @@ img.broken { visibility: hidden; }
 .pwarn { margin-top: 2px; font-size: 12px; color: var(--orange-2); }
 .ppath { width: 100%; font-size: 11px; letter-spacing: 0.06em; color: var(--muted); }
 .pack-list .pgroup > .pleaf { flex-wrap: wrap; }
-.pcheck { width: 30px; height: 30px; flex: none; display: grid; place-items: center; padding: 0; border: 2px solid var(--line-2); border-radius: 6px; background: var(--bg); color: var(--orange-ink); }
+.pcheck { width: 30px; height: 30px; flex: none; display: grid; place-items: center; padding: 0; border: 2px solid var(--line-2); border-radius: var(--radius); background: var(--bg); color: var(--orange-ink); }
 .pcheck:hover { border-color: var(--orange); }
 .pcheck.on { background: var(--orange); border-color: var(--orange); }
 .pcheck.partial { border-color: var(--orange); color: var(--orange); }
