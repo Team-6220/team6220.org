@@ -21,6 +21,11 @@ How the look of the site is controlled today, exactly which files to edit to cha
   `<html data-theme="...">`.
   WingIt follows it too, but its drawings (match view, diagrams, figures) are made for a dark background, so they stay
   dark inside the light page.
+- **Main site light mode**: the button is the last item of the footer's bottom line (next to "Replay intro"). It names the
+  mode it switches to. Light mode is the end of `sites/main/styles/site.css`: it changes the color variables
+  (`--ink` is the surface, `--paper` the text) and lists the parts that keep their dark look (photo banners, gold boxes,
+  the grey "paper" sections). Gold used as text is `var(--gold-text)`, a darker gold on the light page. Sponsor logos are
+  white-only files, so they are inverted on the light page until color versions exist (#161).
 - **Sidebar**: every app shows the same sidebar (`packages/assets/scripts/app-sidebar.js`, styles in
   `packages/assets/styles/app-sidebar.css`): main site, all apps, then fullscreen, light/dark and account at the bottom.
   It lists the apps in `packages/assets/data/apps.json`.
