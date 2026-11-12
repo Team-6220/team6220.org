@@ -47,7 +47,9 @@
 
   /* Layout: flight happens in a 16:9 stage fitted to the screen; the wipe and final frame fill the whole screen */
   var W,H,DPR,SW,SH,SX,SY,U;
-  var resize=function(){var d=Math.min(2,window.devicePixelRatio||1),w=window.innerWidth,h=window.innerHeight;
+  /* Size the drawing to the overlay itself, not window.innerHeight: on phones the two differ while the browser bar shows or hides,
+     and a canvas drawn at one size and shown at another is stretched (the intro looked skewed). */
+  var resize=function(){var d=Math.min(2,window.devicePixelRatio||1),w=intro.clientWidth||window.innerWidth,h=intro.clientHeight||window.innerHeight;
     /* Resetting a canvas clears it, so only do it when the size really changed (prevents a blank frame at handoff) */
     if(d!==DPR||w!==W||h!==H){DPR=d;W=w;H=h;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR)}
     SW=Math.min(W,H*16/9);SH=SW*9/16;SX=(W-SW)/2;SY=(H-SH)/2;U=Math.min(H,W*1.1)};
