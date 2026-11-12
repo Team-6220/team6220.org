@@ -13,18 +13,21 @@
   --brand-panel: color-mix(in srgb, var(--brand-grey) 35%, var(--brand-black));
   --brand-panel-2: color-mix(in srgb, var(--brand-grey) 55%, var(--brand-black));
 
-  /* What the apps use (light look). */
+  /* What the apps use. Dark is the default look; the theme toggle sets data-theme="light" on <html>
+     (see ThemeToggle.astro). The look never follows the device setting. */
   --color-gold: var(--brand-gold);
   --color-gold-strong: var(--brand-gold-secondary);
   --color-on-gold: var(--brand-black);
-  --color-ink: var(--brand-black);
-  --color-muted: var(--brand-grey-tertiary);
-  --color-bg: color-mix(in srgb, var(--brand-grey-light) 25%, var(--brand-white));
-  --color-surface: var(--brand-white);
-  --color-border: var(--brand-grey-light);
-  --color-danger: #b3261e;
+  --color-ink: var(--brand-white);
+  --color-muted: var(--brand-grey-light);
+  --color-bg: var(--brand-black);
+  --color-surface: var(--brand-panel);
+  --color-border: var(--brand-grey);
+  --color-danger: #f2b8b5;
+  color-scheme: dark;
 
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-title: "Karnivore", "Orbitron", "Arial Black", system-ui, sans-serif; /* always UPPERCASE */
+  --font-body: "Jura", "Segoe UI", system-ui, sans-serif;
   --radius: 4px; /* same corner as the main site */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -34,15 +37,69 @@
   --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-ink: var(--brand-white);
-    --color-muted: var(--brand-grey-light);
-    --color-bg: var(--brand-black);
-    --color-surface: var(--brand-panel);
-    --color-border: var(--brand-grey);
-    --color-danger: #f2b8b5;
-  }
+:root[data-theme="light"] {
+  --color-ink: var(--brand-black);
+  --color-muted: var(--brand-grey-tertiary);
+  --color-bg: color-mix(in srgb, var(--brand-grey-light) 25%, var(--brand-white));
+  --color-surface: var(--brand-white);
+  --color-border: var(--brand-grey-light);
+  --color-danger: #b3261e;
+  color-scheme: light;
+}
+
+@font-face {
+  font-family: "Karnivore";
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/assets/shared/fonts/Karnivore.ttf) format("truetype");
+}
+
+/* Titles: Karnivore, always uppercase (branding rule). */
+.t-title {
+  font-family: var(--font-title);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+}
+
+/* The one light/dark button (ThemeToggle.astro). It shows the sun in dark mode and the moon in light mode. */
+.t-theme-toggle {
+  position: fixed;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 40;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.t-theme-toggle:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+.t-theme-toggle:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+.t-theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:root[data-theme="light"] .t-theme-toggle__sun,
+:root:not([data-theme="light"]) .t-theme-toggle__moon {
+  display: none;
 }
 
 .t-button {

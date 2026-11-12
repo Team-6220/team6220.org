@@ -1,6 +1,5 @@
-/* Brand fonts. The web team drops the licensed files next to the page and uncomments the url() lines.
+/* Brand fonts (Karnivore is loaded in packages/ui/src/tokens.css). The web team drops the licensed files next to the page and uncomments the url() lines.
    Until then the stack falls back to Orbitron (display) and Chakra Petch (labels). */
-@font-face{font-family:"Karnivore";font-display:swap;font-weight:100 900;src:url(/assets/shared/fonts/Karnivore.ttf) format("truetype")}
 @font-face{font-family:"Apex Mk2";font-display:swap;src:local("Apex Mk2"),local("ApexMk2-Regular")/*, url("fonts/apex-mk2.woff2") format("woff2")*/}
 
 /* Layout: flat black site with gold accents; full-bleed photo hero; one hazard stripe; pages swap in place.
