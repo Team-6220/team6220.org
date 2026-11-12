@@ -2,11 +2,17 @@
    clockwise with speed trails, swap the page underneath, then fly the logo
    into the header while a gold angled wipe reveals the new page.
    Between pages: G6220Loader.go(url) covers this page, then loads url; the new page
-   (html.pgl-arrive, set by early.js) plays the spin and the reveal. */
+   (html.pgl-arrive, set by early.js) plays the spin and the reveal.
+   Shared (published at /assets/shared/scripts/page-loader.js): the main site loads it from MainLayout.astro, apps
+   from their own page. Markup/styles: packages/ui/src/PageLoader.astro + page-loader.css.
+   Landing spot: the header logo (.center-logo svg) when the page has one, else #pgl-land (the apps' PLACEHOLDER).
+   Pages that are not ready at once (Inventory) set <html data-pgl-hold>: the cover stays up, with the logo still,
+   until the page calls G6220Loader.release() (or HOLD_MAX_S passes), then the usual reveal plays. */
 (function(){
   var NS='http://www.w3.org/2000/svg',root=document.documentElement;
+  var HOLD_MAX_S=20;   /* a held page that never calls release() is revealed after this long (seconds) */
   var el=document.getElementById('pgl'),fly=document.getElementById('pgl-fly'),edge=document.getElementById('pgl-edge');
-  if(!el||!fly||!edge||!document.getElementById('griffin')){root.classList.remove('pgl-arrive','mh-logo');return}
+  if(!el||!fly||!edge||!document.getElementById('griffin')){root.classList.remove('pgl-arrive','mh-logo');root.removeAttribute('data-pgl-hold');return}
   var dotsG=document.getElementById('pgl-dots'),arcsG=document.getElementById('pgl-arcs'),ghostG=document.getElementById('pgl-ghosts');
   var label=document.getElementById('pgl-label'),ldots=label.querySelectorAll('i'),status=document.getElementById('pgl-status');
   var clamp=function(x,a,b){return Math.max(a,Math.min(b,x))},lin=function(t,a,b){return clamp((t-a)/(b-a),0,1)};
@@ -66,9 +72,12 @@
   var vidEl=document.getElementById('pgl-vid');
   try{vidEl.load()}catch(e){}
   var easeIO=function(x){x=clamp(x,0,1);return x*x*x*(x*(x*6-15)+10)};   /* smooth start and stop */
-  window.G6220Loader={busy:false,run:function(swap,opt){
+  window.G6220Loader={busy:false,holding:false,
+  /* The held page is ready: let the reveal play. */
+  release:function(){this.holding=false;root.removeAttribute('data-pgl-hold')},
+  run:function(swap,opt){
     opt=opt||{};var self=this;if(self.busy){if(!opt.leave)self.queued=swap;return}
-    self.busy=true;self.queued=null;
+    self.busy=true;self.queued=null;self.holding=!!opt.hold;
     var main=document.getElementById('main'),t0=performance.now(),swapped=false,ready=false,phase='in',tSpin=0,tOut=0,raf;
     var vid=vidEl,videoOK=vid.readyState>=2&&!vid.error;
     var menu=[].slice.call(document.querySelectorAll('.wordmark,.menu>li,.menu-btn'));
@@ -116,7 +125,8 @@
         var done;
         if(videoOK){done=vid.ended||vid.currentTime>=START||ts_>=1.2}
         else{setFly(cx,cy,big,360*easeIO(ts_/.85),1);done=ts_>=.85}   /* fallback: plain spin */
-        if(done){
+        if(done&&self.holding&&t>=HOLD_MAX_S)self.release();   /* gave up waiting for the page */
+        if(done&&!self.holding){
           if(!ready&&!tHold)tHold=t;
           if(ready||t-tHold>=.15){                /* hold the logo still (max 150 ms) until the page is ready */
             phase='out';tOut=t;
@@ -126,7 +136,7 @@
       }else{                                       /* morph into the header: one shared 0.8 s timeline */
         var sp=self.queued?2.6:1,u=(t-tOut)*sp;   /* a click during the loader finishes it in ~0.3 s */
         if(videoOK)vid.style.opacity=1-lin(u,0,.06);   /* crossfade the video out under the vector logo */
-        var target=document.querySelector('.center-logo svg'),r=target.getBoundingClientRect();
+        var target=document.querySelector('.center-logo svg')||document.querySelector('#pgl-land svg'),r=target.getBoundingClientRect();
         var tx=r.left+r.width/2+offX*r.width,ty=r.top+r.height/2+offY*r.height,tsz=(r.width||58)*fracW;   /* header logo's artwork */
         label.style.opacity=1-ez(lin(u,0,.12));
         /* glide: one arc, starts from zero speed, settles horizontally into the slot */
@@ -173,8 +183,8 @@
     fly.style.display='none';edge.style.display='none';vidEl.style.visibility='hidden';vidEl.style.opacity=0;
     try{vidEl.pause();vidEl.currentTime=0}catch(e){}
     [].forEach.call(document.querySelectorAll('.wordmark,.menu>li,.menu-btn'),function(m){m.style.opacity='';m.style.transform=''});
-    if(this._unlock)this._unlock();status.textContent='';this.busy=false;this.queued=null}};
+    if(this._unlock)this._unlock();status.textContent='';this.holding=false;this.busy=false;this.queued=null}};
   addEventListener('pageshow',function(e){if(e.persisted&&el.classList.contains('on'))G6220Loader.reset()});
   /* Arriving from another page (see early.js): finish the animation here. */
-  if(root.classList.contains('pgl-arrive')){root.classList.remove('pgl-arrive');G6220Loader.run(function(){},{arrive:true})}
+  if(root.classList.contains('pgl-arrive')){root.classList.remove('pgl-arrive');G6220Loader.run(function(){},{arrive:true,hold:root.hasAttribute('data-pgl-hold')})}
 })();

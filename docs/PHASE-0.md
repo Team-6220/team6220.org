@@ -15,7 +15,7 @@ GitHub or Wix admin: they are organization or site settings that can't be change
 
 ## You: GitHub (in this order)
 
-1. **Photo consent first.** See [PHOTOS.md](PHOTOS.md). Then make the repo public:
+1. **Make the repo public.**
    Settings → General → Danger Zone → Change visibility. On the free plan, Pages and branch rules only work on
    public repos.
 2. **Org owners and 2FA.** Org → People: make `losalfrc@gmail.com`, `operations@team6220.org` and

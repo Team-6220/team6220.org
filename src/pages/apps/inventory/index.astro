@@ -2,10 +2,13 @@
 // /apps/inventory: the team inventory. This is the ORIGINAL Apps Script UI (apps/inventory/ui, unchanged), put
 // together at build time the way Apps Script did it (Index.html with its includes filled in), plus:
 //   - the google.script stub (apps/inventory/shim/google-script-stub.js), which must run before the UI's scripts;
-//   - a sign-in gate (#ggi-gate) shown until the member's session is checked;
+//   - the shared page-change loader (packages/ui PageLoader + packages/assets/scripts/page-loader.js) covering the page
+//     from the first paint until the first apiGetAll has finished, instead of the original boot screens;
+//   - a gate (#ggi-gate) for the sign-in / approval / failure messages, shown in place of the app;
 //   - apps/inventory/shim/main.ts, which checks the session and answers google.script.run with @team6220/data.
 // No site layout on purpose: the original page brings its own fonts, styles and logos.
 import { APP_TITLE, assembleIndex } from "../../../../apps/inventory/shim/assemble.ts";
+import PageLoader from "@team6220/ui/PageLoader.astro";
 import stub from "../../../../apps/inventory/shim/google-script-stub.js?raw";
 
 const files = import.meta.glob<string>("../../../../apps/inventory/ui/*.html", { query: "?raw", import: "default", eager: true });
@@ -24,12 +27,19 @@ const page = assembleIndex(files);
       /* Until the sign-in check is done (and instead of the app when it fails), show #ggi-gate. */
       html:not([data-ggi="ready"]) #app { display: none; }
       html[data-ggi="ready"] #ggi-gate { display: none; }
+      /* While the shared loader covers the page (html[data-pgl-hold], set by PageLoader hold; not with reduced motion),
+         it replaces the original boot screens: the gate's "Loading inventory…" and the app's own .loading in #main.
+         Messages (signed out, pending, failures) are not hidden: they replace those and main.ts releases the loader. */
+      html[data-pgl-hold][data-ggi="checking"] #ggi-gate,
+      html[data-pgl-hold] #main > .loading { display: none; }
       #ggi-gate a.btn { text-decoration: none; }
       .ggi-gate-wings { display: block; width: min(280px, 70vw); height: auto; margin: 0 auto 20px; }
     </style>
     <script is:inline set:html={stub} />
   </head>
   <body>
+    <PageLoader landing hold />
+    <script is:inline src="/assets/shared/scripts/page-loader.js"></script>
     <div id="ggi-gate" role="status"><div class="loading"><div class="spinner"></div>Loading inventory…</div></div>
     <Fragment set:html={page.body} />
     <noscript><p style="padding:16px">The inventory needs JavaScript.</p></noscript>

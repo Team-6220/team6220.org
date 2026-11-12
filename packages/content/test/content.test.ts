@@ -13,6 +13,7 @@ import {
   renderBlock,
   renderBlocks,
   renderInline,
+  isSafeHref,
   toFileText,
   type SummerCamp,
 } from "../src/index";
@@ -173,5 +174,14 @@ describe("inline scanner stays fast on hostile text", () => {
     expect(renderInline("[a](b")).toBe("[a](b");
     expect(renderInline("[](x) ****")).toBe("[](x) ****");
     expect(renderInline("**a** and [b](/c)")).toBe('<b>a</b> and <a href="/c">b</a>');
+  });
+});
+
+describe("same-page anchors", () => {
+  it("accepts #anchor links and renders them without a new tab", () => {
+    expect(isSafeHref("#contact")).toBe(true);
+    expect(isSafeHref("#")).toBe(false);
+    expect(isSafeHref("#a b")).toBe(false);
+    expect(renderInline("[reach out](#contact)")).toBe('<a href="#contact">reach out</a>');
   });
 });
