@@ -16,6 +16,8 @@ The real `team6220.org` stays on Wix, untouched, until the last step of Phase 3.
 
 The full plan is [docs/MIGRATION-PLAN.md](docs/MIGRATION-PLAN.md).
 
+**New here, or need to change something?** Start with the [documentation index](docs/README.md): how it all fits together, a "how do I change X" cookbook, adding an app, Wix and Apps Script setup, deploys, troubleshooting and branding.
+
 ## Run it
 
 Needs Node 22 (`.nvmrc`) and [pnpm](https://pnpm.io/installation).
