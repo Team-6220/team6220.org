@@ -2,22 +2,31 @@
 
 How the look of the site is controlled today, exactly which files to edit to change it, and what is planned.
 
-> **Status.** Kaydi's branding guidelines are **still in progress**. The plan says branding work (issue #69 and the Phase 1
-> styling pass) waits for them ([MIGRATION-PLAN.md](MIGRATION-PLAN.md), Decisions table). The goal of that pass is
-> **one shared stylesheet in `packages/ui`** with CSS variables for colors, fonts, spacing and corner radius that the
-> main site and every app use. **That is not done yet.** Today there are several separate sets of values. This guide
-> documents the current mechanism honestly, how to change each part, and what will change. Do not redesign pages while
-> waiting; only change values when the guidelines say so.
+> **Status.** Kaydi's Branding Standards v2.0 are **partly ready: only the colors are final**. The official palette now
+> lives in **one place**, the `--brand-*` variables at the top of `packages/ui/src/tokens.css`, and the main site and
+> the apps read it from there. Fonts, logo rules and wing-to-text spacing still wait for the next revision.
+
+## Rules decided so far
+
+- **Gold**: use Primary Gold `#ffa300` almost everywhere. Secondary Gold `#fa9504` only where a second gold is really
+  needed (today: button hover and one chart bar).
+- **Greys**: Secondary Grey `#33333f`, Tertiary Grey `#4e4a5b`, Secondary Light Grey `#c5c6cd`. Dark panels are
+  Secondary Grey mixed into black (`--brand-panel`, `--brand-panel-2`).
+- **Corners**: every rounded corner uses the main site's radius (`--radius`, 4px).
+- **Karnivore** text is always all UPPERCASE or all lowercase, never mixed. The site uses uppercase.
+- Write **6220**, never "622o".
+- **No feather** decoration. Shadows, animations and dot patterns from the main site are welcome in apps.
+- **Icons**: every app uses the icon set the Inventory uses.
 
 ## The short version
 
 | I want to change... | Edit | Affects |
 | --- | --- | --- |
-| Colors/spacing/radius of the **apps** (dashboard, Attendance) | `packages/ui/src/tokens.css` | Everything wrapped in `AppLayout` |
+| A **brand color** or the corner radius | the `--brand-*` variables and `--radius` in `packages/ui/src/tokens.css` | The main site and everything wrapped in `AppLayout` |
 | Colors, fonts, spacing of the **public website** | the `:root { ... }` block at the top of `sites/main/styles/site.css` | Every public page |
 | Public-site **fonts** (files) | `packages/assets/fonts/` + the `@font-face` lines at the top of `site.css`; the Google Fonts link in `sites/main/MainLayout.astro` | Public pages |
 | A **logo file** (PNG/SVG for people to download or `<img>`) | Overwrite the file in `packages/assets/logos/` keeping its name | Anything that links `/assets/shared/logos/...` |
-| The **griffin/wing drawn in the header, footer and loader** | `sites/main/components/Sprite.astro` (inline SVG `symbol`s: `griffin`, `wing`, `feather`) | Public site chrome |
+| The **griffin/wing drawn in the header, footer and loader** | `sites/main/components/Sprite.astro` (inline SVG `symbol`s such as `wing`) | Public site chrome |
 | **Favicon** and home-screen icons | Replace files in `packages/assets/favicon/` keeping their names | All pages (`BaseLayout.astro`) |
 | **Inventory** look | `apps/inventory/ui/Styles.html` (`:root` tokens), `Fonts.html`, `Brand.html` | `/apps/inventory` only |
 | **GoldSim** look | `apps/goldsim/packages/web/src/styles/tokens.css` | `/apps/goldsim` only |
@@ -32,10 +41,10 @@ After any change: `pnpm dev` to look, then `pnpm check` and `pnpm build`.
 `src/layouts/AppLayout.astro` imports `@team6220/ui/tokens.css`. It defines CSS variables on `:root`:
 
 ```css
---color-gold: #fa9504;   --color-gold-strong: #c97200;
---color-ink: #1d1d1f;    --color-muted: #5f6368;
---color-bg: #f7f7f8;     --color-surface: #ffffff;   --color-border: #e2e2e6;   --color-danger: #b3261e;
---font-body: system-ui, ...;  --radius: 10px;
+--brand-gold: #ffa300;  --brand-gold-secondary: #fa9504;  --brand-blue: #4054e4;
+--brand-black / --brand-white / --brand-grey / --brand-grey-tertiary / --brand-grey-light
+--color-gold, --color-ink, --color-muted, --color-bg, --color-surface, --color-border, --color-danger
+--font-body: system-ui, ...;  --radius: 4px;
 --space-1 ... --space-5;      --shadow: ...
 ```
 
@@ -53,7 +62,7 @@ Self-contained and imported only by `MainLayout.astro`, so apps do not inherit i
 - **Fonts**: `@font-face` for **Karnivore** (loaded from `/assets/shared/fonts/Karnivore.ttf`) and **Apex Mk2** (only a
   `local()` lookup today: if someone has the font installed it is used, otherwise the fallback; the licensed web font file
   has not been added, see the comment in the file).
-- **Variables**: `--gold: #ffa300`, `--gold-hot: #fa9504`, `--ink`, `--paper`, `--blue: #4054e4`, panel/line/dim colors,
+- **Variables**: `--gold`, `--gold-hot`, `--ink`, `--paper`, `--blue`, panel/line/dim colors (all pointing at the `--brand-*` palette),
   `--display` / `--body` / `--tech` font stacks, spacing `--s1`..`--s6`, `--wrap`, `--r`.
 - `color-scheme: dark`: the public site is one committed look (black and gold), not light/dark switching.
 
@@ -92,9 +101,6 @@ Licensing: logos and media are © Los Al Robotics and not under the MIT license;
 
 Written down now so nobody has to rediscover them:
 
-- **Two golds.** The public site and Inventory/GoldSim/WingIt use `#ffa300` as the main gold with `#fa9504` as the "hot"
-  hover gold; the shared app tokens (`packages/ui`) and the migration plan call `#fa9504` "team gold". The guidelines
-  should name one primary gold.
 - **Fonts.** The public site uses Karnivore (headlines), Jura (body) and Apex Mk2 (labels, not yet licensed/loaded, with
   Orbitron and Chakra Petch as stand-ins); the shared app tokens use the system font. Inventory uses Karnivore Lite, Jura and
   Azoft Sans.

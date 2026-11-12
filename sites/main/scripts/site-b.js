@@ -273,8 +273,6 @@
       var n=Math.max(-60,Math.min(60,-d*k));el._ty=n;el.style.transform='translate3d(0,'+n.toFixed(1)+'px,0)'});
     if(echoEl){var h=echoEl.parentNode.getBoundingClientRect();echoEl.parentNode.style.setProperty('--echo-y',Math.max(-30,Math.min(30,-(h.top+h.height/2-mid)*.08)).toFixed(1)+'px')}};
   var _onScroll=onScroll;onScroll=function(){_onScroll();depthScroll()};
-  if('IntersectionObserver' in window){var dio=new IntersectionObserver(function(es){es.forEach(function(en){en.target.classList.toggle('deco-off',!en.isIntersecting)})});
-    document.querySelectorAll('.feather').forEach(function(el){dio.observe(el)})}
   addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(onScroll)}},{passive:true});
   addEventListener('resize',onScroll);
 

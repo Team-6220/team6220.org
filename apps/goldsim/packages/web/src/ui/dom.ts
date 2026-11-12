@@ -40,14 +40,9 @@ export function $(id: string): HTMLElement {
   return el;
 }
 
-/** Text shown in the Karnivore title font. "6220" is written "622o" because it looks better in that font. */
-export function titleText(text: string): string {
-  return text.replace(/6220/g, "622o");
-}
-
 /** An element set in the title font, with the 6220 substitution applied. */
 export function title<K extends keyof HTMLElementTagNameMap>(tag: K, text: string, attrs: Attrs = {}): HTMLElementTagNameMap[K] {
-  return h(tag, { ...attrs, class: `${attrs.class ?? ""} title`.trim() }, titleText(text));
+  return h(tag, { ...attrs, class: `${attrs.class ?? ""} title`.trim() }, text);
 }
 
 export function toast(message: string, ms = 4000): void {

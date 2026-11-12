@@ -3,6 +3,7 @@
 // Owns the main site's styles so apps don't inherit them. Each page in src/pages/ passes its tab id
 // (`page`) and puts its sections in the slot.
 import BaseLayout from "../../src/layouts/BaseLayout.astro";
+import "@team6220/ui/tokens.css";
 import "./styles/site.css";
 import earlyScript from "./content/early.js?raw";
 import Sprite from "./components/Sprite.astro";

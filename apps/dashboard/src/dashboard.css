@@ -62,7 +62,7 @@ body {
   display: inline-grid;
   place-items: center;
   background: var(--color-gold);
-  color: #1d1d1f;
+  color: var(--color-on-gold);
   font-weight: 700;
 }
 .dash__name {
@@ -146,5 +146,5 @@ a.card:focus-visible {
 }
 .card__tag--public {
   background: var(--color-gold);
-  color: #1d1d1f;
+  color: var(--color-on-gold);
 }
