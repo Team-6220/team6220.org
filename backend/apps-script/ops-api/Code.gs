@@ -16,6 +16,7 @@
  *   WixData.gs   reading and writing Wix CMS collections with the server's Wix API key
  *   Shared.gs    numbers, history, projects, people and subteam badges
  *   Bom.gs       BOM: orders, lines, signatures, ordering, receiving
+ *   Icarus.gs    Icarus: milestones, events, seasons and templates (tasks are written straight to Wix)
  *
  * Script Properties (Project Settings > Script Properties). See README.md for where each comes from.
  *   WIX_API_KEY         required. Wix API key with "Wix Data" and "Manage Badges" permissions. SECRET.
@@ -51,6 +52,9 @@ function actions_() {
     markOrdered: { who: "approver", run: markOrdered_ },
     receiveLines: { who: "team", agent: true, run: receiveLines_ },
     importOrder: { who: "lead", run: importOrder_ },
+    // Icarus (Icarus.gs)
+    saveIcarusRecord: { who: "lead", run: saveIcarusRecord_ },
+    removeIcarusRecord: { who: "lead", run: removeIcarusRecord_ },
   };
 }
 
@@ -101,7 +105,7 @@ function checkSetup() {
   });
   const subteams = titles.filter(function (t) { return t.indexOf(SUBTEAM_PREFIX) === 0; });
   if (!subteams.length) throw new Error("No subteam badges yet. Create badges named '" + SUBTEAM_PREFIX + "<name>'.");
-  const collections = REQUIRED_COLLECTIONS.concat(BOM_COLLECTIONS);
+  const collections = REQUIRED_COLLECTIONS.concat(BOM_COLLECTIONS, ICARUS_COLLECTIONS);
   collections.forEach(function (c) { wixQuery_(c, {}, 1); });
   console.log("OK. Badges: " + titles.join(", ") + ". Collections: " + collections.join(", ") + ".");
 }

@@ -58,10 +58,11 @@ export class MockDb {
     if (at !== -1) rows.splice(at, 1);
   }
 
-  takeNumber(kind: string): number {
+  /** The next number of a kind. With count, sets aside that many in a row and returns the first. */
+  takeNumber(kind: string, count = 1): number {
     const row = this.rows("ops_counters").find((r) => r.key === kind) ?? this.save("ops_counters", { key: kind, next: 1 });
     const number = Number(row.next);
-    row.next = number + 1;
+    row.next = number + count;
     return number;
   }
 
@@ -146,7 +147,14 @@ const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; r
       subteams: MOCK_SUBTEAMS,
     }),
   },
-  nextNumber: { who: "team", run: (request, _actor, db) => ({ number: db.takeNumber(text(request.kind, "kind")) }) },
+  nextNumber: {
+    who: "team",
+    run: (request, _actor, db) => {
+      const count = request.count === undefined ? 1 : Math.floor(Number(request.count));
+      if (!(count >= 1 && count <= 200)) throw new OpsError("bad-request", "Ask for between 1 and 200 numbers.");
+      return { number: db.takeNumber(text(request.kind, "kind"), count) };
+    },
+  },
   logHistory: {
     who: "team",
     run: (request, actor, db) => {
@@ -210,6 +218,9 @@ const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; r
 type RoleName = keyof ReturnType<typeof rolesFor>;
 const moduleActions: Record<string, { who: RoleName; run: MockAction }> = {};
 const moduleSeeds: ((db: MockDb) => void)[] = [];
+
+/** Checks subteam names the way the server does. For other data modules' demo rules. */
+export { wantedSubteams as mockWantedSubteams };
 
 /** A data module's protected actions in demo mode: { actionName: { who, run } }. */
 export function mockActions(actions: Record<string, { who: RoleName; run: MockAction }>): void {

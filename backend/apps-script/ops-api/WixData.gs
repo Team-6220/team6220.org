@@ -45,6 +45,13 @@ function wixQuery_(collection, filter, limit) {
   });
 }
 
+/** One item by its _id. Throws bad-request (naming `what`, for example "line") when it is gone. */
+function getRecord_(collection, id, what) {
+  const row = typeof id === "string" && id ? wixQuery_(collection, { _id: id }, 1)[0] : null;
+  if (!row) throw apiError_("bad-request", "That " + what + " doesn't exist any more. Reload the page.");
+  return row;
+}
+
 /** Adds an item. Fails if an item with the same _id already exists. Returns the saved item. */
 function wixInsert_(collection, data) {
   const dataItem = { data: data };

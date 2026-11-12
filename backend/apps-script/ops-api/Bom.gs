@@ -22,12 +22,6 @@ const DEFAULT_VENDORS = [
 const SIGNATURES_NEEDED = 2;
 const MAX_LINES_PER_REQUEST = 200;
 
-function bomGet_(collection, id, what) {
-  const row = typeof id === "string" && id ? wixQuery_(collection, { _id: id }, 1)[0] : null;
-  if (!row) throw apiError_("bad-request", "That " + what + " doesn't exist any more. Reload the page.");
-  return row;
-}
-
 function person_(actor) {
   return { memberId: actor.id, name: actor.name, at: new Date().toISOString() };
 }
@@ -46,7 +40,7 @@ function money_(value, name) {
 /** { bom: { _id?, name, season, status } } -> { bom } */
 function saveBom_(body, actor) {
   const input = body.bom || {};
-  const existing = input._id ? bomGet_(COLLECTION_BOMS, input._id, "BOM") : null;
+  const existing = input._id ? getRecord_(COLLECTION_BOMS, input._id, "BOM") : null;
   const bom = wixSave_(COLLECTION_BOMS, Object.assign({}, existing, {
     name: text_(input.name, "BOM name", 100),
     season: text_(input.season, "season", 40, true),
@@ -63,7 +57,7 @@ function saveBom_(body, actor) {
  */
 function createOrder_(body, actor) {
   const input = body.order || {};
-  const bom = bomGet_(COLLECTION_BOMS, input.bomId, "BOM");
+  const bom = getRecord_(COLLECTION_BOMS, input.bomId, "BOM");
   const projectId = text_(input.projectId, "project", 100, true);
   return withLock_(function () {
     const siblings = wixQuery_(COLLECTION_ORDERS, { bomId: bom._id }).filter(function (o) {
@@ -93,7 +87,7 @@ function newSection_(orderId, vendor, sortOrder) {
 
 /** { orderId, vendor } -> { section } */
 function addSection_(body) {
-  const order = bomGet_(COLLECTION_ORDERS, body.orderId, "order");
+  const order = getRecord_(COLLECTION_ORDERS, body.orderId, "order");
   const vendor = text_(body.vendor, "vendor name", 80);
   const existing = wixQuery_(COLLECTION_SECTIONS, { orderId: order._id });
   if (existing.some(function (s) { return s.vendor.toLowerCase() === vendor.toLowerCase(); })) {
@@ -109,9 +103,9 @@ function addSection_(body) {
 /** { line: { _id?, sectionId, name, link, vendorPartNumber, unitCost, quantity, comments } } -> { line, signaturesCleared } */
 function saveLine_(body, actor) {
   const input = body.line || {};
-  const existing = input._id ? bomGet_(COLLECTION_LINES, input._id, "line") : null;
+  const existing = input._id ? getRecord_(COLLECTION_LINES, input._id, "line") : null;
   if (existing && existing.orderedAt) throw apiError_("conflict", "This line was already ordered and can't be changed.");
-  const section = bomGet_(COLLECTION_SECTIONS, existing ? existing.sectionId : input.sectionId, "vendor section");
+  const section = getRecord_(COLLECTION_SECTIONS, existing ? existing.sectionId : input.sectionId, "vendor section");
   const quantity = Math.floor(Number(input.quantity));
   if (!(quantity >= 1 && quantity <= 100000)) throw apiError_("bad-request", "Quantity must be 1 or more.");
   const line = Object.assign({}, existing, {
@@ -144,7 +138,7 @@ function saveLine_(body, actor) {
 
 /** { lineId } -> {}. Only a line nobody has signed can be removed. */
 function removeLine_(body, actor) {
-  const line = bomGet_(COLLECTION_LINES, body.lineId, "line");
+  const line = getRecord_(COLLECTION_LINES, body.lineId, "line");
   if (line.orderedAt || (line.signatures || []).length) {
     throw apiError_("conflict", "A signed or ordered line can't be removed. A lead can reopen it first.");
   }
@@ -155,7 +149,7 @@ function removeLine_(body, actor) {
 
 /** { lineId } -> { line }. A Lead takes a line back to "not signed, not ordered", for example after a mistake. */
 function reopenLine_(body, actor) {
-  const line = bomGet_(COLLECTION_LINES, body.lineId, "line");
+  const line = getRecord_(COLLECTION_LINES, body.lineId, "line");
   if (line.receivedQty > 0) throw apiError_("conflict", "This line was already received.");
   const saved = wixSave_(COLLECTION_LINES, Object.assign({}, line, { signatures: [], orderedAt: "" }));
   writeHistory_(actor, { kind: "bomLine", id: line._id }, "reopened", line.name);
@@ -208,7 +202,7 @@ function cantSign_(line, actor) {
 
 /** { sectionId } -> { section }. A Mentor or Booster gives "Approval to Order" for one vendor section. */
 function approveSection_(body, actor) {
-  const section = bomGet_(COLLECTION_SECTIONS, body.sectionId, "vendor section");
+  const section = getRecord_(COLLECTION_SECTIONS, body.sectionId, "vendor section");
   const saved = wixSave_(COLLECTION_SECTIONS, Object.assign({}, section, { approval: person_(actor) }));
   writeHistory_(actor, { kind: "bomSection", id: section._id }, "approved to order", section.vendor);
   return { section: saved };
@@ -222,7 +216,7 @@ function approveSection_(body, actor) {
  */
 function markOrdered_(body, actor) {
   return withLock_(function () {
-    const section = bomGet_(COLLECTION_SECTIONS, body.sectionId, "vendor section");
+    const section = getRecord_(COLLECTION_SECTIONS, body.sectionId, "vendor section");
     if (!section.approval) throw apiError_("conflict", "This section needs Approval to Order first.");
     const lines = wixQuery_(COLLECTION_LINES, { sectionId: section._id });
     const ready = lines.filter(function (l) { return !l.orderedAt && (l.signatures || []).length >= SIGNATURES_NEEDED; });
@@ -255,7 +249,7 @@ function receiveLines_(body, actor) {
   }
   return withLock_(function () {
     const lines = items.map(function (item) {
-      const line = bomGet_(COLLECTION_LINES, String(item.lineId), "line");
+      const line = getRecord_(COLLECTION_LINES, String(item.lineId), "line");
       if (!line.orderedAt) throw apiError_("conflict", "'" + line.name + "' hasn't been ordered yet.");
       const quantity = Math.floor(Number(item.quantity));
       const left = line.quantity - (line.receivedQty || 0);
@@ -285,7 +279,7 @@ function receiveLines_(body, actor) {
  * "imported": nobody can mistake them for a signature made on the website.
  */
 function importOrder_(body, actor) {
-  const bom = bomGet_(COLLECTION_BOMS, body.bomId, "BOM");
+  const bom = getRecord_(COLLECTION_BOMS, body.bomId, "BOM");
   const sections = Array.isArray(body.sections) ? body.sections : [];
   const lineCount = sections.reduce(function (n, s) { return n + (Array.isArray(s.lines) ? s.lines.length : 0); }, 0);
   if (!lineCount || lineCount > 500) throw apiError_("bad-request", "An import needs between 1 and 500 lines.");

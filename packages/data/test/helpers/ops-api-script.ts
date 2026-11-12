@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 // Apps Script loads every file into one global scope, in this order.
-const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs"].map((name) =>
+const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs"].map((name) =>
   readFileSync(fileURLToPath(new URL(`../../../../backend/apps-script/ops-api/${name}`, import.meta.url)), "utf8"),
 );
 const CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";

@@ -193,9 +193,12 @@ export async function logHistory(record: RecordLink, change: string, summary = "
   await callOps("logHistory", { record, change, summary });
 }
 
-/** The next number of a kind ("task" -> 42). Used by the data modules when they create a record. */
-export async function nextNumber(kind: "task" | "project" | "part" | "order"): Promise<number> {
-  return (await callOps<{ number: number }>("nextNumber", { kind })).number;
+/**
+ * The next number of a kind ("task" -> 42). Used by the data modules when they create a record.
+ * With count, sets aside that many in a row and returns the first.
+ */
+export async function nextNumber(kind: "task" | "project" | "part" | "order", count = 1): Promise<number> {
+  return (await callOps<{ number: number }>("nextNumber", { kind, count })).number;
 }
 
 /** A member picks their own subteams. */

@@ -3,7 +3,7 @@
 /** One stored record. Every collection item has an _id; the other fields depend on the collection. */
 export type Item = { _id: string } & Record<string, unknown>;
 /** A record that may not be saved yet. */
-export type Draft<T extends Item = Item> = Omit<T, "_id"> & { _id?: string };
+export type Draft<T extends Item = Item> = { [K in keyof T as K extends "_id" ? never : K]: T[K] } & { _id?: string };
 
 /** The kinds of record the apps can point at. */
 export type RecordKind =
@@ -15,7 +15,13 @@ export type RecordKind =
   | "inventoryItem"
   | "rawMaterial"
   | "githubIssue"
-  | "person";
+  | "person"
+  | "bom"
+  | "bomSection"
+  | "season"
+  | "milestone"
+  | "event"
+  | "template";
 
 /** A pointer from one record to another, in any app. Shown with <RecordLink> from @team6220/ui. */
 export interface RecordLink {

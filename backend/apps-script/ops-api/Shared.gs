@@ -7,17 +7,22 @@ const NUMBER_KINDS = ["task", "project", "part", "order"];
 // Numbers
 // ---------------------------------------------------------------------------------------------------------
 
-/** { kind } -> { number }. Hands out the next number of that kind. Numbers are never reused. */
+/**
+ * { kind, count? } -> { number }. Hands out the next number of that kind. Numbers are never reused.
+ * With count (up to 200) it sets aside that many in a row and returns the first, for starting a season.
+ */
 function nextNumber_(body) {
   if (NUMBER_KINDS.indexOf(body.kind) === -1) throw apiError_("bad-request", "Unknown kind of number.");
-  return { number: takeNumber_(body.kind) };
+  const count = body.count === undefined ? 1 : Math.floor(Number(body.count));
+  if (!(count >= 1 && count <= 200)) throw apiError_("bad-request", "Ask for between 1 and 200 numbers.");
+  return { number: takeNumber_(body.kind, count) };
 }
 
-function takeNumber_(kind) {
+function takeNumber_(kind, count) {
   return withLock_(function () {
     const row = wixQuery_(COLLECTION_COUNTERS, { key: kind }, 1)[0] || { key: kind, next: 1 };
     const number = Number(row.next) || 1;
-    wixSave_(COLLECTION_COUNTERS, Object.assign({}, row, { next: number + 1 }));
+    wixSave_(COLLECTION_COUNTERS, Object.assign({}, row, { next: number + (count || 1) }));
     return number;
   });
 }

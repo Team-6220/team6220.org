@@ -2,7 +2,7 @@
 // in memory. If you change a rule here, change it there too (packages/data/test/bom-rules.test.ts runs the
 // same checks against both).
 import { mockActions, seedMock, type MockActor, type MockDb } from "../ops/mock";
-import { OpsError, type ApiRequest } from "../ops/types";
+import { OpsError, type ApiRequest, type Draft } from "../ops/types";
 import { cantSign, DEFAULT_VENDORS, SIGNATURES_NEEDED } from "./rules";
 import type { ImportedSection } from "./import";
 import type { Bom, Line, Order, Section, Stamp } from "./types";
@@ -27,7 +27,7 @@ function money(value: unknown, name: string): number {
   return Math.round(n * 100) / 100;
 }
 
-function newSection(orderId: string, vendor: string, sortOrder: number): Omit<Section, "_id"> {
+function newSection(orderId: string, vendor: string, sortOrder: number): Draft<Section> {
   return { orderId, vendor, sortOrder, approval: null, orderedBy: null, orderDate: "", finalTotal: null, expectedArrival: "" };
 }
 
