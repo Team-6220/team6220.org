@@ -6,7 +6,7 @@
 > - The "Member Authentication app" step is gone. It doesn't exist in Wix; Google sign-in is built into Wix
 >   Members. The real menu paths are in [PHASE-0.md](PHASE-0.md).
 > - The GitHub team is `webmasters` (the doc said "web admins").
-> - Student photos are not stored in git ([PHOTOS.md](PHOTOS.md)).
+> - Photos are hosted in Wix and Google Drive because it's easier, not for legal reasons: the team has consent, and photos may live in git for now (#8).
 > - The tree under "Monorepo structure" is the original sketch. The repo actually has `sites/main/`, `apps/*`,
 >   `packages/*`, `backend/` and `integrations/` at the root (see the [README](../README.md)).
 > - The public page structure now follows Hoss' site review (issue #69), and the Decisions and Phase sections

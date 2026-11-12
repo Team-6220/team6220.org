@@ -63,6 +63,7 @@ function linkAt(text: string, start: number): Token | null {
 /** A link target we accept: an https/http URL or a path on this site. Never javascript: or protocol-relative. */
 export function isSafeHref(href: string): boolean {
   if (/\s/.test(href)) return false;
+  if (href.startsWith("#")) return /^#[A-Za-z][\w-]{0,60}$/.test(href); // an anchor on the same page
   if (href.startsWith("/")) return !href.startsWith("//");
   return /^https?:\/\/[^\s/]+/i.test(href);
 }
