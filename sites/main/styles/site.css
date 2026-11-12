@@ -776,3 +776,5 @@ html.intro-on{overflow:hidden}
 :root[data-theme="light"] :is(.hero,.banner) .title-calm{text-shadow:0 .06em 18px rgba(0,0,0,.55)}
 /* Sponsor logos are white-only files (#161), so they are turned black on the light page until color versions exist. */
 :root[data-theme="light"] img.lg{filter:invert(1)}
+/* Sponsors: the Amazon wishlist band */
+.wish-text{max-width:56ch;margin:var(--s2) 0 var(--s3)}
