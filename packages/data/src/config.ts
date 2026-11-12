@@ -23,6 +23,11 @@ export const BADGES = {
   teamMember: "Team Member",
   attendanceAdmin: "Attendance Admin",
   webAdmin: "Web Admin",
+  // Operations apps (Icarus, Production, BOM). What each allows: packages/data/src/ops/roles.ts.
+  mentor: "Mentor",
+  booster: "Booster",
+  supervisor: "Supervisor",
+  lead: "Lead",
 } as const;
 export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
 
@@ -32,3 +37,13 @@ export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
 const ATTENDANCE_API_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbxvHanf8i2Qx425LnwR1rVa8f01h-1ChHSoe424lQEvRgveyZNybhIgzG191WxWCrK6Fw/exec";
 export const ATTENDANCE_API_URL: string =
   (import.meta.env?.PUBLIC_ATTENDANCE_API_URL as string | undefined) || ATTENDANCE_API_URL_DEFAULT;
+
+// Each subteam is a Wix badge called "Subteam: <name>" (for example "Subteam: Design"). The badges are the list:
+// adding a subteam means creating its badge in Wix.
+export const SUBTEAM_BADGE_PREFIX = "Subteam: ";
+
+// The "ops API" Apps Script web app (backend/apps-script/ops-api), shared by Icarus, Production and BOM.
+// Like the attendance URL it is NOT a secret. Paste the /exec URL between the quotes, or set PUBLIC_OPS_API_URL
+// when building. Empty = not connected yet (the apps then only work in demo mode).
+const OPS_API_URL_DEFAULT = "";
+export const OPS_API_URL: string = (import.meta.env?.PUBLIC_OPS_API_URL as string | undefined) || OPS_API_URL_DEFAULT;

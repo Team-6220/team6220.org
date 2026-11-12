@@ -172,3 +172,84 @@ svg.t-icon.t-icon--inline {
   height: 1em;
   vertical-align: -0.125em;
 }
+
+/* A small colored label for a status (<StatusPill> in React): t-pill--neutral, --info, --ok, --warn, --error. */
+.t-pill {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.t-pill--info {
+  border-color: var(--brand-blue);
+  color: var(--color-ink);
+}
+.t-pill--ok {
+  border-color: transparent;
+  background: var(--color-ok-bg);
+  color: var(--color-ok);
+}
+.t-pill--warn {
+  border-color: transparent;
+  background: var(--color-warn-bg);
+  color: var(--color-warn);
+}
+.t-pill--error {
+  border-color: transparent;
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+/* A link to a record in another app (<RecordChip> in React): "t42 Wire the elevator". */
+.t-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+a.t-chip:hover,
+a.t-chip:focus-visible {
+  border-color: var(--color-gold);
+}
+.t-chip__code {
+  color: var(--color-gold);
+}
+
+/* A row of tick boxes (<SubteamPicker> in React). */
+.t-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 0;
+}
+.t-checks legend {
+  padding: 0;
+  font-weight: 600;
+}
+
+/* A record's change log (<HistoryList> in React). */
+.t-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.t-history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.t-history__when {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
