@@ -41,6 +41,12 @@ for (const tab of NAV) {
       await settle(page);
       await nav(page).locator(`li[data-page="${tab.id}"]`).hover();
       await nav(page).locator(`li[data-page="${tab.id}"] ul.sub a`, { hasText: child.label }).first().click();
+      if (child.href.startsWith("#")) {
+        // An on-page link (Contact): stays on the page and scrolls to the element it names.
+        await page.waitForURL((u) => u.hash === child.href);
+        await expect(page.locator(child.href)).toBeInViewport();
+        return;
+      }
       await page.waitForURL((u) => normPath(sitePath(u.pathname)) === normPath(child.href));
       expect(normPath(sitePath(new URL(page.url()).pathname))).toBe(normPath(child.href));
     });
