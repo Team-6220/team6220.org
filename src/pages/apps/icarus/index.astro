@@ -1,0 +1,13 @@
+---
+// /apps/icarus: tasks and the team Gantt chart (docs/operations/ICARUS.md).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Icarus } from "@team6220/icarus";
+import "@team6220/icarus/icarus.css";
+---
+
+<AppLayout title="Icarus | Los Al Robotics" description="Tasks and the Gantt chart for Los Al Robotics (FRC Team 6220).">
+  <Icarus client:only="react">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading…</p></main>
+  </Icarus>
+  <noscript><p class="t-page">Icarus needs JavaScript turned on.</p></noscript>
+</AppLayout>

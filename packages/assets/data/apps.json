@@ -19,6 +19,16 @@
     "symbol": "parts"
   },
   {
+    "id": "icarus",
+    "name": "Icarus",
+    "description": "Tasks and the team Gantt chart.",
+    "href": "/apps/icarus",
+    "status": "live",
+    "access": "team",
+    "note": "Leads plan seasons and target dates",
+    "symbol": "audits"
+  },
+  {
     "id": "bom",
     "name": "BOM",
     "description": "What we're buying: orders, mentor signatures and deliveries.",

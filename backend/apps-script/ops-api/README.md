@@ -15,6 +15,7 @@ only protected actions come here.
 | `WixData.gs` | Reading and writing Wix with the server's API key |
 | `Shared.gs` | Numbers, history, projects, people and subteam badges |
 | `Bom.gs` | BOM: orders, lines, signatures, ordering, receiving, import |
+| `Icarus.gs` | Icarus: Leads-only changes to milestones, events, seasons and templates |
 | `appsscript.json` | Manifest: web app "execute as me / anyone", one scope (outside requests) |
 
 Tests: `packages/data/test/ops-api.test.ts` runs these files in Node with fake Apps Script services
@@ -54,7 +55,7 @@ together: `roles_` in `Auth.gs` (the real check) and `packages/data/src/ops/role
 | Action | Who | Sends | Returns |
 | --- | --- | --- | --- |
 | `whoAmI` | viewer | | `me` (id, name, badges, subteams, roles) and the list of `subteams` |
-| `nextNumber` | team, Apollo | `kind`: `task`, `project`, `part` or `order` | `number` |
+| `nextNumber` | team, Apollo | `kind`: `task`, `project`, `part` or `order`; optional `count` (up to 200) to set aside several in a row | `number` (the first) |
 | `logHistory` | team | `record` (`kind`, `id`), `change`, `summary` | |
 | `saveProject` | lead | `project` (`_id` to change one) | `project` |
 | `setMySubteams` | team | `subteams` (names) | `subteams` |
@@ -82,6 +83,17 @@ The rules: two signatures from two different people, each a Mentor or Booster; c
 quantity of a signed line removes its signatures; only fully signed lines in a section with Approval to Order can be
 ordered; an ordered line cannot be edited; a Supervisor can call none of these. `packages/data/test/bom-rules.test.ts`
 runs the same checks against this code and against the demo backend.
+
+### Icarus actions (`Icarus.gs`)
+
+Tasks are written straight to Wix by members. These two actions are for the planning records only a Lead may change.
+
+| Action | Who | Sends | Returns |
+| --- | --- | --- | --- |
+| `saveIcarusRecord` | lead | `kind`: `milestone`, `event`, `season` or `template`; `record` (`_id` to change one) | `record` |
+| `removeIcarusRecord` | lead | `kind`, `id` | |
+
+Only the fields listed for each kind in `ICARUS_KINDS` are saved; anything else in the request is dropped.
 
 Each app adds its own actions as it is built. To add one: write the function in the right file, then add one line to
 `actions_()` in `Code.gs` saying who may call it.
@@ -144,6 +156,16 @@ in the same pull request.
    | `bom_orders` | `bomId`, `projectId`, `customName`, `createdAt` (text); `sequence` (number) |
    | `bom_sections` | `orderId`, `vendor`, `orderDate`, `expectedArrival` (text); `sortOrder`, `finalTotal` (number); `approval`, `orderedBy` (object) |
    | `bom_lines` | `sectionId`, `name`, `link`, `vendorPartNumber`, `comments`, `orderedAt`, `receivedAt` (text); `unitCost`, `quantity`, `receivedQty` (number); `requestedBy`, `receivedBy` (object); `signatures` (array) |
+
+   Icarus:
+
+   | Collection | Read | Write | Fields |
+   | --- | --- | --- | --- |
+   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy` (tags) |
+   | `icarus_milestones` | Site members | Admin | `name`, `date`, `seasonId`, `eventId` (text); `subteams` (tags) |
+   | `icarus_events` | Site members | Admin | `code`, `displayName`, `officialName`, `startDate`, `endDate`, `location`, `source` (text) |
+   | `icarus_seasons` | Site members | Admin | `name`, `startDate`, `endDate` (text); `eventIds` (tags) |
+   | `icarus_templates` | Site members | Admin | `name` (text); `tasks`, `milestones` (array) |
 
 3. **Wix API key.** Wix account → API Keys → Generate, with permissions for **Wix Data** (read and write data items)
    and **Manage Badges**, limited to the team site. Copy the key and the **site ID**. The key is a secret: it goes

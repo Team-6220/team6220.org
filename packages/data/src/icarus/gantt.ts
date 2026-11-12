@@ -121,7 +121,8 @@ export function buildGantt({ season, tasks, milestones, events, subteams, today 
       rows: topLevel.filter((t) => belongs(t) && scheduled(t)).sort(byStart).flatMap((t) => withSubtasks(t, 0)),
       milestones: milestones
         .filter((m) => m.seasonId === season._id && m.subteams.includes(name) && inSeason(m.date))
-        .map((m) => ({ column: column(m.date)!, name: m.name })),
+        .map((m) => ({ column: column(m.date)!, name: m.name }))
+        .sort((a, b) => a.column - b.column),
     };
   });
 

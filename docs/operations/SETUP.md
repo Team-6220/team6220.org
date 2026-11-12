@@ -26,6 +26,16 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 | [ ] | Team Google account | Copy `Bom.gs` and the updated `Code.gs` and `WixData.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
 | [ ] | Lead | Create the first BOM and import the 2026 sheets: in each sheet tab, File → Download → CSV, then BOM → New order → Import a sheet tab | `/apps/bom` |
 
+## Icarus (step 2)
+
+| Done | Who | What | Where |
+| --- | --- | --- | --- |
+| [ ] | Web Admin | Create `icarus_tasks` (read and write: **Site members**) | Wix → CMS |
+| [ ] | Web Admin | Create `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates` (read: Site members; write: Admin). Fields are listed in the ops-api README | Wix → CMS |
+| [ ] | Team Google account | Copy `Icarus.gs` and the updated `Code.gs`, `Shared.gs` and `WixData.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
+| [ ] | Lead | Create the 2027 season on Icarus → Plan, start it from the Season template, correct it, and save it as the team's own template | `/apps/icarus` |
+| [ ] | Everyone | Pick your subteams on Icarus → People | `/apps/icarus` |
+
 ## Later steps
 
 Added here as each app is built: the app's own collections, and the keys for GitHub, The Blue Alliance, FIRST,

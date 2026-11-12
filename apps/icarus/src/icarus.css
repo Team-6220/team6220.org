@@ -1,0 +1,317 @@
+/* Styles only Icarus needs. Everything else comes from @team6220/ui. */
+.t-page:has(.icr) {
+  --page-width: 96rem; /* the chart wants all the width it can get */
+}
+.icr,
+.icr__stack {
+  display: grid;
+  gap: var(--space-3);
+}
+.icr > * {
+  min-width: 0; /* lets the chart scroll inside its own box instead of stretching the page */
+}
+.icr__top,
+.icr__buttons,
+.icr__filters,
+.icr__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2);
+}
+.icr__filters,
+.icr__buttons {
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.icr__countdown-text {
+  margin: 0 auto 0 0;
+  padding-bottom: var(--space-2);
+  font-weight: 700;
+}
+.icr__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+.icr__tab {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.icr__tab--on {
+  border-bottom-color: var(--color-gold);
+  color: var(--color-ink);
+}
+.icr__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.icr__number {
+  color: var(--color-gold);
+  font-weight: 700;
+}
+.icr__overdue {
+  color: var(--color-error);
+  font-weight: 700;
+}
+.icr__small {
+  margin-left: var(--space-2);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* ----- the Gantt chart ----- */
+.icr__gantt {
+  --day: 1.6rem; /* the width of one day column */
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.icr__chart {
+  border-collapse: separate; /* "collapse" breaks the pinned column in some browsers */
+  border-spacing: 0;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.icr__chart th,
+.icr__chart td {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-weight: 500;
+}
+.icr__chart thead th {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+/* The task column stays put while the days scroll. */
+.icr__pin {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 13rem;
+  max-width: 20rem;
+  overflow: hidden;
+  background: var(--color-surface);
+  text-overflow: ellipsis;
+}
+.icr__chart .icr__day,
+.icr__chart .icr__span {
+  padding: 0.2rem 0;
+  text-align: center;
+}
+.icr__chart .icr__day {
+  width: var(--day);
+  min-width: var(--day);
+  max-width: var(--day);
+}
+.icr__span {
+  border-left: 1px solid var(--color-border);
+}
+.icr__day--saturday {
+  background: color-mix(in srgb, var(--color-gold) 14%, transparent);
+}
+.icr__chart .icr__day--today {
+  background: var(--color-gold);
+  color: var(--color-on-gold);
+  font-weight: 700;
+}
+.icr__countdown th {
+  font-variant-numeric: tabular-nums;
+}
+.icr__group th,
+.icr__group td {
+  background: var(--brand-panel-2, var(--color-surface));
+  color: var(--color-gold);
+  font-family: var(--font-title);
+  text-transform: uppercase;
+}
+/* One long cell per row; bars and lines are placed inside it by day. Saturdays are tinted with a background
+   that repeats every 7 days; --first-saturday (set on the cell) says which day column the first one is. */
+.icr__chart .icr__track {
+  position: relative;
+  height: 1.9rem;
+  min-width: calc(var(--days) * var(--day));
+  padding: 0;
+  --s: var(--first-saturday, 0);
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(var(--s) * var(--day)),
+    color-mix(in srgb, var(--color-gold) 9%, transparent) calc(var(--s) * var(--day)) calc((var(--s) + 1) * var(--day)),
+    transparent calc((var(--s) + 1) * var(--day)) calc(7 * var(--day))
+  );
+}
+.icr__chart .icr__track--labels {
+  height: 1.6rem;
+  background: none;
+}
+.icr__bar {
+  position: absolute;
+  top: 0.35rem;
+  height: 1.2rem;
+  border-radius: var(--radius);
+  background: var(--brand-grey-light);
+}
+.icr__bar--in-progress {
+  background: var(--brand-blue);
+}
+.icr__bar--done {
+  background: var(--color-ok);
+  opacity: 0.75;
+}
+.icr__bar--cancelled {
+  background: repeating-linear-gradient(135deg, var(--color-border) 0 6px, transparent 6px 12px);
+}
+.icr__bar--overdue {
+  outline: 2px solid var(--color-error);
+}
+.icr__mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.icr__mark--today {
+  border-left: 2px solid var(--color-gold);
+}
+.icr__mark--event {
+  background: color-mix(in srgb, var(--color-error) 30%, transparent);
+}
+.icr__mark--milestone {
+  border-left: 2px dashed var(--color-muted);
+}
+.icr__line-label {
+  position: absolute;
+  top: 0.15rem;
+  padding: 0 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.icr__line-label--event {
+  color: var(--color-error);
+}
+.icr__milestone {
+  position: absolute;
+  top: 0.25rem;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-transform: none;
+  transform: translateX(0.3rem);
+}
+.icr__task-button {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.icr__task-button:hover {
+  text-decoration: underline;
+}
+.icr__empty {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* ----- lists and forms ----- */
+.icr__list,
+.icr__sublist,
+.icr__plain,
+.icr__preview {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.icr__plain li,
+.icr__preview li {
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.icr__preview-sub {
+  padding-left: var(--space-4) !important;
+}
+.icr__list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.icr__list-item:hover {
+  background: var(--color-surface);
+}
+.icr__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.icr__wide {
+  grid-column: 1 / -1;
+}
+.icr__people {
+  max-height: 9rem;
+  overflow-y: auto;
+}
+.icr__scroll {
+  overflow-x: auto;
+}
+.icr__toggle {
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .icr__list-item {
+    grid-template-columns: 1fr; /* one thing per line on a phone */
+  }
+  .icr__pin {
+    min-width: 9rem;
+    max-width: 11rem;
+  }
+}
+
+/* Printing the chart: only the chart, as wide as it needs. */
+@media print {
+  .icr__top,
+  .icr__tabs,
+  .icr__buttons,
+  .t-header,
+  .t-demo {
+    display: none;
+  }
+  .icr__gantt {
+    overflow: visible;
+    border: 0;
+  }
+  .icr__pin {
+    position: static;
+  }
+}

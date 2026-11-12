@@ -1,0 +1,19 @@
+{
+  "name": "@team6220/icarus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/icarus: tasks and the team Gantt chart.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./icarus.css": "./src/icarus.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*",
+    "@team6220/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

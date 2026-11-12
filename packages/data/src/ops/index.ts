@@ -217,5 +217,6 @@ export function projectLabel(project: Pick<Project, "number">): string {
 }
 
 export { rolesFor, subteamsOf } from "./roles";
+export { toCsv } from "./csv";
 export { mockActions, mockDb, resetMock, seedMock, type MockAction, type MockActor, type MockDb } from "./mock";
 export * from "./types";

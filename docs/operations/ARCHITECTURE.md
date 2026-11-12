@@ -95,7 +95,7 @@ same check Inventory uses). Field lists are the important fields, not every fiel
 | Collection | Holds | Main fields |
 | --- | --- | --- |
 | `icarus_tasks` | Tasks and subtasks | number, path (`42.1`), parentId, title, description, projectId, subteams, ownerIds, status, startDate, dueDate, notes, seasonId, templateKey, githubIssue `{repo, number, syncedAt}` |
-| `icarus_relations` | Links between tasks | fromTaskId, toTaskId, type (`blocks`, `related`). Parent/child is `parentId` on the task |
+| (no `icarus_relations`) | Built simpler than first planned: "needs completion of" is a `blockedBy` list on the task, and parent/child is `parentId` | |
 | `icarus_needs` | What a task needs | taskId, record link (inventory item, BOM line or part), quantity |
 | `icarus_milestones` | Target dates | name, date, subteams (empty = whole team), seasonId, eventId |
 | `icarus_events` | Competitions and scrimmages | code, displayName, officialName, startDate, endDate, location, source (`tba`, `first`, `manual`) |
