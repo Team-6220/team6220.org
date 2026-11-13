@@ -19,13 +19,14 @@ interface TaskFormProps {
   onRemove: (task: Task) => Promise<void>;
   onAddSubtask: (parent: Task) => void;
   onOpenTask: (task: Task) => void;
+  onCreateGithubIssue: (task: Task) => Promise<void>;
   onClose: () => void;
 }
 
 const STATUSES: TaskStatus[] = ["not-started", "in-progress", "done", "cancelled"];
 const isOpen = (status: TaskStatus) => status === "not-started" || status === "in-progress";
 
-export function TaskForm({ task, tasks, people, projects, subteams, me, onSave, onRemove, onAddSubtask, onOpenTask, onClose }: TaskFormProps) {
+export function TaskForm({ task, tasks, people, projects, subteams, me, onSave, onRemove, onAddSubtask, onOpenTask, onCreateGithubIssue, onClose }: TaskFormProps) {
   // Tasks saved before "related" and "needs" existed don't have them, so fill them in.
   const [draft, setDraft] = useState<Draft<Task>>({ ...task, related: task.related ?? [], needs: task.needs ?? [] });
   const [saving, setSaving] = useState(false);
@@ -187,6 +188,8 @@ export function TaskForm({ task, tasks, people, projects, subteams, me, onSave, 
               <ProjectPicker projects={projects} value={draft.projectId} onChange={(projectId) => set({ projectId })} />
             </fieldset>
 
+            {saved && <GithubLink task={saved} project={projects.find((p) => p._id === saved.projectId)} onCreate={onCreateGithubIssue} />}
+
             <div>
               <span className="icr__side-label">Relations</span>
               {relations.length === 0 && <p className="t-muted">None</p>}
@@ -260,5 +263,29 @@ export function TaskForm({ task, tasks, people, projects, subteams, me, onSave, 
         </footer>
       </form>
     </section>
+  );
+}
+
+/** The task's GitHub issue, or a button to open one when the task's project is connected to a repository. */
+function GithubLink({ task, project, onCreate }: { task: Task; project?: Project; onCreate: (task: Task) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const issue = task.githubIssue;
+  if (!issue && !project?.githubRepo) return null;
+  return (
+    <div>
+      <span className="icr__side-label">GitHub</span>
+      {issue ? (
+        <p>
+          <a href={issue.url} target="_blank" rel="noreferrer">{issue.repo}#{issue.number}</a>
+          <br />
+          <span className="t-muted">Kept in sync both ways every 5 minutes.</span>
+        </p>
+      ) : (
+        <button className="t-button t-button--quiet" type="button" disabled={busy}
+          onClick={async () => { setBusy(true); try { await onCreate(task); } finally { setBusy(false); } }}>
+          Create issue in {project!.githubRepo}
+        </button>
+      )}
+    </div>
   );
 }

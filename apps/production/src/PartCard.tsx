@@ -13,12 +13,14 @@ interface PartCardProps {
   projects: Project[];
   /** Runs one step from production's rules on this part, then reloads. */
   onStep: (part: Part, change: (part: Part) => Part) => Promise<void>;
+  /** Runs a change that does more than one step (it also changes Inventory), shows its message, then reloads. */
+  onAction: (change: () => Promise<string | void>) => Promise<void>;
 }
 
 /** Which small form is open under the buttons. */
 type Asking = "hand-back" | "setup" | "fail" | null;
 
-export function PartCard({ part, me, projects, onStep }: PartCardProps) {
+export function PartCard({ part, me, projects, onStep, onAction }: PartCardProps) {
   const [asking, setAsking] = useState<Asking>(null);
   const [note, setNote] = useState("");
   const [leftAt, setLeftAt] = useState("");
@@ -51,6 +53,7 @@ export function PartCard({ part, me, projects, onStep }: PartCardProps) {
         {part.fileLinks && ` · Files: ${part.fileLinks}`}
       </p>
       {part.details && <p>{part.details}</p>}
+      {part.cutStock && <p><strong>Stock:</strong> {part.cutStock} <span className="t-muted">(spot reserved in Inventory)</span></p>}
       {part.setupNotes && <p><strong>Setup ({part.setupBy}):</strong> {part.setupNotes}</p>}
       {part.print && (
         <p className="t-muted">
@@ -80,7 +83,8 @@ export function PartCard({ part, me, projects, onStep }: PartCardProps) {
           )}
           {part.status === "in-progress" && (
             <>
-              <button className="t-button" type="button" onClick={() => step(production.markCut)}>
+              <button className="t-button" type="button" onClick={() => onAction(() => production.confirmCut(part, me))}
+                title={production.isPlanned(part) ? "Also updates the stock piece in Inventory to what is left" : undefined}>
                 {part.method === "print" ? "Printed" : "Confirm cut"}
               </button>
               {part.method === "print"
@@ -90,7 +94,7 @@ export function PartCard({ part, me, projects, onStep }: PartCardProps) {
             </>
           )}
           {(part.status === "cut" || part.status === "in-progress") && <button className="t-button t-button--quiet" type="button" onClick={() => step(production.markDone)}>Done</button>}
-          <button className="t-button t-button--quiet" type="button" onClick={() => window.confirm(`Cancel ${production.partLabel(part)}?`) && void step(production.cancel)}>
+          <button className="t-button t-button--quiet" type="button" onClick={() => window.confirm(`Cancel ${production.partLabel(part)}?`) && void onAction(() => production.cancelPart(part, me))}>
             Cancel part
           </button>
         </div>

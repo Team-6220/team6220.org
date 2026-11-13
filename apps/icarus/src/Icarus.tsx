@@ -169,6 +169,11 @@ export default function Icarus() {
               me={me}
               onClose={() => setEditing(null)}
               onOpenTask={openTask}
+              onCreateGithubIssue={(task) => run(async () => {
+                const linked = await icarus.createGithubIssue(task._id);
+                setEditing(linked);
+                return `Opened ${linked.githubIssue!.repo}#${linked.githubIssue!.number}.`;
+              })}
               onAddSubtask={(parent) => openTask({ ...icarus.emptyTask(parent.seasonId, parent._id), subteams: parent.subteams, projectId: parent.projectId })}
               onSave={(task) => run(async () => {
                 const saved = await icarus.saveTask(task, me, data.tasks);
@@ -242,9 +247,27 @@ function Projects({
     bom.spendingByProject().then(setSpending, () => undefined);
   }, []);
 
+  function connectRepo(project: Project) {
+    const answer = window.prompt("GitHub repository for this project (a Team-6220 repository link). Leave empty to disconnect.", project.githubRepo);
+    if (answer === null) return;
+    const repo = answer.trim() ? ops.teamRepoFrom(answer) : "";
+    if (repo === null) {
+      window.alert("GitHub sync only works with repositories in the Team-6220 organization, like https://github.com/Team-6220/robot-2027.");
+      return;
+    }
+    void run(async () => {
+      await ops.saveProject({ ...project, githubRepo: repo });
+      return repo ? `${ops.projectLabel(project)} is connected to ${repo}. Its issues appear as tasks within 5 minutes.` : `${ops.projectLabel(project)} is no longer connected to GitHub.`;
+    });
+  }
+
   return (
     <section className="t-panel">
       <h2>Projects</h2>
+      <p className="t-muted">
+        A project connected to a GitHub repository keeps its issues and tasks in sync both ways: new issues become tasks,
+        and titles, descriptions, assignees and open/closed follow whichever side changed last.
+      </p>
       <ul className="icr__list">
         {projects.map((p) => {
           const mine = tasks.filter((t) => t.projectId === p._id);
@@ -260,22 +283,43 @@ function Projects({
                 </span>
                 <span className="t-muted">{mine.length ? `${done} of ${mine.length} tasks done` : "No tasks yet"}</span>
               </button>
+              <span className="icr__repo">
+                {p.githubRepo ? (
+                  <a href={`https://github.com/${p.githubRepo}`} target="_blank" rel="noreferrer">GitHub: {p.githubRepo}</a>
+                ) : null}
+                {canCreate && (
+                  <button type="button" className="icr__link" onClick={() => connectRepo(p)}>
+                    {p.githubRepo ? "Change" : "Connect a GitHub repository"}
+                  </button>
+                )}
+              </span>
             </li>
           );
         })}
       </ul>
-      {canCreate && (
-        <button
-          className="t-button"
-          type="button"
-          onClick={() => {
-            const name = window.prompt("Name of the new project");
-            if (name) void run(async () => `Created ${ops.projectLabel(await ops.saveProject({ name }))} ${name}.`);
-          }}
-        >
-          New project
-        </button>
-      )}
+      <div className="icr__buttons">
+        {canCreate && (
+          <button
+            className="t-button"
+            type="button"
+            onClick={() => {
+              const name = window.prompt("Name of the new project");
+              if (name) void run(async () => `Created ${ops.projectLabel(await ops.saveProject({ name }))} ${name}.`);
+            }}
+          >
+            New project
+          </button>
+        )}
+        {projects.some((p) => p.githubRepo) && (
+          <button className="t-button t-button--quiet" type="button"
+            onClick={() => run(async () => {
+              const result = await icarus.syncGithubNow();
+              return `Synced ${result.repos} ${result.repos === 1 ? "repository" : "repositories"}: ${result.pulled} tasks updated from GitHub, ${result.pushed} issues updated from Icarus.`;
+            })}>
+            Sync with GitHub now
+          </button>
+        )}
+      </div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 # Team Operations apps: architecture (plan)
 
-> **Plan only, not built.** How Icarus (tasks), Production and BOM are put together and how they share data with each other and
+> **Built (steps 0–6, Nov 2026); the "Not in the first release" items are still to do.** The real-data setup is in [SETUP.md](SETUP.md).
+> How Icarus (tasks), Production and BOM are put together and how they share data with each other and
 > with Inventory. Read the [overview](README.md) first. This follows the site's existing rules
 > ([ARCHITECTURE.md](../ARCHITECTURE.md), [ADD-AN-APP.md](../ADD-AN-APP.md),
 > [APPS-PHILOSOPHY.md](../APPS-PHILOSOPHY.md)); where it adds something new, it says so.
@@ -288,6 +289,13 @@ planSheets(stock: Sheet[], parts: Rect[], options: { kerf, allowRotate }): Sheet
 - **PDF:** the cut list and layout print through the browser's print-to-PDF from a print stylesheet. No PDF library
   unless that proves not good enough.
 
+**As built (step 5).** The geometry is a TypeScript port of Inventory's planner (`geometry.ts`, `sheets.ts`,
+`leftovers.ts`) plus a new 1D planner (`linear.ts`). `test/parity.test.ts` runs the old `JsGeometry.html` and the port
+on the same inputs and checks they agree exactly. No packing library was needed. Production reserves spots as
+Inventory's own cut jobs (`inventory_production`) and confirms cuts with Inventory's own `rawCut` rule (through
+`packages/data/src/inventory/cutting.ts`), so there is one rule that changes stock. `rawCut` gained one optional
+argument, `flagLeftovers`, which marks leftovers "needs check" for the next audit.
+
 ## Screens and shared UI
 
 - React 18, `AppLayout`, shared classes from `@team6220/ui` (`t-page`, `t-panel`, `t-button`), app-prefixed class
@@ -350,6 +358,10 @@ Each bullet is roughly one pull request. Steps match the [overview](README.md#bu
 
 **Step 6: outside integrations**
 - Events from TBA and FIRST. GitHub two-way sync. Apollo API and its README contract.
+
+**Where it stands (Nov 2026).** Steps 0 to 6 are built and run on demo data. Not built yet: Onshape import, events
+from FIRST's API (TBA only), and removing the planner from Inventory's screen (after a real meeting). GitHub sync
+polls every 5 minutes with a newer-wins rule and a kill switch, as planned.
 
 ## Risks
 

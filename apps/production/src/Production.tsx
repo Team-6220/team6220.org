@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { auth, ops, production, type OpsViewer, type Part, type PartMethod, type Project } from "@team6220/data";
 import { AppShell, type AppShellState } from "@team6220/ui";
+import { CutOptimizer } from "./CutOptimizer";
+import { CutPlanner } from "./CutPlanner";
 import { PartCard } from "./PartCard";
 import { RequestForm } from "./RequestForm";
 
@@ -59,7 +61,7 @@ export default function Production() {
   const state: AppShellState = loadError ? "error" : !viewer ? "loading" : viewer.kind !== "member" ? viewer.kind : parts ? "ready" : "loading";
   const open = (parts ?? []).filter(production.isOpen);
   const cards = (list: Part[], empty: string) =>
-    list.length ? <div className="prod__cards">{list.map((p) => <PartCard key={p._id} part={p} me={me!} projects={projects} onStep={onStep} />)}</div> : <p className="t-muted">{empty}</p>;
+    list.length ? <div className="prod__cards">{list.map((p) => <PartCard key={p._id} part={p} me={me!} projects={projects} onStep={onStep} onAction={run} />)}</div> : <p className="t-muted">{empty}</p>;
 
   return (
     <AppShell
@@ -96,15 +98,8 @@ export default function Production() {
           {screen === "prints" && cards(open.filter((p) => p.method === "print"), "The print queue is empty.")}
           {screen === "tracker" && <Tracker parts={open.filter((p) => p.status !== "pending-setup")} meId={me.id} cards={cards} />}
           {screen === "shapeoko" && cards(open.filter((p) => p.status === "pending-setup"), "No Shapeoko parts are waiting for setup.")}
-          {(screen === "planner" || screen === "optimizer") && (
-            <section className="t-panel t-panel--notice">
-              <h2>{screen === "planner" ? "Cut planner" : "Cut optimizer"}: not moved here yet</h2>
-              <p>
-                This screen is planned for a later build step. Until then the cut planner is still in{" "}
-                <a href="/apps/inventory">Inventory</a>, under Raw Materials.
-              </p>
-            </section>
-          )}
+          {screen === "planner" && <CutPlanner me={me} parts={parts} run={run} />}
+          {screen === "optimizer" && <CutOptimizer />}
         </div>
       )}
     </AppShell>

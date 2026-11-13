@@ -64,6 +64,8 @@ export function newPart(request: PartRequest, number: number, designer: Who): Dr
     setupNotes: "",
     setupBy: "",
     print: request.method === "print" ? { ...EMPTY_PRINT, ...request.print } : null,
+    cutJobIds: [],
+    cutStock: "",
     createdAt: now(),
   };
 }

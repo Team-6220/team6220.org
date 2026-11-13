@@ -25,6 +25,10 @@ export interface Task extends Item {
   blockedBy: string[];
   /** _ids of tasks this one is related to, in no particular direction. */
   related: string[];
+  /** When the task was last changed (ISO). Older tasks may not have it. */
+  updatedAt?: string;
+  /** The GitHub issue this task is kept in step with, if any (see backend/apps-script/ops-api/GitHub.gs). */
+  githubIssue?: { repo: string; number: number; url: string; updatedAt: string; syncedAt: string; closed?: boolean };
   /** Inventory parts this task needs. A link and a warning only: a task never changes stock. */
   needs: MaterialNeed[];
   createdBy: string;

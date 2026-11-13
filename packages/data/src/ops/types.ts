@@ -64,6 +64,8 @@ export interface Person extends Item {
   name: string;
   /** The short name typed after "@" (from the member's Wix profile). May be "" for older rows. */
   username: string;
+  /** Their GitHub username, for matching task owners to issue assignees. "" when not set. */
+  githubLogin?: string;
   subteams: string[];
   active: boolean;
 }

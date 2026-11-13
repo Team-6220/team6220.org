@@ -1,7 +1,7 @@
 // Demo backend for Icarus: made-up data, and the same rules for planning records as
 // backend/apps-script/ops-api/Icarus.gs. Change both together.
 import { mockActions, mockWantedSubteams, seedMock, type MockDb } from "../ops/mock";
-import { OpsError } from "../ops/types";
+import { OpsError, type Draft } from "../ops/types";
 import { addDays, isDate } from "./dates";
 import { BUILT_IN_TEMPLATES, previewTemplate } from "./templates";
 import type { Milestone, Season, Task, TeamEvent } from "./types";
@@ -40,7 +40,73 @@ function existing(db: MockDb, collection: string, id: unknown, what: string) {
   return row;
 }
 
+/** Made-up events standing in for The Blue Alliance in demo mode (codes start with "demo" so they can't be confused). */
+function demoTbaEvents(year: number): Draft<TeamEvent>[] {
+  return [
+    { code: `${year}demosd`, officialName: "San Diego Regional (demo)", displayName: "San Diego Regional (demo)", startDate: `${year}-03-04`, endDate: `${year}-03-07`, location: "Del Mar, CA", source: "tba" },
+    { code: `${year}demola`, officialName: "Los Angeles Regional (demo)", displayName: "Los Angeles Regional (demo)", startDate: `${year}-03-25`, endDate: `${year}-03-28`, location: "Los Angeles, CA", source: "tba" },
+  ];
+}
+
 mockActions({
+  lookupEvent: {
+    who: "team",
+    run: (request) => {
+      const code = String(request.code ?? "").trim().toLowerCase();
+      if (!/^\d{4}[a-z0-9]+$/.test(code)) throw new OpsError("bad-request", "Event codes look like 2027casd: the year, then the event's short code.");
+      const event = demoTbaEvents(Number(code.slice(0, 4))).find((e) => e.code === code);
+      if (!event) throw new OpsError("bad-request", `The Blue Alliance has no event called ${code}. (Demo: try ${code.slice(0, 4)}demosd.)`);
+      return { event };
+    },
+  },
+  // The same summary the real server gives Apollo, worked out from the demo data.
+  needsAttention: {
+    who: "viewer",
+    run: (_request, _actor, db) => {
+      const today = new Date().toLocaleDateString("en-CA");
+      const tasks = db.rows<Task>("icarus_tasks");
+      const open = (t: Task) => t.status === "not-started" || t.status === "in-progress";
+      const brief = (t: Task) => ({ _id: t._id, number: t.number, title: t.title, dueDate: t.dueDate, ownerIds: t.ownerIds });
+      const lines = db.rows<Record<string, unknown> & { _id: string }>("bom_lines");
+      return {
+        overdueTasks: tasks.filter((t) => open(t) && t.dueDate && t.dueDate < today).map(brief),
+        blockedTasks: tasks.filter((t) => open(t) && t.blockedBy.some((id) => tasks.some((o) => o._id === id && open(o)))).map(brief),
+        linesWaitingForSignatures: lines.filter((l) => !l.orderedAt && (l.signatures as unknown[]).length < 2).map((l) => ({ _id: l._id, name: l.name })),
+        orderedNotReceived: lines.filter((l) => l.orderedAt && Number(l.receivedQty) < Number(l.quantity)).map((l) => ({ _id: l._id, name: l.name })),
+        partsPendingSetup: db.rows<Record<string, unknown> & { _id: string }>("production_parts").filter((p) => p.status === "pending-setup").map((p) => ({ _id: p._id, number: p.number, partName: p.partName })),
+      };
+    },
+  },
+  // Demo GitHub: links a made-up issue number and never calls GitHub.
+  createGithubIssue: {
+    who: "team",
+    run: (request, _actor, db) => {
+      const task = existing(db, "icarus_tasks", request.taskId, "task") as Task;
+      if (task.githubIssue) throw new OpsError("conflict", "This task already has a GitHub issue.");
+      const project = db.rows<{ _id: string; githubRepo: string }>("ops_projects").find((p) => p._id === task.projectId);
+      if (!project || !/^Team-6220\/[A-Za-z0-9._-]+$/.test(project.githubRepo)) {
+        throw new OpsError("bad-request", "Put the task in a project that is connected to a GitHub repository first.");
+      }
+      const number = 100 + db.rows<Task>("icarus_tasks").filter((t) => t.githubIssue?.repo === project.githubRepo).length;
+      const now = new Date().toISOString();
+      const saved: Task = {
+        ...task,
+        updatedAt: now,
+        githubIssue: { repo: project.githubRepo, number, url: `https://github.com/${project.githubRepo}/issues/${number}`, updatedAt: now, syncedAt: now, closed: false },
+      };
+      db.save("icarus_tasks", saved);
+      return { task: saved };
+    },
+  },
+  syncGithubNow: {
+    who: "team",
+    run: (_request, _actor, db) => ({
+      repos: db.rows<{ _id: string; githubRepo: string }>("ops_projects").filter((p) => p.githubRepo.startsWith("Team-6220/")).length,
+      pulled: 0,
+      pushed: 0,
+    }),
+  },
+  listTeamEvents: { who: "team", run: (request) => ({ events: demoTbaEvents(Math.floor(Number(request.year))) }) },
   saveIcarusRecord: {
     who: "lead",
     run: (request, actor, db) => {

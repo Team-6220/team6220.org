@@ -231,3 +231,40 @@ describe("relations and comments, like GitHub issues", () => {
     ]);
   });
 });
+
+describe("GitHub in demo mode", () => {
+  beforeEach(() => ops.resetMock());
+
+  it("reads only Team-6220 repository links", () => {
+    expect(ops.teamRepoFrom("https://github.com/Team-6220/robot-2027/")).toBe("Team-6220/robot-2027");
+    expect(ops.teamRepoFrom("team-6220/scouting.git")).toBe("Team-6220/scouting");
+    expect(ops.teamRepoFrom("https://github.com/someone/robot")).toBeNull();
+    expect(ops.teamRepoFrom("Team-6220/a/b")).toBeNull();
+  });
+
+  it("creates an issue only for a task in a connected project, once", async () => {
+    const me = await demoMe();
+    const [project] = await ops.listProjects();
+    const task = await icarus.saveTask({ ...icarus.emptyTask("", ""), title: "Wire the CANivore" }, me, []);
+    await expect(icarus.createGithubIssue(task._id)).rejects.toMatchObject({ code: "bad-request" });
+    await ops.saveProject({ ...project, githubRepo: "Team-6220/robot-2027" });
+    await icarus.saveTask({ ...task, projectId: project._id }, me, []);
+    const linked = await icarus.createGithubIssue(task._id);
+    expect(linked.githubIssue).toMatchObject({ repo: "Team-6220/robot-2027", url: expect.stringContaining("github.com/Team-6220/robot-2027/issues/") });
+    await expect(icarus.createGithubIssue(task._id)).rejects.toMatchObject({ code: "conflict" });
+    expect(await icarus.syncGithubNow()).toEqual({ repos: 1, pulled: 0, pushed: 0 });
+  });
+
+  it("saves a member's GitHub username", async () => {
+    const me = await demoMe();
+    expect((await ops.setGithubLogin("@Octo-Lead")).githubLogin).toBe("Octo-Lead");
+    expect((await ops.listPeople()).find((p) => p.memberId === me.id)?.githubLogin).toBe("Octo-Lead");
+    await expect(ops.setGithubLogin("not valid!")).rejects.toMatchObject({ code: "bad-request" });
+  });
+});
+
+async function demoMe(): Promise<Me> {
+  const viewer = await ops.getViewer();
+  if (viewer.kind !== "member") throw new Error("Demo should sign in as a member.");
+  return viewer.me;
+}

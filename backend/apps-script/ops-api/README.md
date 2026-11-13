@@ -15,7 +15,9 @@ only protected actions come here.
 | `WixData.gs` | Reading and writing Wix with the server's API key |
 | `Shared.gs` | Numbers, history, projects, people and subteam badges |
 | `Bom.gs` | BOM: orders, lines, signatures, ordering, receiving, import |
-| `Icarus.gs` | Icarus: Leads-only changes to milestones, events, seasons and templates |
+| `Icarus.gs` | Icarus: Leads-only changes to milestones, events, seasons and templates; tasks and comments for Apollo; the "needs attention" summary |
+| `Events.gs` | Looking events up on The Blue Alliance, and the daily `refreshEvents` trigger |
+| `GitHub.gs` | Two-way sync between tasks and GitHub issues, and the 5-minute `syncGithub` trigger |
 | `appsscript.json` | Manifest: web app "execute as me / anyone", one scope (outside requests) |
 
 Tests: `packages/data/test/ops-api.test.ts` runs these files in Node with fake Apps Script services
@@ -98,6 +100,34 @@ Tasks are written straight to Wix by members. These two actions are for the plan
 
 Only the fields listed for each kind in `ICARUS_KINDS` are saved; anything else in the request is dropped.
 
+| Action | Who | Sends | Returns |
+| --- | --- | --- | --- |
+| `listTasks` | viewer, Apollo | optional `status` (`open`, `closed` or a status), `assigneeId`, `seasonId`, `search`, `overdue` | `tasks` (up to 200, in number order) |
+| `saveTask` | team, Apollo | `task` (`_id` to change one; fields left out are kept) | `task`, numbered like the website (`t43`, `t42.3`) |
+| `addTaskComment` | team, Apollo | `taskId`, `body` | `comment` |
+| `needsAttention` | viewer, Apollo | | `overdueTasks`, `blockedTasks`, `linesWaitingForSignatures`, `orderedNotReceived`, `partsPendingSetup` |
+| `lookupEvent` | team, Apollo | `code` (like `2027casd`) | `event` from The Blue Alliance (nothing saved) |
+| `listTeamEvents` | team, Apollo | `year` | `events`: every event Team 6220 is registered for that year |
+
+`refreshEvents` is not an action: it is run once a day by a time trigger and updates the dates of saved events that
+came from The Blue Alliance (the team's display name is kept). A change of dates is written to the history as
+"dates changed" by "The Blue Alliance"; tasks are never moved automatically.
+
+### GitHub actions (`GitHub.gs`)
+
+| Action | Who | Sends | Returns |
+| --- | --- | --- | --- |
+| `createGithubIssue` | team | `taskId` (the task's project must be connected to a `Team-6220/...` repository) | `task`, now linked |
+| `syncGithubNow` | team | | `repos`, `pulled`, `pushed` |
+| `setGithubLogin` | team (own); Lead, Mentor, Web Admin (anyone's, with `memberId`) | `login`, optional `memberId` | `person` |
+
+`syncGithub` is not an action: a time trigger runs it every 5 minutes. For each project whose `githubRepo` is in the
+Team-6220 organization it reads the issues changed since the last run, creates tasks for new issues, and sends tasks
+changed in Icarus back to GitHub (title, description, open/closed, assignees). If both sides changed, the newer edit
+wins and the other version is written to the task's history. Closing or reopening from Icarus also posts a comment on
+the issue naming who did it. Pull requests are skipped, and nothing is ever deleted on either side. Setting the
+Script Property `GITHUB_SYNC_PAUSED` to `yes` stops it at once. Tests: `packages/data/test/github-sync.test.ts`.
+
 Each app adds its own actions as it is built. To add one: write the function in the right file, then add one line to
 `actions_()` in `Code.gs` saying who may call it.
 
@@ -128,16 +158,26 @@ Actions open to Apollo today:
 | --- | --- | --- | --- |
 | `nextNumber` | `kind` | `number` | `{ "action": "nextNumber", "apiKey": "...", "kind": "task" }` → `{ "ok": true, "number": 43 }` |
 | `saveLine` | `line`: `sectionId`, `name`, `link`, `vendorPartNumber`, `unitCost`, `quantity`, `comments` (`_id` to change one) | `line`, `signaturesCleared` | `{ "action": "saveLine", "apiKey": "...", "line": { "sectionId": "...", "name": "NEO Vortex", "unitCost": 90, "quantity": 4, "link": "https://..." } }` |
-| `receiveLines` | `items`: list of `lineId`, `quantity` | `lines` | `{ "action": "receiveLines", "apiKey": "...", "items": [{ "lineId": "...", "quantity": 4 }] }` |
-
+| `receiveLines` | `items`: list of `lineId`, `quantity`, optional `inventoryItemId`, and `addToInventory: true` to add the quantity to the linked Inventory part | `lines` | `{ "action": "receiveLines", "apiKey": "...", "items": [{ "lineId": "...", "quantity": 4, "addToInventory": true }] }` |
 | `linkLineToInventory` | `lineId`, `inventoryItemId` | `line` | `{ "action": "linkLineToInventory", "apiKey": "...", "lineId": "...", "inventoryItemId": "PT-..." }` |
 
 Apollo reads BOMs, orders, sections and lines from the Wix collections (`bom_boms`, `bom_orders`, `bom_sections`,
 `bom_lines`). It cannot sign, approve or mark ordered.
 
-**Not yet:** `receiveLines` records the delivery and which Inventory part it belongs to, but this server does not
-change Inventory stock. On the website the stock change is made by the browser of the person receiving. Until a
-server-side Inventory write is added, Apollo marking a line received leaves the stock count for a person to update.
+**Receiving into Inventory.** With `addToInventory: true`, the server adds the quantity to the line's linked
+Inventory part (its `inventoryItemId`, sent now or remembered from before). If the line isn't linked to a part, the
+whole request is refused and nothing is received: Apollo must ask a person which part it is (team decision), or
+receive without `addToInventory`. Every item is checked before any is saved. Apollo can't create Inventory parts yet.
+
+| Action | Sends | Returns | Example |
+| --- | --- | --- | --- |
+| `listTasks` | see the Icarus table | `tasks` | `{ "action": "listTasks", "apiKey": "...", "status": "open", "overdue": true }` |
+| `saveTask` | `task` | `task` | `{ "action": "saveTask", "apiKey": "...", "task": { "title": "Order bearings", "subteams": ["Manufacturing"], "dueDate": "2027-01-20" } }` |
+| `addTaskComment` | `taskId`, `body` | `comment` | `{ "action": "addTaskComment", "apiKey": "...", "taskId": "...", "body": "Reminder: due Friday" }` |
+| `needsAttention` | | the summary | `{ "action": "needsAttention", "apiKey": "..." }` |
+| `lookupEvent`, `listTeamEvents` | `code` / `year` | `event` / `events` | `{ "action": "listTeamEvents", "apiKey": "...", "year": 2027 }` |
+
+`packages/data/test/apollo.test.ts` runs these against this code, including the things Apollo is refused.
 
 This table is the contract Apollo's tools are written against. When an action is opened to Apollo, add its row here
 in the same pull request.
@@ -154,7 +194,7 @@ in the same pull request.
    | `ops_counters` | Site members | Admin | `key` (text), `next` (number) |
    | `ops_history` | Site members | Admin | `recordKind`, `recordId`, `actorId`, `actorName`, `action`, `summary`, `at` (text); `actorIsAgent` (boolean) |
    | `ops_projects` | Site members | Admin | `number` (number); `name`, `description`, `status`, `githubRepo`, `startDate`, `endDate` (text); `subteams` (tags) |
-   | `ops_people` | Site members | Admin | `memberId`, `name`, `username` (text); `subteams` (tags); `active` (boolean) |
+   | `ops_people` | Site members | Admin | `memberId`, `name`, `username`, `githubLogin` (text); `subteams` (tags); `active` (boolean) |
 
    BOM (same permissions for all four: read Site members, write Admin):
 
@@ -169,7 +209,7 @@ in the same pull request.
 
    | Collection | Read | Write | Fields |
    | --- | --- | --- | --- |
-   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy` (text); `subteams`, `ownerIds`, `blockedBy`, `related` (tags); `needs` (array) |
+   | `icarus_tasks` | Site members | **Site members** | `number`, `parentId`, `title`, `description`, `projectId`, `status`, `startDate`, `dueDate`, `notes`, `seasonId`, `createdBy`, `updatedAt` (text); `subteams`, `ownerIds`, `blockedBy`, `related` (tags); `needs` (array); `githubIssue` (object) |
    | `icarus_comments` | Site members | **Site members** | `taskId`, `authorId`, `authorName`, `body`, `at` (text) |
    | `icarus_milestones` | Site members | Admin | `name`, `date`, `seasonId`, `eventId` (text); `subteams` (tags) |
    | `icarus_events` | Site members | Admin | `code`, `displayName`, `officialName`, `startDate`, `endDate`, `location`, `source` (text) |
@@ -182,9 +222,19 @@ in the same pull request.
 4. **Apps Script project.** Create a project named "6220 Operations API" in the team Google account and copy in the
    `.gs` files and `appsscript.json` ([docs/APPS-SCRIPT.md](../../../docs/APPS-SCRIPT.md) has the clicks).
 5. **Script Properties** (Project Settings): `WIX_API_KEY`, `WIX_SITE_ID`. Optional: `APOLLO_KEY_SHA256` (make a long
-   random key for Apollo, store its SHA-256 here, give the key itself only to Apollo).
-6. **Run `checkSetup`** from the editor. It asks for permission and checks the badges and collections exist.
-7. **Deploy** as a web app (execute as me, anyone can access). Paste the `/exec` URL into `OPS_API_URL_DEFAULT` in
+   random key for Apollo, store its SHA-256 here, give the key itself only to Apollo); `TBA_KEY` (a read key from
+   your account page on The Blue Alliance, for looking events up); `TEAM_NUMBER` (defaults to 6220); `GITHUB_TOKEN`
+   (see below); `GITHUB_SYNC_PAUSED` (`yes` stops GitHub sync).
+
+   **GitHub token.** Make a fine-grained personal access token on a team bot account that is a member of Team-6220
+   (not a student's own account: every synced change on GitHub shows as that account). Resource owner: Team-6220;
+   repository access: all repositories; permissions: **Issues: read and write** (Metadata: read is added for you).
+   Set an expiry and put a reminder in the team calendar to replace it. An organization owner may have to approve
+   the token.
+6. **Time triggers:** Triggers → Add trigger → `refreshEvents`, time-driven, day timer (only with `TBA_KEY`); and
+   `syncGithub`, time-driven, minutes timer, every 5 minutes (only with `GITHUB_TOKEN`).
+7. **Run `checkSetup`** from the editor. It asks for permission and checks the badges and collections exist.
+8. **Deploy** as a web app (execute as me, anyone can access). Paste the `/exec` URL into `OPS_API_URL_DEFAULT` in
    `packages/data/src/config.ts` (it is not a secret) and open a pull request.
 
-Until step 7 is done, the deployed apps say they are not connected yet and only work in demo mode (`?demo=lead`).
+Until step 8 is done, the deployed apps say they are not connected yet and only work in demo mode (`?demo=lead`).

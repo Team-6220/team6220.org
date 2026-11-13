@@ -1,6 +1,7 @@
 # Production app (`/apps/production`): plan
 
-> **Plan only, not built.** Part of the [Team Operations plan](README.md). Source: issue
+> **Built (steps 0–6, Nov 2026); the "Not in the first release" items are still to do.** The real-data setup is in [SETUP.md](SETUP.md).
+> Part of the [Team Operations plan](README.md). Source: issue
 > [#207](https://github.com/Team-6220/team6220.org/issues/207), the "Production Form" and "Production List" in
 > Google Drive, the "Production Tracker/To do list" doc, and the cut planner that already exists inside Inventory
 > ([DATA-MODEL.md](../../apps/inventory/docs/DATA-MODEL.md)).

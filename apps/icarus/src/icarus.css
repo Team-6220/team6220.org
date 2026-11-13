@@ -615,3 +615,27 @@ h2.icr__issue-title {
 .icr__issue-side .icr__link {
   justify-self: start;
 }
+
+/* An input with a button beside it (event code + Look up). */
+.icr__inline {
+  display: flex;
+  gap: var(--space-1);
+}
+.icr__inline input {
+  flex: 1;
+  min-width: 0;
+}
+.icr__team-events {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+/* A project's GitHub repository, under its row in Projects. */
+.icr__repo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.5rem;
+  font-size: 0.9em;
+}

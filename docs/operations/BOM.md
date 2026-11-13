@@ -1,6 +1,7 @@
 # BOM app (`/apps/bom`): plan
 
-> **Plan only, not built.** Part of the [Team Operations plan](README.md). Source: issues
+> **Built (steps 0–6, Nov 2026); the "Not in the first release" items are still to do.** The real-data setup is in [SETUP.md](SETUP.md).
+> Part of the [Team Operations plan](README.md). Source: issues
 > [#147](https://github.com/Team-6220/team6220.org/issues/147) and
 > [#156](https://github.com/Team-6220/team6220.org/issues/156), and the BOM sheets in Google Drive ("BOM Template",
 > "2026 Offseason BOM", "2026 Competition BOM").

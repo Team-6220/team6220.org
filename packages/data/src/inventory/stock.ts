@@ -7,9 +7,7 @@
 //   await stock.create({ name: "NEO Vortex", quantity: 4 });
 //
 // In demo mode (see ops/index.ts) this uses Inventory's made-up data in memory, never the real inventory.
-import { isDemo } from "../ops";
-import { connectInventory, createMockInventory, getInventorySession } from "./index.ts";
-import type { InventoryService } from "./service.ts";
+import { inventoryForOtherApps as inventory, resetInventoryForOtherApps } from "./connection.ts";
 import type { Row } from "./types.ts";
 
 /** One part in Inventory, as the other apps see it. */
@@ -21,15 +19,9 @@ export interface StockItem {
   lowStockThreshold: number;
 }
 
-let service: Promise<InventoryService> | undefined;
-function inventory(): Promise<InventoryService> {
-  service ??= isDemo() ? Promise.resolve(createMockInventory()) : getInventorySession().then((session) => connectInventory(session, "wix"));
-  return service;
-}
-
-/** Forget the connection (tests use this to start from fresh demo data). */
+/** Start again from fresh demo data (tests). */
 export function reset(): void {
-  service = undefined;
+  resetInventoryForOtherApps();
 }
 
 function toStockItem(row: Row): StockItem {

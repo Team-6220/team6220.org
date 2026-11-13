@@ -81,7 +81,8 @@ export async function saveTask(task: Draft<Task>, me: Me, allTasks: Task[]): Pro
       number = `${parent.number}.${Math.max(0, ...siblings) + 1}`;
     } else number = String(await nextNumber("task"));
   }
-  const saved = await store().save<Task>("icarus_tasks", { ...task, title, number, createdBy: task.createdBy || me.id });
+  // updatedAt tells the GitHub sync this task changed in Icarus since it last synced.
+  const saved = await store().save<Task>("icarus_tasks", { ...task, title, number, createdBy: task.createdBy || me.id, updatedAt: new Date().toISOString() });
   await logHistory({ kind: "task", id: saved._id }, isNew ? "created" : "edited", `${taskLabel(saved)} ${saved.title} (${STATUS_LABELS[saved.status]})`);
   return saved;
 }
@@ -142,6 +143,38 @@ export async function needsMe(me: Me, todayDate: string): Promise<{ open: number
 /** Create or change a milestone, event, season or template. Checked on the server. */
 export async function savePlanning<K extends keyof PlanningRecords>(kind: K, record: Draft<PlanningRecords[K]>): Promise<PlanningRecords[K]> {
   return (await callOps<{ record: PlanningRecords[K] }>("saveIcarusRecord", { kind, record })).record;
+}
+
+/** Looks an event up on The Blue Alliance by its code ("2027casd"). Nothing is saved. */
+/**
+ * What needs a person's attention across Icarus, BOM and Production (the summary Apollo's reminders use).
+ * The website reads its own data directly; this is here so the demo and tests can call the same action.
+ */
+export async function needsAttention(): Promise<Record<string, unknown[]>> {
+  const { ok: _ok, ...summary } = await callOps<Record<string, unknown[]> & { ok: true }>("needsAttention");
+  return summary;
+}
+
+export async function lookupEvent(code: string): Promise<Draft<TeamEvent>> {
+  return (await callOps<{ event: Draft<TeamEvent> }>("lookupEvent", { code })).event;
+}
+
+/** Every event the team is registered for in a year, from The Blue Alliance. Nothing is saved. */
+export async function teamEvents(year: number): Promise<Draft<TeamEvent>[]> {
+  return (await callOps<{ events: Draft<TeamEvent>[] }>("listTeamEvents", { year })).events;
+}
+
+// ----- GitHub (two-way issue sync runs on the server every 5 minutes) -----
+
+/** Opens a GitHub issue for a task whose project is connected to a Team-6220 repository, and links them. */
+export async function createGithubIssue(taskId: string): Promise<Task> {
+  return (await callOps<{ task: Task }>("createGithubIssue", { taskId })).task;
+}
+
+/** Runs GitHub sync now instead of waiting for the next 5-minute run. */
+export async function syncGithubNow(): Promise<{ repos: number; pulled: number; pushed: number }> {
+  const { repos, pulled, pushed } = await callOps<{ repos: number; pulled: number; pushed: number }>("syncGithubNow");
+  return { repos, pulled, pushed };
 }
 
 export async function removePlanning(kind: keyof PlanningRecords, id: string): Promise<void> {

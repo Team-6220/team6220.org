@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@team6220/content": "workspace:*",
+    "@team6220/cut-engine": "workspace:*",
     "@wix/data": "^1.0.544",
     "@wix/members": "^1.0.541",
     "@wix/sdk": "^1.21.18"
