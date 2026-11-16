@@ -722,6 +722,14 @@ address{font-style:normal;color:var(--dim);font-size:.95rem;margin-top:18px}
 :root[data-theme="light"] .tt-to-light,:root:not([data-theme="light"]) .tt-to-dark{display:none}
 .replay{background:none;border:0;padding:0;color:var(--dim);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .replay:hover{color:var(--gold-text)}
+/* Footer: team phone and email, centered above the bottom line (#250) */
+.foot-contact{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 16px;margin-top:var(--s5)}
+.foot-copy{background:none;border:0;padding:4px 2px;color:var(--paper);font-family:var(--tech);font-weight:700;font-size:clamp(1.05rem,2.4vw,1.4rem);letter-spacing:.04em;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:6px;transition:text-decoration-color .2s,color .2s}
+.foot-copy:hover,.foot-copy:focus-visible{color:var(--gold-text);text-decoration-color:var(--gold)}
+.foot-dot{width:7px;height:7px;background:var(--gold);border-radius:1px}
+.foot-copied{position:absolute;left:50%;bottom:-1.6em;transform:translateX(-50%);font-size:.8rem;color:var(--gold-text);white-space:nowrap}
+.foot-copied:empty{display:none}
+@media (max-width:520px){.foot-dot{display:none}.foot-contact{flex-direction:column}}
 @media (max-width:900px){.foot-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){.foot-grid{grid-template-columns:1fr}}
 
