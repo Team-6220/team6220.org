@@ -344,7 +344,7 @@ html.intro-on .h1-echo{opacity:0}
 @media (max-width:900px){.join-grid{grid-template-columns:1fr}}
 
 /* Sponsors */
-.why{display:grid;grid-template-columns:repeat(3,1fr);border-block:2px solid var(--ink);margin-bottom:var(--s5)}
+.why{display:grid;grid-template-columns:repeat(3,1fr);border-block:2px solid var(--ink);margin-bottom:var(--s4)}
 .why div{padding:var(--s3) 20px;border-left:1px solid var(--grey-light);min-width:0}
 .why div:first-child{border-left:0}
 .why b{display:block;font-family:"Orbitron",var(--display);font-weight:800;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -361,6 +361,21 @@ html.intro-on .h1-echo{opacity:0}
 .tier.top .badge{position:absolute;top:-14px;left:24px;background:var(--ink);color:var(--gold-text);font-family:var(--tech);font-weight:700;font-size:.75rem;letter-spacing:.14em;padding:4px 10px}
 @media (max-width:900px){.tiers{grid-template-columns:1fr}}
 .sponsor-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:var(--s4)}
+/* Sponsors: who you reach (three cards under the stats) */
+.reach{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-bottom:var(--s5)}
+.reach article{min-width:0;display:grid;gap:8px;align-content:start;padding:var(--s3);border-top:4px solid var(--gold);background:var(--paper);border-radius:var(--r);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.reach h3{font-size:1.25rem}
+.reach p:last-child{margin:0;color:var(--dim-paper);font-size:.95rem}
+@media (max-width:900px){.reach{grid-template-columns:1fr}}
+/* Sponsors: packet download next to the inquiry form */
+.packet{display:grid;gap:var(--s2);align-content:start;justify-items:start}
+.packet p{margin:0;max-width:52ch}
+.packet .packet-size{font-family:var(--tech);font-weight:700;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim-paper);margin-top:-6px}
+.field textarea{font:inherit;font-size:1rem;color:var(--paper);background:var(--ink);border:2px solid var(--grey-2);border-radius:var(--r);padding:11px 12px;width:100%;resize:vertical}
+.field textarea:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(255,163,0,.35)}
+/* Sponsors: the wall, one group per tier */
+.wall-group+.wall-group{margin-top:var(--s4)}
+.wall-tier{font-family:var(--tech);font-weight:700;font-size:.85rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-text);margin:0 0 var(--s2)}
 .budget-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--s5);align-items:start}
 .budget-wrap>*{min-width:0}
 .budget{list-style:none;margin:0;padding:0;display:grid;gap:12px}
@@ -388,10 +403,16 @@ html.intro-on .h1-echo{opacity:0}
 .wall{margin:0;padding:0}
 .lg{display:block;width:auto;height:auto;max-width:100%}
 .marquee .lg{height:52px;max-width:220px;object-fit:contain}
-.marquee .lg-simkin{height:22px}.marquee .lg-boeing,.marquee .lg-laef{height:40px}.marquee .lg-ptsa,.marquee .lg-lausd,.marquee .lg-runsealbeach,.marquee .lg-ctc{height:68px}
-.marquee .lg-text,.wall .lg-text{font-family:var(--tech);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--paper)}
+.marquee .lg-simkin{height:22px}.marquee .lg-boeing{height:40px}.marquee .lg-laef{height:52px}.marquee .lg-ptsa,.marquee .lg-ctc{height:68px}.marquee .lg-lausd,.marquee .lg-runsealbeach{height:84px}
+/* Sponsors shown by name (Show as: Name, or no logo yet): capitals in the title font. */
+.marquee .lg-text,.wall .lg-text{font-family:var(--display);font-weight:400;letter-spacing:.04em;text-transform:uppercase;color:var(--paper)}
+/* One-color logos (#161): any single-color file is shown white on the dark page and black in light mode. Full-color logos are shown as they are. */
+img.lg-mono{filter:brightness(0) invert(1)}
+:root[data-theme="light"] img.lg-mono{filter:brightness(0)}
 .wall .lg{max-height:72px;max-width:78%;object-fit:contain}
-.wall .lg-simkin{max-height:26px}
+.wall .lg-lausd,.wall .lg-runsealbeach{max-height:96px}
+/* The form is a dark panel; on a light section it keeps its own white text. */
+.on-paper .form{color:var(--paper)}
 .wall li.tbd a{color:var(--gold-text);text-decoration:none}
 @media (max-width:700px){.wall{grid-template-columns:1fr 1fr}}
 .pit-photo{margin:0 0 var(--s5)}
@@ -789,7 +810,5 @@ html.intro-on{overflow:hidden}
 /* Heading shadows are for headings over photos; on a light page they would just look smudged. */
 :root[data-theme="light"] .title-calm{text-shadow:none}
 :root[data-theme="light"] :is(.hero,.banner) .title-calm{text-shadow:0 .06em 18px rgba(0,0,0,.55)}
-/* Sponsor logos are white-only files (#161), so they are turned black on the light page until color versions exist. */
-:root[data-theme="light"] img.lg{filter:invert(1)}
 /* Sponsors: the Amazon wishlist band */
 .wish-text{max-width:56ch;margin:var(--s2) 0 var(--s3)}

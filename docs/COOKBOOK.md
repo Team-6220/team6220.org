@@ -17,7 +17,7 @@ into forms; **it is not built yet**.
 | Recipe | Jump |
 | --- | --- |
 | Add next season's robot | [1](#1-add-next-seasons-robot) |
-| Add or change a sponsor logo | [2](#2-add-or-change-a-sponsor-logo) |
+| Add or change a sponsor (and the packet) | [2](#2-add-or-change-a-sponsor-each-season) |
 | Summer camp on/off, title and sign-up links | [3](#3-summer-camp-onoff-title-and-sign-up-links) |
 | Merch: store link and items | [4](#4-merch-store-link-and-items) |
 | Resources and links | [5](#5-resources-and-links) |
@@ -49,29 +49,33 @@ Nothing else needs to change. Gallery albums themselves are hand-written in
 `sites/main/sections/media/Gallery.astro`, and their photos are not in git yet (issue #8; `public/gal/` is empty), so the
 gallery shows broken pictures when you run it locally.
 
-## 2. Add or change a sponsor logo
+## 2. Add or change a sponsor (each season)
 
-A sponsor logo is written out **by hand in three places** (no list file yet; the Site Manager will fix this):
+Sponsors live in **`sites/main/content/sponsors.json`**. The easiest way to change it is the **Site Manager**
+(`/apps/site`, **Sponsors**; see [SITE-MANAGER.md](SITE-MANAGER.md#editing-sponsors)). The Sponsors page wall and the
+home page strip both read that file.
 
-| Where | What to add |
-| --- | --- |
-| `sites/main/sections/sponsors/Sponsors.astro`, the `<ul class="wall">` list | one `<li class="rv" style="--d:N"><img class="lg lg-<name>" src="/assets/main/<file>" alt="Sponsor name"></li>` |
-| `sites/main/sections/home/SponsorMarquee.astro`, the **first** `<ul>` | the same `<li>` |
-| `sites/main/sections/home/SponsorMarquee.astro`, the **second** `<ul aria-hidden="true">` | a copy with `alt=""` and `data-a="Sponsor name"` (the scrolling strip repeats itself so it loops) |
+For each sponsor pick **Show as**:
 
-Steps:
+| Show as | When | How it looks |
+| --- | --- | --- |
+| One-color logo | the logo file is a single color (any color) | white on the dark page, black in light mode |
+| Full-color logo | the logo has its brand colors | exactly as the file |
+| Name | no logo, or the sponsor prefers their name | the name in capitals in Karnivore |
 
-1. Put the logo file in **`sites/main/media/`** (transparent PNG or WebP; the marquee is on a dark background, so use a
-   light/white version if the logo is dark).
-2. Copy an existing `<li>` in each of the three places and change `src`, `alt` and the `lg-<name>` class.
-3. If the logo looks too big or small, add a size rule for `lg-<name>` next to the others in
-   **`sites/main/styles/site.css`** (search for `.marquee .lg-simkin`). The defaults are 52px tall in the marquee and
-   72px in the wall.
-4. To **remove** a sponsor, delete its `<li>` from all three places (you can leave the file in `media/`, or delete it).
+Logo files go in **`sites/main/media/sponsors/`**, named after the sponsor (`boeing.svg`, `run-seal-beach.svg`). Use an
+SVG when the sponsor has one (a developer commits SVGs by hand; the Site Manager uploads png, jpg, webp, gif or avif only,
+because an uploaded SVG could carry scripts). Use the sponsor's official colors and leave some space around the artwork so
+nothing is cut off. **Tier** groups the wall (Griffin, Eagle, Lion; no tier = Supporters).
 
-The sponsorship packet button is the `Open sponsorship packet` link in `Sponsors.astro`; the business email on the same
-page is in that file too (see [contact info](#7-contact-info)). Tier text and the budget are written into
-`Sponsors.astro` as well.
+If a logo looks too big or small, give it a **Logo size key** (for example `lausd`) and a size rule in
+**`sites/main/styles/site.css`** (search for `.marquee .lg-lausd`). Defaults: 52px tall in the strip, 72px in the wall.
+
+**The sponsorship packet** is `public/sponsorship-packet.pdf`, served at `/sponsorship-packet.pdf`. Each season, export
+the new packet from Google Slides as a PDF, shrink it (aim for 3 MB or less, for example
+`gs -sDEVICE=pdfwrite -dPDFSETTINGS=/ebook -o out.pdf in.pdf`), replace the file keeping its name, and update the title and
+size in `PACKET` at the top of `sites/main/sections/sponsors/Sponsors.astro`. Tier text, stats and the budget are written
+in `Sponsors.astro` too.
 
 ## 3. Summer camp on/off, title and sign-up links
 

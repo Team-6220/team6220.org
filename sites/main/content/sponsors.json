@@ -2,39 +2,44 @@
   "sponsors": [
     {
       "name": "RTX (Raytheon)",
-      "logo": "a26bfa3ebe.png",
+      "show": "One-color logo",
+      "logo": "sponsors/rtx.svg",
       "logoKey": "rtx",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "Boeing",
-      "logo": "b3be6afd52.png",
+      "show": "Full-color logo",
+      "logo": "sponsors/boeing.svg",
       "logoKey": "boeing",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "CTC Global",
-      "logo": "da3cc89f9b.png",
+      "show": "Full-color logo",
+      "logo": "sponsors/ctc-global.svg",
       "logoKey": "ctc",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "Los Alamitos Education Foundation",
-      "logo": "8c2f2817ef.png",
+      "show": "Full-color logo",
+      "logo": "sponsors/laef.svg",
       "logoKey": "laef",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "Los Alamitos High School PTSA",
-      "logo": "438993a9c5.png",
+      "show": "One-color logo",
+      "logo": "sponsors/lahs-ptsa.svg",
       "logoKey": "ptsa",
       "tier": "",
       "link": "",
@@ -42,33 +47,37 @@
     },
     {
       "name": "Los Alamitos Unified School District",
-      "logo": "62b28bae94.png",
+      "show": "Full-color logo",
+      "logo": "sponsors/los-al-usd.webp",
       "logoKey": "lausd",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "Run Seal Beach",
-      "logo": "0a53b7fcd5.png",
+      "show": "Full-color logo",
+      "logo": "sponsors/run-seal-beach.svg",
       "logoKey": "runsealbeach",
-      "tier": "",
+      "tier": "Eagle",
       "link": "",
       "season": "2025–26"
     },
     {
       "name": "Terry Simkin",
-      "logo": "13c4548884.png",
-      "logoKey": "simkin",
-      "tier": "",
+      "show": "Name",
+      "logo": "",
+      "logoKey": "",
+      "tier": "Eagle",
       "link": "",
       "season": "2025–26"
     },
     {
-      "name": "Gene Haas Foundation",
+      "name": "Brent Kinneman",
+      "show": "Name",
       "logo": "",
       "logoKey": "",
-      "tier": "",
+      "tier": "Griffin",
       "link": "",
       "season": "2025–26"
     }

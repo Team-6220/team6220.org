@@ -398,14 +398,15 @@
     var sel=function(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);cb.textContent='SELECTED'};
     try{navigator.clipboard.writeText(cb.dataset.copy).then(function(){cb.textContent='COPIED';setTimeout(function(){cb.textContent='COPY'},1500)},sel)}catch(e){sel()}})});
 
-  /* ---- Interest form: sent to the "Interest form (Join the team)" form in Wix ----
-     The client ID is public (it only identifies the site); the visitor token it mints can only do what visitors can. */
-  var WIX_CLIENT_ID='38a0b75d-6959-4630-ac13-73004c094181',INTEREST_FORM_ID='140821da-28b0-4e89-9b59-fd4cdc03a63a';
-  var sendInterest=function(values){
+  /* ---- Forms: sent to Wix Forms (Wix emails each submission to operations@team6220.org) ----
+     The client ID is public (it only identifies the site); the visitor token it mints can only do what visitors can.
+     Form IDs: "Interest form (Join the team)" and "Sponsor and donation inquiry". */
+  var WIX_CLIENT_ID='38a0b75d-6959-4630-ac13-73004c094181',INTEREST_FORM_ID='140821da-28b0-4e89-9b59-fd4cdc03a63a',SPONSOR_FORM_ID='50cd51ba-cfa4-4328-8bd2-64189dbe2790';
+  var sendForm=function(formId,values){
     return fetch('https://www.wixapis.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId:WIX_CLIENT_ID,grantType:'anonymous'})})
       .then(function(r){if(!r.ok)throw new Error('token');return r.json()})
       .then(function(t){return fetch('https://www.wixapis.com/form-submission-service/v4/submissions',{method:'POST',
-        headers:{'Content-Type':'application/json',Authorization:t.access_token},body:JSON.stringify({submission:{formId:INTEREST_FORM_ID,submissions:values}})})})
+        headers:{'Content-Type':'application/json',Authorization:t.access_token},body:JSON.stringify({submission:{formId:formId,submissions:values}})})})
       .then(function(r){if(!r.ok)throw new Error('submit')})};
   var applyForm=document.getElementById('apply');
   if(applyForm)applyForm.addEventListener('submit',function(e){e.preventDefault();
@@ -416,8 +417,22 @@
     if(!nv||!good){(nv?m:n).focus();return}
     var interests=Array.prototype.map.call(applyForm.querySelectorAll('fieldset input:checked'),function(i){return i.value});
     btn.disabled=true;r.hidden=true;
-    sendInterest({name_a1c2:nv,email_b2d3:ev,grade_c3e4:document.getElementById('f-grade').value,is_parent_d4f5:document.getElementById('f-parent').checked,interests_e5a6:interests})
+    sendForm(INTEREST_FORM_ID,{name_a1c2:nv,email_b2d3:ev,grade_c3e4:document.getElementById('f-grade').value,is_parent_d4f5:document.getElementById('f-parent').checked,interests_e5a6:interests})
       .then(function(){applyForm.reset();r.textContent='Thanks, '+nv.split(' ')[0]+'! We got your interest form and will be in touch soon.'})
       .catch(function(){r.textContent='Sorry, something went wrong and your form was not sent. Please try again, or email operations@team6220.org.'})
+      .then(function(){btn.disabled=false;r.hidden=false})});
+  /* Sponsor inquiry form on /sponsors */
+  var spForm=document.getElementById('sponsor-form');
+  if(spForm)spForm.addEventListener('submit',function(e){e.preventDefault();
+    var v=function(id){return document.getElementById(id).value.trim()};
+    var n=document.getElementById('s-name'),m=document.getElementById('s-email'),btn=spForm.querySelector('button[type=submit]'),r=document.getElementById('s-ok');
+    var nv=v('s-name'),ev=v('s-email'),good=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ev);
+    document.getElementById('s-name-err').hidden=!!nv;document.getElementById('s-email-err').hidden=good;
+    n.toggleAttribute('aria-invalid',!nv);m.toggleAttribute('aria-invalid',!good);
+    if(!nv||!good){(nv?m:n).focus();return}
+    btn.disabled=true;r.hidden=true;
+    sendForm(SPONSOR_FORM_ID,{name_c9e1:nv,company_d1f2:v('s-company'),email_e2a3:ev,phone_f3b4:v('s-phone'),message_a4c5:v('s-message')})
+      .then(function(){spForm.reset();r.textContent='Thank you, '+nv.split(' ')[0]+'! Our business team will email you soon.'})
+      .catch(function(){r.textContent='Sorry, something went wrong and your message was not sent. Please try again, or email operations@team6220.org.'})
       .then(function(){btn.disabled=false;r.hidden=false})});
 })();

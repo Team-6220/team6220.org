@@ -4,11 +4,20 @@ import { imageField, imgSrc } from "./image.ts";
 
 export const TIERS = ["", "Lion", "Eagle", "Griffin"] as const;
 
+/** How a sponsor appears in the logo wall and the home page strip. */
+export const SHOW_AS = ["One-color logo", "Full-color logo", "Name"] as const;
+
 export const sponsor = z.object({
   name: z.string().trim().min(1, "Can't be empty").max(120).meta({ title: "Name", description: "Also the logo's alt text." }),
-  logo: imageField("Logo (color)", {
+  show: z.enum(SHOW_AS).meta({
+    title: "Show as",
+    description:
+      "One-color logo: a logo in a single color, shown white on the dark page and black in light mode. Full-color logo: shown exactly as the file. Name: the sponsor's name in capitals in the title font, no logo needed.",
+  }),
+  logo: imageField("Logo", {
     optional: true,
-    description: "png, jpg, webp, gif or avif up to 2 MB. Leave empty to show the name as text.",
+    svg: true,
+    description: "png, jpg, webp, gif or avif up to 2 MB, ideally with a transparent background. Not needed when Show as is Name.",
   }),
   logoKey: z
     .string()
@@ -19,7 +28,7 @@ export const sponsor = z.object({
       title: "Logo size key",
       description: "Developers: a key such as rtx gives the logo the CSS class lg-rtx (size tweaks in site.css). Leave empty for the default size.",
     }),
-  tier: z.enum(TIERS).meta({ title: "Tier", description: "Kept for the sponsor list; not shown on the pages yet." }),
+  tier: z.enum(TIERS).meta({ title: "Tier", description: "Groups the logos on the Sponsors page (Griffin first). Leave empty to list the sponsor under Supporters." }),
   link: z
     .string()
     .trim()
@@ -30,13 +39,16 @@ export const sponsor = z.object({
 });
 export type Sponsor = z.infer<typeof sponsor>;
 
+/** True when the sponsor shows its name instead of a logo (chosen, or no logo uploaded yet). */
+export const showsName = (s: Sponsor) => s.show === "Name" || !s.logo;
+
 /** sites/main/content/sponsors.json. The order of the list is the order on the pages. */
 export const sponsors = z.object({
   sponsors: z.array(sponsor).max(100).meta({ title: "Sponsors" }),
 });
 export type Sponsors = z.infer<typeof sponsors>;
 
-const logoClass = (s: Sponsor) => (s.logoKey ? `lg lg-${s.logoKey}` : "lg");
+const logoClass = (s: Sponsor) => ["lg", s.show === "One-color logo" ? "lg-mono" : "", s.logoKey ? `lg-${s.logoKey}` : ""].filter(Boolean).join(" ");
 
 function linked(href: string, inner: string): string {
   const target = isExternalHref(href) ? ` target="_blank" rel="noopener"` : "";
@@ -45,13 +57,13 @@ function linked(href: string, inner: string): string {
 
 /**
  * The logos on the Sponsors page (inside `<ul class="wall">`). Entry i gets the reveal delay --d:min(i,5).
- * A sponsor with a link wraps its logo in a link; a sponsor without a logo shows its name as text.
+ * A sponsor with a link wraps its logo in a link; a sponsor shown by name (or without a logo yet) shows its name as text.
  */
 export function renderSponsorWall(list: Sponsor[]): string {
   return list
     .map((s, i) => {
       const style = ` style="--d:${Math.min(i, 5)}"`;
-      if (!s.logo) return `<li class="rv lg-text"${style}>${s.link ? linked(s.link, escapeText(s.name)) : escapeText(s.name)}</li>`;
+      if (showsName(s)) return `<li class="rv lg-text"${style}>${s.link ? linked(s.link, escapeText(s.name)) : escapeText(s.name)}</li>`;
       const img = `<img class="${logoClass(s)}" src="${imgSrc(s.logo)}" alt="${escapeAttr(s.name)}">`;
       return `<li class="rv"${style}>${s.link ? linked(s.link, img) : img}</li>`;
     })
@@ -66,7 +78,7 @@ export function renderSponsorMarquee(list: Sponsor[]): string {
   const one = (hidden: boolean) =>
     list
       .map((s) => {
-        if (!s.logo) return `<li class="lg-text">${escapeText(s.name)}</li>`;
+        if (showsName(s)) return `<li class="lg-text">${escapeText(s.name)}</li>`;
         const alt = hidden ? `alt="" data-a="${escapeAttr(s.name)}"` : `alt="${escapeAttr(s.name)}"`;
         return `<li><img class="${logoClass(s)}" src="${imgSrc(s.logo)}" ${alt}></li>`;
       })

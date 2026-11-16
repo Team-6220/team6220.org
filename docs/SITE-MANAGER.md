@@ -35,10 +35,14 @@ Developers can try the editor without signing in at `/apps/site?demo=admin` (dem
 Pick **Sponsors**. Each entry is one sponsor; **Up** and **Down** set the order, which is the order of the logos on the
 Sponsors page and in the scrolling strip on the home page (all three places read the same list).
 
-- **Name** is also the logo's alt text. **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images
-  per change); leave it empty to show the name as plain text, as the Gene Haas Foundation does today.
+- **Name** is also the logo's alt text.
+- **Show as**: *One-color logo* (a single-color file, shown white on the dark page and black in light mode), *Full-color
+  logo* (shown as the file is) or *Name* (the name in capitals in Karnivore, no logo needed, as for Brent Kinneman).
+- **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images per change). SVG logos are added by a
+  developer (see [COOKBOOK.md](COOKBOOK.md#2-add-or-change-a-sponsor-each-season)).
 - **Link** is optional; when set, the logo on the Sponsors page links there (the home strip never links).
-- **Tier** and **Season** are stored for the list but not shown yet.
+- **Tier** groups the logos on the Sponsors page (Griffin first; no tier = Supporters). **Season** is stored for the list
+  but not shown yet.
 - **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
   Leave it empty for a new sponsor; the default size applies.
 - The "Your company here" tile and the tier cards are page layout, not part of this list.
