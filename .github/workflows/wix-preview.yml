@@ -67,7 +67,7 @@ jobs:
         id: preview
         run: |
           pnpm wix preview 2>&1 | tee preview.log
-          url=$(grep -Eo 'https://[^ ]+wix-site-host\.com[^ ]*' preview.log | head -n 1)
+          url=$(grep -Eo 'https://[^ )]+wix-site-host\.com[^ )]*' preview.log | head -n 1)
           if [ -z "$url" ]; then echo "No preview link found in the output above." >&2; exit 1; fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Post the link on the pull request
