@@ -34,6 +34,9 @@ export default function Field(props: FieldProps) {
       if (schema.ui === "image") return <ImageField {...props} label={labelFor(schema, key)} />;
       if (schema.enum) return <SelectField {...props} label={labelFor(schema, key)} />;
       return <TextField {...props} label={labelFor(schema, key)} />;
+    case "integer":
+    case "number":
+      return <NumberField {...props} label={labelFor(schema, key)} />;
     case "array":
       return <ListField {...props} label={labelFor(schema, key)} />;
     case "object":
@@ -89,6 +92,31 @@ function TextField({ schema, value, path, errors, onChange, label }: FieldProps 
       ) : (
         <input id={id} type="text" value={text} maxLength={schema.maxLength} aria-invalid={bad} onChange={(e) => onChange(path, e.target.value)} />
       )}
+      {schema.description && <p className="site__hint">{schema.description}</p>}
+      <Errors errors={errors} path={path} />
+    </div>
+  );
+}
+
+/** A whole number (counts such as wins). An empty box is left as "" so the error says what is missing. */
+function NumberField({ schema, value, path, errors, onChange, label }: FieldProps & { label: string }) {
+  const id = useId();
+  const bad = !!errors[pathKey(path)]?.length;
+  return (
+    <div className="site__field site__field--number">
+      <label htmlFor={id}>
+        <b>{label}</b>
+      </label>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        step={1}
+        min={0}
+        value={typeof value === "number" ? value : ""}
+        aria-invalid={bad}
+        onChange={(e) => onChange(path, e.target.value === "" ? "" : Number(e.target.value))}
+      />
       {schema.description && <p className="site__hint">{schema.description}</p>}
       <Errors errors={errors} path={path} />
     </div>

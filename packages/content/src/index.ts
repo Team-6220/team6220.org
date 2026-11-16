@@ -7,6 +7,8 @@ import merchJson from "../../../sites/main/content/merch.json" with { type: "jso
 import { merch, merchImages } from "./merch.ts";
 import resourcesJson from "../../../sites/main/content/resources.json" with { type: "json" };
 import { resources } from "./resources.ts";
+import robotsJson from "../../../sites/main/content/robots.json" with { type: "json" };
+import { robotImages, robots } from "./robots.ts";
 import { summerCamp } from "./summer-camp.ts";
 import { sponsorImages, sponsors } from "./sponsors.ts";
 
@@ -15,6 +17,7 @@ export { renderInline, isSafeHref, isExternalHref, escapeText } from "./inline.t
 export { IMAGE_RULES, isImageFile, mediaUrl } from "./image.ts";
 export { merch, merchItem, merchCount, renderMerchItems, type Merch, type MerchItem } from "./merch.ts";
 export { resources, resourceLink, archiveItem, renderResourceCards, type Resources, type ResourceLink, type ArchiveItem } from "./resources.ts";
+export { robots, robot, recordText, matchesPlayed, type Robots, type Robot } from "./robots.ts";
 export { sponsors, sponsor, renderSponsorWall, renderSponsorMarquee, TIERS, type Sponsors, type Sponsor } from "./sponsors.ts";
 export { summerCamp, renderBlock, renderBlocks, type SummerCamp, type Block } from "./summer-camp.ts";
 
@@ -59,6 +62,14 @@ export const AREAS = {
     schema: merch,
     initial: merchJson,
     images: merchImages,
+  }),
+  robots: area({
+    id: "robots",
+    label: "Robots",
+    path: "sites/main/content/robots.json",
+    schema: robots,
+    initial: robotsJson,
+    images: robotImages,
   }),
   resources: area({
     id: "resources",
