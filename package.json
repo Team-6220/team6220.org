@@ -11,14 +11,16 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:static": "node scripts/astro-static.mjs build",
+    "wix": "wix",
     "preview": "astro preview",
-    "check": "astro check",
+    "check": "node scripts/astro-static.mjs check",
     "test": "vitest run",
     "redirects:csv": "node scripts/redirects/csv.mjs",
     "redirects:check": "node scripts/redirects/check.mjs",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "build:e2e-mock": "node e2e/build-mock.mjs",
-    "test:e2e:build": "pnpm build && pnpm build:e2e-mock && pnpm test:e2e",
+    "test:e2e:build": "pnpm build:static && pnpm build:e2e-mock && pnpm test:e2e",
     "content:check": "pnpm --filter @team6220/content validate"
   },
   "devDependencies": {

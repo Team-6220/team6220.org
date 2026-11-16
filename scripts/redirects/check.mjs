@@ -36,7 +36,7 @@ export function readOldAnchors(root = ROOT) {
 /**
  * @returns {{ errors: string[], warnings: string[], notes: string[], mode: "dist" | "source" }}
  */
-export function checkRedirects({ dist = join(ROOT, "dist", "client"), requireDist = false, root = ROOT, jsonPath = JSON_PATH } = {}) {
+export function checkRedirects({ dist = join(ROOT, "dist"), requireDist = false, root = ROOT, jsonPath = JSON_PATH } = {}) {
   const errors = [];
   const warnings = [];
   const notes = [];
@@ -120,7 +120,7 @@ export function checkRedirects({ dist = join(ROOT, "dist", "client"), requireDis
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const di = args.indexOf("--dist");
-  const { errors, warnings, notes, mode } = checkRedirects({ dist: di >= 0 ? resolve(args[di + 1]) : join(ROOT, "dist", "client"), requireDist: args.includes("--require-dist") });
+  const { errors, warnings, notes, mode } = checkRedirects({ dist: di >= 0 ? resolve(args[di + 1]) : join(ROOT, "dist"), requireDist: args.includes("--require-dist") });
   for (const n of notes) console.log(`note: ${n}`);
   for (const w of warnings) console.log(`warning: ${w}`);
   for (const e of errors) console.error(`error: ${e}`);

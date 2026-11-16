@@ -24,6 +24,19 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 | Open signups (#100) | **Manual approval stays on** until inventory is locked (below), then anyone may sign up | All 17 `inventory_*` collections let any signed-in member write. Today manual approval is the only lock |
 | Go-live | As soon as the preview passes team testing | Leaves the most time before kickoff (Jan 9) |
 
+## Two builds of the same pages
+
+- **Wix build** (`pnpm build`, or `wix build`/`wix preview`): `output: "server"` with Wix's integration and hosting
+  adapter, as in Wix's own Astro template. Pages render on each request: Wix's middleware adds the dashboard's SEO
+  tags, analytics and cookie-consent scripts then, and it can't run while pages are pre-built (it fails with "Could
+  not fetch site scripts"). Needs the values from `wix env pull` in `.env.local`.
+- **Static build** (`pnpm build:static`; `pnpm check` uses the same mode): plain HTML in `dist/` without Wix's parts.
+  The e2e tests, the redirect check and CI use it, so they need no Wix secrets. `SITE_BUILD=static` switches it in
+  `astro.config.mjs`; `scripts/astro-static.mjs` sets it on every platform.
+- Wix's template turns off Astro's origin check (`security.checkOrigin: false`). Once sign-in lives in a cookie,
+  **every `/api` endpoint that changes data checks the request's `Origin`** itself.
+- The Wix CLI needs Node 24.22.1 or newer; the site itself still builds on Node 22.
+
 ## Limits that shape the code (from Wix's docs)
 
 - **1000 CPU ms and 20 sub-requests per request** (calls to Wix, Discord, GitHub and so on). Long jobs are split into
@@ -48,10 +61,10 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 
 ### B. Wire the repo to Wix (on the shared computer)
 
-- [ ] `wix env pull` (writes `.env.local`; never commit it).
-- [ ] Add `@wix/astro`, `@wix/astro-wix-hosting-adapter`, `@wix/essentials` and the SDK packages; `output: "server"`;
-      allow `workerd` builds in pnpm; Node 24 in `.nvmrc`, `engines` and CI.
-- [ ] Mark public pages that need no server code `export const prerender = true`, after checking each on a preview.
+- [x] `wix env pull` (writes `.env.local`; never commit it). Done Nov 16 on the captain's PC.
+- [x] Add `@wix/astro`, `@wix/astro-pages`, `@wix/astro-wix-hosting-adapter`, `@wix/essentials`, `@wix/sdk`,
+      `@wix/dashboard` and `@wix/cli`; `output: "server"`; allow `workerd` and `esbuild` builds in pnpm.
+- [x] Static build for tests and CI (`pnpm build:static`), so they need no Wix secrets.
 - [ ] `wix build`, then `wix preview`; open the preview link.
 
 ### C. Server code

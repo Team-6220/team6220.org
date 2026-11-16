@@ -7,7 +7,7 @@ import { isKnownMissingImage } from "./known-missing-images";
 export { expect };
 
 export const ROOT = resolve(import.meta.dirname, "..");
-export const DIST = join(ROOT, "dist", "client"); // Wix hosting build: pages and files in dist/client, server code in dist/server
+export const DIST = join(ROOT, "dist");
 export const DIST_MOCK = join(ROOT, "dist-mock");
 
 /** Port of the second server, which serves the mock-inventory build (see e2e/playwright.config.ts). */

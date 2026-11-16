@@ -1,4 +1,4 @@
-// Smoke tests of the BUILT site (dist/), served by e2e/serve.mjs.  Run: pnpm build && pnpm test:e2e
+// Smoke tests of the BUILT static site (dist/), served by e2e/serve.mjs.  Run: pnpm build:static && pnpm test:e2e
 import { defineConfig } from "@playwright/test";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -52,7 +52,7 @@ export default defineConfig({
   // dist/ is the deployed build. dist-mock/ is the same site with the inventory on made-up data (pnpm build:e2e-mock).
   webServer: [
     {
-      command: `node e2e/serve.mjs dist/client ${PORT}`,
+      command: `node e2e/serve.mjs dist ${PORT}`,
       cwd: "..",
       url: `http://127.0.0.1:${PORT}${BASE}`,
       env: { E2E_BASE: BASE },
@@ -60,7 +60,7 @@ export default defineConfig({
       timeout: 20_000,
     },
     {
-      command: `node e2e/serve.mjs dist-mock/client ${MOCK_PORT}`,
+      command: `node e2e/serve.mjs dist-mock ${MOCK_PORT}`,
       cwd: "..",
       url: `http://127.0.0.1:${MOCK_PORT}${BASE}`,
       env: { E2E_BASE: BASE },
