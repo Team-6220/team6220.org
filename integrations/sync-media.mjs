@@ -10,6 +10,7 @@
 // The output lives in public/ and is git-ignored. Edit the sources, never the copies.
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const dirs = (p) => (existsSync(p) ? readdirSync(p).filter((n) => statSync(join(p, n)).isDirectory()) : []);
 
@@ -18,7 +19,7 @@ export default function syncMedia() {
     name: "sync-media",
     hooks: {
       "astro:config:setup": ({ config }) => {
-        const root = new URL(".", config.root).pathname;
+        const root = fileURLToPath(config.root);
         const pub = join(root, "public");
         rmSync(join(pub, "assets"), { recursive: true, force: true });
         mkdirSync(join(pub, "assets"), { recursive: true });
