@@ -26,24 +26,39 @@ jobs:
       WIX_CLIENT_PUBLIC_KEY: ${{ secrets.WIX_CLIENT_PUBLIC_KEY }}
       WIX_CLIENT_SECRET: ${{ secrets.WIX_CLIENT_SECRET }}
     steps:
+      # Until the `wix` environment has its secrets (docs/PHASE-2.md), skip quietly instead of failing the pull request.
+      - name: Check for Wix secrets
+        id: secrets
+        run: |
+          if [ -n "$WIX_API_KEY" ] && [ -n "$WIX_CLIENT_ID" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; else echo "::notice::Wix secrets are not set up yet; skipping the preview."; fi
+        env:
+          WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       - uses: actions/checkout@v7
+        if: steps.secrets.outputs.ready == 'true'
       - uses: pnpm/action-setup@v6
+        if: steps.secrets.outputs.ready == 'true'
       - uses: actions/setup-node@v7
+        if: steps.secrets.outputs.ready == 'true'
         with:
           node-version: 24 # The Wix CLI needs Node 24.22.1 or newer
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: steps.secrets.outputs.ready == 'true'
       # GoldSim keeps its own npm workspace; `pnpm wix build` builds it into dist/apps/goldsim.
       - name: Install GoldSim dependencies
+        if: steps.secrets.outputs.ready == 'true'
         run: npm ci --no-audit --no-fund
         working-directory: apps/goldsim
       - name: Log in to Wix
+        if: steps.secrets.outputs.ready == 'true'
         run: pnpm wix login --api-key "$WIX_API_KEY"
         env:
           WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       # `wix preview` only uploads what is already built, so always build first.
       - run: pnpm wix build
+        if: steps.secrets.outputs.ready == 'true'
       - name: Create the preview
+        if: steps.secrets.outputs.ready == 'true'
         id: preview
         run: |
           pnpm wix preview 2>&1 | tee preview.log
@@ -51,6 +66,7 @@ jobs:
           if [ -z "$url" ]; then echo "No preview link found in the output above." >&2; exit 1; fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Post the link on the pull request
+        if: steps.secrets.outputs.ready == 'true'
         uses: actions/github-script@v8
         env:
           PREVIEW_URL: ${{ steps.preview.outputs.url }}
