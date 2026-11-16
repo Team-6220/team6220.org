@@ -6,6 +6,7 @@ import PageHero from "../../../sites/main/components/PageHero.astro";
 import Story from "../../../sites/main/sections/about/Story.astro";
 import Pillars from "../../../sites/main/sections/about/Pillars.astro";
 import Skills from "../../../sites/main/sections/about/Skills.astro";
+import Structure from "../../../sites/main/sections/about/Structure.astro";
 import Community from "../../../sites/main/sections/about/Community.astro";
 import Mentors from "../../../sites/main/sections/about/Mentors.astro";
 import Supervisor from "../../../sites/main/sections/about/Supervisor.astro";
@@ -13,10 +14,11 @@ import { media } from "../../../sites/main/lib/media";
 ---
 
 <MainLayout page="about" title="About | FRC Team 6220 | Los Alamitos, CA" description="Los Al Robotics, Team 6220: Los Alamitos High School's student-led, student-driven FIRST Robotics Competition team. Our mission, our six pillars, and what students learn.">
-  <PageHero img={media("team/2d048fe84f.webp")} eyebrow="About" title="Student-led<br>Student-driven" lede="Los Alamitos High School's FIRST Robotics Competition team, where students run everything from the robot to the budget." />
+  <PageHero img={media("team/2d048fe84f.webp")} eyebrow="About" title="Student-led<br>Student-driven" lede="Los Al's FIRST Robotics Competition team, where students run everything from the robot to the budget." />
   <Story />
   <Pillars />
   <Skills />
+  <Structure />
   <Community />
   <Mentors />
   <Supervisor />

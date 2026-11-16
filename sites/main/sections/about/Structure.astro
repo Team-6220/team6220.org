@@ -1,0 +1,64 @@
+---
+// About page: how the team is organized (2026–27 structure, from the team history doc). Titles only, no student names,
+// so this does not need updating every time leadership changes.
+// Technical is four separate subteams. Operations is one subteam with three areas, each with its own lead.
+const BRANCHES = [
+  {
+    name: "Technical",
+    note: "4 subteams",
+    leads: [{ title: "Design Lead" }, { title: "Manufacturing Lead", with: "Manufacturing Manager" }, { title: "Programming Lead" }, { title: "Electrical Lead" }],
+    heading: "Technical subteams",
+    parts: [
+      { name: "Design", text: "Plans the whole robot in CAD, then becomes Strategy to plan how we play each match." },
+      { name: "Manufacturing", text: "Builds the robot and everything around the shop, from hand tools to the CNC." },
+      { name: "Programming", text: "Writes the robot's Java code for driver control and the autonomous period." },
+      { name: "Electrical", text: "Wires the robot's power, motors, and sensors so everything runs reliably." },
+    ],
+  },
+  {
+    name: "Operations",
+    note: "1 subteam, 3 leads",
+    leads: [{ title: "Business Lead" }, { title: "Marketing Lead" }, { title: "Outreach Lead" }],
+    heading: "The Operations subteam",
+    parts: [
+      { name: "Business", text: "Finds funding through sponsors and grants, and manages the budget." },
+      { name: "Marketing", text: "Runs social media and photography, and keeps our brand consistent." },
+      { name: "Outreach", text: "Runs the summer camp, robot demos, and community events." },
+    ],
+  },
+];
+---
+
+<section id="structure" class="on-panel">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">How we're organized</p><h2 class="title-calm">Subteams and leadership</h2></div><p>Every member joins a subteam. Students lead every subteam and the team as a whole.</p></div>
+    <figure class="org rv" aria-label="Leadership structure: the Team Captain and two Assistant Captains lead the team. The Technical side has four subteams, each with a lead. Operations is one subteam with a Business Lead, a Marketing Lead, and an Outreach Lead.">
+      <p class="org-node org-top">Team Captain</p>
+      <p class="org-node">Assistant Captains (2)</p>
+      <div class="org-split">
+        {BRANCHES.map((b) => (
+          <div class="org-col">
+            <p class="org-node org-branch">{b.name}<small>{b.note}</small></p>
+            <ul>
+              {b.leads.map((l) => (
+                <li>{l.title}{l.with && <small>+ {l.with}</small>}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </figure>
+    <div class="branches">
+      {BRANCHES.map((b, i) => (
+        <article class="branch rv" style={`--d:${i}`}>
+          <p class="eyebrow">{b.heading}</p>
+          <ul>
+            {b.parts.map((p) => (
+              <li><h3>{p.name}</h3><p>{p.text}</p></li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
