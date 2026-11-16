@@ -1,4 +1,5 @@
 ---
+export const prerender = true; // built ahead of time; only /api runs on the server (docs/PHASE-2.md)
 // /apps/inventory: the team inventory. This is the ORIGINAL Apps Script UI (apps/inventory/ui, unchanged), put
 // together at build time the way Apps Script did it (Index.html with its includes filled in), plus:
 //   - the google.script stub (apps/inventory/shim/google-script-stub.js), which must run before the UI's scripts;

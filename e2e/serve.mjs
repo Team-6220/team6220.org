@@ -77,7 +77,7 @@ function send(res, code, text) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const root = process.argv[2] ?? "dist";
+  const root = process.argv[2] ?? "dist/client";
   const port = Number(process.argv[3] ?? process.env.E2E_PORT ?? 4322);
   const base = process.env.E2E_BASE ?? "/";
   const server = await startServer({ root, port, base });

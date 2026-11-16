@@ -1,4 +1,5 @@
 ---
+export const prerender = true; // built ahead of time; only /api runs on the server (docs/PHASE-2.md)
 // /apps/logout: signs the member out of the site and Wix, then returns to /apps.
 import AppLayout from "../../layouts/AppLayout.astro";
 import { Logout } from "@team6220/dashboard";

@@ -1,4 +1,5 @@
 ---
+export const prerender = true; // built ahead of time; only /api runs on the server (docs/PHASE-2.md)
 // /apps: the team apps dashboard. The main site's "Log In" link points here.
 // The UI is a React app in apps/dashboard; it only runs in the browser (sign-in state lives there in Phase 1).
 import AppLayout from "../../layouts/AppLayout.astro";

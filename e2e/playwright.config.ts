@@ -52,7 +52,7 @@ export default defineConfig({
   // dist/ is the deployed build. dist-mock/ is the same site with the inventory on made-up data (pnpm build:e2e-mock).
   webServer: [
     {
-      command: `node e2e/serve.mjs dist ${PORT}`,
+      command: `node e2e/serve.mjs dist/client ${PORT}`,
       cwd: "..",
       url: `http://127.0.0.1:${PORT}${BASE}`,
       env: { E2E_BASE: BASE },
@@ -60,7 +60,7 @@ export default defineConfig({
       timeout: 20_000,
     },
     {
-      command: `node e2e/serve.mjs dist-mock ${MOCK_PORT}`,
+      command: `node e2e/serve.mjs dist-mock/client ${MOCK_PORT}`,
       cwd: "..",
       url: `http://127.0.0.1:${MOCK_PORT}${BASE}`,
       env: { E2E_BASE: BASE },
