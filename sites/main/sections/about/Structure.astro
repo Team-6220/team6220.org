@@ -33,6 +33,13 @@ const BRANCHES = [
     ],
   },
 ];
+// How we stay organized: the practices from the same doc that people ask about most.
+const PRACTICES = [
+  { title: "Weekly lead meetings", text: "Every Friday the captains, leads, and managers review the week, plan the next one, and flag what each subteam needs from the others. We follow a simplified Robert's Rules of Order to keep them short." },
+  { title: "Progress updates", text: "After every meeting, each subteam posts what got done, what's next, and what it's waiting on, so absent members and other subteams stay caught up." },
+  { title: "A main subteam, plus more", text: "Every member picks one main subteam and can join others with that lead's approval. Operations and Electrical are the most common second subteams." },
+  { title: "Written-down knowledge", text: "Each subteam keeps its resources, standards, and lessons learned in the team Drive, so what we learn outlasts every graduating class." },
+];
 ---
 
 <section id="structure" class="on-panel">
@@ -65,6 +72,16 @@ const BRANCHES = [
             ))}
           </ul>
         </article>
+      ))}
+    </div>
+    <div class="practices-head rv"><p class="eyebrow ruled">How we stay organized</p></div>
+    <div class="lead-vs-mgr rv">
+      <h3>Lead vs. manager</h3>
+      <p>Every subteam has a <b>Lead</b>, the technical decision-maker who decides <i>what</i> the subteam builds and has the final say on technical questions. Some subteams also have a <b>Manager</b>, the executive decision-maker who decides <i>how</i> it gets done: organizing members, running training, and documenting progress. The lead can focus on the engineering while the manager focuses on the people. Without a manager, the lead does both.</p>
+    </div>
+    <div class="practices">
+      {PRACTICES.map((p, i) => (
+        <article class="rv" style={`--d:${i}`}><h3>{p.title}</h3><p>{p.text}</p></article>
       ))}
     </div>
   </div>

@@ -364,6 +364,17 @@ html.intro-on .h1-echo{opacity:0}
 .org-col li:not(:last-child)::after{content:"";position:absolute;left:-23px;top:0;bottom:0;border-left:var(--ln)}
 .org-col li small{display:block;font-weight:500;color:var(--dim)}
 .branch .branch-intro{margin:var(--s2) 0 0}
+.practices-head{margin-top:var(--s5)}
+.lead-vs-mgr{margin-top:var(--s2);padding:var(--s3);border:2px solid var(--gold);border-radius:var(--r)}
+.lead-vs-mgr h3{font-size:1.3rem;margin:0 0 8px;color:var(--gold-text)}
+.lead-vs-mgr p{margin:0}
+.lead-vs-mgr b{color:var(--paper)}
+.practices{margin-top:var(--s3);display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)}
+@media (max-width:900px){.practices{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.practices{grid-template-columns:1fr}}
+.practices article{min-width:0;border-top:2px solid var(--line);padding-top:var(--s2)}
+.practices h3{font-size:1.05rem;margin:0 0 6px}
+.practices p{margin:0;color:var(--dim)}
 @media (max-width:560px){.org-split{--g:12px}.org-col li{font-size:.9rem}.org-branch{font-size:1rem;padding-inline:4px}}
 .mentors{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
 @media (max-width:900px){.mentors{grid-template-columns:1fr 1fr}}
