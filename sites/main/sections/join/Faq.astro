@@ -1,0 +1,50 @@
+---
+// Join page, part 5: FAQ and the newsletter signup form. The form posts to the Wix form "Interest form (Join the team)"
+// (see site-b.js). The interest values must match that form's choices (changed together in Wix, Nov 2026).
+// Answers may hold HTML (<i> for FIRST, inline links). "link" adds a trailing link in the same style everywhere.
+const FAQS = [
+  { q: "Do I need any experience?", a: "No. You just need a positive attitude. Training week and fall training teach you everything, and students teach students. Most of our members had never built a robot before joining." },
+  { q: "How much time does it take?", a: "In the fall we meet two or three times a week. During build season (January and February) your subteam meets nearly every day after school and on Saturdays. Members attend at least 75% of their subteam's meetings. <a href=\"/about#pillars\">You get out what you put in.</a>" },
+  { q: "Can I do clubs or other sports too?", a: "Yes. Many members do. Not every subteam meets every day, a lot of work gets done at home, and we work around commitments you tell us about ahead of time. Let your subteam lead know about conflicts early." },
+  { q: "I'm not into engineering. Is there a place for me?", a: "Yes. Our Operations subteam runs the business side of the team: sponsors and grants, social media and photography, our summer camp, and award presentations.", link: { href: "/about#structure", label: "Learn about our subteams →" } },
+  { q: "What do parents need to do?", a: "Come to the parent meeting in September, sign the team handbook and safety contract, and register your student on firstinspires.org. We also ask each family for 20 hours of supervising in our workshop during the year. You don't need to know anything about robotics; supervisors are cleared through the school (a Livescan background check and a TB form)." },
+  { q: "Does FRC help with college?", a: "<i>FIRST</i> offers more than $80 million in scholarships, and colleges know what FRC takes: teamwork, problem solving, and a season-long commitment." },
+  { q: "Can I start with summer camp?", a: "Yes. Our student-run summer camp is a great way to try robotics before you join, and students from our camp get priority on the team application.", link: { href: "#newsletter", label: "Sign up for our newsletter and we'll tell you when registration opens →" } },
+];
+const INTERESTS = [
+  { id: "i-design", label: "Design", value: "Design" },
+  { id: "i-mfg", label: "Manufacturing", value: "Manufacturing" },
+  { id: "i-prog", label: "Programming", value: "Programming" },
+  { id: "i-elec", label: "Electrical", value: "Electrical" },
+  { id: "i-ops", label: "Operations", value: "Operations" },
+  { id: "i-unsure", label: "Not sure yet", value: "Not sure" },
+];
+---
+
+<section class="sec-deco" id="faq">
+  <div class="wrap join-grid">
+    <div class="faq rv">
+      <h2 class="ruled title-calm">FAQ</h2>
+      {FAQS.map((f) => (
+        <details><summary>{f.q}</summary><p><Fragment set:html={f.a} />{f.link && <> <a href={f.link.href}>{f.link.label}</a></>}</p></details>
+      ))}
+    </div>
+    <div class="photo-card still rv" style="--d:1"><form class="form pc-in" id="newsletter" novalidate aria-labelledby="form-h">
+      <h3 id="form-h">Get our newsletter</h3>
+      <p class="note" style="margin:0">We'll email you when recruiting opens each September, plus team news.</p>
+      <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" aria-describedby="f-name-err" required><span class="err" id="f-name-err" hidden>Enter your name.</span></div>
+      <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" aria-describedby="f-email-err" required><span class="err" id="f-email-err" hidden>Enter an email address like name@example.com.</span></div>
+      <fieldset class="checks"><legend>I'm a</legend>
+        <label><input type="radio" name="who" value="student" checked>Student</label>
+        <label><input type="radio" name="who" value="parent" id="f-parent">Parent or guardian</label>
+      </fieldset>
+      <div class="field"><label for="f-grade">Student's current grade</label><select id="f-grade" name="grade"><option>8th</option><option>9th</option><option>10th</option><option>11th</option><option>12th</option></select></div>
+      <fieldset class="checks" id="f-interests"><legend>Interested in (optional)</legend>
+        {INTERESTS.map((it) => <label><input type="checkbox" id={it.id} value={it.value}>{it.label}</label>)}
+      </fieldset>
+      <button class="btn btn-gold" type="submit">Sign up</button>
+      <p class="note">For Los Al USD students and families.</p>
+      <p class="ok" id="form-ok" role="status" hidden></p>
+    </form></div>
+  </div>
+</section>

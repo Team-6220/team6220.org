@@ -35,13 +35,34 @@ Developers can try the editor without signing in at `/apps/site?demo=admin` (dem
 Pick **Sponsors**. Each entry is one sponsor; **Up** and **Down** set the order, which is the order of the logos on the
 Sponsors page and in the scrolling strip on the home page (all three places read the same list).
 
-- **Name** is also the logo's alt text. **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images
-  per change); leave it empty to show the name as plain text, as the Gene Haas Foundation does today.
+- **Name** is also the logo's alt text.
+- **Show as**: *One-color logo* (a single-color file, shown white on the dark page and black in light mode), *Full-color
+  logo* (shown as the file is) or *Name* (the name in capitals in Karnivore, no logo needed, as for Brent Kinneman).
+- **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images per change). SVG logos are added by a
+  developer (see [COOKBOOK.md](COOKBOOK.md#2-add-or-change-a-sponsor-each-season)).
 - **Link** is optional; when set, the logo on the Sponsors page links there (the home strip never links).
-- **Tier** and **Season** are stored for the list but not shown yet.
+- **Tier** groups the logos on the Sponsors page (Griffin first; no tier = Supporters). **Season** is stored for the list
+  but not shown yet.
 - **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
   Leave it empty for a new sponsor; the default size applies.
 - The "Your company here" tile and the tier cards are page layout, not part of this list.
+
+### Form signups (#76)
+
+Click **Form signups** at the top. Pick a form (Newsletter signup on the Join page, Mentor and volunteer interest,
+Sponsor and donation inquiry, Summer camp interest, or Contact) and a time range (this school year from August 1, the
+last 30 days, or all time). The page lists each signup with the person's answers, newest first.
+
+**Copy all emails** copies every different email (each address once, ignoring capital letters), separated by commas, to
+paste into the To or Bcc line of an email you already have. It doesn't send anything or start a new email.
+
+- Real signups need the Phase 2 server: it reads them from Wix with `SITE_MANAGER_WIX_API_KEY` (a Wix API key with only
+  the **Manage form submissions** permission) and `WIX_SITE_ID`, both set as server secrets, never in the repo. Until
+  then the page shows made-up demo signups.
+- Like everything in the Site Manager, it's for Web Admins only, and the server checks the badge on every request.
+- The forms list is `SIGNUP_FORMS` in `packages/data/src/site/signups.ts`. Add a form there when the site gets a new one.
+- Code: `packages/data/src/site/signups.ts` (reading and parsing), the `signups` action in `api.ts`, and
+  `apps/site/src/Signups.tsx` (the page).
 
 ### Editing robots
 

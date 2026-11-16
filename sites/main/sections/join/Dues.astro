@@ -1,0 +1,26 @@
+---
+// Join page, part 4: dues. Dues amounts from the 2026-27 Team Handbook; the budget numbers must match the Sponsors page
+// budget (sections/sponsors/Sponsors.astro). Update both each year.
+// Money questions go to the parent booster club, not the student-run operations@ address.
+const BOOSTER_EMAIL = "losalroboticsbooster@gmail.com";
+---
+
+<section class="on-paper">
+  <div class="wrap join-dues">
+    <div class="rv">
+      <p class="eyebrow ruled">Dues</p>
+      <h2 class="title-calm">$350 a year</h2>
+      <ul class="join-dues-lines" aria-label="Dues breakdown">
+        <li><span>Team dues</span><b>$300</b></li>
+        <li><span>Robot transportation</span><b>$50</b></li>
+        <li class="total"><span>Total</span><b>$350</b></li>
+      </ul>
+      <p class="muted">The transportation fee is to move the robot—not students—to events. Dues are paid to the Los Al Robotics Booster Club after you join.</p>
+    </div>
+    <div class="rv" style="--d:1">
+      <h3>What dues pay for</h3>
+      <p>Our 2026–27 season budget is $45,000: $19,000 for robot components, $9,000 for FRC registration, $9,000 for workshop supplies, $3,000 for travel and food, $3,000 for marketing, and $2,000 for training and summer camp. Dues cover part of it; sponsors, grants, and our summer camp cover the rest. <a href="/sponsors#budget">See where the money goes →</a></p>
+      <p class="join-aid">No student should miss out because of cost. For questions about dues or financial help, email our booster club at <a href={`mailto:${BOOSTER_EMAIL}`}>{BOOSTER_EMAIL}</a>.</p>
+    </div>
+  </div>
+</section>

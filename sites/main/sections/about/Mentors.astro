@@ -1,0 +1,23 @@
+---
+// About page: our mentors (names and roles confirmed by the team, Nov 2026). Mr. Jones, our supervisor, has his own section (Supervisor.astro).
+const MENTORS = [
+  { name: "Bruce Riedinger", role: "Mechanical", text: "A retired Boeing engineer whose experience guides the technical and mechanical direction of our designs." },
+  { name: "Laura Hall", role: "Electrical", text: "A retired Broadcom hardware engineer who teaches our electrical team best practices for wiring." },
+  { name: "Lee Tokuda", role: "Programming", text: "An experienced software engineer who helps our programmers improve how they work: their development process, workflow, code reviews, and GitHub." },
+  { name: "Andy Gandara", role: "Programming", text: "An experienced software engineer who helps our programmers write efficient code and improve how they develop it." },
+  { name: "Tamas Vejsz", role: "Management", text: "An experienced engineering manager who provides oversight and direction for the team." },
+  { name: "Russel Hirotsu", role: "Management", text: "An RTX engineer and longtime FIRST participant who helps guide how the team is run." },
+];
+---
+
+<section id="mentors" class="on-paper">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">The adults behind us</p><h2 class="title-calm">Our mentors</h2></div><p>Mentors teach, keep the shop safe, give advice, and maintain knowledge from season to season. Students make the calls.</p></div>
+    <div class="mentors">
+      {MENTORS.map((m, i) => (
+        <article class="rv" style={`--d:${i}`}><p class="eyebrow">{m.role}</p><h3>{m.name}</h3><p>{m.text}</p></article>
+      ))}
+    </div>
+    <p class="mentor-cta rv">Want to mentor? <a href="/sponsors">Tell us how you'd like to help →</a></p>
+  </div>
+</section>

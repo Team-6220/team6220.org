@@ -1,0 +1,24 @@
+---
+// Join page, part 1 (text may hold <i> for FIRST): why students join (#172). Facts from the onboarding deck ("FRC and Team 6220 Intro").
+import { media } from "../../lib/media";
+const REASONS = [
+  { title: "Build something real", text: "Each January <i>FIRST</i> releases a new game. With a rule manual and no blueprint, we design, build, and program a 115-pound robot to compete in about six weeks." },
+  { title: "Learn real skills", text: "CAD, machining, programming, wiring, business, and marketing: the same tools and habits engineers and companies use. No experience needed; we train you." },
+  { title: "Lead", text: "We're student-led and student-driven. Students run the team, from bot to budget, and every year new members step into leadership roles." },
+  { title: "Find your team", text: "Robotics is a sport here: we compete hard, help other teams in the pits, and spend a lot of late build-season nights together." },
+];
+---
+
+<section class="on-paper angled angled-gold">
+  <div class="wrap join-why">
+    <div>
+      <div class="rv"><p class="eyebrow ruled">Why join</p><h2 class="title-calm">More than robots</h2><p class="muted">You get out what you put in. Members leave with skills, leadership experience, and a team they'll remember.</p></div>
+      <div class="join-reasons">
+        {REASONS.map((r, i) => (
+          <article class="rv" style={`--d:${i}`}><h3>{r.title}</h3><p set:html={r.text} /></article>
+        ))}
+      </div>
+    </div>
+    <figure class="photo-frame photo-card rv" style="margin:0"><div class="pc-in"><img src={media("team/27bdee70e4.webp")} alt="Team 6220 students working together on the robot" loading="lazy"></div></figure>
+  </div>
+</section>

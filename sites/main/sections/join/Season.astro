@@ -1,0 +1,45 @@
+---
+// Join page, part 2: what a season looks like. Times come from the 2026-27 Team Handbook; update them each year.
+// "total" is a rough count for a member at every meeting: fall ~15 weeks at ~10 h, build ~7 weeks at ~25 h plus
+// kickoff and ski week, competition ~7 weeks at ~25 h plus two 3-day events and spring break.
+const PHASES = [
+  {
+    when: "Fall semester",
+    title: "Training and offseason",
+    points: ["Onboarding meeting and training week in September", "Training in your subteam's skills", "Offseason projects and season prep", "Two offseason competitions"],
+    hours: "Tuesdays and Fridays 3:17–6:00, Saturdays 10:00–2:00",
+    total: "About 10 hours a week, roughly 150 hours",
+  },
+  {
+    when: "January–February",
+    title: "Build season",
+    points: ["Kickoff: the new game is revealed in early January", "About six weeks to design and build a brand-new robot", "The hardest and most fun part of the year"],
+    hours: "Weekdays 3:17–7:00, Saturdays 10:00–4:00. Expect to be there almost every day.",
+    total: "About 25 hours a week, roughly 200 hours",
+  },
+  {
+    when: "March–April",
+    title: "Competition",
+    points: ["Two <i>FIRST</i> California district events", "Top teams advance to the Southern California State Championship", "The best go on to the <i>FIRST</i> Championship in Houston"],
+    hours: "Weekend events, with some school days. Maximum time commitment: nearly every day, late nights when necessary.",
+    total: "About 25 hours a week plus events, roughly 250 hours",
+  },
+];
+---
+
+<section class="on-ink">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">What a season looks like</p><h2 class="title-calm">Like a varsity sport</h2></div><p>FRC takes the same commitment as a sport. Members attend at least 75% of their subteam's meetings.</p></div>
+    <ol class="join-season">
+      {PHASES.map((p, i) => (
+        <li class="rv" style={`--d:${i}`}>
+          <p class="eyebrow">{p.when}</p>
+          <h3>{p.title}</h3>
+          <ul>{p.points.map((pt) => <li set:html={pt} />)}</ul>
+          <p class="join-hours">{p.hours}</p>
+          <p class="join-total">{p.total}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

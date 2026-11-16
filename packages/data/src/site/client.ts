@@ -16,12 +16,15 @@ import { BADGES } from "../config";
 import * as auth from "../auth";
 import { memberAccessToken } from "../wix";
 import { MockSiteStore, REPO_URL } from "./mock";
+import { DemoSignupReader, SIGNUP_FORMS, emailListText, uniqueEmails, type Signup, type SignupFormId } from "./signups";
 import { proposeChange, readArea } from "./propose";
 import { SiteError, type ImageUpload, type PullRequest, type SiteErrorCode, type SiteStore } from "./types";
 
 export { AREAS, jsonSchemaOf, parseContent };
 export type { AreaId };
 export { REPO_URL };
+export { SIGNUP_FORMS, emailListText, uniqueEmails };
+export type { Signup, SignupFormId };
 
 export type SiteViewer = { kind: "signed-out" } | { kind: "pending"; name: string } | { kind: "member"; name: string } | { kind: "admin"; name: string };
 
@@ -127,6 +130,18 @@ export async function submit(area: AreaId, value: unknown, images?: ImageUpload[
   // Demo: same validation and diff as the server, but the pull request only exists in memory.
   const member = demoMode() ? null : await auth.getMember().catch(() => null);
   return proposeChange(mockStore(), { area, value, images, requestedBy: { name: member?.name ?? "Demo admin", id: member?.id } });
+}
+
+/**
+ * Everyone who filled out one of the website's forms, newest first. `since` limits it to signups on or after that date.
+ * Real data needs the Phase 2 server (it holds the Wix API key); otherwise this returns made-up demo signups.
+ */
+export async function listSignups(formId: SignupFormId, since?: Date): Promise<{ signups: Signup[]; demo: boolean }> {
+  if (opensRealPullRequests()) {
+    const { signups } = await callApi<{ signups: Signup[] }>({ action: "signups", formId, since: since?.toISOString() });
+    return { signups, demo: false };
+  }
+  return { signups: await new DemoSignupReader().list(formId, since), demo: true };
 }
 
 /** Link to the open Site Manager pull requests on GitHub. */
