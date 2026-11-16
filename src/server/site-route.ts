@@ -11,18 +11,11 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { submissions } from "@wix/forms";
-import { badgeAssignments, badgesV2, members } from "@wix/members";
-import { createSessionVerifier, createSignupReader, githubStoreFromEnv, handleSiteRequest, type QuerySubmissions, type SiteEnv } from "@team6220/data/site-server";
+import { createSignupReader, githubStoreFromEnv, handleSiteRequest, type QuerySubmissions, type SiteEnv } from "@team6220/data/site-server";
+import { verifySession as verify } from "./session";
 import { readSecret, readSecrets } from "./wix-secrets";
 
 export const prerender = false;
-
-const verify = createSessionVerifier({
-  getCurrentMember: async () => (await members.getCurrentMember({ fieldsets: ["FULL"] })).member,
-  listBadges: async () => (await badgesV2.queryBadges().limit(100).find()).items,
-  listBadgeIds: async (memberId) =>
-    (await badgeAssignments.queryBadgeAssignments().eq("memberId", memberId).limit(100).find()).items.map((a) => a.badgeId ?? ""),
-});
 
 /** The GitHub credential: one token if it's set (one secret read), else the three GitHub App secrets. */
 async function githubEnv(): Promise<SiteEnv> {

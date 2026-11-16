@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import "../src/bom"; // registers the demo actions
 import { mockDb, mockTransport, resetMock } from "../src/ops/mock";
-import { makeScript } from "./helpers/ops-api-script";
+import { makeOps } from "./helpers/ops-server";
 
 type Answer = Record<string, any>;
 interface Backend {
@@ -21,7 +21,7 @@ function realBackend(): Backend {
     booster: "tok-booster-0123456789abcdef",
     supervisor: "tok-supervisor-0123456789abcdef",
   };
-  const script = makeScript({
+  const script = makeOps({
     [tokens.lead]: { id: "m-lead", status: "APPROVED", badges: ["b-team", "b-lead"] },
     [tokens.member]: { id: "m-member", status: "APPROVED", badges: ["b-team"] },
     [tokens.mentor]: { id: "m-mentor", status: "APPROVED", badges: ["b-mentor"] },

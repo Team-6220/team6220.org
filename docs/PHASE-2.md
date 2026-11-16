@@ -77,10 +77,16 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
       the Apps Scripts' defaults. **To do:** test sign-in on a preview.
 - [x] Secrets: `src/server/wix-secrets.ts` reads Wix Secrets Manager values with elevated permissions, one secret
       per call, only when an action needs it. Form signups use an elevated Wix query, so they need no API key.
-- [ ] Move every ops-api action to `/api/<area>` (one-to-one, same names and answers), with the same tests.
-      `packages/data` stays the only code that calls them.
-- [ ] Timer endpoint(s) for the Apps Script triggers, checked with a shared secret.
-- [ ] GitHub webhook endpoint with signature checking.
+- [x] **Operations server (all of ops-api) on `/api/ops`**, one-to-one with the old actions, in
+      `packages/data/src/ops/server/` (docs: [operations/SERVER.md](operations/SERVER.md)). Written for Wix's limits: bulk
+      reads and writes, a counter that stops any request at 17 calls (`budget.ts`, 3 more go to checking who is asking),
+      atomic numbers instead of a lock. The Apps Script `ops-api` is removed; its tests now run the TypeScript against an
+      in-memory fake (`test/helpers/ops-server.ts`, 277 tests in the data package). **To do on a preview:** create the
+      Wix secrets and collections listed in SERVER.md and try each app signed in.
+- [x] Timer: `POST /api/ops-timer` with the `x-timer-secret` header, run by `backend/apps-script/ops-timer` (**to do:**
+      create that Apps Script project, 5-minute `syncGithub` and daily `refreshEvents` triggers).
+- [x] GitHub webhook: `POST /api/github-hook`, HMAC signature checked, brings an issue change in at once (**to do:** add
+      the webhook in GitHub with the `GITHUB_WEBHOOK_SECRET` value).
 - [x] **Inventory behind the server (#100), code:** `/api/inventory` (`src/server/inventory-route.ts`, logic in
       `packages/data/src/inventory/server-api.ts` and `server-writes.ts`) does every inventory write after checking the
       Team Member badge; the browser reads the collections directly and sends changes there (`remote-store.ts`, used on

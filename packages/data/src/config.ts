@@ -35,8 +35,3 @@ export const ATTENDANCE_API_URL: string =
 // adding a subteam means creating its badge in Wix.
 export const SUBTEAM_BADGE_PREFIX = "Subteam: ";
 
-// The "ops API" Apps Script web app (backend/apps-script/ops-api), shared by Icarus, Production and BOM.
-// Like the attendance URL it is NOT a secret. Paste the /exec URL between the quotes, or set PUBLIC_OPS_API_URL
-// when building. Empty = not connected yet (the apps then only work in demo mode).
-const OPS_API_URL_DEFAULT = "";
-export const OPS_API_URL: string = (import.meta.env?.PUBLIC_OPS_API_URL as string | undefined) || OPS_API_URL_DEFAULT;

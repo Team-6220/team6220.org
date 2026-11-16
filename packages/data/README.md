@@ -60,15 +60,15 @@ Inside this package there are two ways data moves, and each app's data module us
 | | Used for | Real backend | Demo backend |
 | --- | --- | --- | --- |
 | `ops.store()` | Reads, and edits any member may make | Wix CMS as the signed-in member (`ops/wix-store.ts`) | Memory (`ops/mock.ts`) |
-| `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The ops API Apps Script (`backend/apps-script/ops-api`) | The same rules in memory |
+| `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The operations server, `/api/ops` (`ops/server/`, [docs/operations/SERVER.md](../../docs/operations/SERVER.md)) | The same rules in memory |
 
-**Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. So does the deployed site until the ops
-API address is filled in (`OPS_API_URL_DEFAULT` in `config.ts`), because nothing real could work before that. On any page add
+**Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. So does the static build (`pnpm build:static`, which has no
+`/api`), because nothing real could work there. On any page add
 `?demo=member`, `lead`, `mentor`, `booster`, `supervisor`, `pending` or `signed-out` to try each role; `?demo=off`
 leaves it. Call `ops.readDemoFromUrl()` once when the app starts. Demo data resets when the page reloads.
 
 **Roles.** `ops/roles.ts` turns badges into `viewer / team / lead / approver / peopleAdmin`. It only decides what to
-show; the same rules in `ops-api/Auth.gs` are the real check.
+show; the server uses the same function for the real check.
 
 **A new data module** (for example `bom/`) adds its made-up data with `seedMock(...)` and its protected actions with
 `mockActions(...)`, both from `ops/mock.ts`, so the demo and the real server follow the same rules.

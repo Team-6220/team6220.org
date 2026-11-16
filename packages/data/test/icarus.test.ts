@@ -4,7 +4,7 @@ import { icarus, ops } from "../src/index";
 import { mockTransport } from "../src/ops/mock";
 import type { Me } from "../src/ops/types";
 import type { Milestone, Season, Task, TeamEvent } from "../src/icarus/types";
-import { makeScript } from "./helpers/ops-api-script";
+import { makeOps } from "./helpers/ops-server";
 
 const season: Season = { _id: "s1", name: "2027 Competition", startDate: "2027-01-09", endDate: "2027-05-01", eventIds: ["e1"] };
 const task = (over: Partial<Task>): Task => ({ ...icarus.emptyTask("s1"), _id: `id-${over.number}`, number: "1", title: "Task", createdBy: "x", ...over }) as Task;
@@ -154,7 +154,7 @@ describe("Icarus in demo mode", () => {
 // The planning-record rules, checked against both backends with the same steps (like bom-rules.test.ts).
 describe.each([
   ["ops-api (Icarus.gs)", () => {
-    const script = makeScript({
+    const script = makeOps({
       "tok-lead-0123456789abcdef": { id: "m-lead", status: "APPROVED", badges: ["b-team", "b-lead"] },
       "tok-member-0123456789abcdef": { id: "m-member", status: "APPROVED", badges: ["b-team"] },
     });

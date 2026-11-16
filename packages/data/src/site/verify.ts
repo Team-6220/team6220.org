@@ -14,6 +14,8 @@ export interface Viewer {
   approved: boolean;
   /** Badge titles on our site. */
   badges: string[];
+  /** The short name typed after "@": the profile slug, or the nickname without spaces. Only the session verifier fills it in. */
+  username?: string;
 }
 
 const WIX_API = "https://www.wixapis.com";
@@ -113,7 +115,7 @@ export function isWebAdmin(viewer: Viewer): boolean {
  */
 export interface SessionWix {
   /** The signed-in member, or nothing for a visitor. */
-  getCurrentMember(): Promise<{ _id?: string | null; status?: string | null; contact?: { firstName?: string | null; lastName?: string | null } | null; profile?: { nickname?: string | null } | null } | undefined | null>;
+  getCurrentMember(): Promise<{ _id?: string | null; status?: string | null; contact?: { firstName?: string | null; lastName?: string | null } | null; profile?: { nickname?: string | null; slug?: string | null } | null } | undefined | null>;
   /** Every badge on the site: id and title. */
   listBadges(): Promise<{ _id?: string | null; title?: string | null }[]>;
   /** The badge ids assigned to one member. */
@@ -121,7 +123,7 @@ export interface SessionWix {
 }
 
 /** Checks who is asking from the session, not from a token. The `authorization` argument is ignored. */
-export function createSessionVerifier(wix: SessionWix): VerifyViewer {
+export function createSessionVerifier(wix: SessionWix, fallbackName = "Web Admin"): VerifyViewer {
   const unavailable = () => new SiteError("wix-unavailable", "Couldn't reach Wix to check your sign-in. Try again.");
   return async () => {
     let member: Awaited<ReturnType<SessionWix["getCurrentMember"]>>;
@@ -142,9 +144,10 @@ export function createSessionVerifier(wix: SessionWix): VerifyViewer {
     const fullName = [member.contact?.firstName, member.contact?.lastName].filter(Boolean).join(" ").trim();
     return {
       id: member._id,
-      name: fullName || member.profile?.nickname || "Web Admin",
+      name: fullName || member.profile?.nickname || fallbackName,
       approved: member.status === "APPROVED",
       badges: assigned.map((id) => titles.get(id) ?? "").filter(Boolean),
+      username: String(member.profile?.slug || member.profile?.nickname || "").replace(/\s+/g, "").toLowerCase(),
     };
   };
 }

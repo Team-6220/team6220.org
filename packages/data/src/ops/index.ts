@@ -11,9 +11,8 @@
 //
 // Demo mode: `pnpm dev`, or ?demo=member|lead|mentor|booster|supervisor|pending|signed-out on a deployed page,
 // uses made-up data in memory and never talks to Wix.
-import { OPS_API_URL } from "../config";
 import * as auth from "../auth";
-import { memberAccessToken } from "../wix";
+import { onWixBuild } from "../runtime";
 import { httpTransport } from "./http";
 import { MOCK_ROLES, mockStore, mockTransport, type MockRole } from "./mock";
 import { rolesFor, subteamsOf } from "./roles";
@@ -70,16 +69,16 @@ function buildUsesMock(): boolean {
   return env?.PROD !== true; // `pnpm dev` and tests: mock. `pnpm build`: Wix.
 }
 
-/** True when the ops API's address is filled in (packages/data/src/config.ts). */
+/** True when there is an operations server to call: the Wix build has /api/ops, the static build doesn't. */
 function hasServer(): boolean {
-  return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(OPS_API_URL);
+  return onWixBuild();
 }
 
 /**
  * The demo role for this tab, or null when using the real backend.
  * Demo mode is on when: ?demo=<role> chose one; or this is `pnpm dev` / a test; or the team server isn't
- * connected yet. In that last case nothing real could work (the Wix collections may not even exist), so the
- * deployed apps show the demo, signed in as a lead, until the server's address is filled in.
+ * connected yet. In that last case (the static build, with no /api) nothing real could work, so those pages show the
+ * demo, signed in as a lead.
  */
 export function demoRole(): DemoRole | null {
   const stored = session()?.getItem(DEMO_KEY) as DemoRole | null | undefined;
@@ -131,17 +130,17 @@ let http: Transport | undefined;
 export async function callOps<T = Record<string, unknown>>(action: string, args: Record<string, unknown> = {}): Promise<T> {
   const role = demoRole();
   let transport: Transport;
-  let token: string | null;
+  let token: string | undefined;
   if (role) {
+    if (role === "signed-out") throw new OpsError("signed-out", "Sign in to continue.");
     transport = mockTransport;
-    token = role === "signed-out" ? null : `mock:${role}`;
+    token = `mock:${role}`;
   } else {
     if (!isConnected()) throw new OpsError("not-configured", "This app isn't connected to the team server yet.");
-    transport = http ??= httpTransport(OPS_API_URL);
-    token = await memberAccessToken();
+    transport = http ??= httpTransport();
   }
-  if (!token) throw new OpsError("signed-out", "Sign in to continue.");
-  const body = await transport({ action, token, ...args });
+  // On the real server, who is asking comes from the session cookie, not from anything sent here.
+  const body = await transport({ action, ...(token ? { token } : {}), ...args });
   if (body?.ok !== true) {
     const code = ERROR_CODES.includes(body?.error as OpsErrorCode) ? (body.error as OpsErrorCode) : "server-error";
     throw new OpsError(code, typeof body?.message === "string" ? body.message : "The team server had a problem.");

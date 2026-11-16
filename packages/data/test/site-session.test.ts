@@ -17,7 +17,14 @@ function wix(member: Awaited<ReturnType<SessionWix["getCurrentMember"]>>, badgeI
 describe("session verifier", () => {
   it("names the signed-in member and their badges", async () => {
     const verify = createSessionVerifier(wix({ _id: "m1", status: "APPROVED", contact: { firstName: "Ada", lastName: "Lovelace" } }, ["b-team", "b-web"]));
-    await expect(verify(null)).resolves.toEqual({ id: "m1", name: "Ada Lovelace", approved: true, badges: ["Team Member", "Web Admin"] });
+    await expect(verify(null)).resolves.toEqual({ id: "m1", name: "Ada Lovelace", approved: true, badges: ["Team Member", "Web Admin"], username: "" });
+  });
+
+  it("gives the short @name from the profile slug, else the nickname without spaces", async () => {
+    const slug = createSessionVerifier(wix({ _id: "m3", status: "APPROVED", profile: { slug: "Ada-L", nickname: "Ada L" } }));
+    await expect(slug(null)).resolves.toMatchObject({ username: "ada-l" });
+    const nickname = createSessionVerifier(wix({ _id: "m4", status: "APPROVED", profile: { nickname: "Grace H" } }));
+    await expect(nickname(null)).resolves.toMatchObject({ username: "graceh", name: "Grace H" });
   });
 
   it("treats a visitor (no member) as signed out", async () => {

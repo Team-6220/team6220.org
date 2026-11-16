@@ -59,7 +59,7 @@ packages/data/src/icarus/
   templates.ts   templates and the two built-in ones
   dates.ts       date arithmetic on "yyyy-mm-dd" text
   mock.ts        demo data and the demo copy of the planning rules
-backend/apps-script/ops-api/Icarus.gs   Leads-only changes to milestones, events, seasons and templates
+packages/data/src/ops/server/icarus.ts   Leads-only changes to milestones, events, seasons and templates
 ```
 
 **Who can change what.** Tasks are written straight to Wix by members, like Inventory items, so "only owners and

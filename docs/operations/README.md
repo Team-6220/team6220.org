@@ -17,7 +17,7 @@
 | [ICARUS.md](ICARUS.md) | Icarus, the tasks and Gantt app (`/apps/icarus`) |
 | [PRODUCTION.md](PRODUCTION.md) | Production app (`/apps/production`): parts request, print queue, tracker, cut planner and optimizer |
 | [BOM.md](BOM.md) | BOM app (`/apps/bom`): orders, mentor approval, receiving into Inventory |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Shared design: folders, data collections, the `ops-api` backend, roles, the API for Apollo |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Shared design: folders, data collections, the operations server, roles, the API for Apollo |
 | [SETUP.md](SETUP.md) | What a person has to do in Wix and Google before the apps use real data |
 
 ## Why
@@ -144,7 +144,7 @@ Each step is useful by itself and is its own set of pull requests. Details are i
 
 | Step | What | Why this order |
 | --- | --- | --- |
-| 0 | Mentor, Booster, Supervisor, Lead and subteam badges (#156); the `ops-api` backend skeleton; the shared `projects` and people pickers | Everything else needs them |
+| 0 | Mentor, Booster, Supervisor, Lead and subteam badges (#156); the operations server skeleton; the shared `projects` and people pickers | Everything else needs them |
 | 1 | **BOM** core: orders, lines, approval, ordered/received, export, import of 2026 BOMs | Smallest app, replaces a sheet mentors use every week, proves the approval backend |
 | 2 | **Icarus** core: tasks, projects, relations, Gantt, target dates, templates | Kickoff is in January; the 2027 Gantt sheet is already empty and waiting |
 | 3 | **Production** tracker and parts request (replaces the Form and List) | Needed once build season parts start |
@@ -163,7 +163,7 @@ Each step is useful by itself and is its own set of pull requests. Details are i
 - Nexus and match13 event data (#141 says "maybe").
 - Live two-way Google Sheets sync for BOMs.
 - Email notifications.
-- Moving `ops-api` checks into the Phase 2 `/api` endpoints ([MIGRATION-PLAN.md](../MIGRATION-PLAN.md)).
+- ~~Moving `ops-api` checks into the Phase 2 `/api` endpoints~~ Done in Phase 2: [SERVER.md](SERVER.md).
 
 ## Open questions for the team
 

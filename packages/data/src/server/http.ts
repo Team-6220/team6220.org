@@ -8,6 +8,8 @@ export const STATUS: Record<string, number> = {
   pending: 403,
   forbidden: 403,
   "bad-request": 400,
+  conflict: 409,
+  busy: 429,
   "unknown-area": 400,
   invalid: 422,
   "invalid-image": 422,
@@ -18,6 +20,9 @@ export const STATUS: Record<string, number> = {
   network: 502,
   "server-error": 500,
 };
+
+/** The HTTP status for an error code. */
+export const failureStatus = (code: string): number => STATUS[code] ?? 500;
 
 export function reply(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {

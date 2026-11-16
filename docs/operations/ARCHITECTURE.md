@@ -13,9 +13,10 @@
 
 - Three React apps in `apps/`, one data module each in `packages/data`, data in Wix CMS collections. This is the
   same shape as every other app.
-- **New:** one Apps Script backend, `ops-api`, does everything that must not be trusted to the browser: mentor
-  signatures, numbering, receiving into Inventory, GitHub sync, outside API keys and the API for Apollo. It is the
-  [attendance-api](../../backend/apps-script/attendance-api/README.md) pattern used again.
+- **New:** one server, the operations server (`/api/ops`, [SERVER.md](SERVER.md)), does everything that must not be trusted
+  to the browser: mentor signatures, numbering, receiving into Inventory, GitHub sync, outside API keys and the API for
+  Apollo. It was designed as an Apps Script backend (the [attendance-api](../../backend/apps-script/attendance-api/README.md)
+  pattern) and, in Phase 2, runs on Wix hosting with the same actions.
 - **New:** a few things are shared by all three apps (projects, people, links between records, the history log) and
   live in one small shared module, so no app reaches into another app's code.
 
@@ -29,10 +30,10 @@
 │             ▼                │                                              ▲
 │ packages/data                │   protected actions                         │ Wix API key
 │  tasks/ production/ bom/     │   POST text/plain + member token            │ (Script Property)
-│  ops/  inventory/            │ ───────────────────────────────────────▶ ops-api (Apps Script)
+│  ops/  inventory/            │ ───────────────────────────────────────▶ operations server (/api/ops)
 └──────────────────────────────┘                                              │  ▲
                                                                               ▼  │ time triggers
- Apollo (Hermes agent) ── API key ──▶ ops-api          GitHub · Onshape · The Blue Alliance · FIRST Events
+ Apollo (Hermes agent) ── API key ──▶ /api/ops         GitHub · Onshape · The Blue Alliance · FIRST Events
 ```
 
 ## Folders
@@ -53,8 +54,9 @@ packages/
   cut-engine/            NEW package. Pure functions: stock + parts in, layout out. No React, no Wix
   ui/                    existing. Gains shared pieces: PersonPicker, ProjectPicker, RecordLink, HistoryList
 backend/apps-script/
-  ops-api/               NEW. One project: Code.gs split into files by area (Auth, Icarus, Bom, Production,
-                         GitHub, Events, Onshape, Agent). README with setup, like attendance-api
+  ops-timer/             NEW. The clock: Apps Script time triggers that call the website's /api/ops-timer
+packages/data/src/ops/server/   NEW. The operations server, split into files by area (auth, shared, icarus, bom,
+                         github, events). Documented in SERVER.md
 docs/operations/         these plans
 ```
 
@@ -71,7 +73,7 @@ already exists, `APP: BOM`), and `?demo=` modes backed by `mock.ts`.
 3. **Records point at each other with a typed link**, not loose text: `{ kind: "task" | "project" | "part" |
    "bomLine" | "order" | "inventoryItem" | "rawMaterial" | "githubIssue", id }`. One `RecordLink` component in
    `@team6220/ui` shows any link as a chip with its number, name and live status, and opens the right app.
-4. **Numbers come from the server.** `t42`, `p10`, `PR-0123` and order numbers are handed out by `ops-api` under a
+4. **Numbers come from the server.** `t42`, `p10`, `PR-0123` and order numbers are handed out by the operations server under a
    lock, because two browsers writing to Wix at once would give two tasks the same number.
 5. **Every change is logged** in one `ops_history` collection: who (member or Apollo or GitHub sync), when, which
    record, what changed. All three apps show it through one `HistoryList`.
@@ -87,8 +89,8 @@ same check Inventory uses). Field lists are the important fields, not every fiel
 | Collection | Holds | Main fields |
 | --- | --- | --- |
 | `ops_projects` | The shared project list | number (`p10`), name, description, subteams, status, githubRepo, startDate, endDate |
-| `ops_counters` | The next number for tasks, projects, parts and orders | key, next. Written only by `ops-api` |
-| `ops_history` | The change log for all three apps | record link, actor, action, before/after summary, time. Written only by `ops-api` and the data modules |
+| `ops_counters` | The next number for tasks, projects, parts and orders | key, next. Written only by the operations server |
+| `ops_history` | The change log for all three apps | record link, actor, action, before/after summary, time. Written only by the operations server and the data modules |
 | `ops_people` | What the apps need to know about a member beyond Wix | memberId, display name, subteams, githubLogin, active |
 
 ### Icarus (`icarus_`)
@@ -135,31 +137,33 @@ Wix collection permissions are the real lock in Phase 1, so they are set by how 
 | Collections | Read | Write |
 | --- | --- | --- |
 | `icarus_*` except the fields below, `production_parts`, `production_work`, `production_prints`, `bom_catalog`, `bom_lists`, `ops_people` | Site members | Site members (directly from the browser, like Inventory) |
-| `bom_boms`, `bom_orders`, `bom_sections`, `bom_lines` | Site members | **Admin only.** Every write goes through `ops-api`, which checks the member's badge first |
-| `ops_counters`, `ops_history`, `ops_projects`, `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates`, `icarus_subteams` | Site members | **Admin only**, through `ops-api` |
+| `bom_boms`, `bom_orders`, `bom_sections`, `bom_lines` | Site members | **Admin only.** Every write goes through the operations server, which checks the member's badge first |
+| `ops_counters`, `ops_history`, `ops_projects`, `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates`, `icarus_subteams` | Site members | **Admin only**, through the operations server |
 
 The rule: if a change needs a badge, a number or a signature, the collection is Admin-write and the browser asks
-`ops-api`. Everything else is written straight to Wix, which is faster and works when Apps Script is slow.
+the operations server. Everything else is written straight to Wix, which is faster.
 
 **Known limit:** a Team Member who knows how could edit another member's task directly in Wix, even though the
 screen only lets leads do that. That matches Inventory today and is acceptable for tasks. It is not acceptable for
 purchases, which is why all of `bom_*` is locked.
 
-## The `ops-api` backend
+## The operations server
 
-One Apps Script web app, deployed "execute as me / anyone", source in `backend/apps-script/ops-api/`, deployed as
-[APPS-SCRIPT.md](../APPS-SCRIPT.md) describes.
+Part of the website on Wix hosting (Phase 2), source in `packages/data/src/ops/server/`, documented in
+[SERVER.md](SERVER.md).
 
-**Requests from the apps.** Exactly like attendance-api: `POST`, `Content-Type: text/plain`, JSON body
-`{ action, token, ...args }`, where `token` is the member's Wix access token. The script asks Wix who the token
-belongs to and which badges they have, on every request, and answers `{ ok, data }` or `{ ok: false, error,
-message }`. The client lives in `packages/data/src/ops/http.ts`; apps never call the URL themselves.
+**Requests from the apps.** `POST /api/ops`, JSON body `{ action, ...args }`. The member's sign-in is the session cookie:
+the server asks Wix who the session belongs to and which badges they have, on every request, and answers `{ ok: true,
+... }` or `{ ok: false, error, message }`. The client lives in `packages/data/src/ops/http.ts`; apps never call the URL
+themselves. (The first design was an Apps Script web app that took the member's access token; the action names and
+answers did not change.)
 
-**Writing to Wix.** The script holds a Wix API key in Script Properties and calls the Wix Data REST API. The key is
-never in the repo or the browser.
+**Writing to Wix.** The server writes collections with elevated permissions (Wix's way for headless server code), so no
+API key exists anywhere. Secrets for outside services are in Wix's Secrets Manager.
 
-**Locking.** Numbering and signature writes run under Apps Script's `LockService`, so two requests cannot hand out
-the same number or both become "the second signature".
+**No lock.** Numbers come from an atomic counter, so two requests cannot hand out the same number. Two people signing the
+same BOM line in the same instant can lose one signature (the line then shows "1 of 2" and that person signs again).
+A request may make 20 calls, so signing, receiving, importing and subteam changes work in bulk.
 
 | Area | Actions (examples) | Who |
 | --- | --- | --- |
@@ -195,10 +199,10 @@ badge of its own: every Team Member can do everything there, Shapeoko setup incl
 
 Subteams are real Wix badges, so other apps and the Site Manager see the same thing.
 
-- The browser never assigns a badge. It calls `setMySubteams` or `setSubteams`, and `ops-api` checks who is asking,
+- The browser never assigns a badge. It calls `setMySubteams` or `setSubteams`, and the operations server checks who is asking,
   then assigns or removes the badge with its Wix API key (Wix Badges API; **check** the exact calls and that an API
   key may assign badges).
-- `ops-api` only ever touches badges whose title starts with `Subteam: `. It cannot give Team Member, Lead, Mentor,
+- The operations server only ever touches badges whose title starts with `Subteam: `. It cannot give Team Member, Lead, Mentor,
   Booster, Supervisor or any admin badge, whoever asks.
 - `ops_people.subteams` is a copy kept for fast filtering; the badge is the truth, and a daily job fixes any
   difference.
@@ -210,19 +214,19 @@ Subteams are real Wix badges, so other apps and the Site Manager see the same th
 ### GitHub sync
 
 - A GitHub App (or a bot account's token) with issue read/write on the Team-6220 organization. The credential is a
-  Script Property.
-- **Polling, not webhooks.** A time trigger runs every five minutes: for each connected repository it asks GitHub
-  for issues updated since the last run, and it pushes tasks changed since the last run. Polling is chosen because
-  an Apps Script web app cannot read request headers, so it cannot verify GitHub's webhook signature (**check**).
+  Wix secret.
+- **Webhook plus a timer.** GitHub's webhook (signature checked) brings an issue change in at once. A timer (the
+  Apps Script clock, every five minutes) pushes tasks changed in Icarus to GitHub and catches anything the webhook
+  missed: for each connected repository it asks GitHub for issues updated since the last run.
 - Each linked task stores the issue's `updated_at` and the task's own last-synced version. If both changed, the
   newer one wins and the loser is written to `ops_history`.
 - Changes the sync itself makes are tagged so they do not bounce back and forth.
-- Apps Script limits: a run may last six minutes and there is a daily limit on outside requests (**check** current
-  quotas). The sync handles a few repositories per run and remembers where it stopped.
+- Wix limits: a request may make 20 calls and use 1000 CPU ms. The sync reads up to three pages of issues per
+  repository, pushes as many tasks as fit, and remembers where it stopped.
 
 ### Events, Onshape
 
-- **The Blue Alliance** (read key) and **FIRST Events API** (username and token) are called only from `ops-api`,
+- **The Blue Alliance** (read key) and **FIRST Events API** (username and token) are called only from the operations server,
   with answers cached for a day in `icarus_events`. This matches the repo rule that TBA and Nexus keys never go in
   the browser ([ADD-AN-APP.md](../ADD-AN-APP.md#keep-secrets-out)).
 - **Onshape:** `readOnshapeParts(documentUrl)` signs a request with the team's Onshape API keys and returns part
@@ -249,7 +253,7 @@ member asked it to act, that member is stored beside it as "on behalf of". Nothi
 real member's name.
 
 **Documentation.** Every action Apollo may call, with its arguments, its answers and an example, is written in the
-"Apollo" section of the `ops-api` README. That section is the contract Apollo's tools are written against, and a
+"Apollo" section of [SERVER.md](SERVER.md). That section is the contract Apollo's tools are written against, and a
 test fails if an action is open to the Apollo key but missing from it. Reminders ("3 lines are waiting for a second
 signature") are Apollo's job: it reads the "needs attention" actions and posts where the team chats.
 
@@ -263,7 +267,7 @@ Inventory stays the original UI on its shim. The other apps need four things fro
 | `searchItems(text)`, `getItemSummary(link)` | Icarus (needs materials), BOM (linking lines) |
 | `listRawMaterials()`, `listMaterialTypes()` | Production cut planner |
 | `applyCut(pieceId, version, leftovers, flagForAudit)` | Production "Confirm cut". Wraps the existing `apiRawCut` rule in `service.ts` |
-| `addStock(itemId, qty)`, `createItem(draft)`, `updateItem(id, changes)` | BOM receiving and Apollo, called by `ops-api` |
+| `addStock(itemId, qty)`, `createItem(draft)`, `updateItem(id, changes)` | BOM receiving and Apollo, called by the operations server |
 
 Inside Inventory's own screen, the changes are small and marked with `team6220.org:` comments as its README
 requires: an **Add to BOM** button on low-stock items, "Open BOM lines / tasks / parts" on an item, a **Plan cuts**
@@ -317,7 +321,8 @@ argument, `flagLeftovers`, which marks leftovers "needs check" for the next audi
 - Each data module has a `mock.ts`, so `pnpm dev` and `?demo=` work with no network.
 - vitest in `packages/data/test/` for rules: signature rules, line states, numbering, receiving, sync conflict
   choice, template date offsets. `packages/cut-engine` has its own tests with fixed inputs and expected waste.
-- `ops-api` is tested the way attendance-api is: the `.gs` files run in Node with fake Apps Script services.
+- The operations server is tested against an in-memory fake of Wix, GitHub and The Blue Alliance, including a check
+  that no request makes more than Wix's 20 calls.
 - BOM export has a "golden file" test against an imported 2026 order.
 - One Playwright path per app in `e2e/` ([E2E-TESTS.md](../E2E-TESTS.md)): sign two lines as a mentor and a booster; start a
   season from a template; request, claim and confirm-cut a part.
@@ -328,12 +333,12 @@ Each bullet is roughly one pull request. Steps match the [overview](README.md#bu
 
 **Step 0: foundations**
 - Badges in Wix and `config.ts` (#156, plus Booster, Lead and one per subteam); `setMySubteams` / `setSubteams` and the People table in Icarus.
-- `ops-api` skeleton: token and badge check, Wix API key, `nextNumber`, `logHistory`, tests, deploy doc.
+- operations server skeleton: session and badge check, `nextNumber`, `logHistory`, tests, deploy doc.
 - `packages/data/src/ops` (projects, people, links, history, mock) and the shared UI pickers.
 
 **Step 1: BOM**
 - Collections and `packages/data/src/bom` with mock; BOM, order and section screens; line editing.
-- Signing (single, drag, shift-click, section, order) through `ops-api`.
+- Signing (single, drag, shift-click, section, order) through the operations server.
 - Approval to Order, ordered, final totals, the ordering checklist, open all links.
 - Export in today's format with the golden-file test; import of the 2026 BOMs.
 
@@ -367,10 +372,10 @@ polls every 5 minutes with a newer-wins rule and a kill switch, as planned.
 
 | Risk | What we do about it |
 | --- | --- |
-| Apps Script is slow (a second or more per call) and has daily limits | Only protected actions go through it; reads and simple writes go straight to Wix. Batch actions (`signLines`) are one call |
+| A request may only make 20 calls to Wix and other services | Only protected actions go through the server; reads and simple writes go straight to Wix. Batch actions (`signLines`) are a handful of bulk calls |
 | Two-way GitHub sync can loop or overwrite | Tagged sync writes, newer-wins with history, a kill switch (Script Property) that pauses sync |
 | Wix has no transactions | Receiving and signing run under a script lock; each step is safe to repeat; `ops_history` shows what happened |
 | Three apps drift apart in look and behavior | Shared pickers, links and history in `@team6220/ui` and `data/ops`; the rules in this doc |
 | Scope: this is a lot for a student team | The build order ships something usable at every step; BOM alone already replaces a sheet |
-| Phase 2 changes the backend | Apps only call `@team6220/data`; `ops-api` actions map one-to-one to future `/api/icarus`, `/api/production`, `/api/bom` endpoints |
+| Phase 2 changes the backend | Done: apps only call `@team6220/data`, and the operations server actions moved one-to-one to `/api/ops` |
 | Onshape API access or limits are not what we expect | STL import and the plain form do not depend on it |

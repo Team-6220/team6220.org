@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./inventory": "./src/inventory/index.ts",
-    "./site-server": "./src/site/server.ts"
+    "./site-server": "./src/site/server.ts",
+    "./ops-server": "./src/ops/server/index.ts"
   },
   "scripts": {
     "test": "vitest run"

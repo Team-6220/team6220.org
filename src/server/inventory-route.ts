@@ -5,17 +5,10 @@
 import type { APIRoute } from "astro";
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
-import { badgeAssignments, badgesV2, members } from "@wix/members";
-import { InventoryWrites, createSessionVerifier, handleInventoryRequest, type WixItemFns } from "@team6220/data/site-server";
+import { InventoryWrites, handleInventoryRequest, type WixItemFns } from "@team6220/data/site-server";
+import { verifySession as verify } from "./session";
 
 export const prerender = false;
-
-const verify = createSessionVerifier({
-  getCurrentMember: async () => (await members.getCurrentMember({ fieldsets: ["FULL"] })).member,
-  listBadges: async () => (await badgesV2.queryBadges().limit(100).find()).items,
-  listBadgeIds: async (memberId) =>
-    (await badgeAssignments.queryBadgeAssignments().eq("memberId", memberId).limit(100).find()).items.map((a) => a.badgeId ?? ""),
-});
 
 // Plain (non-builder) forms of the @wix/data functions, each elevated (Wix docs: "Elevate API call permissions").
 const fns: WixItemFns = {
