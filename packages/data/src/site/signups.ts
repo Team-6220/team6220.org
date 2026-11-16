@@ -156,7 +156,7 @@ const DEMO: Record<SignupFormId, Omit<Signup, "id">[]> = {
   "140821da-28b0-4e89-9b59-fd4cdc03a63a": [
     { name: "Alex Griffin", email: "alex.griffin@example.com", submittedAt: "2026-11-10T18:04:00Z", details: { Grade: "8th", "Is parent": "No", Interests: "Programming, Design" } },
     { name: "Jordan Lee", email: "jordan.parent@example.com", submittedAt: "2026-11-02T01:30:00Z", details: { Grade: "9th", "Is parent": "Yes" } },
-    { name: "Sam Rivera", email: "sam.rivera@example.com", submittedAt: "2026-10-21T22:15:00Z", details: { Grade: "10th", "Is parent": "No", Interests: "Business" } },
+    { name: "Sam Rivera", email: "sam.rivera@example.com", submittedAt: "2026-10-21T22:15:00Z", details: { Grade: "10th", "Is parent": "No", Interests: "Operations" } },
     { name: "Alex Griffin", email: "Alex.Griffin@example.com", submittedAt: "2026-09-12T16:40:00Z", details: { Grade: "8th", "Is parent": "No" } },
   ],
   "e67d9117-b213-439f-93bf-c6df04b26b18": [

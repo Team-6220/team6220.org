@@ -20,7 +20,7 @@ test.describe("newsletter signup (join page)", () => {
     await page.getByLabel("Parent or guardian").check();
     await page.getByRole("button", { name: "Sign up" }).click();
     await expect(page.locator("#form-ok")).toContainText("Thanks, Alex!");
-    expect(sent?.submission.submissions).toMatchObject({ name_a1c2: "Alex Griffin", email_b2d3: "alex@example.com", interests_e5a6: ["Mechanical", "Programming"], is_parent_d4f5: true });
+    expect(sent?.submission.submissions).toMatchObject({ name_a1c2: "Alex Griffin", email_b2d3: "alex@example.com", interests_e5a6: ["Manufacturing", "Programming"], is_parent_d4f5: true });
   });
 
   test("says so when Wix refuses the form", async ({ page }) => {
