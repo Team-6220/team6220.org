@@ -63,7 +63,7 @@ describe("sponsors schema", () => {
 describe("sponsor rendering", () => {
   it("renders the wall: one-color logos get lg-mono, full-color logos don't, names are text", () => {
     const html = renderSponsorWall(file().sponsors);
-    expect(html.startsWith(`<li class="rv" style="--d:0"><img class="lg lg-mono lg-rtx" src="/assets/main/sponsors/rtx.svg" alt="RTX (Raytheon)"></li><li class="rv" style="--d:1"><img class="lg lg-boeing" src="/assets/main/sponsors/boeing.svg" alt="Boeing">`)).toBe(true);
+    expect(html.startsWith(`<li class="rv" style="--d:0"><a href="https://www.rtx.com" target="_blank" rel="noopener"><img class="lg lg-mono lg-rtx" src="/assets/main/sponsors/rtx.svg" alt="RTX (Raytheon)"></a></li><li class="rv" style="--d:1"><a href="https://www.boeing.com" target="_blank" rel="noopener"><img class="lg lg-boeing" src="/assets/main/sponsors/boeing.svg" alt="Boeing"></a>`)).toBe(true);
     expect(html.endsWith(`<li class="rv lg-text" style="--d:5">Brent Kinneman</li>`)).toBe(true);
     expect((html.match(/--d:5/g) ?? []).length).toBe(4);
   });

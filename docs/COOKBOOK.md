@@ -75,7 +75,8 @@ If a logo looks too big or small, give it a **Logo size key** (for example `laus
 the new packet from Google Slides as a PDF, shrink it (aim for 3 MB or less, for example
 `gs -sDEVICE=pdfwrite -dPDFSETTINGS=/ebook -o out.pdf in.pdf`), replace the file keeping its name, and update the title and
 size in `PACKET` at the top of `sites/main/sections/sponsors/Sponsors.astro`. Tier text, stats and the budget are written
-in `Sponsors.astro` too.
+in `Sponsors.astro` too. The member count ("48 student members") is typed in there for now; it should later be
+counted from the active roster in the team apps (to do in the UI implementation work).
 
 ## 3. Summer camp on/off, title and sign-up links
 
