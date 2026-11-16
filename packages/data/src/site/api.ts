@@ -7,10 +7,11 @@
 //     { "action": "propose", "area": "summer-camp", "value": {...}, "images": [{ "path", "base64" }] }
 //     { "action": "signups", "formId": "<one of SIGNUP_FORMS>", "since": "2026-08-01" }   (since is optional)
 //
-// EVERY request first proves who is asking (Wix token -> member -> badges) and refuses anyone who is not an approved
+// EVERY request first proves who is asking (the session's member and badges) and refuses anyone who is not an approved
 // Web Admin, before the body is even read.
 import { AREAS, isAreaId } from "@team6220/content";
 import { proposeChange, readArea } from "./propose";
+import { failure, guardSameSite, readJsonObject, reply } from "../server/http";
 import { isSignupFormId, type SignupReader } from "./signups";
 import { isWebAdmin, type VerifyViewer } from "./verify";
 import { SiteError, type ImageUpload, type SiteStore } from "./types";
@@ -19,51 +20,17 @@ export interface SiteApiDeps {
   verify: VerifyViewer;
   /** Null when the server has no GitHub credential: every call then answers "not-configured" (after the admin check). */
   getStore: () => Promise<SiteStore | null>;
-  /** Null when the server has no Wix API key: "signups" then answers "not-configured". */
+  /** Null when signups can't be read: "signups" then answers "not-configured". */
   getSignups?: () => SignupReader | null;
   now?: () => Date;
 }
 
-const STATUS: Record<string, number> = {
-  "signed-out": 401,
-  pending: 403,
-  forbidden: 403,
-  "bad-request": 400,
-  "unknown-area": 400,
-  invalid: 422,
-  "invalid-image": 422,
-  "no-changes": 422,
-  "not-configured": 503,
-  "wix-unavailable": 503,
-  github: 502,
-  network: 502,
-  "server-error": 500,
-};
-
 const MAX_BODY_BYTES = 4_500_000; // ten 2 MB images in base64 would be bigger; the module also caps each image
-
-function reply(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
-
-function failure(err: unknown): Response {
-  if (err instanceof SiteError) {
-    return reply(STATUS[err.code] ?? 500, { error: { code: err.code, message: err.message, issues: err.issues } });
-  }
-  console.error("site api: unexpected error", err instanceof Error ? err.name : "unknown"); // never log request bodies or tokens
-  return reply(500, { error: { code: "server-error", message: "Something went wrong on the server." } });
-}
 
 export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Promise<Response> {
   try {
     if (request.method !== "POST") return reply(405, { error: { code: "bad-request", message: "Use POST." } });
-    // Sign-in lives in a cookie, so refuse requests another website makes in a member's browser. Browsers mark every
-    // request with Sec-Fetch-Site; non-browser callers (scripts, Apollo) send no cookie, so they can't use a session.
-    const site = request.headers.get("sec-fetch-site");
-    if (site && site !== "same-origin") throw new SiteError("forbidden", "Requests must come from this website.");
+    guardSameSite(request);
 
     // 1. Who is asking? Checked on every request.
     const viewer = await deps.verify(request.headers.get("authorization"));
@@ -71,23 +38,14 @@ export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Pr
     if (!isWebAdmin(viewer)) throw new SiteError("forbidden", "Only Web Admins can use the Site Manager.");
 
     // 2. What do they want?
-    const length = Number(request.headers.get("content-length") ?? 0);
-    if (length > MAX_BODY_BYTES) throw new SiteError("bad-request", "That request is too large.");
-    let body: Record<string, unknown>;
-    try {
-      const parsed = JSON.parse(await request.text());
-      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("not an object");
-      body = parsed as Record<string, unknown>;
-    } catch {
-      throw new SiteError("bad-request", "The request body must be a JSON object.");
-    }
+    const body = await readJsonObject(request, MAX_BODY_BYTES);
 
     // Form signups come from Wix, not GitHub, so they don't need the GitHub credential.
     if (body.action === "signups") {
       if (!isSignupFormId(body.formId)) throw new SiteError("bad-request", "Pick one of the website's forms.");
       const since = parseSince(body.since);
       const reader = deps.getSignups?.() ?? null;
-      if (!reader) throw new SiteError("not-configured", "The server can't read form signups yet (no Wix API key).");
+      if (!reader) throw new SiteError("not-configured", "The server can't read form signups here (they need the Wix build).");
       return reply(200, { formId: body.formId, signups: await reader.list(body.formId, since) });
     }
 
@@ -116,7 +74,7 @@ export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Pr
         throw new SiteError("bad-request", "Unknown action.");
     }
   } catch (err) {
-    return failure(err);
+    return failure(err, "site api");
   }
 }
 

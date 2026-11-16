@@ -14,6 +14,7 @@
 import { AREAS, jsonSchemaOf, parseContent, type AreaId, type Change } from "@team6220/content";
 import { BADGES } from "../config";
 import * as auth from "../auth";
+import { onWixBuild } from "../runtime";
 import { MockSiteStore, REPO_URL } from "./mock";
 import { DemoSignupReader, SIGNUP_FORMS, emailListText, uniqueEmails, type Signup, type SignupFormId } from "./signups";
 import { proposeChange, readArea } from "./propose";
@@ -54,16 +55,6 @@ export function setDemoMode(on: boolean): void {
 /** True when this build talks to /api/site (Phase 2). Otherwise submits are demo-only. */
 export function apiConfigured(): boolean {
   const v = String(import.meta.env?.PUBLIC_SITE_MANAGER_API ?? "").toLowerCase();
-  return v === "on" || v === "1" || v === "true";
-}
-
-/**
- * True on the Wix build, where /api exists and the member's sign-in is a session cookie (set by astro.config.mjs).
- * Form signups use the real server whenever this is true, because they need no GitHub credential. Opening pull
- * requests waits for apiConfigured(), which also needs the GitHub secrets.
- */
-export function onWixBuild(): boolean {
-  const v = String(import.meta.env?.PUBLIC_WIX_BUILD ?? "").toLowerCase();
   return v === "on" || v === "1" || v === "true";
 }
 

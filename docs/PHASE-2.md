@@ -81,7 +81,15 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
       `packages/data` stays the only code that calls them.
 - [ ] Timer endpoint(s) for the Apps Script triggers, checked with a shared secret.
 - [ ] GitHub webhook endpoint with signature checking.
-- [ ] **Inventory behind the server (#100):** the app's writes go through `/api/inventory` (Team Member badge checked), and every `inventory_*` collection becomes Admin-only for writes. Check the other app collections the same way. Only then turn on open signups.
+- [x] **Inventory behind the server (#100), code:** `/api/inventory` (`src/server/inventory-route.ts`, logic in
+      `packages/data/src/inventory/server-api.ts` and `server-writes.ts`) does every inventory write after checking the
+      Team Member badge; the browser reads the collections directly and sends changes there (`remote-store.ts`, used on
+      the Wix build). Writes use elevated plain `@wix/data` functions. Covered by `inventory-server.test.ts`.
+- [ ] **Inventory lock, Wix side:** (1) on a preview, edit an inventory part and check the change goes to
+      `/api/inventory` and sticks; (2) set the 17 `inventory_*` collections to **Admin-only write** (read stays
+      Site member); (3) check the preview again. **Timing:** dev.team6220.org (Phase 1, direct writes) stops being able
+      to change inventory once step 2 is done, so do it at go-live or when Inventory has moved to the new site. Check
+      the other app collections (`icarus_*`, `bom_*`, `production_*`, `ops_*`) the same way. Only then turn on open signups.
 - [ ] Cookie policy set to essential-only; a small notice with a link to choose.
 - [ ] Apollo repo: point its team-apps calls at the new address.
 

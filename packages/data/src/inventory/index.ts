@@ -7,6 +7,7 @@
 //   "wix"  - Wix CMS collections, called from the browser with the signed-in member's Wix client.
 // Phase 2 adds an "api" backend that calls /api/inventory instead; app code doesn't change.
 
+import { onWixBuild } from "../runtime";
 import { MemoryStore, type MemoryStoreOptions } from "./memory-store.ts";
 import { demoData } from "./mock-data.ts";
 import { createInventoryService, type InventoryService } from "./service.ts";
@@ -93,7 +94,13 @@ export async function connectInventory(session: MemberSession, backend: Inventor
   if (backend === "mock") return createMockInventory({ latencyMs: 120 });
   if (!session.loggedIn || !session.approved) throw new Error("Sign in with an approved team account to use the inventory.");
   const { createWixStore } = await import("./wix-store.ts");
-  return createInventoryService(await createWixStore(session.wixClient));
+  const direct = await createWixStore(session.wixClient);
+  // On the Wix build the collections only let the server write (issue #100): changes go through /api/inventory.
+  if (onWixBuild()) {
+    const { RemoteWriteStore, postInventory } = await import("./remote-store.ts");
+    return createInventoryService(new RemoteWriteStore(direct, postInventory()));
+  }
+  return createInventoryService(direct);
 }
 
 let connected: InventoryService | null = null;
