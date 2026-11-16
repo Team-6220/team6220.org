@@ -79,16 +79,15 @@ for future shared components.
 
 Self-contained and imported only by `MainLayout.astro`, so apps do not inherit it. The top of the file holds:
 
-- **Fonts**: `@font-face` for **Karnivore** (loaded from `/assets/shared/fonts/Karnivore.ttf`) and **Apex Mk2** (only a
-  `local()` lookup today: if someone has the font installed it is used, otherwise the fallback; the licensed web font file
-  has not been added, see the comment in the file).
+- **Fonts**: **Karnivore** for headlines (loaded from `/assets/shared/fonts/Karnivore.ttf`) and **Jura** for body text,
+  labels, and buttons.
 - **Variables**: `--gold`, `--gold-hot`, `--ink`, `--paper`, `--blue`, panel/line/dim colors (all pointing at the `--brand-*` palette),
-  `--display` / `--body` / `--tech` font stacks, spacing `--s1`..`--s6`, `--wrap`, `--r`.
+  `--display` / `--body` font stacks, spacing `--s1`..`--s6`, `--wrap`, `--r`.
 - `color-scheme: dark`: the public site is one committed look (black and gold), not light/dark switching.
 
-The Google-hosted fonts **Jura**, **Orbitron** and **Chakra Petch** are requested by a `<link>` in
+The Google-hosted fonts **Jura** and **Orbitron** (the headline fallback) are requested by a `<link>` in
 `sites/main/MainLayout.astro`. To change the body/headline fonts: add the files or link, update the `@font-face`/link, and
-change `--display`, `--body`, `--tech`.
+change `--display` or `--body`.
 
 Some colors are written directly (not as variables), for example in the animated intro/loader scripts
 (`sites/main/scripts/site-a.js`, `site-b.js`) and in `Sprite.astro` (the griffin is filled `#ffa300`). Search the repo for the
@@ -121,8 +120,7 @@ Licensing: logos and media are © Los Al Robotics and not under the MIT license;
 
 Written down now so nobody has to rediscover them:
 
-- **Fonts.** The public site uses Karnivore (headlines), Jura (body) and Apex Mk2 (labels, not yet licensed/loaded, with
-  Orbitron and Chakra Petch as stand-ins); the shared app tokens use the system font. Inventory uses Karnivore Lite, Jura and
+- **Fonts.** The public site uses Karnivore (headlines) and Jura (everything else); the shared app tokens use the system font. Inventory uses Karnivore Lite, Jura and
   Azoft Sans.
 - **Light vs dark.** The public site is dark only; the app tokens follow the visitor's light/dark setting.
 - **Logo versions** exist in several places: files in `packages/assets/logos/`, an inline SVG in `Sprite.astro`, and copies

@@ -1,7 +1,7 @@
 /* Page-change loader styles, shared by the main site and the apps (imported by PageLoader.astro).
    Markup: PageLoader.astro. Behaviour: packages/assets/scripts/page-loader.js. The animation looks exactly as it
    did when these rules lived in sites/main/styles/site.css; only the colour/font names changed to loader-owned ones. */
-:root{--pgl-ink:#000;--pgl-paper:#fff;--pgl-gold:#ffa300;--pgl-font:"Apex Mk2","Chakra Petch","Jura",system-ui,sans-serif}
+:root{--pgl-ink:#000;--pgl-paper:#fff;--pgl-gold:#ffa300;--pgl-font:"Jura",system-ui,sans-serif}
 /* ---- Page-change loader: 2D clockwise spin with speed trails ---- */
 .pgl{position:fixed;inset:0;z-index:190;background:var(--pgl-ink);display:none;pointer-events:none}
 .pgl.on{display:block;pointer-events:auto;cursor:progress}
