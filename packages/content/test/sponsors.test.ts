@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AREAS, diffContent, describeChange, isImageFile, jsonSchemaOf, parseContent, renderSponsorMarquee, renderSponsorWall, type Sponsors } from "../src/index";
 
 const file = () => structuredClone(AREAS.sponsors.initial) as Sponsors;
-const one = (over: Record<string, string>) => ({ name: "Acme", show: "Full-color logo", logo: "abc.png", logoKey: "", tier: "", link: "", season: "", ...over });
+const one = (over: Record<string, string>) => ({ name: "Acme", show: "Full-color logo", logo: "abc.png", logoDark: "", logoKey: "", tier: "", link: "", season: "", ...over });
 
 describe("image paths", () => {
   it("accepts plain image file names and sub folders", () => {
@@ -56,7 +56,7 @@ describe("sponsors schema", () => {
   });
 
   it("lists the images the file uses", () => {
-    expect(AREAS.sponsors.images!(file())).toHaveLength(7);
+    expect(AREAS.sponsors.images!(file())).toHaveLength(8);
   });
 });
 
@@ -66,6 +66,13 @@ describe("sponsor rendering", () => {
     expect(html.startsWith(`<li class="rv" style="--d:0"><img class="lg lg-mono lg-rtx" src="/assets/main/sponsors/rtx.svg" alt="RTX (Raytheon)"></li><li class="rv" style="--d:1"><img class="lg lg-boeing" src="/assets/main/sponsors/boeing.svg" alt="Boeing">`)).toBe(true);
     expect(html.endsWith(`<li class="rv lg-text" style="--d:5">Brent Kinneman</li>`)).toBe(true);
     expect((html.match(/--d:5/g) ?? []).length).toBe(4);
+  });
+
+  it("shows a dark-page version next to the normal logo when one is set", () => {
+    expect(renderSponsorWall([one({ logoDark: "abc-dark.png" })])).toBe(
+      `<li class="rv" style="--d:0"><img class="lg lg-on-light" src="/assets/main/abc.png" alt="Acme"><img class="lg lg-on-dark" src="/assets/main/abc-dark.png" alt="Acme"></li>`,
+    );
+    expect(renderSponsorMarquee([one({ logoDark: "abc-dark.png" })])).toContain(`<img class="lg lg-on-light" src="/assets/main/abc.png" alt="" data-a="Acme"><img class="lg lg-on-dark" src="/assets/main/abc-dark.png" alt="" data-a="Acme">`);
   });
 
   it("shows the name when Show as is Name, even if a logo is set", () => {

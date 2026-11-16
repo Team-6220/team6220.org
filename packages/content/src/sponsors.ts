@@ -19,6 +19,11 @@ export const sponsor = z.object({
     svg: true,
     description: "png, jpg, webp, gif or avif up to 2 MB, ideally with a transparent background. Not needed when Show as is Name.",
   }),
+  logoDark: imageField("Logo on the dark page", {
+    optional: true,
+    svg: true,
+    description: "Optional: a version made for dark backgrounds (for example with white text). The dark page shows it and light mode shows Logo. Only used with Full-color logo.",
+  }),
   logoKey: z
     .string()
     .trim()
@@ -50,6 +55,12 @@ export type Sponsors = z.infer<typeof sponsors>;
 
 const logoClass = (s: Sponsor) => ["lg", s.show === "One-color logo" ? "lg-mono" : "", s.logoKey ? `lg-${s.logoKey}` : ""].filter(Boolean).join(" ");
 
+/** The logo; with a dark-page version, two images and CSS shows the one for the current theme. `alt` is already escaped. */
+function logoImg(s: Sponsor, alt: string, extra = ""): string {
+  if (!s.logoDark || s.show !== "Full-color logo") return `<img class="${logoClass(s)}" src="${imgSrc(s.logo)}" alt="${alt}"${extra}>`;
+  return `<img class="${logoClass(s)} lg-on-light" src="${imgSrc(s.logo)}" alt="${alt}"${extra}><img class="${logoClass(s)} lg-on-dark" src="${imgSrc(s.logoDark)}" alt="${alt}"${extra}>`;
+}
+
 function linked(href: string, inner: string): string {
   const target = isExternalHref(href) ? ` target="_blank" rel="noopener"` : "";
   return `<a href="${escapeAttr(href)}"${target}>${inner}</a>`;
@@ -64,7 +75,7 @@ export function renderSponsorWall(list: Sponsor[]): string {
     .map((s, i) => {
       const style = ` style="--d:${Math.min(i, 5)}"`;
       if (showsName(s)) return `<li class="rv lg-text"${style}>${s.link ? linked(s.link, escapeText(s.name)) : escapeText(s.name)}</li>`;
-      const img = `<img class="${logoClass(s)}" src="${imgSrc(s.logo)}" alt="${escapeAttr(s.name)}">`;
+      const img = logoImg(s, escapeAttr(s.name));
       return `<li class="rv"${style}>${s.link ? linked(s.link, img) : img}</li>`;
     })
     .join("");
@@ -79,8 +90,7 @@ export function renderSponsorMarquee(list: Sponsor[]): string {
     list
       .map((s) => {
         if (showsName(s)) return `<li class="lg-text">${escapeText(s.name)}</li>`;
-        const alt = hidden ? `alt="" data-a="${escapeAttr(s.name)}"` : `alt="${escapeAttr(s.name)}"`;
-        return `<li><img class="${logoClass(s)}" src="${imgSrc(s.logo)}" ${alt}></li>`;
+        return `<li>${hidden ? logoImg(s, "", ` data-a="${escapeAttr(s.name)}"`) : logoImg(s, escapeAttr(s.name))}</li>`;
       })
       .join("");
   return `<ul>${one(false)}</ul><ul aria-hidden="true">${one(true)}</ul>`;
@@ -88,5 +98,5 @@ export function renderSponsorMarquee(list: Sponsor[]): string {
 
 /** Every image a sponsors file points to (CI checks that each exists in sites/main/media/). */
 export function sponsorImages(value: Sponsors): string[] {
-  return value.sponsors.map((s) => s.logo).filter(Boolean);
+  return value.sponsors.flatMap((s) => [s.logo, s.logoDark]).filter(Boolean);
 }

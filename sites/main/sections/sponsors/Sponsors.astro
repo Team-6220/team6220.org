@@ -1,6 +1,7 @@
 ---
 // The Sponsors page (#161, #162, #163). Order: why sponsor (stats and who you reach), tiers, packet + inquiry form,
-// budget, the sponsor wall grouped by tier, and other ways to help.
+// budget, the sponsor wall grouped by tier, mentor/volunteer form, and other ways to help.
+// The forms post to Wix Forms (sites/main/scripts/site-b.js); Wix emails each submission to operations@team6220.org.
 // Sponsors, their logos and tiers: sites/main/content/sponsors.json (Site Manager). The packet: public/sponsorship-packet.pdf.
 import { renderSponsorWall, TIERS } from "@team6220/content";
 import { media } from "../../lib/media";
@@ -65,7 +66,7 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
   <div class="wrap budget-wrap">
     <div class="rv">
       <p class="eyebrow ruled" style="margin-bottom:10px">Where your money goes</p>
-      <h2 class="title-calm" style="font-size:clamp(1.6rem,3vw,2.2rem)">2025–26 season budget: $45,000</h2>
+      <h2 class="title-calm" style="font-size:clamp(1.6rem,3vw,2.2rem)">2026–27 season budget: $45,000</h2>
       <p class="muted">Robot parts are the biggest line: motors, electronics, aluminum, polycarbonate, filament, gears, and sprockets. The rest covers FRC registration, workshop tools, travel, marketing, and summer camp kits.</p>
       <p class="give-note">Make checks payable to <strong>Los Al Robotics</strong> (501(c)(3), EIN 93-3891396). Hand them to your student contact, drop by our workshop at Los Al High, or mail them to the address in the <a href={PACKET.href}>packet</a>.</p>
     </div>
@@ -83,15 +84,43 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
 <section id="sponsor-list">
   <div class="wrap">
     <div class="sec-head rv"><div><p class="eyebrow ruled">Our sponsors</p><h2 class="title-calm">Thank you</h2></div><p>Your support makes our mission possible.</p></div>
-    {GROUPS.map((g, i) => (
+    {GROUPS.map((g) => (
       <div class="wall-group">
         <h3 class="wall-tier rv">{g.title}</h3>
-        <ul class="wall">
-          <Fragment set:html={renderSponsorWall(g.list)} />
-          {i === GROUPS.length - 1 && <li class="tbd rv" style="--d:5"><a href="#sponsor-us">Your company here →</a></li>}
-        </ul>
+        <ul class="wall"><Fragment set:html={renderSponsorWall(g.list)} /></ul>
       </div>
     ))}
+    <a class="btn btn-gold wall-cta rv" href="#sponsor-us">Your company here: become a sponsor →</a>
+  </div>
+</section>
+<section id="volunteer" class="on-paper angled angled-gold">
+  <div class="wrap join-grid">
+    <div class="rv">
+      <p class="eyebrow ruled">Mentor or volunteer</p>
+      <h2 class="title-calm">Give your time</h2>
+      <p>Students lead this team, and the adults around them make it possible. Tell us how you'd like to help and we'll email you about next steps.</p>
+      <div class="reach reach-stack" aria-label="Ways to help">
+        <article><p class="eyebrow">Industry mentors</p><p>Engineers and professionals who coach a subteam: design, manufacturing, programming, electrical or business. Students make the decisions; you share what you know.</p></article>
+        <article><p class="eyebrow">Parent volunteers</p><p>Help at competitions, with food and driving, with fundraising, or through the booster club.</p></article>
+        <article><p class="eyebrow">Alumni</p><p>Come back to help with fall training, at events, or as a mentor for the subteam you were on.</p></article>
+      </div>
+    </div>
+    <div class="photo-card still rv" style="--d:1"><form class="form pc-in" id="volunteer-form" novalidate aria-labelledby="v-form-h">
+      <h3 id="v-form-h">Volunteer with us</h3>
+      <div class="field"><label for="v-name">Name</label><input id="v-name" name="name" autocomplete="name" aria-describedby="v-name-err" required><span class="err" id="v-name-err" hidden>Enter your name.</span></div>
+      <div class="field"><label for="v-email">Email</label><input id="v-email" name="email" type="email" autocomplete="email" aria-describedby="v-email-err" required><span class="err" id="v-email-err" hidden>Enter an email address like name@example.com.</span></div>
+      <div class="field"><label for="v-phone">Phone (optional)</label><input id="v-phone" name="phone" type="tel" autocomplete="tel"></div>
+      <fieldset class="checks" aria-describedby="v-roles-err"><legend>I'd like to help as</legend>
+        <label><input type="checkbox" value="Industry mentor">Industry mentor</label>
+        <label><input type="checkbox" value="Parent volunteer">Parent volunteer</label>
+        <label><input type="checkbox" value="Alumni">Alumni</label>
+        <span class="err" id="v-roles-err" hidden>Pick at least one.</span>
+      </fieldset>
+      <div class="field"><label for="v-background">Your background or skills (optional)</label><textarea id="v-background" name="background" rows="3"></textarea></div>
+      <div class="field"><label for="v-availability">When are you available? (optional)</label><textarea id="v-availability" name="availability" rows="2"></textarea></div>
+      <button class="btn btn-gold" type="submit">Send</button>
+      <p class="ok" id="v-ok" role="status" hidden></p>
+    </form></div>
   </div>
 </section>
 <section id="wishlist" class="on-gold">
@@ -101,7 +130,8 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
     <p class="wish-text">Raw stock, machining time, electronics, software licenses, shipping and mentoring hours all count toward the same tiers as a cash gift. Or pick something from our Amazon wishlist: it lists the parts, tools, and supplies our students use to build and maintain the robot.</p>
     <div class="sponsor-cta" style="margin-top:0">
       <a class="btn btn-black" href="https://www.amazon.com/hz/wishlist/ls/2XCLFBYGO6WMT" target="_blank" rel="noopener">Open our Amazon wishlist ↗</a>
-      <a class="btn btn-line" href="#sponsor-us">Offer something else</a>
+      <a class="btn btn-grey" href="#sponsor-us">Offer something else</a>
+      <a class="btn btn-grey" href="#volunteer">Mentor or volunteer</a>
     </div>
   </div>
 </section>

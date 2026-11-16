@@ -400,8 +400,8 @@
 
   /* ---- Forms: sent to Wix Forms (Wix emails each submission to operations@team6220.org) ----
      The client ID is public (it only identifies the site); the visitor token it mints can only do what visitors can.
-     Form IDs: "Interest form (Join the team)" and "Sponsor and donation inquiry". */
-  var WIX_CLIENT_ID='38a0b75d-6959-4630-ac13-73004c094181',INTEREST_FORM_ID='140821da-28b0-4e89-9b59-fd4cdc03a63a',SPONSOR_FORM_ID='50cd51ba-cfa4-4328-8bd2-64189dbe2790';
+     Form IDs: "Interest form (Join the team)", "Sponsor and donation inquiry" and "Mentor and volunteer interest". */
+  var WIX_CLIENT_ID='38a0b75d-6959-4630-ac13-73004c094181',INTEREST_FORM_ID='140821da-28b0-4e89-9b59-fd4cdc03a63a',SPONSOR_FORM_ID='50cd51ba-cfa4-4328-8bd2-64189dbe2790',VOLUNTEER_FORM_ID='e67d9117-b213-439f-93bf-c6df04b26b18';
   var sendForm=function(formId,values){
     return fetch('https://www.wixapis.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId:WIX_CLIENT_ID,grantType:'anonymous'})})
       .then(function(r){if(!r.ok)throw new Error('token');return r.json()})
@@ -434,5 +434,20 @@
     sendForm(SPONSOR_FORM_ID,{name_c9e1:nv,company_d1f2:v('s-company'),email_e2a3:ev,phone_f3b4:v('s-phone'),message_a4c5:v('s-message')})
       .then(function(){spForm.reset();r.textContent='Thank you, '+nv.split(' ')[0]+'! Our business team will email you soon.'})
       .catch(function(){r.textContent='Sorry, something went wrong and your message was not sent. Please try again, or email operations@team6220.org.'})
+      .then(function(){btn.disabled=false;r.hidden=false})});
+  /* Mentor and volunteer form on /sponsors */
+  var vForm=document.getElementById('volunteer-form');
+  if(vForm)vForm.addEventListener('submit',function(e){e.preventDefault();
+    var v=function(id){return document.getElementById(id).value.trim()};
+    var n=document.getElementById('v-name'),m=document.getElementById('v-email'),btn=vForm.querySelector('button[type=submit]'),r=document.getElementById('v-ok');
+    var roles=Array.prototype.map.call(vForm.querySelectorAll('fieldset input:checked'),function(i){return i.value});
+    var nv=v('v-name'),ev=v('v-email'),good=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ev);
+    document.getElementById('v-name-err').hidden=!!nv;document.getElementById('v-email-err').hidden=good;document.getElementById('v-roles-err').hidden=roles.length>0;
+    n.toggleAttribute('aria-invalid',!nv);m.toggleAttribute('aria-invalid',!good);
+    if(!nv){n.focus();return}if(!good){m.focus();return}if(!roles.length){vForm.querySelector('fieldset input').focus();return}
+    btn.disabled=true;r.hidden=true;
+    sendForm(VOLUNTEER_FORM_ID,{name_f231:nv,email_4a7a:ev,phone_abd3:v('v-phone'),roles_4f41:roles,background_5f2b:v('v-background'),availability_026c:v('v-availability')})
+      .then(function(){vForm.reset();r.textContent='Thank you, '+nv.split(' ')[0]+'! We will email you about next steps.'})
+      .catch(function(){r.textContent='Sorry, something went wrong and your form was not sent. Please try again, or email operations@team6220.org.'})
       .then(function(){btn.disabled=false;r.hidden=false})});
 })();

@@ -56,6 +56,8 @@ h3{font-size:1.2rem}
 .btn-line{border-color:var(--paper);color:var(--paper);background:transparent}
 .btn-line:hover{background:var(--paper);color:var(--ink)}
 .btn-black{background:var(--ink);color:var(--gold-text)}
+.btn-grey{background:var(--brand-grey);color:#fff}
+.btn-grey:hover{background:var(--brand-grey-tertiary)}
 .btn-ghost{border-color:currentColor;background:transparent}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;color:var(--paper);border-radius:var(--r);transition:color .2s,transform .25s var(--ease)}
 .icon-btn:hover{color:var(--gold-text);transform:translateY(-3px)}
@@ -137,7 +139,7 @@ section{padding-block:clamp(var(--s5),9vw,128px)}
 .hero h1{font-size:clamp(3rem,8.4vw,6.6rem);color:var(--gold-text);max-width:12ch;line-height:1}
 .hero .eyebrow{color:var(--paper)}
 .hero .lede{margin-top:var(--s4);font-size:clamp(1.05rem,1.8vw,1.3rem);max-width:44ch;color:var(--paper)}
-.hero .ctas{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:var(--s4)}
+.hero .ctas,.page-hero .ctas{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:var(--s4)}
 .hero .credit{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:12px;font-family:var(--tech);font-size:.72rem;letter-spacing:.1em;color:var(--dim)}
 .rule{border:0;height:2px;margin:0;background:var(--gold)}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -367,6 +369,7 @@ html.intro-on .h1-echo{opacity:0}
 .reach h3{font-size:1.25rem}
 .reach p:last-child{margin:0;color:var(--dim-paper);font-size:.95rem}
 @media (max-width:900px){.reach{grid-template-columns:1fr}}
+.reach.reach-stack{grid-template-columns:1fr;margin:var(--s3) 0 0}
 /* Sponsors: packet download next to the inquiry form */
 .packet{display:grid;gap:var(--s2);align-content:start;justify-items:start}
 .packet p{margin:0;max-width:52ch}
@@ -375,6 +378,8 @@ html.intro-on .h1-echo{opacity:0}
 .field textarea:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(255,163,0,.35)}
 /* Sponsors: the wall, one group per tier */
 .wall-group+.wall-group{margin-top:var(--s4)}
+/* "Your company here": one wide button under the wall */
+.wall-cta{display:flex;justify-content:center;width:100%;margin-top:var(--s4);padding-block:22px;font-size:1rem}
 .wall-tier{font-family:var(--tech);font-weight:700;font-size:.85rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-text);margin:0 0 var(--s2)}
 .budget-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:var(--s5);align-items:start}
 .budget-wrap>*{min-width:0}
@@ -398,7 +403,10 @@ html.intro-on .h1-echo{opacity:0}
 .on-paper .copy-btn{border-color:var(--ink);color:var(--ink)}
 .give-note{font-size:.92rem;color:var(--dim-paper);margin-top:var(--s2)}
 .wall{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
-.wall li{list-style:none;display:flex;align-items:center;justify-content:center;text-align:center;min-height:120px;padding:var(--s2);background:var(--panel);border-radius:var(--r);font-family:var(--tech);font-weight:700;font-size:1.15rem;letter-spacing:.08em;text-transform:uppercase}
+/* Sponsor tiles: a lighter grey than the dark page (darker than the light page) so every logo has contrast. */
+.wall{--tile:var(--brand-grey)}
+:root[data-theme="light"] .wall{--tile:#dcdde2}
+.wall li{list-style:none;display:flex;align-items:center;justify-content:center;text-align:center;min-height:160px;padding:var(--s2);background:var(--tile);border-radius:var(--r);font-family:var(--tech);font-weight:700;font-size:1.15rem;letter-spacing:.08em;text-transform:uppercase}
 .wall li.tbd{color:var(--dim);font-size:.9rem}
 .wall{margin:0;padding:0}
 .lg{display:block;width:auto;height:auto;max-width:100%}
@@ -406,11 +414,17 @@ html.intro-on .h1-echo{opacity:0}
 .marquee .lg-simkin{height:22px}.marquee .lg-boeing{height:40px}.marquee .lg-laef{height:52px}.marquee .lg-ptsa,.marquee .lg-ctc{height:68px}.marquee .lg-lausd,.marquee .lg-runsealbeach{height:84px}
 /* Sponsors shown by name (Show as: Name, or no logo yet): capitals in the title font. */
 .marquee .lg-text,.wall .lg-text{font-family:var(--display);font-weight:400;letter-spacing:.04em;text-transform:uppercase;color:var(--paper)}
+.wall .lg-text{font-size:clamp(1.4rem,2.4vw,1.9rem);line-height:1.15}
+.marquee .lg-text{font-size:clamp(1.4rem,2.6vw,2rem)}
 /* One-color logos (#161): any single-color file is shown white on the dark page and black in light mode. Full-color logos are shown as they are. */
 img.lg-mono{filter:brightness(0) invert(1)}
+/* A sponsor with a dark-page logo (Logo on the dark page) has two images: one per theme. */
+img.lg-on-light{display:none}
+:root[data-theme="light"] img.lg-on-light{display:block}
+:root[data-theme="light"] img.lg-on-dark{display:none}
 :root[data-theme="light"] img.lg-mono{filter:brightness(0)}
-.wall .lg{max-height:72px;max-width:78%;object-fit:contain}
-.wall .lg-lausd,.wall .lg-runsealbeach{max-height:96px}
+.wall .lg{max-height:88px;max-width:78%;object-fit:contain}
+.wall .lg-lausd,.wall .lg-runsealbeach{max-height:120px}
 /* The form is a dark panel; on a light section it keeps its own white text. */
 .on-paper .form{color:var(--paper)}
 .wall li.tbd a{color:var(--gold-text);text-decoration:none}
