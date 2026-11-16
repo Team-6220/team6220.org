@@ -98,7 +98,12 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 
 ### D. Review and testing
 
-- [ ] GitHub Action: `wix preview` on every pull request, link posted on the PR; `pages.yml` removed.
+- [x] GitHub Action (`.github/workflows/wix-preview.yml`): builds with Wix and runs `wix preview` on every pull
+      request from this repo, then posts (or updates) the link as a PR comment. **To do (webmaster):** create the
+      GitHub environment `wix` (Settings → Environments) with these secrets: `WIX_API_KEY` (Wix dashboard → Account
+      settings → API keys; give it access to the site), and `WIX_CLIENT_ID`, `WIX_CLIENT_INSTANCE_ID`,
+      `WIX_CLIENT_PUBLIC_KEY`, `WIX_CLIENT_SECRET` (the values in your `.env.local`). Not yet run: the first run
+      may need tweaks to how it reads the link. `pages.yml` is removed at go-live.
 - [ ] Team test on a fresh preview (sign-in, every app, every form).
 
 ### E. Go-live (Phase 3)
