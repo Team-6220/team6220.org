@@ -1,16 +1,25 @@
 ---
-// About page: beyond our team, the "hub for all ages" part of the mission.
+// About page: beyond our team, the "hub for all ages" part of the mission. A photo on one side, the programs as cards on the other.
+import { media } from "../../lib/media";
+const PROGRAMS = [
+  { title: "Summer camps", text: "A three-week robotics camp with the Los Alamitos Education Foundation, created and run by our students." },
+  { title: "STEM Expo", text: "A campus-wide STEM event at Los Alamitos High, built with the school's other STEM clubs." },
+  { title: "Open Workshop days", text: "Hands-on engineering in our shop for students who aren't on the team." },
+  { title: "Around Los Alamitos", text: "Robot demos at community and sponsor events, and work with the district's elementary and middle schools." },
+];
 ---
 
 <section id="community">
-  <div class="wrap">
-    <div class="sec-head rv"><div><p class="eyebrow ruled">Beyond our team</p><h2 class="title-calm">STEM for all ages in Los Alamitos</h2></div><p>Our mission reaches past our own robot.</p></div>
-    <ul class="community rv">
-      <li><b>Summer camps</b><span>A three-week robotics camp with the Los Alamitos Education Foundation, created and run by our students.</span></li>
-      <li><b>STEM Expo</b><span>A campus-wide STEM event at Los Alamitos High, built with the school's other STEM clubs.</span></li>
-      <li><b>Open Workshop days</b><span>Hands-on engineering in our shop for students who aren't on the team.</span></li>
-      <li><b>Around Los Alamitos</b><span>Robot demos at community and sponsor events, and work with the district's elementary and middle schools.</span></li>
-    </ul>
-    <a class="sweep rv" href="/about/outreach">See our outreach →</a>
+  <div class="wrap community-wrap">
+    <figure class="photo-frame photo-card rv" style="margin:0"><div class="pc-in"><img src={media("team/bc010b578b.webp")} alt="Team 6220 members and visitors gathered at the pit under The Golden Griffins banner" loading="lazy"></div></figure>
+    <div>
+      <div class="rv"><p class="eyebrow ruled">Beyond our team</p><h2 class="title-calm">STEM for all ages in Los Alamitos</h2><p class="community-lede">Our mission reaches past our own robot.</p></div>
+      <div class="community">
+        {PROGRAMS.map((p, i) => (
+          <article class="rv" style={`--d:${i}`}><h3>{p.title}</h3><p>{p.text}</p></article>
+        ))}
+      </div>
+      <a class="sweep rv" href="/about/outreach">See our outreach →</a>
+    </div>
   </div>
 </section>

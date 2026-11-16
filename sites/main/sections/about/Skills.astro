@@ -9,17 +9,23 @@ const SKILLS = [
 ];
 ---
 
+<!-- Skills: a sticky column with the heading and a CAD render on the left, the list of skills on the right. -->
 <section id="skills" class="on-paper">
-  <div class="wrap">
-    <div class="sec-head rv"><div><p class="eyebrow ruled">What students learn</p><h2 class="title-calm">Real tools, real responsibility</h2></div><p>Everything we build is intentional, not perfect. Students learn the same tools and habits engineers and businesses use.</p></div>
-    <div class="skills">
+  <div class="wrap skills-wrap">
+    <div class="skills-side rv">
+      <p class="eyebrow ruled">What students learn</p>
+      <h2 class="title-calm">Real tools, real responsibility</h2>
+      <p class="muted">Everything we build is intentional, not perfect. Students learn the same tools and habits engineers and businesses use.</p>
+      <figure class="skills-render"><img src="/assets/main/1256dd39df.webp" alt="CAD render of Goober, Team 6220's 2026 robot, designed by students in Onshape" loading="lazy"><figcaption class="cap">Goober, our 2026 robot, in Onshape CAD</figcaption></figure>
+    </div>
+    <ul class="skills">
       {SKILLS.map((s, i) => (
-        <article class="rv" style={`--d:${Math.min(i, 5)}`}>
+        <li class="rv" style={`--d:${Math.min(i, 5)}`}>
           <h3>{s.area}</h3>
           <p>{s.tools}</p>
           <p class="careers"><span>Leads to</span> {s.careers}</p>
-        </article>
+        </li>
       ))}
-    </div>
+    </ul>
   </div>
 </section>

@@ -1,5 +1,6 @@
 ---
 // About page: the six team pillars (#168), in the order of the team intro deck, and the two FIRST values.
+import { media } from "../../lib/media";
 const PILLARS = [
   { title: "Student-led, student-driven", text: "Students make nearly every final decision, for the robot and for the team. Mentors bring experience, safety, and advice; they don't build the robot for us. Sure, students make more mistakes, but that means we have even more opportunities to learn." },
   { title: "Find out what you want to learn, and learn what you need to know", text: "Follow what interests you, and pick up whatever the team needs from you along the way. Nobody needs experience to start." },
@@ -8,19 +9,27 @@ const PILLARS = [
   { title: "The best idea always wins", text: "Not the idea of the most senior person, whether student or mentor. Ideas are judged on data and merit." },
   { title: "Steal from the best, innovate the rest", text: "We study the best FRC teams and proven designs, then spend our own creativity where it makes the difference." },
 ];
+const [FIRST_PILLAR, ...OTHER_PILLARS] = PILLARS;
 ---
 
 <section id="pillars" class="pillars-sec">
   <div class="wrap">
     <div class="sec-head rv"><div><p class="eyebrow ruled">How we work</p><h2 class="title-calm">Our six pillars</h2></div><p>The principles behind every decision we make, on and off the field.</p></div>
-    <ol class="pillars">
-      {PILLARS.map((p, i) => (
+    <!-- Pillar 1 is the team motto: a large gold card next to a photo. Pillars 2 to 6 follow as numbered rows. -->
+    <div class="pillar-lead">
+      <article class="pillar-one on-gold rv"><span class="pillar-num">1</span><h3>{FIRST_PILLAR.title}</h3><p>{FIRST_PILLAR.text}</p></article>
+      <figure class="photo-frame photo-card tl-l rv" style="--d:1;margin:0"><div class="pc-in"><img src={media("team/4f1c204f9c.webp")} alt="Students and mentors working on the robot in the pits, seen from above" loading="lazy"></div></figure>
+    </div>
+    <div class="pillars-grid">
+    <ol class="pillars" start="2">
+      {OTHER_PILLARS.map((p, i) => (
         <li class="rv" style={`--d:${Math.min(i, 5)}`}><h3>{p.title}</h3><p>{p.text}</p></li>
       ))}
     </ol>
     <div class="values rv">
       <p class="eyebrow">And the <i>FIRST</i> values</p>
       <p><b>Gracious Professionalism:</b> compete hard, and treat everyone with respect while you do it. <b>Coopertition:</b> help other teams even while you compete against them; we borrow tools, share parts, and fix other teams' robots in the pits.</p>
+    </div>
     </div>
   </div>
 </section>
