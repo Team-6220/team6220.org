@@ -51,8 +51,12 @@ jobs:
         working-directory: apps/goldsim
       - name: Log in to Wix
         if: steps.secrets.outputs.ready == 'true'
-        # A line break pasted after the key makes Wix reject it ("Invalid character in header content"), so strip them.
-        run: pnpm wix login --api-key "$(printf '%s' "$WIX_API_KEY" | tr -d '\r\n')"
+        # A line break or other stray character pasted with the key makes Wix reject it ("Invalid character in header
+        # content"), so keep only the characters a token is made of.
+        run: |
+          key=$(printf '%s' "$WIX_API_KEY" | tr -cd 'A-Za-z0-9._~+/=-')
+          echo "API key length: ${#WIX_API_KEY} stored, ${#key} after cleaning"
+          pnpm wix login --api-key "$key"
         env:
           WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       # `wix preview` only uploads what is already built, so always build first.
