@@ -2,7 +2,7 @@
 // The Sponsors page (#161, #162, #163). Order: why sponsor (stats and who you reach), tiers, packet + inquiry form,
 // budget, the sponsor wall grouped by tier, mentor/volunteer form, and other ways to help.
 // The forms post to Wix Forms (sites/main/scripts/site-b.js); Wix emails each submission to operations@team6220.org.
-// Sponsors, their logos and tiers: sites/main/content/sponsors.json (Site Manager). The packet: public/sponsorship-packet.pdf.
+// Sponsors, their logos, and tiers: sites/main/content/sponsors.json (Site Manager). The packet: public/sponsorship-packet.pdf.
 import { renderSponsorWall, TIERS } from "@team6220/content";
 import { media } from "../../lib/media";
 import { SPONSORS } from "../../data/sponsors";
@@ -24,11 +24,11 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
       <!-- Typed in for now. Later (UI implementation session): count the active roster in the team apps instead of a fixed number. -->
       <div><b>48</b><span>student members this season</span></div>
       <div><b>7,500</b><span>average digital impressions a month, across our social media and website</span></div>
-      <div><b>1,000s</b><span>of students, families and engineers see your logo at every <i>FIRST</i> event</span></div>
+      <div><b>1,000s</b><span>of students, families, and engineers see your logo at every <i>FIRST</i> event</span></div>
     </div>
     <div class="reach rv" aria-label="Who you reach">
-      <article><p class="eyebrow">At competitions</p><h3>On the robot, the banner and our uniforms</h3><p>Your logo travels with us to every <i>FIRST</i> event, where thousands of students, families, mentors and engineers see it in the stands and in the pits.</p></article>
-      <article><p class="eyebrow">At our own events</p><h3>Student to student</h3><p>Hundreds of face-to-face conversations at the STEM Expo, our Open Workshop days and our summer camp, with middle and high school students who love STEM.</p></article>
+      <article><p class="eyebrow">At competitions</p><h3>On the robot, the banner, and our uniforms</h3><p>Your logo travels with us to every <i>FIRST</i> event, where thousands of students, families, mentors, and engineers see it in the stands and in the pits.</p></article>
+      <article><p class="eyebrow">At our own events</p><h3>Student to student</h3><p>Hundreds of face-to-face conversations at the STEM Expo, our Open Workshop days, and our summer camp, with middle and high school students who love STEM.</p></article>
       <article><p class="eyebrow">Online</p><h3>About 7,500 impressions a month</h3><p>Sponsor posts and thank-yous on our social media, and your logo on this website all season.</p></article>
     </div>
     <div class="has-dots"><svg class="deco dots dots-tiers" aria-hidden="true"><rect width="100%" height="100%" fill="url(#dotk)"/></svg><div class="tiers">
@@ -101,7 +101,7 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
       <h2 class="title-calm">Give your time</h2>
       <p>Students lead this team, and the adults around them make it possible. Tell us how you'd like to help and we'll email you about next steps.</p>
       <div class="reach reach-stack" aria-label="Ways to help">
-        <article><p class="eyebrow">Industry mentors</p><p>Engineers and professionals who coach a subteam: design, manufacturing, programming, electrical or business. Students make the decisions; you share what you know.</p></article>
+        <article><p class="eyebrow">Industry mentors</p><p>Engineers and professionals who coach a subteam: design, manufacturing, programming, electrical, or business. Students make the decisions; you share what you know.</p></article>
         <article><p class="eyebrow">Parent volunteers</p><p>Help at competitions, with food and driving, with fundraising, or through the booster club.</p></article>
         <article><p class="eyebrow">Alumni</p><p>Come back to help with fall training, at events, or as a mentor for the subteam you were on.</p></article>
       </div>
@@ -127,8 +127,8 @@ const PACKET = { href: "/sponsorship-packet.pdf", title: "2026 Sponsorship Packe
 <section id="wishlist" class="on-gold">
   <div class="wrap rv">
     <p class="eyebrow ruled">Other ways to help</p>
-    <h2 class="title-calm">Materials, time and know-how count too</h2>
-    <p class="wish-text">Raw stock, machining time, electronics, software licenses, shipping and mentoring hours all count toward the same tiers as a cash gift. Or pick something from our Amazon wishlist: it lists the parts, tools, and supplies our students use to build and maintain the robot.</p>
+    <h2 class="title-calm">Materials, time, and know-how count too</h2>
+    <p class="wish-text">Raw stock, machining time, electronics, software licenses, shipping, and mentoring hours all count toward the same tiers as a cash gift. Or pick something from our Amazon wishlist: it lists the parts, tools, and supplies our students use to build and maintain the robot.</p>
     <div class="sponsor-cta" style="margin-top:0">
       <a class="btn btn-black" href="https://www.amazon.com/hz/wishlist/ls/2XCLFBYGO6WMT" target="_blank" rel="noopener">Open our Amazon wishlist ↗</a>
       <a class="btn btn-grey" href="#volunteer">Mentor or volunteer</a>
