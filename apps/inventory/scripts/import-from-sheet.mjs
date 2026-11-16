@@ -18,6 +18,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { META_COLLECTION, TABLES, wixCollectionDefinitions } from "../../../packages/data/src/inventory/schema.ts";
 import { toWixItem } from "../../../packages/data/src/inventory/wix-mapping.ts";
 import { checkReferences, findCsvFile, readTable } from "./lib/sheet.mjs";
@@ -251,7 +252,7 @@ async function main() {
   console.log("\nImport finished. Open /apps/inventory (with PUBLIC_INVENTORY_BACKEND=wix) and spot-check a few items.");
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname);
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   main().catch((e) => {
     console.error(`\nStopped: ${e.message}`);
