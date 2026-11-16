@@ -38,7 +38,7 @@ How the look of the site is controlled today, exactly which files to edit to cha
   when it is not loaded), `<Icon name="x" />` from `@team6220/ui` in React. To add one, add a line to the list in that file.
 - **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`). The
   Karnivore file everywhere (`packages/assets/fonts/`, GoldSim's copy, Inventory's embedded copy) is **KarnivoreGold**, the
-  team's version with a plain zero. Numbers use it too. Karnivore draws `·` as a 5, so don't put a middle dot in titles.
+  team's version with a plain zero. Numbers use it too. KarnivoreGold also fixes the middle dot `·`, which the original drew like a 5.
 
 ## The short version
 
