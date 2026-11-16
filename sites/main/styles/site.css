@@ -344,24 +344,27 @@ html.intro-on .h1-echo{opacity:0}
 .branch ul{list-style:none;margin:var(--s2) 0 0;padding:0;display:grid;gap:var(--s2)}
 .branch h3{font-size:1.2rem;margin:0 0 4px}
 .branch p{margin:0;color:var(--dim)}
-/* Leadership diagram: boxes joined by gold lines. Captains stack in the middle, then the two branches side by side. */
+/* Leadership diagram: plain text joined by gold lines (not boxes, so nothing looks clickable). Captains stack in the middle,
+   then the two branches side by side; each branch's leads hang off a line that starts under the branch name and ends in a corner. */
 .org{--ln:2px solid var(--gold);margin:0 auto var(--s4);max-width:760px;display:grid;justify-items:center}
-.org-node{margin:0;padding:10px 20px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r);font-weight:700;text-align:center}
+.org-node{margin:0;padding:4px 0;font-weight:700;text-align:center}
+.org-top{font-family:var(--display);color:var(--gold-text);font-size:1.3rem;text-transform:uppercase;letter-spacing:.04em}
 .org-node+.org-node,.org-node+.org-split{position:relative;margin-top:28px}
-.org-node+.org-node::before,.org-split::before{content:"";position:absolute;left:50%;top:-29px;height:28px;border-left:var(--ln)}
-.org-top{background:var(--gold);color:#000;border-color:var(--gold)}
+.org-node+.org-node::before,.org-split::before{content:"";position:absolute;left:50%;top:-29px;height:26px;border-left:var(--ln)}
 .org-split{--g:var(--s3);width:100%;display:grid;grid-template-columns:1fr 1fr;gap:var(--g);padding-top:28px}
-.org-split::before{top:-28px}
+.org-split::before{top:-27px}
 .org-split::after{content:"";position:absolute;top:0;left:calc((100% - var(--g)) / 4);right:calc((100% - var(--g)) / 4);border-top:var(--ln)}
-.org-col{position:relative;display:grid;justify-items:center;align-content:start}
+.org-col{position:relative;justify-self:center;width:max-content;max-width:100%}
 .org-col::before{content:"";position:absolute;left:50%;top:-28px;height:28px;border-left:var(--ln)}
-.org-branch{font-family:var(--display);color:var(--gold-text);text-transform:uppercase;letter-spacing:.06em;border-color:var(--gold)}
-.org-col ul{list-style:none;margin:16px 0 0;padding:0 0 0 18px;border-left:var(--ln);display:grid;gap:10px;justify-self:center}
-.org-col li{position:relative;padding:8px 14px;background:var(--ink);border:1px solid var(--line);border-radius:var(--r);font-weight:600}
-.org-col li::before{content:"";position:absolute;left:-19px;top:50%;width:18px;border-top:var(--ln)}
-.org-col li small{display:block;font-weight:500;color:var(--dim)}
+.org-branch{margin:0;padding:6px 8px 8px;border-top:var(--ln);border-bottom:var(--ln);font-family:var(--display);font-size:1.15rem;color:var(--gold-text);text-transform:uppercase;letter-spacing:.06em;text-align:center}
 .org-branch small{display:block;font-family:var(--body);font-size:.72rem;font-weight:600;letter-spacing:.12em;color:var(--dim);margin-top:2px}
-@media (max-width:560px){.org-split{--g:12px}.org-col li{padding:8px 10px;font-size:.9rem}}
+.org-col ul{list-style:none;margin:0;padding:0 0 0 24px}
+.org-col li{position:relative;padding-top:14px;font-weight:600;line-height:1.5}
+.org-col li::before{content:"";position:absolute;left:-23px;top:0;width:16px;height:calc(14px + .75em);border-left:var(--ln);border-bottom:var(--ln)}
+.org-col li:not(:last-child)::after{content:"";position:absolute;left:-23px;top:0;bottom:0;border-left:var(--ln)}
+.org-col li small{display:block;font-weight:500;color:var(--dim)}
+.branch .branch-intro{margin:var(--s2) 0 0}
+@media (max-width:560px){.org-split{--g:12px}.org-col li{font-size:.9rem}.org-branch{font-size:1rem;padding-inline:4px}}
 .mentors{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
 @media (max-width:900px){.mentors{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.mentors{grid-template-columns:1fr}}
