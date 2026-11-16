@@ -20,7 +20,8 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 | Reviewing changes | A **Wix preview link on every pull request** (GitHub Action) | GitHub Pages can't run the server-side site. dev.team6220.org stays at its last version and is removed at go-live |
 | Wix CLI | Runs on a webmaster's computer (Node 24), shared with Claude through Remote Control | The CLI needs a Wix login |
 | Form emails | Stay with operations@team6220.org | Topic groups (#216) can come later |
-| Old Wix apps | Remove **Wix Hotels** and **Wix Invoices** (unused) | They wouldn't show on the new site anyway |
+| Old Wix apps | Leave **Wix Hotels** and **Wix Invoices** alone | They're hidden system pieces (not visible in the dashboard) and don't show on the new site |
+| Open signups (#100) | **Manual approval stays on** until inventory is locked (below), then anyone may sign up | All 17 `inventory_*` collections let any signed-in member write. Today manual approval is the only lock |
 | Go-live | As soon as the preview passes team testing | Leaves the most time before kickoff (Jan 9) |
 
 ## Limits that shape the code (from Wix's docs)
@@ -38,12 +39,12 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 
 ### A. Before any code (webmaster)
 
-- [ ] Install **Node 24** (24.22.1 or newer).
+- [x] Install **Node 24** (24.22.1 or newer).
 - [ ] Share `team6220.org` with Claude: Claude desktop app → Settings → Claude Code → Remote Control.
-- [ ] Wix dashboard → Settings → Development & integrations → **Headless Settings → Start Migration**. Check the
+- [x] Wix dashboard → Settings → Development & integrations → **Headless Settings → Start Migration** (done Nov 16; preview site `e2f3631f-a8c5-4c5a-bea2-bc77ade591a3`, in `wix.config.json`). Check the
       supported/unsupported apps list and copy the prompt it gives.
-- [ ] Site members settings: sign-in with **Google and email**, Facebook off; keep "Only people I manually approve".
-- [ ] Remove the Wix Hotels and Wix Invoices apps.
+- [x] Site members settings: sign-in with **Google and email**; "Only people I manually approve" (on again, Nov 16, until inventory is locked).
+- [x] Facebook sign-in off: in the current site's Wix Editor → Signup & Login settings → Social → turn off Facebook → Publish.
 
 ### B. Wire the repo to Wix (on the shared computer)
 
@@ -63,6 +64,7 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
       `packages/data` stays the only code that calls them.
 - [ ] Timer endpoint(s) for the Apps Script triggers, checked with a shared secret.
 - [ ] GitHub webhook endpoint with signature checking.
+- [ ] **Inventory behind the server (#100):** the app's writes go through `/api/inventory` (Team Member badge checked), and every `inventory_*` collection becomes Admin-only for writes. Check the other app collections the same way. Only then turn on open signups.
 - [ ] Cookie policy set to essential-only; a small notice with a link to choose.
 - [ ] Apollo repo: point its team-apps calls at the new address.
 
