@@ -5,7 +5,7 @@ Brand media that **any** part of the site (main site or any app) may use. Nothin
 | Folder | URL on the site | Contents |
 | --- | --- | --- |
 | `logos/` | `/assets/shared/logos/<file>` | Logo variations from the team's logo kit, with their original file names (`6220LogoGold.png`, `Lockups/DoubleLockup2.svg`, ...) |
-| `fonts/` | `/assets/shared/fonts/<file>` | `Karnivore.ttf` |
+| `fonts/` | `/assets/shared/fonts/<file>` | `Karnivore.ttf` (the team's KarnivoreGold version: plain zero, fixed middle dot) |
 | `loader/` | `/assets/shared/loader/<file>` | The page-change loader's spin video (`pgl-spin.webm`, `.mp4`) |
 | `favicon/` | `/favicon.ico`, `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`, `/icon-512.png` and the wing set `/favicon-wing.svg`, `/favicon-wing-32.png`, `/apple-touch-icon-wing.png` | Browser tab and home-screen icons. The main site uses the gold logo; the team apps use the gold wing |
 

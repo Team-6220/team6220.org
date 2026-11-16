@@ -325,11 +325,14 @@
   if(sc&&ROBOTS.length){var rtabs=[].slice.call(sc.querySelectorAll('.rtab')),rI=0;
     var fill=function(i){var r=ROBOTS[i];var im=document.getElementById('rs-img');var iu=null;try{iu=new URL(r.img,location.href)}catch(err){}if(iu&&/^https?:$/.test(iu.protocol))im.src=iu.href;im.alt=r.alt;
       document.getElementById('rs-season').textContent=r.year;document.getElementById('rs-plate').textContent=r.year+' · '+r.game;document.getElementById('rs-game').textContent=r.game;
-      document.getElementById('rs-name').textContent=r.name;var qc=document.getElementById('rs-quip-c');if(qc)qc.textContent='a teammate, on '+r.name;document.getElementById('rs-finish').textContent=r.finish;var q=document.getElementById('rs-quip');if(r.quip){document.getElementById('rs-quip-t').textContent='“'+r.quip+'”';q.hidden=false}else{q.hidden=true}
+      document.getElementById('rs-name').textContent=r.name;var qc=document.getElementById('rs-quip-c');if(qc)qc.textContent='a teammate, on '+r.name;document.getElementById('rs-finish').textContent=r.finish;
+      var note=document.getElementById('rs-note');note.textContent=r.note;note.hidden=!r.note;
+      document.getElementById('rs-record').textContent=r.record;document.getElementById('rs-matches').textContent=r.matches;
+      var aw=document.getElementById('rs-awards');aw.innerHTML='';r.awards.forEach(function(a){var li=document.createElement('li');li.textContent=a;aw.appendChild(li)});document.getElementById('rs-awards-row').hidden=!r.awards.length;var q=document.getElementById('rs-quip');if(r.quip){document.getElementById('rs-quip-t').textContent='“'+r.quip+'”';q.hidden=false}else{q.hidden=true}
       var ul=document.getElementById('rs-events');ul.innerHTML='';r.events.forEach(function(e){var li=document.createElement('li');li.textContent=e;ul.appendChild(li)});
       var ph=document.getElementById('rs-photos');ph.href=r.album?'/resources/media#'+r.album:'/resources/media';
       var cad=document.getElementById('rs-cad');if(cad){var cu=null;try{cu=r.cad?new URL(r.cad,location.href):null}catch(err){}if(cu&&/^https?:$/.test(cu.protocol)){cad.href=cu.href;cad.hidden=false}else{cad.removeAttribute('href');cad.hidden=true}}ph.textContent=r.album?'See '+r.year+' photos →':'See all photos →';
-      document.getElementById('robot-panel').setAttribute('aria-labelledby','rtab-'+r.year)};
+      document.getElementById('robot-panel').setAttribute('aria-labelledby','rtab-'+r.key)};
     var pick=function(i,focus){i=(i+ROBOTS.length)%ROBOTS.length;if(i===rI&&!focus)return;rI=i;
       rtabs.forEach(function(b,k){b.setAttribute('aria-selected',String(k===i));b.tabIndex=k===i?0:-1});if(focus)rtabs[i].focus();
       if(!motionOK){fill(i);return}sc.classList.add('swap');setTimeout(function(){fill(i);sc.classList.add('drop');sc.classList.remove('swap');requestAnimationFrame(function(){requestAnimationFrame(function(){sc.classList.remove('drop')})})},200)};
@@ -339,8 +342,8 @@
     var rsx=null,si=sc.querySelector('.stage-img');si.addEventListener('pointerdown',function(e){rsx=e.clientX});
     si.addEventListener('pointerup',function(e){if(rsx===null)return;var dx=e.clientX-rsx;rsx=null;if(Math.abs(dx)>50)pick(rI+(dx<0?1:-1))});
     ROBOTS.forEach(function(r){var p=new Image();p.src=r.img});
-    /* /robots#2025 opens that season */
-    var byHash=function(){var y=location.hash.slice(1),k=-1;ROBOTS.forEach(function(r,i){if(r.year===y)k=i});return k};
+    /* /robots#2025 opens that season's first robot; /robots#2025-sbaghettio a robot by its key */
+    var byHash=function(){var y=location.hash.slice(1),k=-1;ROBOTS.forEach(function(r,i){if(k<0&&(r.key===y||r.year===y))k=i});return k};
     var h0=byHash();if(h0>0){rI=h0;rtabs.forEach(function(b,k){b.setAttribute('aria-selected',String(k===h0));b.tabIndex=k===h0?0:-1})}fill(rI);
     addEventListener('hashchange',function(){var k=byHash();if(k>=0){pick(k);sc.scrollIntoView({behavior:motionOK?'smooth':'auto'})}});if(typeof dio!=='undefined'&&dio)dio.observe(document.getElementById('stage-img'))}
   /* ---- Gallery: albums, filter, album view, lightbox ---- */

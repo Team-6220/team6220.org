@@ -4,7 +4,7 @@ A Web Admin app at `/apps/site` where webmasters change the website's regular co
 It started as an idea at the end of issue #69 ("Maybe a new app dedicated to site management"). The more
 the backend grows, the more the team needs it, so it now has its own plan.
 
-**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112) and **Merch** (#113) editors and the image uploader are built. Today the app runs in
+**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112), **Merch** (#113) and **Robots** (#159) editors and the image uploader are built. Today the app runs in
 **demo mode**: it validates, shows what would change and says "demo: no pull request is opened". It starts opening real
 pull requests once the Phase 2 server (`output: "server"`) and the GitHub App exist (see "Turn on real pull requests").
 Resources follows (#114): each remaining area is one more area (see "Add a new editable area").
@@ -43,6 +43,20 @@ Sponsors page and in the scrolling strip on the home page (all three places read
   Leave it empty for a new sponsor; the default size applies.
 - The "Your company here" tile and the tier cards are page layout, not part of this list.
 
+### Editing robots
+
+Pick **Robots**. Each entry is one robot on `/robots`, newest first; the first one is also the "Latest robot" card on the
+home page. **Up** and **Down** set the order of the tabs.
+
+- **Season** is the year (`2026`). It is also the link: `/robots#2026`. When one season has two robots (2025: Nessie and
+  Sbaghettio), the second one's link is `/robots#2025-sbaghettio`.
+- **Wins**, **Losses** and **Ties** count every match that robot played that season: official and offseason events,
+  qualifications and playoffs. **Matches played** on the page is their sum. Type them in by hand after each event; nothing
+  loads from The Blue Alliance or match13 (team decision, #159). The 2016–2026 numbers were copied once from match13 in Nov 2026.
+- **Awards** is a list; leave it empty when there were none. Write each one as `Award · Event`.
+- **Photo or CAD render** is optional. Without one the card shows the team logo.
+- **Note** is an optional line under the name (Sbaghettio: "The LAEF FRC Robotics Summer Camp robot, built in 3 weeks").
+
 ### Editing merch
 
 Pick **Merch**. Each entry is one card on `/merch`; **Up** and **Down** set the order (the grid reads left to right, row by
@@ -78,7 +92,7 @@ Sponsors) are out of scope for now (team decision, Nov 2026).
 | Sponsors | `sections/sponsors/Sponsors.astro`, home marquee | logo (color) per sponsor, name, tier, link, order, season | Yes |
 | Merch | `sections/merch/Merch.astro` (hand-written) | item, image, price, link, order | Yes |
 | Resources and links | `sites/main/data/resources.ts` | sections, links, archive items, order | Yes |
-| Robots | `sites/main/data/robots.ts` | year, game, name, finish, events, album, image, alt, CAD link, quote | Later |
+| Robots | `sites/main/content/robots.json` | season, game, name, note, best finish, events, wins/losses/ties, awards, photo, album, CAD link, quote | Built (#159) |
 | History / timeline | `sections/about/History.astro` | entries (year, title, text), newest first | Later |
 | Gallery | Wix Media / Google Drive (#8) | which album folders appear and in what order | Later |
 
@@ -132,7 +146,7 @@ exist, previews are the Phase 2 PR previews, and the live site stays static and 
    GitHub API) with a mock mode for local development, `/api/site` with the badge check, the `/apps/site`
    shell and a dashboard card.
 2. **Summer camp**, then **Sponsors**, then **Merch**, then **Resources and links** (first batch).
-3. **Later:** Robots, History, Gallery albums.
+3. **Later:** History, Gallery albums. (Robots is built, #159.)
 
 Each area is its own issue: convert the content to JSON, make the page read it, build the form, and check
 the page is identical before and after.
