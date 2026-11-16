@@ -1,0 +1,222 @@
+{
+  "robots": [
+    {
+      "year": "2026",
+      "game": "REBUILT",
+      "name": "Goober",
+      "note": "",
+      "finish": "CA District Los Angeles Event · 3rd place",
+      "homeFinish": "LA District Event · 3rd place",
+      "events": [
+        "CA District Los Angeles Event",
+        "CA District Orange County Event",
+        "FIRST California Southern State Championship",
+        "SoCal Showdown",
+        "Beach Blitz"
+      ],
+      "wins": 26,
+      "losses": 38,
+      "ties": 0,
+      "awards": [],
+      "image": "1256dd39df.webp",
+      "alt": "CAD render of Goober, Team 6220's 2026 robot",
+      "album": "",
+      "cad": "https://cad.onshape.com/documents/cfcf30c88841d74e4322e2ee/w/0293e4f8d98a6db63dfa9e5e/e/e391d6c1d5b644ac4d583e63",
+      "quip": ""
+    },
+    {
+      "year": "2025",
+      "game": "REEFSCAPE",
+      "name": "Nessie",
+      "note": "",
+      "finish": "Los Angeles Regional · Rank 39",
+      "homeFinish": "",
+      "events": [
+        "Los Angeles Regional",
+        "Beach Blitz"
+      ],
+      "wins": 6,
+      "losses": 14,
+      "ties": 0,
+      "awards": [],
+      "image": "29c743c6a0.webp",
+      "alt": "CAD render of Nessie, Team 6220's 2025 robot",
+      "album": "beach-blitz-2025",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2025",
+      "game": "REEFSCAPE",
+      "name": "Sbaghettio",
+      "note": "The LAEF FRC Robotics Summer Camp robot, built in 3 weeks",
+      "finish": "SoCal Showdown · 7th place",
+      "homeFinish": "",
+      "events": [
+        "SoCal Showdown"
+      ],
+      "wins": 5,
+      "losses": 6,
+      "ties": 0,
+      "awards": [],
+      "image": "",
+      "alt": "",
+      "album": "socal-showdown-2025",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2024",
+      "game": "CRESCENDO",
+      "name": "George",
+      "note": "",
+      "finish": "Orange County Regional · 5th place",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "Beach Blitz"
+      ],
+      "wins": 8,
+      "losses": 14,
+      "ties": 0,
+      "awards": [],
+      "image": "750ea7b708.webp",
+      "alt": "CAD render of George, Team 6220's 2024 robot",
+      "album": "oc-regional-2024",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2023",
+      "game": "CHARGED UP",
+      "name": "2023 robot",
+      "note": "",
+      "finish": "Orange County Regional · 2nd place",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "SoCal Showdown",
+        "Beach Blitz"
+      ],
+      "wins": 19,
+      "losses": 19,
+      "ties": 0,
+      "awards": [
+        "Regional Finalist · Orange County Regional"
+      ],
+      "image": "",
+      "alt": "",
+      "album": "oc-regional-2023",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2022",
+      "game": "RAPID REACT",
+      "name": "2022 robot",
+      "note": "",
+      "finish": "Beach Blitz · Semifinals",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "Beach Blitz"
+      ],
+      "wins": 10,
+      "losses": 13,
+      "ties": 0,
+      "awards": [
+        "Against All Odds Award · Beach Blitz"
+      ],
+      "image": "",
+      "alt": "",
+      "album": "beach-blitz-2022",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2019",
+      "game": "DESTINATION: DEEP SPACE",
+      "name": "2019 robot",
+      "note": "",
+      "finish": "Orange County Regional · Rank 31",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "Beach Blitz"
+      ],
+      "wins": 9,
+      "losses": 11,
+      "ties": 0,
+      "awards": [],
+      "image": "fc1361c0d9.webp",
+      "alt": "CAD render of Team 6220's 2019 robot",
+      "album": "oc-regional-2019",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2018",
+      "game": "FIRST POWER UP",
+      "name": "2018 robot",
+      "note": "",
+      "finish": "Beach Blitz · Quarterfinals (alliance captain)",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "Beach Blitz"
+      ],
+      "wins": 11,
+      "losses": 12,
+      "ties": 0,
+      "awards": [],
+      "image": "",
+      "alt": "",
+      "album": "power-up-2018",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2017",
+      "game": "FIRST STEAMWORKS",
+      "name": "2017 robot",
+      "note": "",
+      "finish": "Orange County Regional · Rank 41",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional"
+      ],
+      "wins": 3,
+      "losses": 6,
+      "ties": 1,
+      "awards": [],
+      "image": "",
+      "alt": "",
+      "album": "steamworks-2017",
+      "cad": "",
+      "quip": ""
+    },
+    {
+      "year": "2016",
+      "game": "FIRST STRONGHOLD",
+      "name": "Sam Jenkins",
+      "note": "",
+      "finish": "Orange County Regional · 1st place",
+      "homeFinish": "",
+      "events": [
+        "Orange County Regional",
+        "FIRST Championship, Newton Division"
+      ],
+      "wins": 13,
+      "losses": 16,
+      "ties": 0,
+      "awards": [
+        "Regional Winner · Orange County Regional"
+      ],
+      "image": "",
+      "alt": "",
+      "album": "stronghold-2016",
+      "cad": "",
+      "quip": ""
+    }
+  ]
+}

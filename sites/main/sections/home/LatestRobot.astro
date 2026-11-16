@@ -1,5 +1,5 @@
 ---
-// "Latest robot" card: the first entry in sites/main/data/robots.ts.
+// "Latest robot" card: the first robot in sites/main/content/robots.json (loaded by sites/main/data/robots.ts).
 import { ROBOTS } from "../../data/robots";
 const r = ROBOTS[0];
 ---
@@ -9,7 +9,7 @@ const r = ROBOTS[0];
     <div class="rv">
       <p class="eyebrow">Latest robot</p>
       <h2 class="title-calm" style="margin:12px 0 0">Built by students, start to finish</h2><svg class="swoosh" viewBox="0 0 240 24" aria-hidden="true"><path d="M2,19 Q120,20 222,5 A8,8 0 1,1 226,20 Q120,24 2,19 Z" fill="currentColor"/></svg>
-      <p style="color:var(--dim);max-width:46ch;margin-top:var(--s3)">Every January FIRST releases a new game. We design the robot in CAD, machine and wire it in our workshop, and program it before our first event.</p>
+      <p style="color:var(--dim);max-width:46ch;margin-top:var(--s3)">Every January <i>FIRST</i> releases a new game. We design the robot in CAD, machine and wire it in our workshop, and program it before our first event.</p>
       <a class="btn btn-gold" href="/robots" style="margin-top:var(--s3)">All our robots</a>
     </div>
     <article class="spec rv" style="--d:1">
@@ -17,7 +17,7 @@ const r = ROBOTS[0];
       <div class="spec-body">
         <div class="spec-top"><span class="season">{r.year}</span><span class="game">{r.game}</span></div>
         <h3>{r.name}</h3>
-        <dl><div><dt>Best finish</dt><dd>{r.homeFinish ?? r.finish}</dd></div></dl>
+        <dl><div><dt>Best finish</dt><dd>{r.homeFinish}</dd></div></dl>
       </div>
     </article>
   </div>

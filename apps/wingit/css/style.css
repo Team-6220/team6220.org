@@ -18,7 +18,7 @@
   --text: #ffffff;
   --track: #000000;
   --primary-hover: #ffffff;
-  --gold-text: #ffa300; /* gold used as TEXT; darker in the light theme so it can be read */
+  --gold-text: #ffa300; /* gold used as TEXT: always Primary Gold, in both themes */
   color-scheme: dark;
   --font-title: "Karnivore", "Segoe UI", Arial, sans-serif; /* always UPPERCASE */
   --font-body: "Jura", "Segoe UI", Arial, sans-serif;
@@ -29,7 +29,7 @@
   --text: #000000;
   --track: #e6e7eb;
   --primary-hover: #ffd58a;
-  --gold-text: #8a5a00;
+  --gold-text: #ffa300; /* always Primary Gold (team decision, Nov 2026) */
   --gray-1: #f3f3f5;
   --gray-2: #ffffff;
   --gray-3: #e6e7eb;

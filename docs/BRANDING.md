@@ -24,7 +24,7 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - **Main site light mode**: the button is the last item of the footer's bottom line (next to "Replay intro"). It names the
   mode it switches to. Light mode is the end of `sites/main/styles/site.css`: it changes the color variables
   (`--ink` is the surface, `--paper` the text) and lists the parts that keep their dark look (photo banners, gold boxes,
-  the grey "paper" sections). Gold used as text is `var(--gold-text)`, a darker gold on the light page. Sponsor logos are
+  the grey "paper" sections). Gold used as text is `var(--gold-text)`; it is always Primary Gold `#ffa300`, on the light page too (team decision, Nov 2026). Sponsor logos are
   white-only files, so they are inverted on the light page until color versions exist (#161).
 - **Sidebar**: every app shows the same sidebar (`packages/assets/scripts/app-sidebar.js`, styles in
   `packages/assets/styles/app-sidebar.css`): main site, all apps, then fullscreen, light/dark and account at the bottom.
@@ -36,7 +36,9 @@ How the look of the site is controlled today, exactly which files to edit to cha
 - **Icons**: the team icon set is the Inventory's style (decided in #137): `packages/assets/scripts/icons.js`, 24px grid, 1.8 stroke.
   Use it everywhere an app needs an icon: `team6220Icons.svg("x")` in plain JavaScript (WingIt and GoldSim fall back to text
   when it is not loaded), `<Icon name="x" />` from `@team6220/ui` in React. To add one, add a line to the list in that file.
-- **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`).
+- **Fonts**: Karnivore for titles (class `t-title` or `var(--font-title)`), Jura for body text (`var(--font-body)`). The
+  Karnivore file everywhere (`packages/assets/fonts/`, GoldSim's copy, Inventory's embedded copy) is **KarnivoreGold**, the
+  team's version with a plain zero. Numbers use it too. Karnivore draws `·` as a 5, so don't put a middle dot in titles.
 
 ## The short version
 
