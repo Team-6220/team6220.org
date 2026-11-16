@@ -6,7 +6,7 @@
    Single committed look (brand is black + gold). Colors come from the official palette in
    packages/ui/src/tokens.css (the --brand-* variables); change a brand color there, not here. */
 :root{
-  --gold-text:var(--brand-gold); /* gold used as TEXT; darker in light mode so it can be read */
+  --gold-text:var(--brand-gold); /* gold used as TEXT: always Primary Gold #ffa300, in both themes */
   --gold:var(--brand-gold); --gold-hot:var(--brand-gold-secondary); --ink:var(--brand-black); --paper:var(--brand-white); --blue:var(--brand-blue);
   --grey:var(--brand-grey); --grey-2:var(--brand-grey-tertiary); --grey-light:var(--brand-grey-light);
   --panel:var(--brand-panel); --panel-2:var(--brand-panel-2); --line:var(--grey);
@@ -349,7 +349,7 @@ html.intro-on .h1-echo{opacity:0}
 .why{display:grid;grid-template-columns:repeat(3,1fr);border-block:2px solid var(--ink);margin-bottom:var(--s4)}
 .why div{padding:var(--s3) 20px;border-left:1px solid var(--grey-light);min-width:0}
 .why div:first-child{border-left:0}
-.why b{display:block;font-family:"Orbitron",var(--display);font-weight:800;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.why b{display:block;font-family:var(--display);font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
 .why span{display:block;margin-top:6px;font-size:.92rem;color:var(--dim-paper)}
 @media (max-width:700px){.why{grid-template-columns:1fr}.why div{border-left:0}.why div+div{border-top:1px solid var(--grey-light)}}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);align-items:stretch}
@@ -468,12 +468,17 @@ h2.winged .wing svg{width:1.07em;height:.9em}
 .frc-band{background:var(--ink)}
 .frc-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:var(--s5);align-items:center}
 .frc-grid>*{min-width:0}
-.first-logo{width:100%;max-width:440px;height:auto;justify-self:center}
+/* FIRST logo (#92): clear space around it at least the height of the "F" (FIRST brand guidelines); never recolor or crop it. */
+.first-logo{width:100%;max-width:340px;justify-self:center;padding:clamp(16px,3vw,32px)}
+.first-logo img{display:block;width:100%;height:auto}
+.first-logo-light{display:none!important}
+:root[data-theme="light"] .first-logo-dark{display:none!important}
+:root[data-theme="light"] .first-logo-light{display:block!important}
 .frc-quote{margin:var(--s3) 0 0;font-size:clamp(1.2rem,2.2vw,1.6rem);line-height:1.4;color:var(--paper);max-width:34ch}
 .frc-body{margin-top:var(--s2);color:var(--dim);font-size:1.05rem;max-width:56ch}
 .frc-cite{display:block;margin-top:12px;font-family:var(--tech);font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-text)}
 .frc-more{display:inline-block;margin-top:var(--s3);font-family:var(--tech);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.88rem;color:var(--gold-text)}
-@media (max-width:800px){.frc-grid{grid-template-columns:1fr;gap:var(--s4)}.first-logo{max-width:300px;justify-self:start}}
+@media (max-width:800px){.frc-grid{grid-template-columns:1fr;gap:var(--s4)}.first-logo{max-width:240px;justify-self:start}}
 
 
 /* ===== Swoosh variants + rules ===== */
@@ -504,18 +509,22 @@ h2.winged{gap:.55em}
 .stage:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
 .stage-img{position:relative;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;border-radius:var(--r);background:radial-gradient(ellipse 58% 16% at 50% 86%,rgba(255,163,0,.26),rgba(255,163,0,0) 72%),var(--panel-2);overflow:hidden;touch-action:pan-y}
 .stage-img img{width:88%;height:88%;object-fit:contain;transition:transform .35s var(--ease),opacity .35s var(--ease)}
-.stage-info{min-width:0;transition:opacity .35s var(--ease)}
+.stage-info{min-width:0;transition:opacity .35s var(--ease);container-type:inline-size}
 .showcase.swap .stage-img img{opacity:0;transform:translateX(24px)}
 .showcase.swap .stage-info{opacity:0}
 .rs-tag{display:flex;gap:12px;align-items:center;font-family:var(--tech);font-weight:700;letter-spacing:.12em;font-size:.8rem}
 .rs-tag .season{background:var(--gold);color:var(--ink);padding:3px 9px}
 .rs-tag .game{color:var(--gold-text)}
-.rs-name{display:flex;justify-content:flex-start;font-size:clamp(1.8rem,3.4vw,2.8rem);margin:18px 0 var(--s3);color:var(--paper)}
+/* The name shrinks with the column so long names (SBAGHETTIO) don't run into the wings. */
+.rs-name{display:flex;justify-content:flex-start;font-size:min(2.8rem,7.5cqi);margin:18px 0 var(--s3);color:var(--paper)}
 .rs-name .wing svg{width:1.05em;height:.88em}
 .rs-quip{margin:-6px 0 var(--s3);padding:2px 0 2px 14px;border-left:3px solid var(--gold);max-width:40ch}
 .rs-quip p{margin:0;font-family:var(--tech);font-weight:700;font-size:1.02rem;letter-spacing:.02em;color:var(--paper);text-transform:lowercase}
 .rs-quip cite{display:block;margin-top:4px;font-style:normal;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 @media (max-width:900px){.rs-quip{margin-inline:auto;text-align:left}}
+.rs-note{margin:-8px 0 var(--s3);color:var(--dim);max-width:46ch}
+.rs-note[hidden],.rs-dl div[hidden]{display:none}
+.rs-unit{color:var(--dim);font-size:.8em;letter-spacing:.08em}
 .rs-dl{margin:0;display:grid}
 .rs-dl div{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .rs-dl dt{font-family:var(--tech);font-weight:600;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding-top:3px}
@@ -818,7 +827,7 @@ html.intro-on{overflow:hidden}
   --panel:#f0f1f3; --panel-2:#e6e7eb;
   --line:var(--brand-grey-light);
   --dim:var(--brand-grey-tertiary);
-  --gold-text:#8a5a00;
+  --gold-text:var(--brand-gold); /* always Primary Gold, also on the light page (team decision, Nov 2026) */
 }
 :root[data-theme="light"] :is(.hero,.banner,.door,.on-gold,.on-paper,.btn-gold,.skip,.ph-tag,.season,.ch-yr,.stage-img,.ph-tile){
   --ink:#000; --paper:#fff;

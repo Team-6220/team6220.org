@@ -15,7 +15,9 @@ and are not covered by the MIT license. Don't reuse them without the team's perm
 **Third-party material keeps its own license**, for example:
 
 - Sponsor and *FIRST* logos in `sites/main/media/` belong to their owners and are used with permission.
-- The Karnivore font (`packages/assets/fonts/`) is under its own font license.
+- The Karnivore font (`packages/assets/fonts/Karnivore.ttf`, Apostrophic Laboratories) is under its own font license. The file
+  we ship is **KarnivoreGold**: Karnivore with two changes made for the team's branding (the zero has no dot, so "6220"
+  reads the same as on our banners, and the middle dot `·` is a small square instead of a 5-like shape). It is not sold or offered as a font of its own.
 - `backend/apps-script/attendance/` started from a bpwebs.com QR-scanner template and loads the
   [html5-qrcode](https://github.com/mebjas/html5-qrcode) library (Apache 2.0).
 - Dependencies installed by pnpm/npm are under their own licenses.
