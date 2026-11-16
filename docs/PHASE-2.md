@@ -100,7 +100,7 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
       Where Wix's consent manager exists it keeps everything except essential cookies off until the visitor chooses, and
       shows a small notice (Allow analytics / No thanks); the choice is remembered. It does nothing on the static
       build. Covered by `e2e/tests/cookies.spec.ts` with a fake manager.
-- [ ] Apollo repo: point its team-apps calls at the new address.
+- [x] Apollo repo: draft PR [Team-6220/Apollo#21](https://github.com/Team-6220/Apollo/pull/21) documents the new address and key (nothing in Apollo called the apps yet). Merge it after go-live.
 
 ### D. Review and testing
 
