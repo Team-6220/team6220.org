@@ -1,0 +1,39 @@
+---
+// Join page, part 2: what a season looks like. Times come from the 2026-27 Team Handbook; update them each year.
+const PHASES = [
+  {
+    when: "Fall",
+    title: "Training and offseason",
+    points: ["Onboarding meeting and training week in September", "Training in your subteam's skills", "Offseason competitions: SoCal Showdown and Beach Blitz"],
+    hours: "Tuesdays and Fridays 3:17–6:00, Saturdays 10:00–2:00",
+  },
+  {
+    when: "January–February",
+    title: "Build season",
+    points: ["Kickoff: the new game is revealed in early January", "About six weeks to design and build a brand-new robot", "The hardest and most fun part of the year"],
+    hours: "Weekdays 3:17–7:00, Saturdays 10:00–4:00 (not every subteam every day)",
+  },
+  {
+    when: "March–April",
+    title: "Competition",
+    points: ["Two <i>FIRST</i> California district events", "Top teams advance to the Southern California State Championship", "The best go on to the <i>FIRST</i> Championship in Houston"],
+    hours: "Weekend events, with some school days",
+  },
+];
+---
+
+<section class="on-ink">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">What a season looks like</p><h2 class="title-calm">Like a varsity sport</h2></div><p>FRC takes the same commitment as a sport. Members attend at least 75% of their subteam's meetings.</p></div>
+    <ol class="join-season">
+      {PHASES.map((p, i) => (
+        <li class="rv" style={`--d:${i}`}>
+          <p class="eyebrow">{p.when}</p>
+          <h3>{p.title}</h3>
+          <ul>{p.points.map((pt) => <li set:html={pt} />)}</ul>
+          <p class="join-hours">{p.hours}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

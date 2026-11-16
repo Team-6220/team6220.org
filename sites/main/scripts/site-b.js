@@ -398,7 +398,7 @@
     var sel=function(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);cb.textContent='SELECTED'};
     try{navigator.clipboard.writeText(cb.dataset.copy).then(function(){cb.textContent='COPIED';setTimeout(function(){cb.textContent='COPY'},1500)},sel)}catch(e){sel()}})});
 
-  /* ---- Interest form: sent to the "Interest form (Join the team)" form in Wix ----
+  /* ---- Newsletter signup on the Join page: sent to the "Interest form (Join the team)" form in Wix ----
      The client ID is public (it only identifies the site); the visitor token it mints can only do what visitors can. */
   var WIX_CLIENT_ID='38a0b75d-6959-4630-ac13-73004c094181',INTEREST_FORM_ID='140821da-28b0-4e89-9b59-fd4cdc03a63a';
   var sendInterest=function(values){
@@ -407,17 +407,17 @@
       .then(function(t){return fetch('https://www.wixapis.com/form-submission-service/v4/submissions',{method:'POST',
         headers:{'Content-Type':'application/json',Authorization:t.access_token},body:JSON.stringify({submission:{formId:INTEREST_FORM_ID,submissions:values}})})})
       .then(function(r){if(!r.ok)throw new Error('submit')})};
-  var applyForm=document.getElementById('apply');
+  var applyForm=document.getElementById('newsletter');
   if(applyForm)applyForm.addEventListener('submit',function(e){e.preventDefault();
     var n=document.getElementById('f-name'),m=document.getElementById('f-email'),btn=applyForm.querySelector('button[type=submit]'),r=document.getElementById('form-ok');
     var nv=n.value.trim(),ev=m.value.trim(),good=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ev);
     document.getElementById('f-name-err').hidden=!!nv;document.getElementById('f-email-err').hidden=good;
     n.toggleAttribute('aria-invalid',!nv);m.toggleAttribute('aria-invalid',!good);
     if(!nv||!good){(nv?m:n).focus();return}
-    var interests=Array.prototype.map.call(applyForm.querySelectorAll('fieldset input:checked'),function(i){return i.value});
+    var interests=Array.prototype.map.call(applyForm.querySelectorAll('#f-interests input:checked'),function(i){return i.value});
     btn.disabled=true;r.hidden=true;
     sendInterest({name_a1c2:nv,email_b2d3:ev,grade_c3e4:document.getElementById('f-grade').value,is_parent_d4f5:document.getElementById('f-parent').checked,interests_e5a6:interests})
-      .then(function(){applyForm.reset();r.textContent='Thanks, '+nv.split(' ')[0]+'! We got your interest form and will be in touch soon.'})
-      .catch(function(){r.textContent='Sorry, something went wrong and your form was not sent. Please try again, or email operations@team6220.org.'})
+      .then(function(){applyForm.reset();r.textContent='Thanks, '+nv.split(' ')[0]+'! You\'re on our newsletter list. We\'ll email you when recruiting opens.'})
+      .catch(function(){r.textContent='Sorry, something went wrong and your signup was not sent. Please try again, or email operations@team6220.org.'})
       .then(function(){btn.disabled=false;r.hidden=false})});
 })();
