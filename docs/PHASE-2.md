@@ -71,10 +71,12 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 
 ### C. Server code
 
-- [ ] Sign-in: `auth.ts` uses `/api/auth/login` and `/api/auth/logout`; `/api` endpoints read the signed-in member
-      from the session. Add www.team6220.org and the preview address where Wix asks for allowed addresses.
-- [ ] Secrets: one small module reads Wix secrets (elevated); `/api/site` and the new endpoints use it instead of
-      environment variables.
+- [x] Sign-in: `auth.ts` uses `/api/auth/login` and `/api/auth/logout`; the browser client reads the `wixSession`
+      cookie; `/api/site` reads the member and badges from the session and refuses cross-site requests
+      (`Sec-Fetch-Site`). **To do:** set `WIX_CLIENT_ID` in `packages/data/src/config.ts` (and the forms in
+      `site-b.js`, attendance-api and ops-api) to the new client's ID, and test sign-in on a preview.
+- [x] Secrets: `src/server/wix-secrets.ts` reads Wix Secrets Manager values with elevated permissions, one secret
+      per call, only when an action needs it. Form signups use an elevated Wix query, so they need no API key.
 - [ ] Move every ops-api action to `/api/<area>` (one-to-one, same names and answers), with the same tests.
       `packages/data` stays the only code that calls them.
 - [ ] Timer endpoint(s) for the Apps Script triggers, checked with a shared secret.

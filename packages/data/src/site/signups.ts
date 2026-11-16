@@ -1,5 +1,5 @@
 // Form signups for the Site Manager (#76): who filled out each website form, and their emails ready to paste into an
-// existing email thread. Browser-safe except WixSignupReader, which needs a Wix API key and only runs on the server.
+// existing email thread. Browser-safe; on the server, createSignupReader gets an elevated Wix query (no API key).
 //
 // Each submission's answers are keyed by the form field's "target" (for example name_a1c2), which differs per form,
 // so the name and email are found by pattern instead of a list of keys to keep up to date.
@@ -94,58 +94,44 @@ export function emailListText(signups: Signup[]): string {
 // Reading from Wix (server only)
 // ---------------------------------------------------------------------------------------------------------
 
-const QUERY_URL = "https://www.wixapis.com/form-submission-service/v4/submissions/namespace/query";
 const MAX_SIGNUPS = 2000; // 20 pages of 100; far more than a season's signups
 
-export class WixSignupReader implements SignupReader {
-  private readonly doFetch: typeof fetch;
-
-  /** `apiKey` needs the "Manage form submissions" permission. Never send it to the browser. */
-  constructor(
-    private readonly apiKey: string,
-    private readonly siteId: string,
-    doFetch: typeof fetch = (...a) => fetch(...a),
-  ) {
-    this.doFetch = doFetch;
-  }
-
-  async list(formId: SignupFormId, since?: Date): Promise<Signup[]> {
-    const out: Signup[] = [];
-    let cursor: string | undefined;
-    do {
-      const filter: Record<string, unknown> = { namespace: "wix.form_app.form", formId };
-      if (since) filter.createdDate = { $gte: since.toISOString() };
-      const query = { filter, sort: [{ fieldName: "createdDate", order: "DESC" }], cursorPaging: { limit: 100, ...(cursor ? { cursor } : {}) } };
-      let res: Response;
-      try {
-        res = await this.doFetch(QUERY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: this.apiKey, "wix-site-id": this.siteId },
-          body: JSON.stringify({ query }),
-        });
-      } catch {
-        throw new SiteError("wix-unavailable", "Couldn't reach Wix to read the form signups. Try again.");
-      }
-      if (res.status === 401 || res.status === 403) throw new SiteError("not-configured", "Wix refused the server's API key for form signups. Check SITE_MANAGER_WIX_API_KEY.");
-      if (!res.ok) throw new SiteError("wix-unavailable", `Wix couldn't list the form signups (${res.status}). Try again.`);
-      const data = (await res.json()) as { submissions?: Parameters<typeof toSignup>[0][]; metadata?: { hasNext?: boolean; cursors?: { next?: string } } };
-      for (const s of data.submissions ?? []) out.push(toSignup(s));
-      cursor = data.metadata?.hasNext ? data.metadata.cursors?.next : undefined;
-    } while (cursor && out.length < MAX_SIGNUPS);
-    return out;
-  }
+/** One page of Wix Forms submissions, in the shape of Wix's Query Submissions By Namespace (REST or SDK). */
+export interface SubmissionsPage {
+  submissions?: { _id?: string | null; id?: string | null; _createdDate?: Date | string | null; createdDate?: string | null; submissions?: Record<string, unknown> | null }[];
+  metadata?: { hasNext?: boolean | null; cursors?: { next?: string | null } | null } | null;
 }
 
-/** The server's variables for reading signups. Secrets: never commit or log them. */
-export interface SignupEnv {
-  SITE_MANAGER_WIX_API_KEY?: string;
-  WIX_SITE_ID?: string;
-}
+/** Runs one query. On Wix hosting: the forms SDK's querySubmissionsByNamespace called with a query, elevated (no API key). */
+export type QuerySubmissions = (query: Record<string, unknown>) => Promise<SubmissionsPage>;
 
-/** Null when the server has no key: the Site Manager then says signups aren't set up yet. */
-export function signupReaderFromEnv(env: SignupEnv, doFetch?: typeof fetch): WixSignupReader | null {
-  if (!env.SITE_MANAGER_WIX_API_KEY || !env.WIX_SITE_ID) return null;
-  return new WixSignupReader(env.SITE_MANAGER_WIX_API_KEY, env.WIX_SITE_ID, doFetch);
+/** Reads a form's submissions page by page through `query`, newest first. */
+export function createSignupReader(query: QuerySubmissions): SignupReader {
+  return {
+    async list(formId, since) {
+      const out: Signup[] = [];
+      let cursor: string | undefined;
+      do {
+        const filter: Record<string, unknown> = { namespace: "wix.form_app.form", formId };
+        if (since) filter._createdDate = { $gte: since.toISOString() };
+        const q = cursor
+          ? { cursorPaging: { limit: 100, cursor } }
+          : { filter, sort: [{ fieldName: "_createdDate", order: "DESC" }], cursorPaging: { limit: 100 } };
+        let page: SubmissionsPage;
+        try {
+          page = await query(q);
+        } catch {
+          throw new SiteError("wix-unavailable", "Couldn't read the form signups from Wix. Try again.");
+        }
+        for (const s of page.submissions ?? []) {
+          const created = s._createdDate ?? s.createdDate;
+          out.push(toSignup({ id: s._id ?? s.id ?? "", createdDate: created instanceof Date ? created.toISOString() : created ?? "", submissions: s.submissions ?? {} }));
+        }
+        cursor = page.metadata?.hasNext ? page.metadata.cursors?.next ?? undefined : undefined;
+      } while (cursor && out.length < MAX_SIGNUPS);
+      return out;
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------------

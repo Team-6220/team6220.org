@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleSiteRequest, type SiteApiDeps } from "../src/site/api";
 import { MockSiteStore } from "../src/site/mock";
-import { DemoSignupReader, WixSignupReader, emailListText, fieldLabel, signupReaderFromEnv, toSignup, uniqueEmails, type Signup } from "../src/site/signups";
+import { DemoSignupReader, createSignupReader, emailListText, fieldLabel, toSignup, uniqueEmails, type Signup, type SubmissionsPage } from "../src/site/signups";
 import type { Viewer } from "../src/site/verify";
 
 const NEWSLETTER = "140821da-28b0-4e89-9b59-fd4cdc03a63a";
@@ -43,39 +43,36 @@ describe("copying emails", () => {
   });
 });
 
-describe("WixSignupReader", () => {
-  it("queries the form with the API key on the server and follows the pages", async () => {
-    const calls: { url: string; init: RequestInit }[] = [];
-    const pages = [
-      { submissions: [{ id: "1", submissions: { email_a: "one@x.com" } }], metadata: { hasNext: true, cursors: { next: "c2" } } },
-      { submissions: [{ id: "2", submissions: { email_a: "two@x.com" } }], metadata: { hasNext: false } },
+describe("createSignupReader", () => {
+  it("queries the form newest first, since a date, and follows the pages", async () => {
+    const queries: Record<string, any>[] = [];
+    const pages: SubmissionsPage[] = [
+      { submissions: [{ _id: "1", _createdDate: new Date("2026-11-10T00:00:00Z"), submissions: { email_a: "one@x.com" } }], metadata: { hasNext: true, cursors: { next: "c2" } } },
+      { submissions: [{ _id: "2", _createdDate: "2026-11-09T00:00:00Z", submissions: { email_a: "two@x.com" } }], metadata: { hasNext: false } },
     ];
-    const fakeFetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
-      calls.push({ url: String(url), init: init ?? {} });
-      return new Response(JSON.stringify(pages[calls.length - 1]), { status: 200 });
-    }) as unknown as typeof fetch;
-    const reader = new WixSignupReader("secret-key", "site-123", fakeFetch);
+    const reader = createSignupReader(async (q) => {
+      queries.push(q);
+      return pages[queries.length - 1];
+    });
     const out = await reader.list(NEWSLETTER, new Date("2026-08-01T00:00:00Z"));
 
-    expect(out.map((s) => s.email)).toEqual(["one@x.com", "two@x.com"]);
-    expect(calls).toHaveLength(2);
-    const headers = calls[0].init.headers as Record<string, string>;
-    expect(headers.Authorization).toBe("secret-key");
-    expect(headers["wix-site-id"]).toBe("site-123");
-    const first = JSON.parse(String(calls[0].init.body)).query;
-    expect(first.filter).toEqual({ namespace: "wix.form_app.form", formId: NEWSLETTER, createdDate: { $gte: "2026-08-01T00:00:00.000Z" } });
-    expect(JSON.parse(String(calls[1].init.body)).query.cursorPaging).toEqual({ limit: 100, cursor: "c2" });
+    expect(out.map((s) => [s.id, s.email, s.submittedAt])).toEqual([
+      ["1", "one@x.com", "2026-11-10T00:00:00.000Z"],
+      ["2", "two@x.com", "2026-11-09T00:00:00Z"],
+    ]);
+    expect(queries[0]).toEqual({
+      filter: { namespace: "wix.form_app.form", formId: NEWSLETTER, _createdDate: { $gte: "2026-08-01T00:00:00.000Z" } },
+      sort: [{ fieldName: "_createdDate", order: "DESC" }],
+      cursorPaging: { limit: 100 },
+    });
+    expect(queries[1]).toEqual({ cursorPaging: { limit: 100, cursor: "c2" } });
   });
 
-  it("explains a refused key", async () => {
-    const reader = new WixSignupReader("bad", "site", (async () => new Response("{}", { status: 403 })) as unknown as typeof fetch);
-    await expect(reader.list(NEWSLETTER)).rejects.toMatchObject({ code: "not-configured" });
-  });
-
-  it("is only built when both server variables are set", () => {
-    expect(signupReaderFromEnv({})).toBeNull();
-    expect(signupReaderFromEnv({ SITE_MANAGER_WIX_API_KEY: "k" })).toBeNull();
-    expect(signupReaderFromEnv({ SITE_MANAGER_WIX_API_KEY: "k", WIX_SITE_ID: "s" })).toBeInstanceOf(WixSignupReader);
+  it("explains when Wix can't be read", async () => {
+    const reader = createSignupReader(async () => {
+      throw new Error("403");
+    });
+    await expect(reader.list(NEWSLETTER)).rejects.toMatchObject({ code: "wix-unavailable" });
   });
 });
 
@@ -120,7 +117,7 @@ describe("/api/site signups", () => {
     expect(res.status).toBe(400);
   });
 
-  it("says when the server has no Wix key", async () => {
+  it("says when the server can't read signups", async () => {
     const res = await call({ action: "signups", formId: NEWSLETTER }, { reader: null });
     expect(res.status).toBe(503);
     expect((await res.json()).error.code).toBe("not-configured");

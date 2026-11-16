@@ -56,12 +56,18 @@ importers:
       '@wix/essentials':
         specifier: 1.0.15
         version: 1.0.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
+      '@wix/forms':
+        specifier: ^1.0.545
+        version: 1.0.545(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))
       '@wix/members':
         specifier: ^1.0.541
         version: 1.0.541
       '@wix/sdk':
         specifier: 1.21.18
         version: 1.21.18
+      '@wix/secrets':
+        specifier: ^1.0.76
+        version: 1.0.76
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -921,6 +927,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@internationalized/date@3.12.4':
+    resolution: {integrity: sha512-M1dEn4c1U1HsSlaVR8upZtSqvXrTkHDfv18H01uCSJyjVLDxnBR38v/fMxecmlwXKR4i9HeZcmgQAPE6A+aGJQ==}
+
+  '@internationalized/number@3.6.9':
+    resolution: {integrity: sha512-GgWy2caO/+hV9sT/oCTWGHvbjmJMPT9kkXzoKRLnkEq7adghhR7UprhvY9sXrKfrp3NcDfhF6QQHXR1KfQbB8g==}
+
+  '@internationalized/string@3.2.10':
+    resolution: {integrity: sha512-PDx6//vHSpRnHfxqMqto11zQvhsaU74O3mKv2F/0eicGZcl9NLjQmGlbHz/LsJh5tLKp4A4L7ZVTzN1/MmMTvA==}
+
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
@@ -1314,6 +1329,11 @@ packages:
   '@radix-ui/rect@1.1.3':
     resolution: {integrity: sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw==}
 
+  '@react-types/shared@3.37.0':
+    resolution: {integrity: sha512-VNlZuifu4tHdxWPfHvoMfKsHA9kVTCGkduv5vKVTdinm8wHFJNhyVB5RzIMiRFj0q3RKoCbP68u2zaoBSiFueg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+
   '@rolldown/binding-android-arm-eabi@1.2.16':
     resolution: {integrity: sha512-ia3DwAs0OsMGS7+IConptSiyk9pEXkOx/AbJ2n/lAGxH3QkWQus1t8d7gnAT38FCU2sQu8lUbeR6AiZFv4JxaA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1539,6 +1559,9 @@ packages:
 
   '@speed-highlight/core@1.2.24':
     resolution: {integrity: sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw==}
+
+  '@swc/helpers@0.5.24':
+    resolution: {integrity: sha512-6tcXo4kA8HgGO7AVmawB57RYi/piBPYVHVcO6dXjX+SZw8GoHmi262sp4v2Ha2kNP9Cx84qei27yT+fjS1lxgg==}
 
   '@tybys/wasm-util@0.10.4':
     resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
@@ -1766,6 +1789,27 @@ packages:
   '@wix/auto_sdk_ecom_current-cart@1.0.202':
     resolution: {integrity: sha512-2owsnKHTgJaKbiS05XSPvpxwFlPoe3EL/nZOx+QR3iSy/Y4GE7QXsBYxWa/9exD+m+MifY0jbBzkfya9bb9XvA==}
 
+  '@wix/auto_sdk_forms_chat-settings@1.0.32':
+    resolution: {integrity: sha512-chPY8TPN4JNXXcuMMR/vbwnXA0QJsY8qxyCZZRXdW7PBQAk5SV/IpNU2yoeZ0BxhS9o6WYxlK8pKwEbQrxoqrg==}
+
+  '@wix/auto_sdk_forms_form-spam-submission-reports@1.0.51':
+    resolution: {integrity: sha512-JjFxP4KpAdPXylMTyjjy2uCMXVBKdtKxHEzt3+Q6tCYdfIOI63XcTfDf8WuLFb78WD/AkBdkAa2A9soKo4RgkA==}
+
+  '@wix/auto_sdk_forms_form-submissions@1.0.32':
+    resolution: {integrity: sha512-UHFgzrP7W314ioEfstcOD/jgt6wzL/lVerOGU50ysRvdJFpUcvSx/be2AIh4bigucWQUIJtfoG7s5sPHZj+5pQ==}
+
+  '@wix/auto_sdk_forms_forms@1.0.155':
+    resolution: {integrity: sha512-+P0BQo2X8oEchnuxJJ+T8berxGk6rQq+6bdOrWKOF4JjpcobePYZEfv96wWP6aOR+H0HfCvjZyUIoBJ769nxag==}
+
+  '@wix/auto_sdk_forms_interactive-form-sessions@1.0.98':
+    resolution: {integrity: sha512-uMrPRSDaQXmvRiyIbWh3yP8tdW63C2MKmJ/3k3AJULCHGsgAvMSfPIioL31CR33otYZU1P8FPx7SFv+s0lBh6g==}
+
+  '@wix/auto_sdk_forms_restrictions@1.0.5':
+    resolution: {integrity: sha512-mmar/mj8cZfJUnk5kObxF9P4JWaxQfBjUZPiReYB8GFRUwoOux4nEJniasHfwpwsnH21YLIwBFsq1NcctHY/2A==}
+
+  '@wix/auto_sdk_forms_submissions@1.0.178':
+    resolution: {integrity: sha512-NzFYLums7wTi1PQjJPtOaqxJUlMhkOJsfiiUf7vpIqa4slV2K/1WwB0kHwQay6Mu4kdiMwOb9d2kYEczB+4puw==}
+
   '@wix/auto_sdk_headless-site-assets_scripts@1.0.16':
     resolution: {integrity: sha512-nDqV7I+8lcdGFDx3ND5Hmx9nJUJvaNUqUhRKxOajCHIXny5DgAONRh0tNqrhXybVcf1GZmAXH7rNrNuiy+7/PQ==}
 
@@ -1856,6 +1900,9 @@ packages:
   '@wix/auto_sdk_redirects_redirects@1.0.60':
     resolution: {integrity: sha512-DrphRqURT6PuXpUxZnBjXozmu4eZdt5OaHlx9++/cDCzfIoNB1zIH/hr/AJtLlQ+oavXj5ZeZzMHbyY2iWg4vQ==}
 
+  '@wix/auto_sdk_secrets_secrets@1.0.30':
+    resolution: {integrity: sha512-PHPZlbyyTBUt36u7BKDHI9elnCGVOrp9Os6MeAAQ/rlPXSac6QJXgqnQS2oqGtkvEb/9nBy2Hsqz8uYlxzN+pA==}
+
   '@wix/cli@1.2.13':
     resolution: {integrity: sha512-Qe7zeME6bLxvzKuU90S8Ac69L/Uk7buX5ArpwB7xqiATFQAW3i8Nc2tKm5hmQs85vHD31nL3aBSXsXkAQ87ieg==}
     engines: {node: '>= 24.22.1'}
@@ -1907,6 +1954,9 @@ packages:
       intl-messageformat:
         optional: true
 
+  '@wix/essentials@0.1.28':
+    resolution: {integrity: sha512-uAB9xpwqebaIrdgPD9YsdZA8XSqWEJvtLT4HKSpuWmSmtLZBRYb+8U0D6NfY5grVw1qYzw0Z4XaGdeM2LLyuuw==}
+
   '@wix/essentials@1.0.15':
     resolution: {integrity: sha512-UpQ9hbH1BHurisssTA1l6+MTeAGZH/bBK+Nzk+Jh9dVlcEptY92CqdeGQirS19aLU3ylHUGnWcvVkTc4pxqs2Q==}
 
@@ -1915,6 +1965,14 @@ packages:
 
   '@wix/filter-builder@1.0.262':
     resolution: {integrity: sha512-2W15alzdtUjxVrGbdgzAn3hzHaFUHYSmrFNvRvoMbY53kYa9F6xJZU3zspz3TBzBZ45aUbJwzfj33PHxXOUikw==}
+
+  '@wix/form-public@0.145.0':
+    resolution: {integrity: sha512-y/K5nWdM0x5oNQHFBgk5b4jtx7Jitu+kDHTbJ4lqFuYQaroekBrAcH2mOqDQB30cXwBMCz+wjtyAWdHOYDPwBA==}
+    peerDependencies:
+      react: ^18.3.1
+
+  '@wix/forms@1.0.545':
+    resolution: {integrity: sha512-YaT1qviTc4u8aZ7NlJ7hufFqszl553os1Pz4BQEt9iflMfb24KxCdJbDTXuMH8qeMlkvpya4CAWnjye7J0ngWA==}
 
   '@wix/headless-cms@0.0.45':
     resolution: {integrity: sha512-wSX5M8axWYFw3DI1OUBoMrrU1mqzfranSAB4qBonXcM0/M8O3ciZ3rzYhNIVwHXgiNW580ptjmq8yX6ERGiJwA==}
@@ -1928,6 +1986,9 @@ packages:
     resolution: {integrity: sha512-ib8dYXCeHlo/UYck/CE9v3AkFXI0r5Dn+6ZRH1I2ylxrZMy7Lqj2GF0gwvoOwEKdDbjuNhWEvTY9X4tg6tN0Qg==}
     peerDependencies:
       '@wix/headless-components': ^0.0.0
+
+  '@wix/headless-forms@0.0.45':
+    resolution: {integrity: sha512-I/uXQlR6r7af7iWm5E4xXICXaUbqGmTziApXDlxlMeTOP+zqUyTFSXWcUL4uT683yRfcXH46jog4f8e2NVSHsg==}
 
   '@wix/headless-localization-utils@1.0.15':
     resolution: {integrity: sha512-ZM1aw52LH4nTcWRIYuFcONQbrl6zdevtXCry3PwaA9J4ty7m+G7o/L4Xv3RzKsYq7djsTeVLggFgdW6/6q2jbQ==}
@@ -1949,6 +2010,11 @@ packages:
 
   '@wix/headless-utils@0.0.0':
     resolution: {integrity: sha512-Pz4UZfMRCTfHf/nRmJ20vVVVPzjcz6VuiRpTzBgsjML9fI/ulviR6oV0ZAReMiyflptqGGl0PU/pTrj/fnhcow==}
+    peerDependencies:
+      react: '>=16.3.0'
+
+  '@wix/headless-utils@0.0.12':
+    resolution: {integrity: sha512-CY5L2/KftFNvoCBzx68MJ2lhSlkjNNBrTXDAhg/fom5PORCruJAoRit4HuIK4u19pUWXkp7QLrhiQKapf1wucg==}
     peerDependencies:
       react: '>=16.3.0'
 
@@ -2042,6 +2108,9 @@ packages:
 
   '@wix/sdk@1.21.18':
     resolution: {integrity: sha512-YWiiWoOBTXsYSvQ7NwdOsvfV3OJd+XlfXVDYRA4diDH+3fKKXaWuVam8ZG+1z5xtVc8odX3UYJBFKybQ0E+CDA==}
+
+  '@wix/secrets@1.0.76':
+    resolution: {integrity: sha512-DlmfKxxSKyv89EDLYd716+Q/pmVpQslMdBW5elUBkCb5CSPDvHvg7YUtZyTZD4c3jCaC4TN5gv5f5q627MqeMw==}
 
   '@wix/services-definitions@1.0.5':
     resolution: {integrity: sha512-69+ZTkae11GNVXA4WeHs5yINpmhNQHMZ00OhogP77fZXZQHmvFsd7yKpQBXFJKeWj+5wSd1hoL3o0s36jGza/Q==}
@@ -2188,6 +2257,9 @@ packages:
   ci-info@4.4.0:
     resolution: {integrity: sha512-77PSwercCZU2Fc4sX94eF8k8Pxte6JAwL4/ICZLFjJLqegs7kCuAsqqj/70NQF6TvDpgFjkubQB2FW2ZZddvQg==}
     engines: {node: '>=8'}
+
+  client-only@0.0.1:
+    resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
 
   cliui@9.0.1:
     resolution: {integrity: sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==}
@@ -2503,6 +2575,9 @@ packages:
     peerDependencies:
       intl-messageformat: '>=10.3.3 <13.0.0'
 
+  i18next@19.9.2:
+    resolution: {integrity: sha512-0i6cuo6ER6usEOtKajUUDj92zlG+KArFia0857xxiEHAQcUwh/RtOQocui1LPJwunSYT574Pk64aNva1kwtxZg==}
+
   i18next@25.10.10:
     resolution: {integrity: sha512-cqUW2Z3EkRx7NqSyywjkgCLK7KLCL6IFVFcONG7nVYIJ3ekZ1/N5jUsihHV6Bq37NfhgtczxJcxduELtjTwkuQ==}
     peerDependencies:
@@ -2640,6 +2715,12 @@ packages:
   lightningcss@1.33.0:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
+
+  lodash.camelcase@4.3.0:
+    resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
+
+  lodash.mapkeys@4.6.0:
+    resolution: {integrity: sha512-0Al+hxpYvONWtg+ZqHpa/GaVzxuN3V7Xeo2p+bY06EaK/n+Y9R7nBePPN2o1LxmL0TWQSwP8LYZ008/hc9JzhA==}
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
@@ -2895,10 +2976,35 @@ packages:
   radix3@1.1.2:
     resolution: {integrity: sha512-b484I/7b8rDEdSDKckSSBA8knMpcdsXudlE/LNL639wFoHKwLbEkQFZHWEYwDC0wa0FKUcCY+GAF73Z7wxNVFA==}
 
+  react-aria-components@1.22.1:
+    resolution: {integrity: sha512-UTHaYHOaM71bOCjGPF50DcLywlrwAodE63IP64LB4kO+OizatQEL8TesVEOM8+TkBeSgHoflJ45388IlJfa7aw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+      react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+
+  react-aria@3.53.1:
+    resolution: {integrity: sha512-dikisyOjJd3D2fFrIDWmVWzqiLz5B86GzZv1zxs7xI4dVc0JIz/1Wa52I20gYvVL2WXeFXlygYsle/QcOMhtcg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+      react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
     peerDependencies:
       react: ^18.3.1
+
+  react-i18next@11.18.6:
+    resolution: {integrity: sha512-yHb2F9BiT0lqoQDt8loZ5gWP331GwctHz9tYQ8A2EIEUu+CcEdjBLQWli1USG3RdWQt3W+jqQLg/d4rrQR96LA==}
+    peerDependencies:
+      i18next: '>= 19.0.0'
+      react: '>= 16.8.0'
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
 
   react-i18next@16.6.6:
     resolution: {integrity: sha512-ZgL2HUoW34UKUkOV7uSQFE1CDnRPD+tCR3ywSuWH7u2iapnz86U8Bi3Vrs620qNDzCf1F47NxglCEkchCTDOHw==}
@@ -2935,6 +3041,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-stately@3.51.0:
+    resolution: {integrity: sha512-YJcmkAXu2XOQP97hO/qz/cC3qv9kni3oVhwBlxWr358BHePJUpY15XwL3YSRMKxYt4EkslPqAz11JRirMfANGw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
 
   react-style-singleton@2.2.3:
     resolution: {integrity: sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ==}
@@ -4255,6 +4366,18 @@ snapshots:
   '@img/sharp-win32-x64@0.35.5':
     optional: true
 
+  '@internationalized/date@3.12.4':
+    dependencies:
+      '@swc/helpers': 0.5.24
+
+  '@internationalized/number@3.6.9':
+    dependencies:
+      '@swc/helpers': 0.5.24
+
+  '@internationalized/string@3.2.10':
+    dependencies:
+      '@swc/helpers': 0.5.24
+
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -4642,6 +4765,10 @@ snapshots:
 
   '@radix-ui/rect@1.1.3': {}
 
+  '@react-types/shared@3.37.0(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true
 
@@ -4784,6 +4911,8 @@ snapshots:
   '@sindresorhus/is@7.2.0': {}
 
   '@speed-highlight/core@1.2.24': {}
+
+  '@swc/helpers@0.5.24': {}
 
   '@tybys/wasm-util@0.10.4':
     dependencies:
@@ -5114,6 +5243,41 @@ snapshots:
       '@wix/sdk-runtime': 1.0.31
       '@wix/sdk-types': 1.17.12
 
+  '@wix/auto_sdk_forms_chat-settings@1.0.32':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_form-spam-submission-reports@1.0.51':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_form-submissions@1.0.32':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_forms@1.0.155':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_interactive-form-sessions@1.0.98':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_restrictions@1.0.5':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
+  '@wix/auto_sdk_forms_submissions@1.0.178':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
   '@wix/auto_sdk_headless-site-assets_scripts@1.0.16':
     dependencies:
       '@wix/sdk-runtime': 1.0.31
@@ -5264,6 +5428,11 @@ snapshots:
       '@wix/sdk-runtime': 1.0.31
       '@wix/sdk-types': 1.17.12
 
+  '@wix/auto_sdk_secrets_secrets@1.0.30':
+    dependencies:
+      '@wix/sdk-runtime': 1.0.31
+      '@wix/sdk-types': 1.17.12
+
   '@wix/cli@1.2.13':
     dependencies:
       '@wix/agent-skills': 1.41.5
@@ -5347,6 +5516,21 @@ snapshots:
       i18next-icu: 2.7.0(intl-messageformat@10.7.18)
       intl-messageformat: 10.7.18
 
+  '@wix/essentials@0.1.28(typescript@6.0.3)':
+    dependencies:
+      '@wix/error-handler': 1.68.0(i18next-icu@2.7.0(intl-messageformat@10.7.18))(i18next@25.10.10(typescript@6.0.3))(intl-messageformat@10.7.18)
+      '@wix/monitoring': 0.21.0
+      '@wix/sdk-runtime': 0.3.62
+      '@wix/sdk-types': 1.17.12
+      i18next: 25.10.10(typescript@6.0.3)
+      i18next-icu: 2.7.0(intl-messageformat@10.7.18)
+      intl-messageformat: 10.7.18
+    optionalDependencies:
+      graphql: 17.1.0
+    transitivePeerDependencies:
+      - '@wix/fe-essentials'
+      - typescript
+
   '@wix/essentials@1.0.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)':
     dependencies:
       '@wix/error-handler': 1.68.0(i18next-icu@2.7.0(intl-messageformat@10.7.18))(i18next@25.10.10(typescript@6.0.3))(intl-messageformat@10.7.18)
@@ -5375,6 +5559,40 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.13
       tslib: 2.9.1
+
+  '@wix/form-public@0.145.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)':
+    dependencies:
+      '@wix/essentials': 0.1.28(typescript@6.0.3)
+      i18next: 19.9.2
+      lodash.camelcase: 4.3.0
+      lodash.mapkeys: 4.6.0
+      react: 18.3.1
+      react-i18next: 11.18.6(i18next@19.9.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    transitivePeerDependencies:
+      - '@wix/fe-essentials'
+      - react-dom
+      - react-native
+      - typescript
+
+  '@wix/forms@1.0.545(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))':
+    dependencies:
+      '@wix/auto_sdk_forms_chat-settings': 1.0.32
+      '@wix/auto_sdk_forms_form-spam-submission-reports': 1.0.51
+      '@wix/auto_sdk_forms_form-submissions': 1.0.32
+      '@wix/auto_sdk_forms_forms': 1.0.155
+      '@wix/auto_sdk_forms_interactive-form-sessions': 1.0.98
+      '@wix/auto_sdk_forms_restrictions': 1.0.5
+      '@wix/auto_sdk_forms_submissions': 1.0.178
+      '@wix/headless-forms': 0.0.45(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@wix/fe-essentials'
+      - '@wix/services-manager'
+      - react
+      - react-dom
+      - react-native
+      - typescript
+      - use-sync-external-store
 
   '@wix/headless-cms@0.0.45(@types/react@18.3.31)(@wix/headless-components@0.0.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.7.0(react@18.3.1))':
     dependencies:
@@ -5421,6 +5639,24 @@ snapshots:
       - react-dom
       - use-sync-external-store
 
+  '@wix/headless-forms@0.0.45(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))':
+    dependencies:
+      '@wix/form-public': 0.145.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
+      '@wix/forms': 1.0.545(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))
+      '@wix/headless-utils': 0.0.12(@types/react@18.3.31)(react@18.3.1)
+      '@wix/services-definitions': 1.0.5
+      '@wix/services-manager-react': 1.0.8(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.7.0(react@18.3.1))
+      react-aria-components: 1.22.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@wix/fe-essentials'
+      - '@wix/services-manager'
+      - react
+      - react-dom
+      - react-native
+      - typescript
+      - use-sync-external-store
+
   '@wix/headless-localization-utils@1.0.15':
     dependencies:
       '@wix/headless-node': 1.46.0
@@ -5465,6 +5701,13 @@ snapshots:
       '@wix/sdk-runtime': 1.0.31
 
   '@wix/headless-utils@0.0.0(@types/react@18.3.31)(react@18.3.1)':
+    dependencies:
+      '@radix-ui/react-slot': 1.5.0(@types/react@18.3.31)(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - '@types/react'
+
+  '@wix/headless-utils@0.0.12(@types/react@18.3.31)(react@18.3.1)':
     dependencies:
       '@radix-ui/react-slot': 1.5.0(@types/react@18.3.31)(react@18.3.1)
       react: 18.3.1
@@ -5634,6 +5877,10 @@ snapshots:
       type-fest: 4.41.0
     optionalDependencies:
       graphql: 17.1.0
+
+  '@wix/secrets@1.0.76':
+    dependencies:
+      '@wix/auto_sdk_secrets_secrets': 1.0.30
 
   '@wix/services-definitions@1.0.5':
     dependencies:
@@ -5864,6 +6111,8 @@ snapshots:
   chownr@3.0.0: {}
 
   ci-info@4.4.0: {}
+
+  client-only@0.0.1: {}
 
   cliui@9.0.1:
     dependencies:
@@ -6176,6 +6425,10 @@ snapshots:
     dependencies:
       intl-messageformat: 10.7.18
 
+  i18next@19.9.2:
+    dependencies:
+      '@babel/runtime': 7.29.13
+
   i18next@25.10.10(typescript@6.0.3):
     dependencies:
       '@babel/runtime': 7.29.13
@@ -6276,6 +6529,10 @@ snapshots:
       lightningcss-linux-x64-musl: 1.33.0
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
+
+  lodash.camelcase@4.3.0: {}
+
+  lodash.mapkeys@4.6.0: {}
 
   lodash@4.18.1: {}
 
@@ -6535,11 +6792,47 @@ snapshots:
 
   radix3@1.1.2: {}
 
+  react-aria-components@1.22.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@internationalized/date': 3.12.4
+      '@internationalized/string': 3.2.10
+      '@react-types/shared': 3.37.0(react@18.3.1)
+      '@swc/helpers': 0.5.24
+      client-only: 0.0.1
+      react: 18.3.1
+      react-aria: 3.53.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-dom: 18.3.1(react@18.3.1)
+      react-stately: 3.51.0(react@18.3.1)
+      use-sync-external-store: 1.7.0(react@18.3.1)
+
+  react-aria@3.53.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@internationalized/date': 3.12.4
+      '@internationalized/number': 3.6.9
+      '@internationalized/string': 3.2.10
+      '@react-types/shared': 3.37.0(react@18.3.1)
+      '@swc/helpers': 0.5.24
+      aria-hidden: 1.2.6
+      clsx: 2.1.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-stately: 3.51.0(react@18.3.1)
+      use-sync-external-store: 1.7.0(react@18.3.1)
+
   react-dom@18.3.1(react@18.3.1):
     dependencies:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
+
+  react-i18next@11.18.6(i18next@19.9.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@babel/runtime': 7.29.13
+      html-parse-stringify: 3.1.0
+      i18next: 19.9.2
+      react: 18.3.1
+    optionalDependencies:
+      react-dom: 18.3.1(react@18.3.1)
 
   react-i18next@16.6.6(i18next@25.10.10(typescript@6.0.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3):
     dependencies:
@@ -6570,6 +6863,16 @@ snapshots:
       use-sidecar: 1.1.3(@types/react@18.3.31)(react@18.3.1)
     optionalDependencies:
       '@types/react': 18.3.31
+
+  react-stately@3.51.0(react@18.3.1):
+    dependencies:
+      '@internationalized/date': 3.12.4
+      '@internationalized/number': 3.6.9
+      '@internationalized/string': 3.2.10
+      '@react-types/shared': 3.37.0(react@18.3.1)
+      '@swc/helpers': 0.5.24
+      react: 18.3.1
+      use-sync-external-store: 1.7.0(react@18.3.1)
 
   react-style-singleton@2.2.3(@types/react@18.3.31)(react@18.3.1):
     dependencies:
