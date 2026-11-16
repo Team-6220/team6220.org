@@ -5,11 +5,13 @@
 //     { "action": "status" }
 //     { "action": "read",    "area": "summer-camp" }
 //     { "action": "propose", "area": "summer-camp", "value": {...}, "images": [{ "path", "base64" }] }
+//     { "action": "signups", "formId": "<one of SIGNUP_FORMS>", "since": "2026-08-01" }   (since is optional)
 //
 // EVERY request first proves who is asking (Wix token -> member -> badges) and refuses anyone who is not an approved
 // Web Admin, before the body is even read.
 import { AREAS, isAreaId } from "@team6220/content";
 import { proposeChange, readArea } from "./propose";
+import { isSignupFormId, type SignupReader } from "./signups";
 import { isWebAdmin, type VerifyViewer } from "./verify";
 import { SiteError, type ImageUpload, type SiteStore } from "./types";
 
@@ -17,6 +19,8 @@ export interface SiteApiDeps {
   verify: VerifyViewer;
   /** Null when the server has no GitHub credential: every call then answers "not-configured" (after the admin check). */
   getStore: () => Promise<SiteStore | null>;
+  /** Null when the server has no Wix API key: "signups" then answers "not-configured". */
+  getSignups?: () => SignupReader | null;
   now?: () => Date;
 }
 
@@ -74,6 +78,15 @@ export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Pr
       throw new SiteError("bad-request", "The request body must be a JSON object.");
     }
 
+    // Form signups come from Wix, not GitHub, so they don't need the GitHub credential.
+    if (body.action === "signups") {
+      if (!isSignupFormId(body.formId)) throw new SiteError("bad-request", "Pick one of the website's forms.");
+      const since = parseSince(body.since);
+      const reader = deps.getSignups?.() ?? null;
+      if (!reader) throw new SiteError("not-configured", "The server can't read form signups yet (no Wix API key).");
+      return reply(200, { formId: body.formId, signups: await reader.list(body.formId, since) });
+    }
+
     const store = await deps.getStore();
     if (!store) throw new SiteError("not-configured", "The Site Manager has no GitHub credential on the server yet.");
 
@@ -106,6 +119,13 @@ export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Pr
 function requireArea(value: unknown) {
   if (!isAreaId(value)) throw new SiteError("unknown-area", "That part of the site can't be edited here.");
   return value;
+}
+
+function parseSince(value: unknown): Date | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const date = typeof value === "string" ? new Date(value) : new Date(NaN);
+  if (Number.isNaN(date.getTime())) throw new SiteError("bad-request", "\"since\" must be a date like 2026-08-01.");
+  return date;
 }
 
 function parseImages(value: unknown): ImageUpload[] | undefined {

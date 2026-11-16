@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, site } from "@team6220/data";
 import { Icon } from "@team6220/ui";
 import Editor from "./Editor";
+import Signups from "./Signups";
 
 type State =
   | { kind: "loading" }
@@ -21,13 +22,18 @@ function applyDemoParam() {
 export default function Site() {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [areaId, setAreaId] = useState<site.AreaId>("summer-camp");
+  /** Editing the website's content, or reading who filled out its forms (#76). */
+  const [view, setView] = useState<"edit" | "signups">("edit");
 
   const load = useCallback(async () => {
     try {
       setState({ kind: "viewer", viewer: await site.getViewer() });
     } catch (err) {
       console.warn("Couldn't load the signed-in member", err);
-      setState({ kind: "error", message: "We couldn't reach the team login service." });
+      setState({
+        kind: "error",
+        message: "We couldn't reach the team login service.",
+      });
     }
   }, []);
 
@@ -44,7 +50,8 @@ export default function Site() {
     <main className="t-page site">
       {!real && (
         <p className="t-demo" role="note">
-          Demo: {demo ? "you're in demo mode, " : ""}no pull request is opened. Submitting only shows what would happen.
+          Demo: {demo ? "you're in demo mode, " : ""}no pull request is opened.
+          Submitting only shows what would happen.
           {demo && (
             <>
               {" "}
@@ -59,7 +66,9 @@ export default function Site() {
           <h1 className="t-title">Site Manager</h1>
         </div>
         <nav className="t-nav">
-          {state.kind === "viewer" && state.viewer.kind !== "signed-out" && <span className="t-who">{state.viewer.name}</span>}
+          {state.kind === "viewer" && state.viewer.kind !== "signed-out" && (
+            <span className="t-who">{state.viewer.name}</span>
+          )}
           <a className="t-button t-button--quiet" href="/apps">
             Team apps
           </a>
@@ -74,17 +83,24 @@ export default function Site() {
       {state.kind === "error" && (
         <div className="t-panel" role="alert">
           <p>{state.message} Try again in a minute.</p>
-          <button type="button" className="t-button" onClick={() => void load()}>
+          <button
+            type="button"
+            className="t-button"
+            onClick={() => void load()}
+          >
             Try again
           </button>
         </div>
       )}
-      {state.kind === "viewer" && state.viewer.kind === "signed-out" && <SignedOut />}
+      {state.kind === "viewer" && state.viewer.kind === "signed-out" && (
+        <SignedOut />
+      )}
       {state.kind === "viewer" && state.viewer.kind === "pending" && (
         <div className="t-panel t-panel--notice">
           <h2>Waiting for approval</h2>
           <p>
-            You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge yet.
+            You're signed in, but a web admin hasn't approved your account or
+            given you the <b>Team Member</b> badge yet.
           </p>
         </div>
       )}
@@ -92,29 +108,62 @@ export default function Site() {
         <div className="t-panel t-panel--notice">
           <h2>Web Admins only</h2>
           <p>
-            The Site Manager changes what the public website says, so it needs the <b>Web Admin</b> badge. Ask a Web Admin if you need a
-            change made.
+            The Site Manager changes what the public website says, so it needs
+            the <b>Web Admin</b> badge. Ask a Web Admin if you need a change
+            made.
           </p>
         </div>
       )}
       {state.kind === "viewer" && state.viewer.kind === "admin" && (
         <>
-          <div className="site__bar">
-            <label>
-              <b>Part of the site</b>{" "}
-              <select value={areaId} onChange={(e) => setAreaId(e.target.value as site.AreaId)}>
-                {areas.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <a className="site__link" href={site.openPullRequestsUrl()} target="_blank" rel="noopener">
-              Open Site Manager pull requests on GitHub <Icon name="external" inline />
-            </a>
+          <div className="site__views" role="group" aria-label="What to do">
+            <button
+              type="button"
+              className="t-button t-button--quiet"
+              aria-pressed={view === "edit"}
+              onClick={() => setView("edit")}
+            >
+              Edit the site
+            </button>
+            <button
+              type="button"
+              className="t-button t-button--quiet"
+              aria-pressed={view === "signups"}
+              onClick={() => setView("signups")}
+            >
+              Form signups
+            </button>
           </div>
-          <Editor key={areaId} areaId={areaId} />
+          {view === "signups" && <Signups />}
+          {view === "edit" && (
+            <>
+              <div className="site__bar">
+                <label>
+                  <b>Part of the site</b>{" "}
+                  <select
+                    value={areaId}
+                    onChange={(e) => setAreaId(e.target.value as site.AreaId)}
+                  >
+                    {areas.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <a
+                  className="site__link"
+                  href={site.openPullRequestsUrl()}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Open Site Manager pull requests on GitHub{" "}
+                  <Icon name="external" inline />
+                </a>
+              </div>
+              <Editor key={areaId} areaId={areaId} />
+            </>
+          )}
         </>
       )}
     </main>
@@ -128,7 +177,8 @@ function SignedOut() {
     <div className="t-panel">
       <h2>Sign in to use the Site Manager</h2>
       <p>
-        The Site Manager is for Web Admins. Sign in with Google, then come back here. (Developers can try it without signing in at{" "}
+        The Site Manager is for Web Admins. Sign in with Google, then come back
+        here. (Developers can try it without signing in at{" "}
         <a href="?demo=admin">?demo=admin</a>.)
       </p>
       <p className="site__actions">
@@ -142,7 +192,9 @@ function SignedOut() {
             try {
               await auth.login("/apps/site");
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Couldn't start sign-in.");
+              setError(
+                err instanceof Error ? err.message : "Couldn't start sign-in.",
+              );
               setBusy(false);
             }
           }}

@@ -124,7 +124,7 @@
     },
     {
       "from": "/#apply",
-      "to": "/about/join#apply",
+      "to": "/about/join#newsletter",
       "via": "home page script",
       "decision": "confirmed",
       "note": ""

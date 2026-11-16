@@ -149,3 +149,32 @@
   background: var(--color-ok-bg);
   text-decoration: none;
 }
+
+/* ---------- Edit / Form signups switch, and the signups list (Signups.tsx) ---------- */
+.site__views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.site__views [aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+.signups__copy p {
+  margin: 0 0 var(--space-2);
+}
+.signups__emails {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-2);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.signups__scroll {
+  overflow-x: auto;
+}

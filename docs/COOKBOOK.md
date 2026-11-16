@@ -126,7 +126,7 @@ old value (for example `grep -rn "losalfrc@gmail.com" sites src`) and change the
 | Business email | `sites/main/sections/sponsors/Sponsors.astro` |
 | Instagram link | `sites/main/sections/home/Hero.astro` and `sites/main/sections/outreach/Outreach.astro` |
 | Booster checks / EIN text | `Sponsors.astro` and `Footer.astro` |
-| The interest form on the Join page | `sites/main/sections/join/Join.astro`. The form checks the name and email in the browser but does not send them anywhere yet (the planned Wix forms are in the migration plan under Forms) |
+| The Join page | One file per section in `sites/main/sections/join/` (Why, Season, Steps, Dues, Faq), put together in `src/pages/about/join.astro`. Meeting times and dues come from the Team Handbook; update them each season. The newsletter signup in `Faq.astro` posts to the Wix form "Interest form (Join the team)" from `sites/main/scripts/site-b.js` |
 
 ## 8. Add a team app to the dashboard
 
