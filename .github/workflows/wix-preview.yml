@@ -51,7 +51,8 @@ jobs:
         working-directory: apps/goldsim
       - name: Log in to Wix
         if: steps.secrets.outputs.ready == 'true'
-        run: pnpm wix login --api-key "$WIX_API_KEY"
+        # A line break pasted after the key makes Wix reject it ("Invalid character in header content"), so strip them.
+        run: pnpm wix login --api-key "$(printf '%s' "$WIX_API_KEY" | tr -d '\r\n')"
         env:
           WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       # `wix preview` only uploads what is already built, so always build first.
