@@ -65,7 +65,7 @@ land on the home page and can scroll to the footer.
 | `/#robots` | `/robots` |  |
 | `/#join` | `/about/join` |  |
 | `/#faq` | `/about/join#faq` |  |
-| `/#apply` | `/about/join#apply` |  |
+| `/#apply` | `/about/join#newsletter` |  |
 | `/#sponsors` | `/sponsors` |  |
 | `/#budget` | `/sponsors#budget` |  |
 | `/#sponsor-list` | `/sponsors#sponsor-list` |  |

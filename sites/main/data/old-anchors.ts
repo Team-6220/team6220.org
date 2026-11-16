@@ -7,7 +7,7 @@ export const OLD_ANCHORS: Record<string, string> = {
   robots: "/robots",
   join: "/about/join",
   faq: "/about/join#faq",
-  apply: "/about/join#apply",
+  apply: "/about/join#newsletter",
   sponsors: "/sponsors",
   budget: "/sponsors#budget",
   "sponsor-list": "/sponsors#sponsor-list",
