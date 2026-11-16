@@ -13,7 +13,7 @@ what the team runs today is exactly what is in git. `attendance-api/` is new cod
 ## Rules
 
 - **Don't edit the live scripts and this folder separately.** Change code here first (pull request), then copy it
-  into the Apps Script editor, or use `clasp` once it is set up (it needs each project's script ID; not set up yet).
+  into the Apps Script editor, or use `clasp` (`pnpm clasp -P backend/apps-script/<folder> push`) for a project that has a `.clasp.json`; today only `ops-timer/` does.
 - **No secrets and no student data in git.** The code contains none today: spreadsheets are found with
   `getActive()` (or, in `attendance-api/`, by an ID kept in Script Properties) and settings live in Script
   Properties. Keep it that way, because this repo is public.

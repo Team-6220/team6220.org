@@ -11,8 +11,16 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 
 ## Setup (once, with the team Google account)
 
-1. Create an Apps Script project named "6220 Ops Timer" and copy in `Code.gs` and `appsscript.json`
-   ([docs/APPS-SCRIPT.md](../../../docs/APPS-SCRIPT.md) has the clicks).
+1. Create the Apps Script project and upload the files with `clasp` (installed by `pnpm install`), signed in as the team
+   Google account. Once per computer, `pnpm clasp login` (it opens a browser; first turn on the Apps Script API at
+   <https://script.google.com/home/usersettings>). Then, from the repo root:
+
+   ```bash
+   pnpm clasp create-script --type standalone --title "6220 Ops Timer" --rootDir backend/apps-script/ops-timer
+   ```
+
+   That writes `backend/apps-script/ops-timer/.clasp.json` (the script ID is not a secret; commit it). If clasp asks about
+   overwriting `appsscript.json`, answer no. After that, every change is `pnpm clasp -P backend/apps-script/ops-timer push`.
 2. Make a long random secret (20 or more characters). Save it **twice**: as the Wix secret `OPS_TIMER_SECRET` (Wix
    dashboard → Developer Tools → Secrets Manager) and as the Script Property `OPS_TIMER_SECRET` here. Never put it in
    the repo.

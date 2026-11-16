@@ -31,3 +31,6 @@ dist/
 /dist-mock/
 /playwright-report/
 /test-results/
+
+# clasp's Google login (never commit)
+.clasprc.json

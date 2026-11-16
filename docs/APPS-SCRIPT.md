@@ -41,8 +41,10 @@ Rules from [backend/apps-script/README.md](../backend/apps-script/README.md):
 - **No secrets, no student data in git.** Sheets are found by `getActive()` or an ID in Script Properties.
 - Don't change the attendance row format in one of the two attendance projects without the other.
 - Leave the old deployments up until the new site has run a real team meeting with Attendance and Inventory.
-- `clasp` (Google's command-line sync tool) is **not set up**. You need each project's script ID for it. Until then you
-  copy files by hand.
+- `clasp` (Google's command-line sync tool) is installed by `pnpm install`. **ops-timer** is the first project to use it
+  (`pnpm clasp -P backend/apps-script/ops-timer push`, setup in its README). The older projects have no `.clasp.json` yet,
+  so for them you still copy files by hand; to move one over, run `pnpm clasp clone-script <scriptId> --rootDir <folder>`
+  in a scratch folder and compare before replacing anything (never overwrite `attendance/`).
 
 Because the repo is public and these are real team accounts, use the shared **programming@team6220.org** account (or
 another team-owned account) as the project **owner**, so a graduating student never owns something the team needs.
