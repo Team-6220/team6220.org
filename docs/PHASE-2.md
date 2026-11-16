@@ -90,7 +90,10 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
       Site member); (3) check the preview again. **Timing:** dev.team6220.org (Phase 1, direct writes) stops being able
       to change inventory once step 2 is done, so do it at go-live or when Inventory has moved to the new site. Check
       the other app collections (`icarus_*`, `bom_*`, `production_*`, `ops_*`) the same way. Only then turn on open signups.
-- [ ] Cookie policy set to essential-only; a small notice with a link to choose.
+- [x] Cookie policy and notice: `src/components/CookieConsent.astro` (in `BaseLayout.astro`, so every page and app).
+      Where Wix's consent manager exists it keeps everything except essential cookies off until the visitor chooses, and
+      shows a small notice (Allow analytics / No thanks); the choice is remembered. It does nothing on the static
+      build. Covered by `e2e/tests/cookies.spec.ts` with a fake manager.
 - [ ] Apollo repo: point its team-apps calls at the new address.
 
 ### D. Review and testing
@@ -99,6 +102,11 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 - [ ] Team test on a fresh preview (sign-in, every app, every form).
 
 ### E. Go-live (Phase 3)
+
+- [ ] Set the **site-wide default consent policy** to essential-only with the Update Consent Policy API
+      (https://dev.wix.com/docs/api-reference/business-management/site-properties/properties/update-consent-policy), so
+      analytics are off from the very first page view, not only after the page's own script runs. It applies to the whole
+      Wix site, so do it at go-live, not before.
 
 - [ ] attendance-api (Apps Script): set the Script Property `WIX_CLIENT_ID` to `74e98aee-3daa-4452-bf00-f13523cae9c5`
       (the new login client) right after the switch. Not before: dev.team6220.org still signs in with the old client.

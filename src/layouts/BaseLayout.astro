@@ -3,6 +3,8 @@
 // The main site shows the gold logo as its favicon; the team apps show the gold wing (pass favicon="wing").
 // Each site or app wraps this in its own layout (see sites/main/MainLayout.astro).
 
+import CookieConsent from "../components/CookieConsent.astro";
+
 interface Props {
   title: string;
   description: string;
@@ -27,6 +29,7 @@ const wing = favicon === "wing";
     <link rel="icon" type="image/png" sizes="32x32" href={wing ? "/favicon-wing-32.png" : "/favicon-32.png"} />
     <link rel="apple-touch-icon" href={wing ? "/apple-touch-icon-wing.png" : "/apple-touch-icon.png"} />
     <slot name="head" />
+    <CookieConsent />
   </head>
   <body>
     <slot />
