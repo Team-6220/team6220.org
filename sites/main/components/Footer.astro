@@ -4,8 +4,7 @@
     <div class="foot-grid">
       <div>
         <a class="brand" href="/" aria-label="Team 6220 home"><svg aria-hidden="true"><use href="#griffin"/></svg><span>Los Al Robotics<small>FRC Team 6220</small></span></a>
-        <address>Los Alamitos High School<br>3591 Cerritos Ave<br>Los Alamitos, CA 90720<br><a href="tel:+16572226220">657-222-6220</a></address>
-        <div class="copy-row"><code id="email">operations@team6220.org</code><button class="copy-btn" type="button" data-copy="operations@team6220.org">COPY</button></div>
+        <address>Los Alamitos High School<br>3591 Cerritos Ave<br>Los Alamitos, CA 90720</address>
       </div>
       <div><h3>Follow</h3><ul>
         <li><a href="https://www.instagram.com/losalfrc_6220/" target="_blank" rel="noopener">Instagram ↗</a></li>
@@ -21,7 +20,14 @@
         <li><a href="https://www.amazon.com/hz/wishlist/ls/2XCLFBYGO6WMT" target="_blank" rel="noopener">Amazon wishlist ↗</a></li></ul></div>
       <div><h3>Learn more</h3><ul>
         <li><a href="https://www.firstinspires.org/robotics/frc" target="_blank" rel="noopener">FIRST Robotics ↗</a></li>
-        <li><a href="https://www.losal.org/" target="_blank" rel="noopener">Los Al High ↗</a></li></ul></div>
+        <li><a href="https://www.losal.org/" target="_blank" rel="noopener">LAHS ↗</a></li></ul></div>
+    </div>
+    <!-- Team phone and email (#250): click either to copy it. Kept apart from the school's address so the number isn't read as the school's. -->
+    <div class="foot-contact" aria-label="Contact the team">
+      <button type="button" class="foot-copy" data-copy="657-222-6220" aria-label="Copy 657-222-6220">657-222-6220</button>
+      <span class="foot-dot" aria-hidden="true"></span>
+      <button type="button" class="foot-copy" data-copy="operations@team6220.org" aria-label="Copy operations@team6220.org" id="email">operations@team6220.org</button>
+      <span class="foot-copied" role="status" aria-live="polite"></span>
     </div>
     <div class="legal">
       <span>© 2026 Los Al Robotics · FRC Team 6220 · <button class="replay" type="button" id="replay">Replay intro</button>&nbsp;· <button class="replay" type="button" data-theme-toggle><span class="tt-to-light">Light mode</span><span class="tt-to-dark">Dark mode</span></button></span>
@@ -31,6 +37,22 @@
 </footer>
 <!-- The light/dark button (in the footer's bottom line, next to Replay intro). It names the mode it switches to. The choice is saved as team6220.theme, shared with the team apps (MainLayout applies it before the page is drawn). -->
 <script is:inline>
+  // Footer phone and email: copy on click and show "Copied" for a moment.
+  document.querySelectorAll(".foot-copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var note = document.querySelector(".foot-copied");
+      var done = function (text) {
+        note.textContent = text;
+        clearTimeout(note._t);
+        note._t = setTimeout(function () { note.textContent = ""; }, 2000);
+      };
+      try {
+        navigator.clipboard.writeText(btn.dataset.copy).then(function () { done("Copied " + btn.dataset.copy); }, function () { done("Select and copy: " + btn.dataset.copy); });
+      } catch (e) {
+        done("Select and copy: " + btn.dataset.copy);
+      }
+    });
+  });
   document.querySelector("[data-theme-toggle]").addEventListener("click", function () {
     var next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
     document.documentElement.dataset.theme = next;

@@ -1,0 +1,88 @@
+---
+// About page: how the team is organized. Roles and descriptions come from the "Team Structure 2026-27" doc
+// (team Google Drive), in present tense. Titles only, no student names, so this does not need updating when leaders change.
+// Technical is four separate subteams. Operations is one subteam with three areas, each with its own lead.
+const BRANCHES = [
+  {
+    name: "Technical",
+    note: "4 subteams",
+    leads: [
+      { title: "Design Lead", with: "Design Manager" },
+      { title: "Manufacturing Lead", with: "Manufacturing Manager" },
+      { title: "Programming Lead" },
+      { title: "Electrical Lead" },
+    ],
+    heading: "Technical subteams",
+    parts: [
+      { name: "Design", text: "Creates a full plan for the robot using CAD and strategic design. When the design is finished, Design manages the temporary in-season Strategy and Scouting subteam and develops a full strategy for our team, along with a plan to collect and use data at competitions through scouting. Design also provides Business with information for the Technical Binder." },
+      { name: "Manufacturing", text: "Executes the design: makes parts from the ground up as needed, uses off-the-shelf parts, and assembles everything. Manufacturing also maintains the team's tools, keeps the shop organized, and builds our practice field. It sets and documents the team's safety practices, keeps the shop and the competition pit clean and safe (a safe shop must first be a clean shop), and trains every new member in basic tool use and safety." },
+      { name: "Programming", text: "Develops the software for the robot, turning it from a remote-control drivetrain into a nearly autonomous robot, and chooses the sensors that give the robot the data it needs to help the driver." },
+      { name: "Electrical", text: "Manages the robot's wiring and electronics, keeping them as organized as possible, and keeps members in the pit at competitions ready to fix electrical issues." },
+    ],
+  },
+  {
+    name: "Operations",
+    note: "1 subteam, 3 leads",
+    leads: [{ title: "Business Lead" }, { title: "Marketing Lead" }, { title: "Outreach Lead" }],
+    heading: "The Operations subteam",
+    intro: "Operations is one subteam, but its duties are broad, so it is split into three areas, each with its own lead. Members can work on any task in any area. At competitions, Operations produces photos and video, gives award presentations, organizes scouting and pit schedules, and keeps the team engaged, organized, and unified.",
+    parts: [
+      { name: "Business", text: "Handles our LAHS club requirements, website content, sponsorships, grants, award presentations, financial records, and keeping costs down. Business also keeps the team's documentation, archives, and history organized, and records the lessons we learn." },
+      { name: "Marketing", text: "Manages the team's appearance and public relations: social media, website graphics and photos, team merch, graphics for award and sponsorship packets, and other public materials. Marketing keeps our media organized and works closely with Business on the team's image." },
+      { name: "Outreach", text: "Manages our outreach goals, organizes full-team training, and hosts camps and events. Outreach documents each one so Business and Marketing can use it for awards and our reputation in the community." },
+    ],
+  },
+];
+// How we stay organized: the practices from the same doc that people ask about most.
+const PRACTICES = [
+  { title: "Weekly lead meetings", text: "Every Friday the captains, leads, and managers review the week, plan the next one, and flag what each subteam needs from the others. We follow a simplified Robert's Rules of Order to keep them short." },
+  { title: "Progress updates", text: "After every meeting, each subteam posts what got done, what's next, and what it's waiting on, so absent members and other subteams stay caught up." },
+  { title: "A main subteam, plus more", text: "Every member picks one main subteam and can join others with that lead's approval. Operations and Electrical are the most common secondary subteams." },
+  { title: "Written-down knowledge", text: "Each subteam keeps its resources, standards, and lessons learned in the team Drive, so what we learn outlasts every graduating class." },
+];
+---
+
+<section id="structure" class="on-panel">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">How we're organized</p><h2 class="title-calm">Subteams and leadership</h2></div><p>Every member joins a subteam. Students lead every subteam and the team as a whole.</p></div>
+    <figure class="org rv" aria-label="Leadership structure: the Team Captain and two Assistant Captains lead the team. The Technical side has four subteams, each with a lead; Design and Manufacturing also have managers. Operations is one subteam with a Business Lead, a Marketing Lead, and an Outreach Lead.">
+      <p class="org-node org-top">Team Captain</p>
+      <p class="org-node">Assistant Captains (2)</p>
+      <div class="org-split">
+        {BRANCHES.map((b) => (
+          <div class="org-col">
+            <p class="org-branch">{b.name}<small>{b.note}</small></p>
+            <ul>
+              {b.leads.map((l) => (
+                <li>{l.title}{l.with && <small>+ {l.with}</small>}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </figure>
+    <div class="branches">
+      {BRANCHES.map((b, i) => (
+        <article class="branch rv" style={`--d:${i}`}>
+          <p class="eyebrow">{b.heading}</p>
+          {b.intro && <p class="branch-intro">{b.intro}</p>}
+          <ul>
+            {b.parts.map((p) => (
+              <li><h3>{p.name}</h3><p>{p.text}</p></li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+    <div class="practices-head rv"><p class="eyebrow ruled">How we stay organized</p></div>
+    <div class="lead-vs-mgr rv">
+      <h3>Lead vs. manager</h3>
+      <p>Every subteam has a <b>Lead</b>, the technical decision-maker who decides <i>what</i> the subteam builds and has the final say on technical questions. Some subteams also have a <b>Manager</b>, the executive decision-maker who decides <i>how</i> it gets done: organizing members, running training, and documenting progress. The lead can focus on the engineering while the manager focuses on the people. Without a manager, the lead does both.</p>
+    </div>
+    <div class="practices">
+      {PRACTICES.map((p, i) => (
+        <article class="rv" style={`--d:${i}`}><h3>{p.title}</h3><p>{p.text}</p></article>
+      ))}
+    </div>
+  </div>
+</section>

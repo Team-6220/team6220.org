@@ -1,0 +1,31 @@
+---
+// About page: the skills students learn (#170), grouped by career skill for school staff, counselors, and colleges.
+const SKILLS = [
+  { area: "Mechanical engineering and design", tools: "Onshape CAD, design reviews, prototyping, weight and center-of-gravity budgets, and game strategy", careers: "Mechanical, aerospace, and product engineering" },
+  { area: "Manufacturing", tools: "CNC router and mill, 3D printing, lathe and hand tools, assembly, and shop safety", careers: "Manufacturing, machining, and industrial engineering" },
+  { area: "Software and controls", tools: "Java and WPILib, Git and GitHub, computer vision with AprilTags, autonomous path planning, and simulation", careers: "Software engineering, computer science, and robotics" },
+  { area: "Electrical", tools: "Power distribution, CAN networks, sensors, crimping and wiring standards, and troubleshooting", careers: "Electrical and computer engineering" },
+  { area: "Business and leadership", tools: "A $45,000 budget, sponsorship pitches, grant writing, marketing and social media, project schedules, and leading a team of 48", careers: "Business, marketing, management, and entrepreneurship" },
+];
+---
+
+<!-- Skills: a sticky column with the heading and a CAD render on the left, the list of skills on the right. -->
+<section id="skills" class="on-paper">
+  <div class="wrap skills-wrap">
+    <div class="skills-side rv">
+      <p class="eyebrow ruled">What students learn</p>
+      <h2 class="title-calm">Real tools, real responsibility</h2>
+      <p class="muted">Everything we build is intentional, not perfect. Students learn the same tools and habits engineers and businesses use.</p>
+      <figure class="skills-render"><img src="/assets/main/1256dd39df.webp" alt="CAD render of Goober, Team 6220's 2026 robot, designed by students in Onshape" loading="lazy"><figcaption class="cap">Goober, our 2026 robot, in Onshape CAD</figcaption></figure>
+    </div>
+    <ul class="skills">
+      {SKILLS.map((s, i) => (
+        <li class="rv" style={`--d:${Math.min(i, 5)}`}>
+          <h3>{s.area}</h3>
+          <p>{s.tools}</p>
+          <p class="careers"><span>Leads to</span> {s.careers}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
