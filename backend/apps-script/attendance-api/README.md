@@ -64,7 +64,7 @@ For `status`, `today`, `history`, `lookup` and `openKiosk`, with the token from 
 
 1. **Token Info** `POST https://www.wixapis.com/oauth2/token-info` with `{ "token": … }`: it must be `active`, with
    `subjectType` `MEMBER` and `clientId` equal to our headless client ID (Script Property `WIX_CLIENT_ID`, default
-   `38a0b75d-…4181`, the same public ID as `packages/data/src/config.ts`). A token from another Wix site or app, a
+   `74e98aee-…e9c5`, the same public ID as `packages/data/src/config.ts`; set the property at go-live, see docs/PHASE-2.md). A token from another Wix site or app, a
    visitor token, or an expired token fails here.
    Docs: [Token Info](https://dev.wix.com/docs/api-reference/app-management/oauth-2/token-info).
 2. **Get My Member** `GET https://www.wixapis.com/members/v1/members/my?fieldSet=FULL` with the header

@@ -40,7 +40,7 @@ const DATASHEET = "Data";
 const LOOKUPSHEET = "MemberLookup";
 
 const WIX_API = "https://www.wixapis.com";
-const DEFAULT_WIX_CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
+const DEFAULT_WIX_CLIENT_ID = "74e98aee-3daa-4452-bf00-f13523cae9c5";
 const BADGE_TEAM_MEMBER = "Team Member";
 const BADGE_ATTENDANCE_ADMIN = "Attendance Admin";
 

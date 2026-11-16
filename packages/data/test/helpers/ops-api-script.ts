@@ -9,7 +9,7 @@ import vm from "node:vm";
 const FILES = ["Code.gs", "Auth.gs", "WixData.gs", "Shared.gs", "Bom.gs", "Icarus.gs", "Events.gs", "GitHub.gs"].map((name) =>
   readFileSync(fileURLToPath(new URL(`../../../../backend/apps-script/ops-api/${name}`, import.meta.url)), "utf8"),
 );
-const CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
+const CLIENT_ID = "74e98aee-3daa-4452-bf00-f13523cae9c5";
 export const API_KEY = "server-wix-api-key";
 export const APOLLO_KEY = "apollo-key-0123456789abcdef0123456789abcdef";
 const sha = (text: string) => createHash("sha256").update(text, "utf8").digest("hex");

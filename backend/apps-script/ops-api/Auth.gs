@@ -5,7 +5,7 @@
 // Apollo: an API key whose SHA-256 is stored in the APOLLO_KEY_SHA256 Script Property.
 
 const WIX_API = "https://www.wixapis.com";
-const DEFAULT_WIX_CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
+const DEFAULT_WIX_CLIENT_ID = "74e98aee-3daa-4452-bf00-f13523cae9c5";
 
 // Badge titles, exactly as created in Wix. Keep in step with BADGES in packages/data/src/config.ts.
 const BADGE_TEAM_MEMBER = "Team Member";

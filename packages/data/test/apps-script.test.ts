@@ -10,7 +10,7 @@ const CODE = readFileSync(
   fileURLToPath(new URL("../../../backend/apps-script/attendance-api/Code.gs", import.meta.url)),
   "utf8",
 );
-const CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
+const CLIENT_ID = "74e98aee-3daa-4452-bf00-f13523cae9c5";
 const BADGES = { tm: "badge-team-member", aa: "badge-attendance-admin" };
 
 interface Member {

@@ -73,8 +73,8 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 
 - [x] Sign-in: `auth.ts` uses `/api/auth/login` and `/api/auth/logout`; the browser client reads the `wixSession`
       cookie; `/api/site` reads the member and badges from the session and refuses cross-site requests
-      (`Sec-Fetch-Site`). **To do:** set `WIX_CLIENT_ID` in `packages/data/src/config.ts` (and the forms in
-      `site-b.js`, attendance-api and ops-api) to the new client's ID, and test sign-in on a preview.
+      (`Sec-Fetch-Site`). `WIX_CLIENT_ID` is the new client (`74e98aee-…`) in `config.ts`, the forms in `site-b.js`, and
+      the Apps Scripts' defaults. **To do:** test sign-in on a preview.
 - [x] Secrets: `src/server/wix-secrets.ts` reads Wix Secrets Manager values with elevated permissions, one secret
       per call, only when an action needs it. Form signups use an elevated Wix query, so they need no API key.
 - [ ] Move every ops-api action to `/api/<area>` (one-to-one, same names and answers), with the same tests.
@@ -91,6 +91,9 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 - [ ] Team test on a fresh preview (sign-in, every app, every form).
 
 ### E. Go-live (Phase 3)
+
+- [ ] attendance-api (Apps Script): set the Script Property `WIX_CLIENT_ID` to `74e98aee-3daa-4452-bf00-f13523cae9c5`
+      (the new login client) right after the switch. Not before: dev.team6220.org still signs in with the old client.
 
 Follow [MIGRATION-PLAN.md](MIGRATION-PLAN.md#phase-3-switch-over): Complete Migration with only the flags the dialog
 gives, 301 redirects for old pages, SEO check, submit every form once, delete the `dev` DNS record.

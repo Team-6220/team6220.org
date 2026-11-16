@@ -77,9 +77,11 @@ The server-side check that truly blocks people is in the attendance API.
 
 ## Headless client and redirect URIs
 
-**What it is.** Our website's JavaScript is allowed to log people in and read Wix data because we created a **headless
-(OAuth) client** on the Wix site. Its **client ID** is committed in `packages/data/src/config.ts` as `WIX_CLIENT_ID`
-(`38a0b75d-6959-4630-ac13-73004c094181`). It is public and not a secret.
+**What it is.** Our website's JavaScript is allowed to log people in and read Wix data because the site has a
+**headless (OAuth) client**. Its **client ID** is committed in `packages/data/src/config.ts` as `WIX_CLIENT_ID`. It is
+public and not a secret. Since Phase 2 it is the migration project's client (`74e98aee-3daa-4452-bf00-f13523cae9c5`,
+from `wix env pull`); the Phase 1 client (`38a0b75d-6959-4630-ac13-73004c094181`) serves dev.team6220.org until
+go-live.
 
 **Where:** Dashboard → **Settings → Development & integrations → Headless Settings** → our client → **Settings**.
 

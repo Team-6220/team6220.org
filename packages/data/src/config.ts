@@ -1,11 +1,8 @@
-// Wix headless (OAuth) client for the "Los Al Robotics | FRC Team 6220" site.
-// The client ID identifies the site and is safe to commit. It is NOT a secret.
-// Never put Wix API keys, Nexus / The Blue Alliance keys or Apps Script secrets here.
-//
-// Allowed domains and redirect URIs (set in Wix: Settings > Headless settings):
-//   https://dev.team6220.org
-//   http://localhost:4321
-export const WIX_CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
+// The login client of our Wix-managed headless project (Phase 2; the WIX_CLIENT_ID that `wix env pull` writes).
+// Wix's built-in login issues member tokens to this client, and the session cookie names it. It is public and safe to
+// commit, NOT a secret. Never put Wix API keys, Nexus / The Blue Alliance keys or Apps Script secrets here.
+// (The Phase 1 headless client, 38a0b75d-..., still serves dev.team6220.org until go-live.)
+export const WIX_CLIENT_ID = "74e98aee-3daa-4452-bf00-f13523cae9c5";
 
 // The apps dashboard. The main site's "Log In" link points here.
 export const APPS_HOME_PATH = "/apps";
