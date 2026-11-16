@@ -1,5 +1,5 @@
 ---
-// Wix sends members here after the Wix login page (see packages/data/src/config.ts, LOGIN_REDIRECT_PATH).
+// The Phase 1 login finished here. Sign-in now uses Wix's /api/auth/login, so this only forwards old bookmarks.
 // Deliberately NOT under /api/auth/*, which @wix/astro reserves in Phase 2.
 import AppLayout from "../../../layouts/AppLayout.astro";
 import { LoginCallback } from "@team6220/dashboard";

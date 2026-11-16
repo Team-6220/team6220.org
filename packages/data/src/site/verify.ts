@@ -102,3 +102,49 @@ async function visitorToken(call: (url: string, init: RequestInit) => Promise<Re
 export function isWebAdmin(viewer: Viewer): boolean {
   return viewer.approved && viewer.badges.includes(BADGES.webAdmin);
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Wix's built-in login (docs/PHASE-2.md): the signed-in member comes from the session cookie
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * The Wix calls the session verifier makes. On Wix hosting they are the @wix/members module functions, which run as
+ * the member of the request's session (Wix's middleware sets that up). Tests pass fakes.
+ */
+export interface SessionWix {
+  /** The signed-in member, or nothing for a visitor. */
+  getCurrentMember(): Promise<{ _id?: string | null; status?: string | null; contact?: { firstName?: string | null; lastName?: string | null } | null; profile?: { nickname?: string | null } | null } | undefined | null>;
+  /** Every badge on the site: id and title. */
+  listBadges(): Promise<{ _id?: string | null; title?: string | null }[]>;
+  /** The badge ids assigned to one member. */
+  listBadgeIds(memberId: string): Promise<string[]>;
+}
+
+/** Checks who is asking from the session, not from a token. The `authorization` argument is ignored. */
+export function createSessionVerifier(wix: SessionWix): VerifyViewer {
+  const unavailable = () => new SiteError("wix-unavailable", "Couldn't reach Wix to check your sign-in. Try again.");
+  return async () => {
+    let member: Awaited<ReturnType<SessionWix["getCurrentMember"]>>;
+    try {
+      member = await wix.getCurrentMember();
+    } catch {
+      throw new SiteError("signed-out", "Sign in to use the Site Manager.");
+    }
+    if (!member?._id) throw new SiteError("signed-out", "Sign in to use the Site Manager.");
+    let all: Awaited<ReturnType<SessionWix["listBadges"]>>;
+    let assigned: string[];
+    try {
+      [all, assigned] = await Promise.all([wix.listBadges(), wix.listBadgeIds(member._id)]);
+    } catch {
+      throw unavailable();
+    }
+    const titles = new Map(all.map((b) => [b._id ?? "", b.title ?? ""]));
+    const fullName = [member.contact?.firstName, member.contact?.lastName].filter(Boolean).join(" ").trim();
+    return {
+      id: member._id,
+      name: fullName || member.profile?.nickname || "Web Admin",
+      approved: member.status === "APPROVED",
+      badges: assigned.map((id) => titles.get(id) ?? "").filter(Boolean),
+    };
+  };
+}

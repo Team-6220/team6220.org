@@ -2,7 +2,8 @@
    Published at /assets/shared/scripts/account.js.
 
    packages/data saves the member's name and picture in the browser when it loads the member
-   (team6220.member) and removes them at sign-out. This only decides what to SHOW; it protects nothing.
+   (team6220.member) and removes them at sign-out. Signed in means the wixSession cookie (Wix's built-in login)
+   holds member tokens. This only decides what to SHOW; it protects nothing.
    Use: team6220Account.member() returns { name, photoUrl } or null; team6220Account.avatar(member)
    returns the round picture (or the first letter of the name). Styles: .t-avatar in app-sidebar.css
    and the main site's site.css. */
@@ -15,9 +16,19 @@
     }
   }
 
+  function sessionTokens() {
+    var row = document.cookie.split("; ").filter(function (r) { return r.indexOf("wixSession=") === 0; })[0];
+    if (!row) return null;
+    try {
+      return JSON.parse(decodeURIComponent(row.slice("wixSession=".length))).tokens || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   window.team6220Account = {
     member: function () {
-      var tokens = read("team6220.wix.tokens");
+      var tokens = sessionTokens();
       var member = read("team6220.member");
       var signedIn = tokens && tokens.refreshToken && tokens.refreshToken.role === "member";
       return signedIn && member && typeof member.name === "string" ? member : null;

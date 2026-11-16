@@ -1,7 +1,7 @@
 // The /api/site request handler: a plain function from Request to Response, so it is tested directly and the
 // Astro route (src/server/site-route.ts) is a thin wrapper. SERVER ONLY.
 //
-//   POST /api/site   Authorization: <Wix member access token>   body: JSON
+//   POST /api/site   (signed in through Wix's built-in login: the session cookie)   body: JSON
 //     { "action": "status" }
 //     { "action": "read",    "area": "summer-camp" }
 //     { "action": "propose", "area": "summer-camp", "value": {...}, "images": [{ "path", "base64" }] }
@@ -60,6 +60,10 @@ function failure(err: unknown): Response {
 export async function handleSiteRequest(request: Request, deps: SiteApiDeps): Promise<Response> {
   try {
     if (request.method !== "POST") return reply(405, { error: { code: "bad-request", message: "Use POST." } });
+    // Sign-in lives in a cookie, so refuse requests another website makes in a member's browser. Browsers mark every
+    // request with Sec-Fetch-Site; non-browser callers (scripts, Apollo) send no cookie, so they can't use a session.
+    const site = request.headers.get("sec-fetch-site");
+    if (site && site !== "same-origin") throw new SiteError("forbidden", "Requests must come from this website.");
 
     // 1. Who is asking? Checked on every request.
     const viewer = await deps.verify(request.headers.get("authorization"));

@@ -56,6 +56,9 @@ importers:
       '@wix/essentials':
         specifier: 1.0.15
         version: 1.0.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)
+      '@wix/members':
+        specifier: ^1.0.541
+        version: 1.0.541
       '@wix/sdk':
         specifier: 1.21.18
         version: 1.21.18

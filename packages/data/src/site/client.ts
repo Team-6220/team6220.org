@@ -7,14 +7,13 @@
 //
 // Two modes:
 //   - Server mode (build variable PUBLIC_SITE_MANAGER_API=on, Phase 2): talks to POST /api/site, which checks the Web
-//     Admin badge and holds the GitHub credential. The browser only ever sends its Wix member token to our own site.
+//     Admin badge from the session cookie (Wix's built-in login) and holds the GitHub credential.
 //   - Demo mode (default, e.g. the static Phase 1 site): everything runs in this tab against MockSiteStore. No network,
 //     no pull request is opened. `?demo=admin` also skips the sign-in so the editor can be tried locally.
 // The badge check here only chooses what to show; /api/site enforces it.
 import { AREAS, jsonSchemaOf, parseContent, type AreaId, type Change } from "@team6220/content";
 import { BADGES } from "../config";
 import * as auth from "../auth";
-import { memberAccessToken } from "../wix";
 import { MockSiteStore, REPO_URL } from "./mock";
 import { DemoSignupReader, SIGNUP_FORMS, emailListText, uniqueEmails, type Signup, type SignupFormId } from "./signups";
 import { proposeChange, readArea } from "./propose";
@@ -78,15 +77,16 @@ export async function getViewer(): Promise<SiteViewer> {
 }
 
 async function callApi<T>(body: Record<string, unknown>): Promise<T> {
-  const token = await memberAccessToken();
-  if (!token) throw new SiteError("signed-out", "Sign in to use the Site Manager.");
+  if (!auth.isLoggedIn()) throw new SiteError("signed-out", "Sign in to use the Site Manager.");
   let res: Response;
   try {
+    // The session cookie says who is asking (Wix's built-in login). Never send an Authorization header to our own
+    // /api: Wix's middleware would treat the request as a call from a Wix app.
     res = await fetch("/api/site", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: token },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      credentials: "omit",
+      credentials: "same-origin",
     });
   } catch {
     throw new SiteError("network", "Couldn't reach the server. Check the internet connection.");

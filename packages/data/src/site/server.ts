@@ -2,7 +2,7 @@
 // it is what holds the GitHub credential.
 export { handleSiteRequest, type SiteApiDeps } from "./api";
 export { GithubSiteStore, githubStoreFromEnv, githubAppJwt, type SiteEnv, type GithubSiteStoreOptions } from "./github";
-export { createWixVerifier, isWebAdmin, type Viewer, type VerifyViewer } from "./verify";
+export { createWixVerifier, createSessionVerifier, isWebAdmin, type SessionWix, type Viewer, type VerifyViewer } from "./verify";
 export { MockSiteStore } from "./mock";
 export { WixSignupReader, signupReaderFromEnv, type SignupEnv } from "./signups";
 export { proposeChange, readArea, branchName, slug, validateImages, pullRequestBody } from "./propose";

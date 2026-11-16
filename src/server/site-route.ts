@@ -9,7 +9,8 @@
 //   SITE_MANAGER_WIX_API_KEY, WIX_SITE_ID                               form signups (#76): a Wix API key with
 //                                                                       "Manage form submissions", and our site ID
 import type { APIRoute } from "astro";
-import { createWixVerifier, githubStoreFromEnv, handleSiteRequest, signupReaderFromEnv, type SignupEnv, type SiteEnv } from "@team6220/data/site-server";
+import { badgeAssignments, badgesV2, members } from "@wix/members";
+import { createSessionVerifier, githubStoreFromEnv, handleSiteRequest, signupReaderFromEnv, type SignupEnv, type SiteEnv } from "@team6220/data/site-server";
 
 export const prerender = false;
 
@@ -38,7 +39,14 @@ function readEnv(): SiteEnv & SignupEnv {
   return out;
 }
 
-const verify = createWixVerifier();
+// Who is asking: the member of this request's session (Wix's built-in login). Wix's middleware runs these module
+// functions as that member, so no token is passed around.
+const verify = createSessionVerifier({
+  getCurrentMember: async () => (await members.getCurrentMember({ fieldsets: ["FULL"] })).member,
+  listBadges: async () => (await badgesV2.queryBadges().limit(100).find()).items,
+  listBadgeIds: async (memberId) =>
+    (await badgeAssignments.queryBadgeAssignments().eq("memberId", memberId).limit(100).find()).items.map((a) => a.badgeId ?? ""),
+});
 
 export const ALL: APIRoute = ({ request }) =>
   handleSiteRequest(request, {

@@ -10,13 +10,9 @@ export const WIX_CLIENT_ID = "38a0b75d-6959-4630-ac13-73004c094181";
 // The apps dashboard. The main site's "Log In" link points here.
 export const APPS_HOME_PATH = "/apps";
 
-// The page that finishes a login (exchanges the code from Wix for member tokens).
+// The Phase 1 page that finished a login. Sign-in now goes through Wix's /api/auth/login (see auth.ts); this page
+// only forwards old bookmarks to the dashboard.
 export const LOGIN_CALLBACK_PATH = "/apps/login/callback";
-
-// Where Wix sends the browser after login. Must EXACTLY match an "Allowed authorization redirect URI" on the
-// headless client (Wix > Headless Settings). Allowed today: https://dev.team6220.org/apps/login/callback and
-// http://localhost:4321/apps/login/callback. Add any new origin there before using it.
-export const LOGIN_REDIRECT_PATH: string = LOGIN_CALLBACK_PATH;
 
 // Badge titles as created in Wix (Site Members > Badges). There is no inventory badge: every Team Member can edit the inventory (team decision, Nov 2026). Compare with these, not with typed strings.
 export const BADGES = {
