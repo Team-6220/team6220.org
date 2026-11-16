@@ -30,6 +30,12 @@ export default defineConfig(
         integrations: [syncMedia(), wix(), wixPages(), react(), buildApps(), siteApi()],
         // As in Wix's Astro template. Our /api endpoints check the request's origin themselves (docs/PHASE-2.md).
         security: { checkOrigin: false },
+        // GoldSim and WingIt are plain files copied in by buildApps(). Wix hosting doesn't serve a folder's
+        // index.html at the folder's address, so send the folder address there.
+        redirects: {
+          "/apps/goldsim": "/apps/goldsim/index.html",
+          "/apps/wingit": "/apps/wingit/index.html",
+        },
         image: { domains: ["static.wixstatic.com"] },
       },
 );

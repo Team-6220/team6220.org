@@ -65,7 +65,9 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 - [x] Add `@wix/astro`, `@wix/astro-pages`, `@wix/astro-wix-hosting-adapter`, `@wix/essentials`, `@wix/sdk`,
       `@wix/dashboard` and `@wix/cli`; `output: "server"`; allow `workerd` and `esbuild` builds in pnpm.
 - [x] Static build for tests and CI (`pnpm build:static`), so they need no Wix secrets.
-- [ ] `wix build`, then `wix preview`; open the preview link.
+- [x] `wix build`, then `wix preview` (preview only uploads what is already built, so always build first). First
+      preview Nov 16: every page renders. Wix drops trailing slashes (`/about/` → `/about`, one redirect) and doesn't
+      serve a folder's `index.html`, so `/apps/goldsim` and `/apps/wingit` redirect to their `index.html`.
 
 ### C. Server code
 
