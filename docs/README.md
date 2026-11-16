@@ -44,6 +44,7 @@ Every change goes through a **pull request** with one review; merging to `main` 
 | [MIGRATION-PLAN.md](MIGRATION-PLAN.md) | The plan, the decisions and why. Source of truth |
 | [PHASE-0.md](PHASE-0.md) | The one-time setup checklist for GitHub and Wix, with exact menu paths (done Nov 9, 2026) |
 | [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md) | What we learned testing the Wix CLI and Wix hosting before building |
+| [PHASE-2.md](PHASE-2.md) | Phase 2 (moving to Wix hosting): the decisions and the step-by-step checklist |
 | [SITE-MANAGER.md](SITE-MANAGER.md) | The plan for a Web Admin app that edits content with forms (not built) |
 | [operations/README.md](operations/README.md) | The plan for Icarus (tasks and Gantt), Production and BOM apps and how they connect to Inventory (not built) |
 | [REDIRECTS.md](REDIRECTS.md) | Old page addresses and where they go; list of all page addresses |
