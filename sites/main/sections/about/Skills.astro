@@ -1,0 +1,25 @@
+---
+// About page: the skills students learn (#170), grouped by career skill for school staff, counselors and colleges.
+const SKILLS = [
+  { area: "Mechanical engineering and design", tools: "Onshape CAD, design reviews, prototyping, weight and center-of-gravity budgets, game strategy", careers: "Mechanical, aerospace and product engineering" },
+  { area: "Manufacturing", tools: "CNC router and mill, 3D printing, lathe and hand tools, assembly, shop safety", careers: "Manufacturing, machining, industrial engineering" },
+  { area: "Software and controls", tools: "Java and WPILib, Git and GitHub, computer vision with AprilTags, autonomous path planning, simulation", careers: "Software engineering, computer science, robotics" },
+  { area: "Electrical", tools: "Power distribution, CAN networks, sensors, crimping and wiring standards, troubleshooting", careers: "Electrical and computer engineering" },
+  { area: "Business and leadership", tools: "A $45,000 budget, sponsorship pitches, grant writing, marketing and social media, project schedules, leading a team of 50", careers: "Business, marketing, management, entrepreneurship" },
+];
+---
+
+<section id="skills" class="on-paper">
+  <div class="wrap">
+    <div class="sec-head rv"><div><p class="eyebrow ruled">What students learn</p><h2 class="title-calm">Real tools, real responsibility</h2></div><p>Everything we build is intentional, not perfect. Students learn the same tools and habits engineers and businesses use.</p></div>
+    <div class="skills">
+      {SKILLS.map((s, i) => (
+        <article class="rv" style={`--d:${Math.min(i, 5)}`}>
+          <h3>{s.area}</h3>
+          <p>{s.tools}</p>
+          <p class="careers"><span>Leads to</span> {s.careers}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
