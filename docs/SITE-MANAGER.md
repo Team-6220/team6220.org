@@ -4,7 +4,7 @@ A Web Admin app at `/apps/site` where webmasters change the website's regular co
 It started as an idea at the end of issue #69 ("Maybe a new app dedicated to site management"). The more
 the backend grows, the more the team needs it, so it now has its own plan.
 
-**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112) and **Merch** (#113) editors and the image uploader are built. Today the app runs in
+**Status (Nov 2026):** foundations, the **Summer camp** editor (#110, #111), the **Sponsors** (#112), **Merch** (#113) and **Robots** (#159) editors and the image uploader are built. Today the app runs in
 **demo mode**: it validates, shows what would change and says "demo: no pull request is opened". It starts opening real
 pull requests once the Phase 2 server (`output: "server"`) and the GitHub App exist (see "Turn on real pull requests").
 Resources follows (#114): each remaining area is one more area (see "Add a new editable area").
@@ -35,10 +35,14 @@ Developers can try the editor without signing in at `/apps/site?demo=admin` (dem
 Pick **Sponsors**. Each entry is one sponsor; **Up** and **Down** set the order, which is the order of the logos on the
 Sponsors page and in the scrolling strip on the home page (all three places read the same list).
 
-- **Name** is also the logo's alt text. **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images
-  per change); leave it empty to show the name as plain text, as the Gene Haas Foundation does today.
+- **Name** is also the logo's alt text.
+- **Show as**: *One-color logo* (a single-color file, shown white on the dark page and black in light mode), *Full-color
+  logo* (shown as the file is) or *Name* (the name in capitals in Karnivore, no logo needed, as for Brent Kinneman).
+- **Logo** is a file picker (png, jpg, webp, gif or avif, 2 MB at most, 10 new images per change). SVG logos are added by a
+  developer (see [COOKBOOK.md](COOKBOOK.md#2-add-or-change-a-sponsor-each-season)).
 - **Link** is optional; when set, the logo on the Sponsors page links there (the home strip never links).
-- **Tier** and **Season** are stored for the list but not shown yet.
+- **Tier** groups the logos on the Sponsors page (Griffin first; no tier = Supporters). **Season** is stored for the list
+  but not shown yet.
 - **Logo size key** is for developers: `rtx` gives the logo the CSS class `lg-rtx` (sizes in `sites/main/styles/site.css`).
   Leave it empty for a new sponsor; the default size applies.
 - The "Your company here" tile and the tier cards are page layout, not part of this list.
@@ -59,6 +63,20 @@ paste into the To or Bcc line of an email you already have. It doesn't send anyt
 - The forms list is `SIGNUP_FORMS` in `packages/data/src/site/signups.ts`. Add a form there when the site gets a new one.
 - Code: `packages/data/src/site/signups.ts` (reading and parsing), the `signups` action in `api.ts`, and
   `apps/site/src/Signups.tsx` (the page).
+
+### Editing robots
+
+Pick **Robots**. Each entry is one robot on `/robots`, newest first; the first one is also the "Latest robot" card on the
+home page. **Up** and **Down** set the order of the tabs.
+
+- **Season** is the year (`2026`). It is also the link: `/robots#2026`. When one season has two robots (2025: Nessie and
+  Sbaghettio), the second one's link is `/robots#2025-sbaghettio`.
+- **Wins**, **Losses** and **Ties** count every match that robot played that season: official and offseason events,
+  qualifications and playoffs. **Matches played** on the page is their sum. Type them in by hand after each event; nothing
+  loads from The Blue Alliance or match13 (team decision, #159). The 2016–2026 numbers were copied once from match13 in Nov 2026.
+- **Awards** is a list; leave it empty when there were none. Write each one as `Award · Event`.
+- **Photo or CAD render** is optional. Without one the card shows the team logo.
+- **Note** is an optional line under the name (Sbaghettio: "The LAEF FRC Robotics Summer Camp robot, built in 3 weeks").
 
 ### Editing merch
 
@@ -95,7 +113,7 @@ Sponsors) are out of scope for now (team decision, Nov 2026).
 | Sponsors | `sections/sponsors/Sponsors.astro`, home marquee | logo (color) per sponsor, name, tier, link, order, season | Yes |
 | Merch | `sections/merch/Merch.astro` (hand-written) | item, image, price, link, order | Yes |
 | Resources and links | `sites/main/data/resources.ts` | sections, links, archive items, order | Yes |
-| Robots | `sites/main/data/robots.ts` | year, game, name, finish, events, album, image, alt, CAD link, quote | Later |
+| Robots | `sites/main/content/robots.json` | season, game, name, note, best finish, events, wins/losses/ties, awards, photo, album, CAD link, quote | Built (#159) |
 | History / timeline | `sections/about/History.astro` | entries (year, title, text), newest first | Later |
 | Gallery | Wix Media / Google Drive (#8) | which album folders appear and in what order | Later |
 
@@ -149,7 +167,7 @@ exist, previews are the Phase 2 PR previews, and the live site stays static and 
    GitHub API) with a mock mode for local development, `/api/site` with the badge check, the `/apps/site`
    shell and a dashboard card.
 2. **Summer camp**, then **Sponsors**, then **Merch**, then **Resources and links** (first batch).
-3. **Later:** Robots, History, Gallery albums.
+3. **Later:** History, Gallery albums. (Robots is built, #159.)
 
 Each area is its own issue: convert the content to JSON, make the page read it, build the form, and check
 the page is identical before and after.

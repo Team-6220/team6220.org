@@ -41,6 +41,7 @@
   gap: var(--space-1);
 }
 .site__field input[type="text"],
+.site__field input[type="number"],
 .site__field textarea,
 .site__bar select {
   font: inherit;
@@ -55,6 +56,9 @@
 }
 .site__bar select {
   width: auto;
+}
+.site__field--number input {
+  width: 8rem;
 }
 .site__field input[aria-invalid="true"],
 .site__field textarea[aria-invalid="true"] {

@@ -1,4 +1,4 @@
-// Images in content files: a path relative to sites/main/media/ (for example "a26bfa3ebe.png"), which the site serves
+// Images in content files: a path relative to sites/main/media/ (for example "sponsors/rtx.svg" or "team/4f1c204f9c.webp"), which the site serves
 // at /assets/main/<path>. The Site Manager uploads small images with the pull request under the same rules the
 // server enforces (@team6220/data `validateImages` uses IMAGE_RULES too).
 import { z } from "zod";
@@ -18,15 +18,17 @@ const NAME_CHAR = /[A-Za-z0-9._/-]/;
 /**
  * A repository-relative image file name: letters, digits, `.`, `_`, `-` and `/`, starting with a letter or digit,
  * ending in an allowed extension, no `..` or `//`. A single pass (no backtracking) because it runs on user input.
+ * `svg: true` also accepts `.svg`: for logos a developer commits. Uploads never accept SVG (it can carry scripts).
  */
-export function isImageFile(path: string): boolean {
+export function isImageFile(path: string, opts: { svg?: boolean } = {}): boolean {
   if (path.length === 0 || path.length > 300) return false;
   if (!/[A-Za-z0-9]/.test(path[0]!)) return false;
   for (let i = 0; i < path.length; i++) if (!NAME_CHAR.test(path[i]!)) return false;
   if (path.includes("..") || path.includes("//")) return false;
   const dot = path.lastIndexOf(".");
   if (dot < 1) return false;
-  return (IMAGE_RULES.extensions as readonly string[]).includes(path.slice(dot + 1).toLowerCase());
+  const ext = path.slice(dot + 1).toLowerCase();
+  return (IMAGE_RULES.extensions as readonly string[]).includes(ext) || (opts.svg === true && ext === "svg");
 }
 
 /** Where the site serves a file of sites/main/media/. Logos and photos here are always under /assets/main. */
@@ -36,12 +38,12 @@ export const mediaUrl = (path: string) => `/assets/main/${path}`;
  * An image field: a path relative to sites/main/media/. `optional: true` also allows "" (no image), so the
  * form can leave it empty. The editor shows an uploader for fields marked `ui: "image"`.
  */
-export function imageField(title: string, opts: { optional?: boolean; description?: string } = {}) {
+export function imageField(title: string, opts: { optional?: boolean; description?: string; svg?: boolean } = {}) {
   return z
     .string()
     .trim()
     .max(200)
-    .refine((v) => (opts.optional && v === "") || isImageFile(v), `Choose a ${IMAGE_RULES.extensions.join("/")} image`)
+    .refine((v) => (opts.optional && v === "") || isImageFile(v, { svg: opts.svg }), `Choose a ${IMAGE_RULES.extensions.join("/")} image`)
     .meta({
       title,
       ui: "image",
