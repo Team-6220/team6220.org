@@ -14,6 +14,8 @@ import siteApi from "./integrations/site-api.mjs";
 //     tests, the redirect check and CI, which need no Wix secrets.
 // siteApi() adds /api/site only in the Wix build (docs/SITE-MANAGER.md).
 const STATIC = process.env.SITE_BUILD === "static";
+// Tells the browser code it is on the Wix build, where /api exists (read by packages/data/src/site/client.ts).
+if (!STATIC) process.env.PUBLIC_WIX_BUILD ??= "on";
 
 export default defineConfig(
   STATIC

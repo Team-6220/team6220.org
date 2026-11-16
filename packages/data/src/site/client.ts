@@ -57,6 +57,16 @@ export function apiConfigured(): boolean {
   return v === "on" || v === "1" || v === "true";
 }
 
+/**
+ * True on the Wix build, where /api exists and the member's sign-in is a session cookie (set by astro.config.mjs).
+ * Form signups use the real server whenever this is true, because they need no GitHub credential. Opening pull
+ * requests waits for apiConfigured(), which also needs the GitHub secrets.
+ */
+export function onWixBuild(): boolean {
+  const v = String(import.meta.env?.PUBLIC_WIX_BUILD ?? "").toLowerCase();
+  return v === "on" || v === "1" || v === "true";
+}
+
 /** Whether Submit really opens a pull request in this tab. */
 export function opensRealPullRequests(): boolean {
   return apiConfigured() && !demoMode();
@@ -134,10 +144,10 @@ export async function submit(area: AreaId, value: unknown, images?: ImageUpload[
 
 /**
  * Everyone who filled out one of the website's forms, newest first. `since` limits it to signups on or after that date.
- * Real data needs the Phase 2 server (it holds the Wix API key); otherwise this returns made-up demo signups.
+ * Real data needs the Wix build (the server reads it with elevated permissions); otherwise this returns made-up demo signups.
  */
 export async function listSignups(formId: SignupFormId, since?: Date): Promise<{ signups: Signup[]; demo: boolean }> {
-  if (opensRealPullRequests()) {
+  if (onWixBuild() && !demoMode()) {
     const { signups } = await callApi<{ signups: Signup[] }>({ action: "signups", formId, since: since?.toISOString() });
     return { signups, demo: false };
   }

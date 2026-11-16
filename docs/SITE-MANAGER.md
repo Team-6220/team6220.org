@@ -56,8 +56,9 @@ last 30 days, or all time). The page lists each signup with the person's answers
 **Copy all emails** copies every different email (each address once, ignoring capital letters), separated by commas, to
 paste into the To or Bcc line of an email you already have. It doesn't send anything or start a new email.
 
-- Real signups need the Wix build: the server reads them from Wix with elevated permissions (no API key). On the static
-  build and in demo mode the page shows made-up demo signups.
+- Real signups need the Wix build (`PUBLIC_WIX_BUILD`, set by `astro.config.mjs`): the server reads them from Wix with
+  elevated permissions (no API key), and they need no GitHub credential. On the static build and in demo mode
+  (`?demo=admin`) the page shows made-up demo signups.
 - Like everything in the Site Manager, it's for Web Admins only, and the server checks the badge on every request.
 - The forms list is `SIGNUP_FORMS` in `packages/data/src/site/signups.ts`. Add a form there when the site gets a new one.
 - Code: `packages/data/src/site/signups.ts` (reading and parsing), the `signups` action in `api.ts`, and
