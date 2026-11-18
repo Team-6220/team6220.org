@@ -87,6 +87,8 @@ export interface MemberSession {
    * inventory (team decision, Nov 2026: there is no separate Inventory Manager role).
    */
   approved: boolean;
+  /** A guest: may view the inventory but not change it (the server refuses their changes too). */
+  readOnly?: boolean;
   /** Display name, if known. */
   name?: string;
   /** Badge titles, e.g. "Team Member". */

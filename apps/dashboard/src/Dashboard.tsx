@@ -8,6 +8,7 @@ type View =
   | { kind: "signed-out" }
   | { kind: "pending"; member: Member }
   | { kind: "approved"; member: Member }
+  | { kind: "guest"; member: Member }
   | { kind: "error"; message: string };
 
 export default function Dashboard() {
@@ -23,7 +24,10 @@ export default function Dashboard() {
         if (!member) return setView({ kind: "signed-out" });
         const access = await auth.getAccess();
         if (access === "approved") setIsWebAdmin(await auth.hasBadge(BADGES.webAdmin).catch(() => false));
-        setView(access === "approved" ? { kind: "approved", member } : { kind: "pending", member });
+        if (access === "approved") return setView({ kind: "approved", member });
+        // Cosmetic: a guest is approved and has the Guest badge but not Team Member. The apps and servers check for real.
+        const guest = member.status === "APPROVED" && (await auth.hasBadge(BADGES.guest).catch(() => false));
+        setView(guest ? { kind: "guest", member } : { kind: "pending", member });
       } catch (err) {
         console.warn("Couldn't load the signed-in member", err);
         if (!cancelled) setView({ kind: "error", message: "We couldn't reach the team login service." });
@@ -56,6 +60,7 @@ export default function Dashboard() {
 
       {view.kind === "approved" && <NeedsYou />}
       {view.kind === "approved" && <AppGrid apps={APPS.filter((a) => a.access !== "web-admin" || isWebAdmin)} />}
+      {view.kind === "guest" && <AppGrid apps={APPS.filter((a) => a.status === "live" && (a.guests || a.access === "public"))} />}
       {(view.kind === "signed-out" || view.kind === "pending" || view.kind === "error") && (
         <>
           <h2 className="dash__section">Open to everyone</h2>

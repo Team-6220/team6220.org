@@ -62,7 +62,8 @@ browser is only for looks.
 
 | Role | Badges that give it | Allows |
 | --- | --- | --- |
-| `viewer` | any below, or `Supervisor` | Opening the apps. A Supervisor can view and nothing else |
+| `viewer` | any below, or `Supervisor` or `Guest` | Opening the apps. A Supervisor or Guest can view and nothing else |
+| `guest` | `Guest` alone (not with `Team Member`, `Supervisor` or anything above) | Opening only the guest apps (Icarus and Inventory, view-only; the apps marked `guests` in `packages/assets/data/apps.json`). Icarus hides People; BOM and Production show the "not open to you" screen. Every change is refused by the server, as for a Supervisor |
 | `team` | `Team Member`, `Mentor`, `Booster`, `Lead` | Everyday work: tasks, parts, BOM lines |
 | `lead` | `Lead` | Planning: projects, milestones, templates, BOMs |
 | `approver` | `Mentor`, `Booster` | Signing BOM lines and buying |
@@ -220,7 +221,7 @@ HMAC signature (the Wix secret `GITHUB_WEBHOOK_SECRET`). Without the secrets set
 
 Once, by someone with Wix admin and the team Google account.
 
-1. **Wix badges.** In Wix → Site Members → Badges, create (exact titles): `Mentor`, `Booster`, `Supervisor`, `Lead`,
+1. **Wix badges.** In Wix → Site Members → Badges, create (exact titles): `Mentor`, `Booster`, `Supervisor`, `Lead`, `Guest`,
    and one per subteam: `Subteam: Design`, `Subteam: Manufacturing`, `Subteam: Programming`, `Subteam: Electrical`,
    `Subteam: Operations`. `Team Member` and `Web Admin` already exist.
 2. **Wix collections.** In Wix → CMS, create these with the listed permissions. The server writes with elevated

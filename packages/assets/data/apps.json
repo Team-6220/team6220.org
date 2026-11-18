@@ -16,6 +16,7 @@
     "href": "/apps/inventory",
     "status": "live",
     "access": "team",
+    "guests": true,
     "symbol": "parts"
   },
   {
@@ -25,6 +26,7 @@
     "href": "/apps/icarus",
     "status": "live",
     "access": "team",
+    "guests": true,
     "note": "Leads plan seasons and target dates",
     "symbol": "audits"
   },

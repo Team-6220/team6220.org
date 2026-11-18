@@ -27,10 +27,6 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
    `appsscript.json` with `git checkout`, and give `-P` the full path, such as
    `pnpm clasp -P "C:\Users\you\team6220.org\backend\apps-script\ops-timer" push`, because the relative path is rejected
    ("escapes project root").
-   On Windows, clasp rejects the relative path ("escapes project root"): give the full path, such as
-   `pnpm clasp -P "C:\Users\you\team6220.org\backend\apps-script\ops-timer" push`. `create-script` also leaves a
-   `.clasp.json` in the repo root and replaces `appsscript.json` with Google's default: move the first into this folder
-   (keep only `scriptId`) and restore the second with `git checkout` before the first push.
 2. Make a long random secret (20 or more characters). Save it **twice**: as the Wix secret `OPS_TIMER_SECRET` (Wix
    dashboard → Developer Tools → Secrets Manager) and as the Script Property `OPS_TIMER_SECRET` here. Never put it in
    the repo.

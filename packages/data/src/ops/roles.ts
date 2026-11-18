@@ -8,8 +8,10 @@ import type { Roles } from "./types";
 export function rolesFor(badges: readonly string[]): Roles {
   const has = (badge: string) => badges.includes(badge);
   const team = has(BADGES.teamMember) || has(BADGES.mentor) || has(BADGES.booster) || has(BADGES.lead);
+  const guest = has(BADGES.guest) && !team && !has(BADGES.supervisor);
   return {
-    viewer: team || has(BADGES.supervisor),
+    viewer: team || has(BADGES.supervisor) || guest,
+    guest,
     team,
     lead: has(BADGES.lead),
     approver: has(BADGES.mentor) || has(BADGES.booster),

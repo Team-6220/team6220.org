@@ -34,7 +34,7 @@ export default function Icarus() {
   const [message, setMessage] = useState<Message>(null);
 
   const reload = useCallback(async () => {
-    const [who, all, everyone, allProjects] = await Promise.all([ops.getViewer(), icarus.loadAll(), ops.listPeople(), ops.listProjects()]);
+    const [who, all, everyone, allProjects] = await Promise.all([ops.getViewer({ guests: true }), icarus.loadAll(), ops.listPeople(), ops.listProjects()]);
     setViewer(who);
     setData(all);
     setPeople(everyone);
@@ -44,7 +44,7 @@ export default function Icarus() {
   useEffect(() => {
     ops.readDemoFromUrl();
     (async () => {
-      const who = await ops.getViewer();
+      const who = await ops.getViewer({ guests: true });
       setViewer(who);
       if (who.kind === "member") await reload();
     })().catch((err) => setLoadError(err instanceof Error ? err.message : "We couldn't load Icarus."));
@@ -143,7 +143,8 @@ export default function Icarus() {
           </div>
 
           <nav className="icr__tabs" aria-label="Screens">
-            {TABS.map(([id, label]) => (
+            {/* Guests do not see the People screen. */}
+            {TABS.filter(([id]) => !(me.roles.guest && id === "people")).map(([id, label]) => (
               <button key={id} type="button" className={tab === id ? "icr__tab icr__tab--on" : "icr__tab"} onClick={() => setTab(id)}>
                 {label}
               </button>

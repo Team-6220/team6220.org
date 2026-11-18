@@ -153,8 +153,9 @@ export async function callOps<T = Record<string, unknown>>(action: string, args:
 /**
  * Who is looking, for choosing what to show. Hiding a button is only cosmetic: the ops API checks every action.
  * If the ops API isn't connected yet, roles come from the badges the browser can see, so viewing still works.
+ * `guests: true` is for the apps guests may open (Icarus); in the others a guest gets the "pending" screen.
  */
-export async function getViewer(): Promise<OpsViewer> {
+export async function getViewer(options: { guests?: boolean } = {}): Promise<OpsViewer> {
   if (demoRole() === "signed-out") return { kind: "signed-out" };
   if (!isDemo()) {
     const member = await auth.getMember();
@@ -162,13 +163,15 @@ export async function getViewer(): Promise<OpsViewer> {
     if (!isConnected()) {
       const badges = member.status === "APPROVED" ? await auth.getBadges() : [];
       const roles = rolesFor(badges);
-      if (!roles.viewer) return { kind: "pending", name: member.name };
+      if (!roles.viewer || (roles.guest && !options.guests)) return { kind: "pending", name: member.name };
       const me: Me = { id: member.id, name: member.name, badges, subteams: subteamsOf(badges), roles };
       return { kind: "member", me, subteams: [] };
     }
   }
   try {
     const { me, subteams } = await callOps<{ me: Me; subteams: string[] }>("whoAmI");
+    // Guests may open only the apps that say so (Icarus); everywhere else they see the "not open to you" screen.
+    if (me.roles.guest && !options.guests) return { kind: "pending", name: me.name };
     return { kind: "member", me, subteams };
   } catch (err) {
     if (err instanceof OpsError && (err.code === "pending" || err.code === "forbidden")) {

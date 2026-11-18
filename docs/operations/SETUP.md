@@ -11,8 +11,8 @@ Full instructions: [SERVER.md](SERVER.md#setup).
 
 | Done | Who | What | Where |
 | --- | --- | --- | --- |
-| [ ] | Web Admin | Create the badges `Mentor`, `Booster`, `Supervisor`, `Lead` and the five `Subteam: <name>` badges | Wix → Site Members → Badges |
-| [ ] | Web Admin | Give `Lead`, `Mentor`, `Booster` and `Supervisor` to the right people | Wix → Site Members |
+| [x] | Web Admin | Create the badges `Mentor`, `Booster`, `Supervisor`, `Lead`, `Guest` and the five `Subteam: <name>` badges | Wix → Site Members → Badges |
+| [ ] | Web Admin | Give `Lead`, `Mentor`, `Booster`, `Supervisor` and `Guest` to the right people (a Guest sees only Icarus and Inventory, view-only, and still needs approval) | Wix → Site Members |
 | [ ] | Web Admin | Create the collections `ops_counters`, `ops_history`, `ops_projects`, `ops_people` (read: Site members; write: Admin) | Wix → CMS |
 | [ ] | Wix owner | Make a Wix API key (Wix Data, Manage Badges, Read Members) and note the site ID | Wix account → API Keys |
 | [ ] | Team Google account | Create the "6220 Operations API" Apps Script project, add the Script Properties, run `checkSetup`, deploy | script.google.com |

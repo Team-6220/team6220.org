@@ -8,6 +8,7 @@ const TOKENS = {
   lead: "tok-lead-0123456789abcdef",
   mentor: "tok-mentor-0123456789abcdef",
   supervisor: "tok-supervisor-0123456789abcdef",
+  guest: "tok-guest-0123456789abcdef",
   nobadge: "tok-nobadge-0123456789abcdef",
   pending: "tok-pending-0123456789abcdef",
 };
@@ -20,6 +21,7 @@ describe("ops-api", () => {
       [TOKENS.lead]: { id: "m-lead", status: "APPROVED", badges: ["b-team", "b-lead"] },
       [TOKENS.mentor]: { id: "m-mentor", status: "APPROVED", badges: ["b-mentor"] },
       [TOKENS.supervisor]: { id: "m-supervisor", status: "APPROVED", badges: ["b-supervisor"] },
+      [TOKENS.guest]: { id: "m-guest", status: "APPROVED", badges: ["b-guest"] },
       [TOKENS.nobadge]: { id: "m-new", status: "APPROVED", badges: [] },
       [TOKENS.pending]: { id: "m-pending", status: "PENDING", badges: ["b-team"] },
     });
@@ -49,6 +51,13 @@ describe("ops-api", () => {
   it("lets a supervisor view and nothing else", async () => {
     expect(await s.post({ action: "whoAmI", token: TOKENS.supervisor })).toMatchObject({ ok: true, me: { roles: { viewer: true, team: false } } });
     expect(await s.post({ action: "nextNumber", token: TOKENS.supervisor, kind: "task" })).toMatchObject({ ok: false, error: "forbidden" });
+  });
+
+  it("lets a guest view and nothing else", async () => {
+    expect(await s.post({ action: "whoAmI", token: TOKENS.guest })).toMatchObject({ ok: true, me: { roles: { viewer: true, guest: true, team: false } } });
+    expect(await s.post({ action: "nextNumber", token: TOKENS.guest, kind: "task" })).toMatchObject({ ok: false, error: "forbidden" });
+    expect(await s.post({ action: "saveTask", token: TOKENS.guest, task: { title: "Nope" } })).toMatchObject({ ok: false, error: "forbidden" });
+    expect(await s.post({ action: "setMySubteams", token: TOKENS.guest, subteams: ["Design"] })).toMatchObject({ ok: false, error: "forbidden" });
   });
 
   it("hands out numbers that never repeat, one counter per kind", async () => {
@@ -98,9 +107,9 @@ describe("ops-api", () => {
     expect(await s.post({ action: "syncPeople", token: TOKENS.member })).toMatchObject({ ok: false, error: "forbidden" });
     const answer = await s.post({ action: "syncPeople", token: TOKENS.lead });
     // Every APPROVED member is listed (the pending one is not); the member who had opened an app is not added twice.
-    expect(answer).toMatchObject({ ok: true, people: 5, added: 4, removed: 0 });
+    expect(answer).toMatchObject({ ok: true, people: 6, added: 5, removed: 0 });
     const people = s.rows("ops_people");
-    expect(people).toHaveLength(5);
+    expect(people).toHaveLength(6);
     expect(people.find((p) => p.memberId === "m-member")).toMatchObject({ username: "pat-m-member", subteams: ["Programming"], active: true });
     expect(people.find((p) => p.memberId === "m-pending")).toBeUndefined();
   });

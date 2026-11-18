@@ -21,6 +21,8 @@ export const BADGES = {
   booster: "Booster",
   supervisor: "Supervisor",
   lead: "Lead",
+  // Invited people who may only look at the apps listed as guest apps (Icarus and Inventory, view-only).
+  guest: "Guest",
 } as const;
 export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
 

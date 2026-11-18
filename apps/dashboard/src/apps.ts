@@ -26,6 +26,8 @@ export interface AppEntry {
   href?: string;
   status: "live" | "planned";
   access: AppAccess;
+  /** Also open to guests (Guest badge), view-only. */
+  guests?: boolean;
   /** Shown as a small note on the card, e.g. who can take admin actions. */
   note?: string;
   icon?: string;
