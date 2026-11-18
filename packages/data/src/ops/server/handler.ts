@@ -17,6 +17,7 @@ import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
 import * as github from "./github";
 import * as icarus from "./icarus";
+import * as records from "./records";
 import * as shared from "./shared";
 
 type Action = (ctx: Ctx, body: Doc) => Promise<object>;
@@ -29,6 +30,10 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   whoAmI: { who: "viewer", run: shared.whoAmI },
   nextNumber: { who: "team", agent: true, run: shared.nextNumber },
   logHistory: { who: "team", run: shared.logHistory },
+  // Reads and simple writes the apps make through the server (records.ts)
+  listRecords: { who: "viewer", run: records.listRecords },
+  saveRecord: { who: "team", run: records.saveRecord },
+  removeRecord: { who: "team", run: records.removeRecord },
   saveProject: { who: "lead", run: shared.saveProject },
   setMySubteams: { who: "team", run: shared.setMySubteams },
   setSubteams: { who: "peopleAdmin", run: shared.setSubteams },

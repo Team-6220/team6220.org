@@ -60,6 +60,31 @@ describe("ops-api", () => {
     expect(await s.post({ action: "setMySubteams", token: TOKENS.guest, subteams: ["Design"] })).toMatchObject({ ok: false, error: "forbidden" });
   });
 
+  it("checks who is asking before it lists or writes a collection for the apps", async () => {
+    s.rows("bom_lines").push({ _id: "l1", name: "Bolts" });
+    s.rows("ops_people").push({ _id: "p1", memberId: "m-member", name: "Pat" });
+    s.rows("ops_history").push({ _id: "h1", recordKind: "task", recordId: "t1" }, { _id: "h2", recordKind: "bomLine", recordId: "l1" });
+    s.rows("icarus_tasks").push({ _id: "t1", title: "Wire it" });
+    // A team member reads everything the apps list; an unknown collection is refused.
+    expect(await s.post({ action: "listRecords", token: TOKENS.member, collection: "bom_lines" })).toMatchObject({ ok: true, items: [{ _id: "l1" }] });
+    expect(await s.post({ action: "listRecords", token: TOKENS.member, collection: "ops_counters" })).toMatchObject({ ok: false, error: "bad-request" });
+    // A guest reads Icarus and people, only the task part of the history, and nothing of the BOM.
+    expect(await s.post({ action: "listRecords", token: TOKENS.guest, collection: "icarus_tasks" })).toMatchObject({ ok: true, items: [{ _id: "t1" }] });
+    expect(await s.post({ action: "listRecords", token: TOKENS.guest, collection: "ops_people" })).toMatchObject({ ok: true });
+    expect(await s.post({ action: "listRecords", token: TOKENS.guest, collection: "ops_history" })).toMatchObject({ ok: true, items: [{ _id: "h1" }] });
+    expect(await s.post({ action: "listRecords", token: TOKENS.guest, collection: "bom_lines" })).toMatchObject({ ok: false, error: "forbidden" });
+    expect(await s.post({ action: "listRecords", token: TOKENS.guest, collection: "production_parts" })).toMatchObject({ ok: false, error: "forbidden" });
+    // Only team members write, and only the collections the apps write directly.
+    for (const token of [TOKENS.guest, TOKENS.supervisor]) {
+      expect(await s.post({ action: "saveRecord", token, collection: "icarus_tasks", item: { title: "No" } })).toMatchObject({ ok: false, error: "forbidden" });
+      expect(await s.post({ action: "removeRecord", token, collection: "icarus_tasks", id: "t1" })).toMatchObject({ ok: false, error: "forbidden" });
+    }
+    expect(await s.post({ action: "saveRecord", token: TOKENS.member, collection: "icarus_tasks", item: { title: "Yes" } })).toMatchObject({ ok: true, item: { title: "Yes" } });
+    expect(await s.post({ action: "saveRecord", token: TOKENS.member, collection: "bom_lines", item: { name: "x" } })).toMatchObject({ ok: false, error: "bad-request" });
+    expect(await s.post({ action: "removeRecord", token: TOKENS.member, collection: "icarus_tasks", id: "t1" })).toMatchObject({ ok: true });
+    expect(s.rows("icarus_tasks").map((r) => r._id)).not.toContain("t1");
+  });
+
   it("hands out numbers that never repeat, one counter per kind", async () => {
     expect(await s.post({ action: "nextNumber", token: TOKENS.member, kind: "task" })).toMatchObject({ number: 1 });
     expect(await s.post({ action: "nextNumber", token: TOKENS.member, kind: "task" })).toMatchObject({ number: 2 });
