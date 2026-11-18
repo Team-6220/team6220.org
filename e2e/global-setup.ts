@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 export default function globalSetup() {
   const root = resolve(import.meta.dirname, "..");
   for (const [dir, how] of [
-    ["dist", "pnpm build"],
+    ["dist", "pnpm build:static"],
     ["dist-mock", "pnpm build:e2e-mock"],
   ]) {
     if (!existsSync(resolve(root, dir, "index.html"))) {

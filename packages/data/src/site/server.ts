@@ -2,8 +2,10 @@
 // it is what holds the GitHub credential.
 export { handleSiteRequest, type SiteApiDeps } from "./api";
 export { GithubSiteStore, githubStoreFromEnv, githubAppJwt, type SiteEnv, type GithubSiteStoreOptions } from "./github";
-export { createWixVerifier, isWebAdmin, type Viewer, type VerifyViewer } from "./verify";
+export { createWixVerifier, createSessionVerifier, isWebAdmin, type SessionWix, type Viewer, type VerifyViewer } from "./verify";
 export { MockSiteStore } from "./mock";
-export { WixSignupReader, signupReaderFromEnv, type SignupEnv } from "./signups";
+export { InventoryWrites, type WixItemFns, type Modification } from "../inventory/server-writes";
+export { handleInventoryRequest, mayEditInventory, type InventoryApiDeps } from "../inventory/server-api";
+export { createSignupReader, type QuerySubmissions, type SubmissionsPage } from "./signups";
 export { proposeChange, readArea, branchName, slug, validateImages, pullRequestBody } from "./propose";
 export * from "./types";

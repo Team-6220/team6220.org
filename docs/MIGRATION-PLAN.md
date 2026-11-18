@@ -153,6 +153,8 @@ GitHub publishes the site automatically every time code merges into `main`. In t
 
 ### Phase 2: Migration preview
 
+**The working checklist and the decisions made for this phase (Nov 16, 2026) are in [PHASE-2.md](PHASE-2.md).** Where it differs from the steps below (for example: no Wix scheduler, so timers run in Apps Script; all of ops-api moved to `/api`, now [operations/SERVER.md](operations/SERVER.md)), PHASE-2.md wins.
+
 Wix's migration tool makes a hidden preview copy of the site that only we can see.
 
 Lessons from the Phase 0 Wix CLI test (details in [WIX-CLI-SPIKE.md](WIX-CLI-SPIKE.md)): use Node 24, set

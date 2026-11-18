@@ -1,29 +1,25 @@
-// Transport to the real "ops API" Apps Script web app (backend/apps-script/ops-api).
-//
-// Apps Script can't answer CORS preflight (OPTIONS) requests, so this must stay a "simple" request:
-// POST, Content-Type text/plain, no custom headers, no cookies. The JSON goes in the body.
+// Transport to the operations server (POST /api/ops, packages/data/src/ops/server). Sign-in is the session cookie, so
+// there is no token to send; the server answers { ok: true, ... } or { ok: false, error, message } with a matching
+// HTTP status, and the body is always read, so the message reaches the person.
 import { OpsError, type Transport } from "./types";
 
-export function httpTransport(url: string, fetchImpl: typeof fetch = (...a) => fetch(...a)): Transport {
+export function httpTransport(url = "/api/ops", fetchImpl: typeof fetch = (...a) => fetch(...a)): Transport {
   return async (request) => {
     let res: Response;
     try {
       res = await fetchImpl(url, {
         method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
-        credentials: "omit",
-        redirect: "follow",
+        credentials: "same-origin",
       });
     } catch {
       throw new OpsError("network", "Couldn't reach the team server. Check the internet connection.");
     }
-    if (!res.ok) throw new OpsError("network", `The team server answered ${res.status}. Try again.`);
     try {
       return (await res.json()) as Record<string, unknown>;
     } catch {
-      // Apps Script returns an HTML page when the deployment is wrong (e.g. not "Anyone" access).
-      throw new OpsError("server-error", "The team server sent an unexpected answer.");
+      throw new OpsError("network", `The team server answered ${res.status} with something unexpected. Try again.`);
     }
   };
 }

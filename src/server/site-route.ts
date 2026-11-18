@@ -1,48 +1,36 @@
-// POST /api/site: the Site Manager's server endpoint. Only added to the site when `output` is "server"
-// (Phase 2, Wix hosting) by integrations/site-api.mjs; in the static Phase 1 build this file is not part of the site.
-// All logic lives in @team6220/data/site-server (handleSiteRequest), which is unit-tested; this file only wires it up.
+// POST /api/site: the Site Manager's server endpoint. Only added to the Wix build by integrations/site-api.mjs (the
+// static test build has no server). All logic lives in @team6220/data/site-server (handleSiteRequest), which is
+// unit-tested; this file only wires it to Wix.
 //
-// Server environment variables (secrets: set them in Wix, never in the repo; see docs/WIX-SETUP.md and .env.example):
+// Who is asking: the member of the request's session (Wix's built-in login), read with @wix/members.
+// Secrets (Wix dashboard → Developer Tools → Secrets Manager; never in the repo), read only when an action needs them:
 //   GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY   the GitHub App (preferred)
 //   SITE_MANAGER_GITHUB_TOKEN                                           alternative: one ready token
 //   SITE_MANAGER_GITHUB_REPO                                            optional, default Team-6220/team6220.org
-//   SITE_MANAGER_WIX_API_KEY, WIX_SITE_ID                               form signups (#76): a Wix API key with
-//                                                                       "Manage form submissions", and our site ID
+// Form signups (#76) need no secret: the server reads them with elevated permissions.
 import type { APIRoute } from "astro";
-import { createWixVerifier, githubStoreFromEnv, handleSiteRequest, signupReaderFromEnv, type SignupEnv, type SiteEnv } from "@team6220/data/site-server";
+import { auth } from "@wix/essentials";
+import { submissions } from "@wix/forms";
+import { createSignupReader, githubStoreFromEnv, handleSiteRequest, type QuerySubmissions, type SiteEnv } from "@team6220/data/site-server";
+import { verifySession as verify } from "./session";
+import { readSecret, readSecrets } from "./wix-secrets";
 
 export const prerender = false;
 
-const NAMES = [
-  "SITE_MANAGER_GITHUB_TOKEN",
-  "GITHUB_APP_ID",
-  "GITHUB_APP_INSTALLATION_ID",
-  "GITHUB_APP_PRIVATE_KEY",
-  "SITE_MANAGER_GITHUB_REPO",
-  "SITE_MANAGER_WIX_API_KEY",
-  "WIX_SITE_ID",
-] as const;
-
-const nodeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
-
-/**
- * Reads the server variables. process.env covers Node-style hosting; Astro's server env covers the rest.
- * If Wix hosting only exposes secrets through `astro:env/server` (`getSecret`), swap this one function.
- */
-function readEnv(): SiteEnv & SignupEnv {
-  const out: SiteEnv & SignupEnv = {};
-  for (const name of NAMES) {
-    const value = nodeEnv?.[name] ?? (import.meta.env as Record<string, string | undefined>)[name];
-    if (value) out[name] = value;
-  }
-  return out;
+/** The GitHub credential: one token if it's set (one secret read), else the three GitHub App secrets. */
+async function githubEnv(): Promise<SiteEnv> {
+  const token = await readSecret("SITE_MANAGER_GITHUB_TOKEN");
+  const repo = await readSecret("SITE_MANAGER_GITHUB_REPO");
+  if (token) return { SITE_MANAGER_GITHUB_TOKEN: token, SITE_MANAGER_GITHUB_REPO: repo };
+  return { ...(await readSecrets(["GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY"] as const)), SITE_MANAGER_GITHUB_REPO: repo };
 }
 
-const verify = createWixVerifier();
+const querySubmissions = auth.elevate(submissions.querySubmissionsByNamespace) as unknown as QuerySubmissions;
+const signups = createSignupReader(querySubmissions);
 
-export const ALL: APIRoute = ({ request }) =>
+export const ALL: APIRoute = async ({ request }) =>
   handleSiteRequest(request, {
     verify,
-    getStore: () => githubStoreFromEnv(readEnv()),
-    getSignups: () => signupReaderFromEnv(readEnv()),
+    getStore: async () => githubStoreFromEnv(await githubEnv()),
+    getSignups: () => signups,
   });

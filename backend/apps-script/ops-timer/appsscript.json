@@ -4,10 +4,6 @@
   "oauthScopes": [
     "https://www.googleapis.com/auth/script.external_request"
   ],
-  "webapp": {
-    "executeAs": "USER_DEPLOYING",
-    "access": "ANYONE_ANONYMOUS"
-  },
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8"
 }

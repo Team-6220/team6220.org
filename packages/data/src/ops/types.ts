@@ -31,8 +31,10 @@ export interface RecordLink {
 
 /** What a person's badges allow. See roles.ts. */
 export interface Roles {
-  /** May open the apps. Supervisors can view and nothing else. */
+  /** May open the apps. Supervisors and guests can view and nothing else. */
   viewer: boolean;
+  /** Only a guest: has the Guest badge and nothing that gives more. May open just the guest apps (Icarus, Inventory). */
+  guest: boolean;
   /** May do everyday work: tasks, parts, BOM lines. */
   team: boolean;
   /** May plan: projects, milestones, templates, BOMs. */
@@ -56,6 +58,8 @@ export interface Me {
 export type OpsViewer =
   | { kind: "signed-out" }
   | { kind: "pending"; name: string }
+  /** A guest, in an app that is not open to guests (BOM, Production). */
+  | { kind: "guest"; name: string }
   | { kind: "member"; me: Me; subteams: string[] };
 
 /** A team member as the pickers show them (collection ops_people). */

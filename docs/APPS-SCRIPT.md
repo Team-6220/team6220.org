@@ -30,7 +30,7 @@ its tables, it tells you how to get from the files in git to a running web app.
 | Folder | Live name | Bound or standalone | Web app access | Status |
 | --- | --- | --- | --- | --- |
 | `backend/apps-script/attendance-api/` | 6220 Attendance API | **Standalone**, finds the Sheet by `SHEET_ID` | Execute as me, **Anyone** (it checks the Wix sign-in itself on every request) | **The website uses it.** `packages/data/src/config.ts` holds a deployed `/exec` URL |
-| `backend/apps-script/ops-api/` | 6220 Operations API | **Standalone**, talks only to Wix | Execute as me, **Anyone** (it checks the Wix sign-in itself on every request) | **Not deployed yet.** Icarus, Production and BOM will use it; setup is in [its README](../backend/apps-script/ops-api/README.md) |
+| `backend/apps-script/ops-timer/` | 6220 Ops Timer | **Standalone**, only calls the website | Not a web app: time triggers only | **Not deployed yet.** The clock for the operations server (Phase 2), which runs on Wix hosting: [docs/operations/SERVER.md](operations/SERVER.md). Setup is in [its README](../backend/apps-script/ops-timer/README.md) |
 | `backend/apps-script/attendance/` | QR Code Scanner ("6220 Attendance") | **Bound** to the attendance Sheet | Execute as me, **Only myself** | Live fallback. **Do not modify** |
 | `backend/apps-script/inventory/` | Inventory Manager (Golden Griffins Inventory) | **Bound** to the inventory Sheet | set in the live deployment; the export has no manifest | Live until the new `/apps/inventory` has run a real meeting |
 
@@ -41,8 +41,10 @@ Rules from [backend/apps-script/README.md](../backend/apps-script/README.md):
 - **No secrets, no student data in git.** Sheets are found by `getActive()` or an ID in Script Properties.
 - Don't change the attendance row format in one of the two attendance projects without the other.
 - Leave the old deployments up until the new site has run a real team meeting with Attendance and Inventory.
-- `clasp` (Google's command-line sync tool) is **not set up**. You need each project's script ID for it. Until then you
-  copy files by hand.
+- `clasp` (Google's command-line sync tool) is installed by `pnpm install`. **ops-timer** is the first project to use it
+  (`pnpm clasp -P backend/apps-script/ops-timer push`, setup in its README). The older projects have no `.clasp.json` yet,
+  so for them you still copy files by hand; to move one over, run `pnpm clasp clone-script <scriptId> --rootDir <folder>`
+  in a scratch folder and compare before replacing anything (never overwrite `attendance/`).
 
 Because the repo is public and these are real team accounts, use the shared **programming@team6220.org** account (or
 another team-owned account) as the project **owner**, so a graduating student never owns something the team needs.

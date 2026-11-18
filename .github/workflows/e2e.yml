@@ -44,7 +44,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       # dist/ is the site as deployed; dist-mock/ is the same site with the inventory on made-up data (for ?demo= modes).
       - name: Build the site
-        run: pnpm build
+        run: pnpm build:static
       - name: Build the mock-inventory site
         run: pnpm build:e2e-mock
       # Only once scripts/redirects exists (it comes in its own pull request): every new address in docs/redirects.json is in the build.

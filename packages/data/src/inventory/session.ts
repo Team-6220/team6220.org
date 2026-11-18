@@ -1,5 +1,6 @@
 // Who is using the inventory, from the site login (packages/data/src/auth.ts).
 // Loaded on demand so the mock build (dev, tests) doesn't pull in the Wix SDK.
+import { BADGES } from "../config";
 import type { MemberSession } from "./types.ts";
 
 /**
@@ -12,9 +13,12 @@ export async function wixMemberSession(): Promise<MemberSession> {
   const member = await auth.getMember();
   if (!member) return { loggedIn: false, approved: false, badges: [] };
   const [access, badges] = await Promise.all([auth.getAccess(), auth.getBadges()]);
+  // A guest (approved by a Web Admin, Guest badge, no Team Member badge) may look but not change anything.
+  const guest = access !== "approved" && member.status === "APPROVED" && badges.includes(BADGES.guest);
   return {
     loggedIn: true,
-    approved: access === "approved",
+    approved: access === "approved" || guest,
+    readOnly: guest,
     name: member.name,
     badges,
     wixClient: wix(),

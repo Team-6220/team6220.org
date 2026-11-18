@@ -1,42 +1,41 @@
-// The one Wix SDK client for the browser (Phase 1). Internal to @team6220/data: apps never import this.
+// The one Wix SDK client for the browser. Internal to @team6220/data: apps never import this.
 //
-// Tokens live in localStorage so a member stays signed in across tabs and reloads. The SDK refreshes an
-// expired access token with the refresh token by itself and writes the new tokens back through
-// `tokenStorage`. If the refresh fails, it silently falls back to anonymous visitor tokens, which makes
-// `loggedIn()` false (the member just signs in again).
-//
-// Phase 2 (@wix/astro): the integration keeps the session in a cookie and creates the client for us,
-// so this file goes away and the functions in auth.ts call the integration instead.
+// Sign-in is Wix's built-in login from the Astro integration (docs/PHASE-2.md): /api/auth/login signs the member in
+// and keeps the session in the `wixSession` cookie, which the server reads on every request. This client reads and
+// refreshes the same cookie, in the same format as Wix's own browser setup (@wix/astro's astro-auth), so the
+// browser and the server share one sign-in. The SDK refreshes an expired access token by itself and writes the new
+// tokens back; if that fails it falls back to visitor tokens, which makes `loggedIn()` false (sign in again).
 import { createClient, EMPTY_TOKENS, OAuthStrategy, type Tokens, type TokenStorage } from "@wix/sdk";
 import { badgeAssignments, badgesV2, members } from "@wix/members";
 import { WIX_CLIENT_ID } from "./config";
 
-const TOKENS_KEY = "team6220.wix.tokens";
+const SESSION_COOKIE = "wixSession";
 
-function readTokens(): Tokens {
+/** The tokens in the session cookie, when the cookie belongs to our login client. */
+export function readSessionTokens(cookie: string = document.cookie): Tokens | null {
+  const row = cookie.split("; ").find((r) => r.startsWith(SESSION_COOKIE + "="));
+  if (!row) return null;
   try {
-    const raw = window.localStorage.getItem(TOKENS_KEY);
-    return raw ? (JSON.parse(raw) as Tokens) : EMPTY_TOKENS;
+    const value = JSON.parse(decodeURIComponent(row.slice(SESSION_COOKIE.length + 1)));
+    if (value?.clientId !== WIX_CLIENT_ID || !value.tokens?.accessToken || !value.tokens?.refreshToken) return null;
+    return value.tokens as Tokens;
   } catch {
-    return EMPTY_TOKENS;
+    return null;
   }
 }
 
-const localStorageTokens: TokenStorage = {
-  getTokens: readTokens,
+const cookieTokens: TokenStorage = {
+  getTokens: () => readSessionTokens() ?? EMPTY_TOKENS,
   setTokens(tokens) {
-    try {
-      window.localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens));
-    } catch {
-      // Storage blocked (private mode etc.): the session only lasts for this page.
-    }
+    const value = encodeURIComponent(JSON.stringify({ clientId: WIX_CLIENT_ID, tokens }));
+    document.cookie = `${SESSION_COOKIE}=${value}; path=/; secure`;
   },
 };
 
 function makeClient() {
   return createClient({
     modules: { members, badgesV2, badgeAssignments },
-    auth: OAuthStrategy({ clientId: WIX_CLIENT_ID, tokenStorage: localStorageTokens }),
+    auth: OAuthStrategy({ clientId: WIX_CLIENT_ID, tokenStorage: cookieTokens }),
   });
 }
 
@@ -45,7 +44,7 @@ let client: ReturnType<typeof makeClient> | undefined;
 /** The shared browser client. Throws if called during the static build (there is no window). */
 export function wix() {
   if (typeof window === "undefined") {
-    throw new Error("@team6220/data: Wix calls only run in the browser in Phase 1 (use client:only).");
+    throw new Error("@team6220/data: browser Wix calls only run in the browser (use client:only).");
   }
   client ??= makeClient();
   return client;
@@ -63,10 +62,11 @@ export function saveMemberHint(hint: { name: string; photoUrl?: string }) {
   }
 }
 
-export function clearStoredTokens() {
+/** Forgets what this browser shows about the member. The session cookie itself is ended by /api/auth/logout. */
+export function clearMemberHint() {
   try {
-    window.localStorage.removeItem(TOKENS_KEY);
     window.localStorage.removeItem(MEMBER_HINT_KEY);
+    window.localStorage.removeItem("team6220.wix.tokens"); // left over from the Phase 1 login
   } catch {
     // ignore
   }

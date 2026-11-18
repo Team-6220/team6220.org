@@ -13,7 +13,11 @@ export default function siteApi() {
       "astro:config:setup": ({ config, injectRoute, logger }) => {
         if (config.output !== "server") return;
         injectRoute({ pattern: "/api/site", entrypoint: "./src/server/site-route.ts", prerender: false });
-        logger.info("added /api/site (Site Manager)");
+        injectRoute({ pattern: "/api/inventory", entrypoint: "./src/server/inventory-route.ts", prerender: false });
+        injectRoute({ pattern: "/api/ops", entrypoint: "./src/server/ops-route.ts", prerender: false });
+        injectRoute({ pattern: "/api/ops-timer", entrypoint: "./src/server/ops-timer-route.ts", prerender: false });
+        injectRoute({ pattern: "/api/github-hook", entrypoint: "./src/server/github-hook-route.ts", prerender: false });
+        logger.info("added /api/site, /api/inventory, /api/ops, /api/ops-timer and /api/github-hook");
       },
     },
   };

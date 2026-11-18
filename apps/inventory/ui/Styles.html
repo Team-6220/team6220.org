@@ -845,6 +845,12 @@ img.broken { visibility: hidden; }
 :root[data-theme="light"] .shape-part-label,
 :root[data-theme="light"] .trace-num { fill: #FFFFFF; }
 
+/* A guest may look but not change anything: hide the + and - buttons and the page-level actions (Add part and so on).
+   The server refuses every change from a guest anyway; this only keeps the screen honest. */
+:root[data-readonly="true"] .qty button:not(.val) { display: none; }
+:root[data-readonly="true"] .qty .val { pointer-events: none; }
+:root[data-readonly="true"] .page-actions { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation-duration: 0.01s !important; }
 }

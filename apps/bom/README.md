@@ -50,7 +50,7 @@ packages/data/src/bom/
   export.ts        an order -> the rows of the team's sheet
   import.ts        a sheet tab (CSV) -> an order
   mock.ts          demo data and the demo copy of the rules
-backend/apps-script/ops-api/Bom.gs   the real rules (who may sign, order, receive)
+packages/data/src/ops/server/bom.ts   the real rules (who may sign, order, receive)
 ```
 
 The rules exist twice, in `Bom.gs` (real) and `mock.ts` (demo). `packages/data/test/bom-rules.test.ts` runs the same

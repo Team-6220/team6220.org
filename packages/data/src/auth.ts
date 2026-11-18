@@ -1,22 +1,16 @@
 // Member login for every app. Apps call these functions and never see Wix tokens or the Wix SDK.
 //
-// Phase 1 (GitHub Pages, no server): the browser runs the Wix "login page" OAuth flow with PKCE.
-//   login()  -> generateOAuthData + getAuthUrl -> Wix-hosted login page (Sign in with Google)
-//   Wix      -> redirects back with #code=...&state=...  -> handleLoginCallback() exchanges it for
-//               member tokens (getMemberTokens) and stores them in localStorage.
-//   Docs: https://dev.wix.com/docs/go-headless/authentication/members/wix-login-page/add-a-wix-login-page-js-sdk
-//
-// Phase 2 (@wix/astro): the integration owns /api/auth/login and /api/auth/logout and keeps the session
-// in a cookie. Only the bodies below change (login() links to /api/auth/login?returnToUrl=..., logout()
-// POSTs /api/auth/logout, getMember()/getBadges() call /api/me or the SDK with the integration's auth).
+// Wix's built-in login from the Astro integration (docs/PHASE-2.md):
+//   login()   -> /api/auth/login?returnToUrl=...  -> Wix's login page (Google or email) -> back to returnToUrl,
+//                signed in. The session lives in the `wixSession` cookie (see wix.ts).
+//   logout()  -> POST /api/auth/logout?returnToUrl=...
 //   Docs: https://dev.wix.com/docs/go-headless/authentication/members/wix-login-page/add-member-login-with-the-astro-integration
+// These endpoints exist only on the Wix build (Wix hosting or `wix dev`), not on the static test build.
 //
-// Badge checks here are COSMETIC (they hide buttons). Real enforcement is Wix CMS collection permissions
-// in Phase 1 and badge checks inside /api endpoints in Phase 2.
-import { APPS_HOME_PATH, BADGES, LOGIN_REDIRECT_PATH, type BadgeName } from "./config";
-import { clearStoredTokens, saveMemberHint, wix } from "./wix";
-
-const OAUTH_DATA_KEY = "team6220.wix.oauthData";
+// Badge checks here are COSMETIC (they hide buttons). Real enforcement is in the /api endpoints, which check the
+// member's badges on the server.
+import { APPS_HOME_PATH, BADGES, type BadgeName } from "./config";
+import { clearMemberHint, saveMemberHint, wix } from "./wix";
 
 export type MemberStatus = "APPROVED" | "PENDING" | "BLOCKED" | "OFFLINE" | "UNKNOWN";
 
@@ -41,70 +35,29 @@ export function isLoggedIn(): boolean {
  * (a path on this site, default: the current page).
  */
 export async function login(returnTo?: string): Promise<never> {
-  const client = wix();
-  const origin = window.location.origin;
   const back = safeLocalPath(returnTo ?? window.location.pathname + window.location.search);
-  const data = client.auth.generateOAuthData(origin + LOGIN_REDIRECT_PATH, origin + back);
-  try {
-    window.sessionStorage.setItem(OAUTH_DATA_KEY, JSON.stringify(data));
-  } catch {
-    throw new Error("Sign-in needs browser storage. Turn off private browsing or allow site data.");
-  }
-  const { authUrl } = await client.auth.getAuthUrl(data);
-  window.location.assign(authUrl);
+  window.location.assign("/api/auth/login?returnToUrl=" + encodeURIComponent(back));
   return new Promise<never>(() => {}); // the page is navigating away
 }
 
 /**
- * Finishes a login on the callback page. Returns the path to send the member to next.
- * Throws an Error with a readable message if Wix reported a problem.
+ * The page that finished the Phase 1 login (/apps/login/callback). With the built-in login Wix returns straight to
+ * the page that started it, so this only forwards old bookmarks to the apps dashboard.
  */
 export async function handleLoginCallback(): Promise<string> {
-  const client = wix();
-  const returned = client.auth.parseFromUrl();
-  let stored: ReturnType<typeof client.auth.generateOAuthData> | null = null;
-  try {
-    const raw = window.sessionStorage.getItem(OAUTH_DATA_KEY);
-    stored = raw ? JSON.parse(raw) : null;
-    window.sessionStorage.removeItem(OAUTH_DATA_KEY);
-  } catch {
-    // fall through to the error below
-  }
-  // Remove #code=... from the address bar so it isn't bookmarked or shared.
-  window.history.replaceState(null, "", window.location.pathname);
-
-  if (returned.error) {
-    throw new Error(returned.errorDescription || returned.error);
-  }
-  if (!returned.code || !returned.state) {
-    throw new Error("This page finishes signing in. Start from the Sign in button.");
-  }
-  if (!stored) {
-    throw new Error("The sign-in started in another browser or tab. Please sign in again.");
-  }
-  const tokens = await client.auth.getMemberTokens(returned.code, returned.state, stored);
-  client.auth.setTokens(tokens);
-  clearMemberCache();
-
-  const original = stored.originalUri ? new URL(stored.originalUri, window.location.origin) : null;
-  return original && original.origin === window.location.origin
-    ? safeLocalPath(original.pathname + original.search)
-    : APPS_HOME_PATH;
+  return APPS_HOME_PATH;
 }
 
 /** Signs the member out of this site and Wix, then returns to `returnTo` (default: the dashboard). */
 export async function logout(returnTo: string = APPS_HOME_PATH): Promise<never> {
-  const client = wix();
-  const back = window.location.origin + safeLocalPath(returnTo);
-  let logoutUrl = back;
-  try {
-    if (client.auth.loggedIn()) ({ logoutUrl } = await client.auth.logout(back));
-  } catch {
-    // Wix couldn't create the logout session; local sign-out below still works.
-  }
-  clearStoredTokens();
+  clearMemberHint();
   clearMemberCache();
-  window.location.assign(logoutUrl);
+  // The endpoint takes a POST and answers with a redirect, so submit a form and let the browser follow it.
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/api/auth/logout?returnToUrl=" + encodeURIComponent(safeLocalPath(returnTo));
+  document.body.appendChild(form);
+  form.submit();
   return new Promise<never>(() => {});
 }
 

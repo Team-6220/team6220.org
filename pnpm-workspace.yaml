@@ -6,3 +6,7 @@ packages:
   - "!apps/wingit"
 overrides:
   "@emnapi/runtime": "1.11.3"
+# Packages allowed to run install scripts. esbuild builds the site; workerd is the Wix hosting adapter's local runtime.
+onlyBuiltDependencies:
+  - esbuild
+  - workerd

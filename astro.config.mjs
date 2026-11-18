@@ -1,16 +1,43 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
+import wix from "@wix/astro";
+import wixPages from "@wix/astro-pages";
+import wixHostingAdapter from "@wix/astro-wix-hosting-adapter";
 import syncMedia from "./integrations/sync-media.mjs";
 import buildApps from "./integrations/build-apps.mjs";
 import siteApi from "./integrations/site-api.mjs";
 
-// Phase 1 (prototype): static site on GitHub Pages at dev.team6220.org.
-// Phase 2+: add the Wix Astro integration (@wix/astro) and delete pages.yml.
-// siteApi() adds /api/site only when output is "server" (docs/SITE-MANAGER.md).
-// See docs/PHASE-0.md and the Headless Migration Plan.
-export default defineConfig({
-  site: "https://dev.team6220.org",
-  output: "static",
-  // React 18 only: @wix/astro (Phase 2) peers on react ^18.3. Apps under apps/* are React.
-  integrations: [syncMedia(), react(), buildApps(), siteApi()],
-});
+// Two builds of the same pages (docs/PHASE-2.md):
+//   - Wix (the default; `pnpm build`, `wix build`): served by Wix hosting. Pages render on each request, so Wix's
+//     middleware can add the dashboard's SEO tags, analytics and cookie consent. Needs the values from `wix env pull`.
+//   - Static (SITE_BUILD=static; `pnpm build:static`): plain HTML in dist/, without Wix's parts. Used by the e2e
+//     tests, the redirect check and CI, which need no Wix secrets.
+// siteApi() adds /api/site only in the Wix build (docs/SITE-MANAGER.md).
+const STATIC = process.env.SITE_BUILD === "static";
+// Tells the browser code it is on the Wix build, where /api exists (read by packages/data/src/site/client.ts).
+if (!STATIC) process.env.PUBLIC_WIX_BUILD ??= "on";
+
+export default defineConfig(
+  STATIC
+    ? {
+        site: "https://www.team6220.org",
+        output: "static",
+        // React 18 only: @wix/astro peers on react ^18.3. Apps under apps/* are React.
+        integrations: [syncMedia(), react(), buildApps(), siteApi()],
+      }
+    : {
+        site: "https://www.team6220.org",
+        output: "server",
+        adapter: wixHostingAdapter(),
+        integrations: [syncMedia(), wix(), wixPages(), react(), buildApps(), siteApi()],
+        // As in Wix's Astro template. Our /api endpoints check the request's origin themselves (docs/PHASE-2.md).
+        security: { checkOrigin: false },
+        // GoldSim and WingIt are plain files copied in by buildApps(). Wix hosting doesn't serve a folder's
+        // index.html at the folder's address, so send the folder address there.
+        redirects: {
+          "/apps/goldsim": "/apps/goldsim/index.html",
+          "/apps/wingit": "/apps/wingit/index.html",
+        },
+        image: { domains: ["static.wixstatic.com"] },
+      },
+);

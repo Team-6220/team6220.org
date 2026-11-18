@@ -1,4 +1,4 @@
-// Smoke tests of the BUILT site (dist/), served by e2e/serve.mjs.  Run: pnpm build && pnpm test:e2e
+// Smoke tests of the BUILT static site (dist/), served by e2e/serve.mjs.  Run: pnpm build:static && pnpm test:e2e
 import { defineConfig } from "@playwright/test";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";

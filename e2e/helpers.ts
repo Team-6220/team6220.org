@@ -91,7 +91,9 @@ function watch(page: Page): Collected {
   page.on("pageerror", (e) => c.errors.push(`pageerror: ${e.message}`));
   const bad = (url: string, what: string) => {
     const u = new URL(url);
-    (isKnownMissingImage(sitePath(u.pathname)) ? c.allowed : c.failed).push(`${what} ${u.pathname}`);
+    // Wix's sign-in endpoints (/api/auth/login, /api/auth/logout) exist only on the Wix build, not on this static one.
+    const wixOnly = sitePath(u.pathname).startsWith("/api/auth/");
+    (isKnownMissingImage(sitePath(u.pathname)) || wixOnly ? c.allowed : c.failed).push(`${what} ${u.pathname}`);
   };
   page.on("response", (r: Response) => {
     if (r.status() >= 400) bad(r.url(), String(r.status()));

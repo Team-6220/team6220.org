@@ -7,12 +7,12 @@ Tick a box in a pull request when a step is done, so the next person knows where
 
 ## For every app (step 0)
 
-Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-script/ops-api/README.md#setup-once-by-someone-with-wix-admin-and-the-team-google-account).
+Full instructions: [SERVER.md](SERVER.md#setup).
 
 | Done | Who | What | Where |
 | --- | --- | --- | --- |
-| [ ] | Web Admin | Create the badges `Mentor`, `Booster`, `Supervisor`, `Lead` and the five `Subteam: <name>` badges | Wix → Site Members → Badges |
-| [ ] | Web Admin | Give `Lead`, `Mentor`, `Booster` and `Supervisor` to the right people | Wix → Site Members |
+| [x] | Web Admin | Create the badges `Mentor`, `Booster`, `Supervisor`, `Lead`, `Guest` and the five `Subteam: <name>` badges | Wix → Site Members → Badges |
+| [ ] | Web Admin | Give `Lead`, `Mentor`, `Booster`, `Supervisor` and `Guest` to the right people (a Guest sees only Icarus and Inventory, view-only, and still needs approval) | Wix → Site Members |
 | [ ] | Web Admin | Create the collections `ops_counters`, `ops_history`, `ops_projects`, `ops_people` (read: Site members; write: Admin) | Wix → CMS |
 | [ ] | Wix owner | Make a Wix API key (Wix Data, Manage Badges, Read Members) and note the site ID | Wix account → API Keys |
 | [ ] | Team Google account | Create the "6220 Operations API" Apps Script project, add the Script Properties, run `checkSetup`, deploy | script.google.com |
@@ -22,7 +22,7 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 
 | Done | Who | What | Where |
 | --- | --- | --- | --- |
-| [ ] | Web Admin | Create the collections `bom_boms`, `bom_orders`, `bom_sections`, `bom_lines` (read: Site members; write: Admin). Fields are listed in the ops-api README | Wix → CMS |
+| [ ] | Web Admin | Create the collections `bom_boms`, `bom_orders`, `bom_sections`, `bom_lines` (read: Site members; write: Admin). Fields are listed in SERVER.md | Wix → CMS |
 | [ ] | Team Google account | Copy `Bom.gs` and the updated `Code.gs` and `WixData.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
 | [ ] | Lead | Create the first BOM and import the 2026 sheets: in each sheet tab, File → Download → CSV, then BOM → New order → Import a sheet tab | `/apps/bom` |
 
@@ -31,7 +31,7 @@ Full instructions: [backend/apps-script/ops-api/README.md](../../backend/apps-sc
 | Done | Who | What | Where |
 | --- | --- | --- | --- |
 | [ ] | Web Admin | Create `icarus_tasks` and `icarus_comments` (read and write: **Site members**) | Wix → CMS |
-| [ ] | Web Admin | Create `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates` (read: Site members; write: Admin). Fields are listed in the ops-api README | Wix → CMS |
+| [ ] | Web Admin | Create `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates` (read: Site members; write: Admin). Fields are listed in SERVER.md | Wix → CMS |
 | [ ] | Team Google account | Copy `Icarus.gs` and the updated `Code.gs`, `Shared.gs` and `WixData.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
 | [ ] | Lead | Create the 2027 season on Icarus → Plan, start it from the Season template, correct it, and save it as the team's own template | `/apps/icarus` |
 | [ ] | Lead or Mentor | Press "Update from the members list" on Icarus → People, so everyone can be @mentioned | `/apps/icarus` |
@@ -50,13 +50,13 @@ Each one is optional: the apps work without it, and the button that needs it exp
 
 | Done | Who | What | Where |
 | --- | --- | --- | --- |
-| [ ] | Team Google account | Copy `Events.gs`, `GitHub.gs` and the updated `Code.gs`, `Icarus.gs`, `Shared.gs` into the Apps Script project, run `checkSetup`, deploy a new version | script.google.com |
-| [ ] | Anyone with a TBA account | Make a read key on The Blue Alliance (Account → Read API Keys), add it as Script Property `TBA_KEY`, and add the daily `refreshEvents` trigger | thebluealliance.com, script.google.com |
-| [ ] | Org owner | Make a fine-grained GitHub token on a team bot account (Team-6220, all repositories, Issues read and write), add it as `GITHUB_TOKEN`, and add the 5-minute `syncGithub` trigger. Details in the ops-api README, step 5 | github.com, script.google.com |
+| [ ] | Team Google account | Set up the clock: copy `backend/apps-script/ops-timer` into an Apps Script project, add its `OPS_TIMER_SECRET`, and add the triggers (5-minute `syncGithub`, daily `refreshEvents`) | script.google.com |
+| [ ] | Anyone with a TBA account | Make a read key on The Blue Alliance (Account → Read API Keys), add it as the Wix secret `TBA_KEY` | thebluealliance.com, Wix → Secrets Manager |
+| [ ] | Org owner | Make a fine-grained GitHub token on a team bot account (Team-6220, all repositories, Issues read and write), add it as the Wix secret `GITHUB_TOKEN`, then add the GitHub webhook. Details in SERVER.md, steps 3 to 5 | github.com, Wix → Secrets Manager |
 | [ ] | Web Admin | Add `githubLogin` (text) to `ops_people`, and `updatedAt` (text) and `githubIssue` (object) to `icarus_tasks` | Wix → CMS |
 | [ ] | Lead | Connect each project to its repository: Icarus → Projects → Connect a GitHub repository | `/apps/icarus` |
 | [ ] | Everyone who uses GitHub | Set your GitHub username on Icarus → People | `/apps/icarus` |
-| [ ] | Whoever runs Apollo | Make a long random key, store its SHA-256 as `APOLLO_KEY_SHA256`, and give the key to Apollo. Apollo's actions are listed in the ops-api README | script.google.com |
+| [ ] | Whoever runs Apollo | Make a long random key, store its SHA-256 as the Wix secret `APOLLO_KEY_SHA256`, and give the key to Apollo. Apollo's actions are listed in SERVER.md | Wix → Secrets Manager |
 | [ ] | Manufacturing lead | Use the cut planner in Production at a real meeting; then a programmer removes Inventory's own planner | `/apps/production` |
 
 Not built yet, so nothing to set up: Onshape import (it will need Onshape API keys).

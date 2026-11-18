@@ -35,7 +35,7 @@ jobs:
       - name: Install GoldSim dependencies
         run: npm ci --no-audit --no-fund
         working-directory: apps/goldsim
-      - run: pnpm build
+      - run: pnpm build:static
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

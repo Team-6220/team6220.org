@@ -2,6 +2,8 @@ node_modules/
 dist/
 .astro/
 .wix/
+# Local cache of the Wix hosting adapter's runtime (workerd/wrangler)
+.wrangler/
 .env
 .env.*
 !.env.example
@@ -29,3 +31,6 @@ dist/
 /dist-mock/
 /playwright-report/
 /test-results/
+
+# clasp's Google login (never commit)
+.clasprc.json
