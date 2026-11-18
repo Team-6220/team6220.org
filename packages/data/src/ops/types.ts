@@ -58,6 +58,8 @@ export interface Me {
 export type OpsViewer =
   | { kind: "signed-out" }
   | { kind: "pending"; name: string }
+  /** A guest, in an app that is not open to guests (BOM, Production). */
+  | { kind: "guest"; name: string }
   | { kind: "member"; me: Me; subteams: string[] };
 
 /** A team member as the pickers show them (collection ops_people). */

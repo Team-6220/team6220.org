@@ -143,8 +143,8 @@ export default function Icarus() {
           </div>
 
           <nav className="icr__tabs" aria-label="Screens">
-            {/* Guests do not see the People screen. */}
-            {TABS.filter(([id]) => !(me.roles.guest && id === "people")).map(([id, label]) => (
+            {/* Guests do not see the People or Plan screens. */}
+            {TABS.filter(([id]) => !(me.roles.guest && (id === "people" || id === "plan"))).map(([id, label]) => (
               <button key={id} type="button" className={tab === id ? "icr__tab icr__tab--on" : "icr__tab"} onClick={() => setTab(id)}>
                 {label}
               </button>

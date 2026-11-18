@@ -154,6 +154,7 @@ async function start(): Promise<void> {
   if (backend === "mock" && typeof App !== "undefined" && App) {
     App.on("started", () => App.toast("Demo data: changes aren’t saved, and reloading the page starts over.", { timeout: 8000 }));
   }
+  if (session.readOnly) root.dataset.readonly = "true"; // the style sheet hides the buttons that change things
   if (session.readOnly && typeof App !== "undefined" && App) {
     App.on("started", () => App.toast("You are a guest: you can look around, but changes aren’t saved.", { timeout: 8000 }));
   }

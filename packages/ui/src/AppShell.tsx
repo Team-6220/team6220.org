@@ -1,12 +1,12 @@
 // The page frame every operations app uses: the header, and the screens for "loading", "signed out",
-// "waiting for approval" and "something went wrong". The app's own screens go inside as children.
+// "waiting for approval", "not open to guests" and "something went wrong". The app's own screens go inside as children.
 //
 //   <AppShell title="BOM" state={state} who={name} onSignIn={() => auth.login("/apps/bom")}>
 //     ...the app, shown only when state is "ready"...
 //   </AppShell>
 import type { ReactNode } from "react";
 
-export type AppShellState = "loading" | "signed-out" | "pending" | "error" | "ready";
+export type AppShellState = "loading" | "signed-out" | "pending" | "guest" | "error" | "ready";
 
 interface AppShellProps {
   title: string;
@@ -61,6 +61,12 @@ export function AppShell({ title, state, who, errorMessage, notice, nav, onSignI
         <section className="t-panel t-panel--notice">
           <h2>Waiting for approval</h2>
           <p>A Web Admin needs to approve your account before you can use team apps.</p>
+        </section>
+      )}
+      {state === "guest" && (
+        <section className="t-panel t-panel--notice">
+          <h2>Not open to guests</h2>
+          <p>{title} is for team members. As a guest you can use Icarus and Inventory from the team apps page.</p>
         </section>
       )}
       {state === "ready" && children}
