@@ -83,6 +83,13 @@ A person with several badges gets everything any of them allows. The rules are i
 | `setMySubteams` | team | `subteams` (names) | `subteams` |
 | `setSubteams` | peopleAdmin | `memberIds` (up to 50), `subteams` | `changed` |
 | `syncPeople` | peopleAdmin | | `people`, `added`, `removed`: copies the site's approved members into `ops_people` (name and @username) |
+| `listRecords` | viewer (a Guest sees only Icarus, projects, people and task history) | `collection` | `items`: every item of that collection (refused when it has 1000 or more) |
+| `saveRecord` | team | `collection` (`icarus_tasks`, `icarus_comments` or `production_parts`), `item` (`_id` to change one) | `item` |
+| `removeRecord` | team | `collection` (same three), `id` | |
+
+The last three (`records.ts`) are what the apps use for reads and simple writes: `lazyWixStore` in `ops/index.ts` sends
+every `store().list`, `save` and `remove` through them whenever the team server is connected. That is what lets the
+server say who may read or change what (see "Locking the collections" in Setup).
 
 ### BOM actions (`bom.ts`)
 
@@ -277,6 +284,21 @@ Once, by someone with Wix admin and the team Google account.
 5. **GitHub webhook.** GitHub → Team-6220 → Settings → Webhooks → Add webhook: payload URL
    `https://www.team6220.org/api/github-hook`, content type `application/json`, the secret from step 3, and only the
    **Issues** event. GitHub's "Recent deliveries" tab shows each answer (200 is good, 401 means the secrets differ).
+
+6. **Locking the collections (at go-live, not before).** The server now does every read and write the apps make, with a
+   role check, so Wix's own permissions can be tightened so nobody can go around it. Do this in Wix → CMS → each
+   collection → Permissions, **after** the old static apps (the Pages site) are retired, because they still read and
+   write these collections straight from the browser and would stop working:
+
+   | Collections | Read | Insert / update / remove |
+   | --- | --- | --- |
+   | `icarus_tasks`, `icarus_comments`, `production_parts` | Admin | Admin |
+   | `bom_*`, `ops_history` | Admin | Admin |
+   | `ops_projects`, `ops_people`, `ops_counters`, `icarus_milestones`, `icarus_events`, `icarus_seasons`, `icarus_templates` | Admin | Admin |
+   | `inventory_*` (Inventory reads straight from Wix) | Site members | Admin |
+
+   Test it after the change: a Guest who calls the Wix Data API directly should be refused for every collection that
+   is not an inventory one, and the apps should still work for each role. To undo it, put the old permissions back.
 
 There is nothing to deploy: the server is part of the website. Until the site is live on Wix, the deployed apps say they
 are not connected yet and only work in demo mode (`?demo=lead`).

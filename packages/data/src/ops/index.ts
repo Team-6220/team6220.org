@@ -18,7 +18,9 @@ import { MOCK_ROLES, mockStore, mockTransport, type MockRole } from "./mock";
 import { rolesFor, subteamsOf } from "./roles";
 import {
   OpsError,
+  type Draft,
   type HistoryEntry,
+  type Item,
   type Me,
   type OpsErrorCode,
   type OpsViewer,
@@ -114,10 +116,17 @@ export function store(): Store {
 }
 
 const wixStoreModule = () => import("./wix-store");
+// With the team server connected, every read and write goes through it, so it can check who is asking (records.ts).
+// Without it (the static test build) the browser talks to Wix directly, as before.
 const lazyWixStore: Store = {
-  list: async (collection) => (await wixStoreModule()).wixStore.list(collection),
-  save: async (collection, item) => (await wixStoreModule()).wixStore.save(collection, item),
-  remove: async (collection, id) => (await wixStoreModule()).wixStore.remove(collection, id),
+  list: async <T extends Item>(collection: string) =>
+    isConnected() ? ((await callOps<{ items: T[] }>("listRecords", { collection })).items) : (await wixStoreModule()).wixStore.list<T>(collection),
+  save: async <T extends Item>(collection: string, item: Draft<T>) =>
+    isConnected() ? ((await callOps<{ item: T }>("saveRecord", { collection, item })).item) : (await wixStoreModule()).wixStore.save<T>(collection, item),
+  remove: async (collection, id) => {
+    if (isConnected()) await callOps("removeRecord", { collection, id });
+    else await (await wixStoreModule()).wixStore.remove(collection, id);
+  },
 };
 
 const ERROR_CODES: OpsErrorCode[] = [
