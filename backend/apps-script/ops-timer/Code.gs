@@ -2,7 +2,7 @@
  * 6220 Ops Timer
  *
  * Wix hosting has no scheduler, so this tiny script is the clock: time triggers call the website's /api/ops-timer, which
- * does the work (docs/operations/SERVER.md). It holds one secret and no logic.
+ * does the work (https://github.com/Team-6220/team6220.org/wiki/Operations-Server). It holds one secret and no logic.
  *
  * Script Properties (Project Settings > Script Properties):
  *   OPS_TIMER_SECRET  required. The same value as the Wix secret OPS_TIMER_SECRET (20 or more random characters). SECRET.

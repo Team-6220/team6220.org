@@ -1,6 +1,6 @@
 // Reading and writing collections for the apps, with a role check. SERVER ONLY.
 //
-// Until Wix's own collection permissions are tightened (docs/operations/SERVER.md, "Locking the collections"), the
+// Until Wix's own collection permissions are tightened (https://github.com/Team-6220/team6220.org/wiki/Operations-Server, "Locking the collections"), the
 // apps could read and write several collections straight from the browser, so any approved site member could change
 // them, a Guest included. These three actions are what the apps use instead (see lazyWixStore in ../index.ts). They
 // check the caller's role first, then read or write with the server's elevated permission.

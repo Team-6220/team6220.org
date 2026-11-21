@@ -1,7 +1,7 @@
 # BOM (`/apps/bom`)
 
 What the team is buying. It replaces the BOM Google Sheets (one sheet per season, one tab per order). The plan and
-the reasons behind the rules are in [docs/operations/BOM.md](../../docs/operations/BOM.md).
+the reasons behind the rules are in [Operations BOM](https://github.com/Team-6220/team6220.org/wiki/Operations-BOM).
 
 ## What is built
 
@@ -68,5 +68,5 @@ data resets when the page reloads.
 
 ## Going live
 
-See [docs/operations/SETUP.md](../../docs/operations/SETUP.md). Until the ops API is deployed and its URL is in
+See [Operations Setup](https://github.com/Team-6220/team6220.org/wiki/Operations-Setup). Until the ops API is deployed and its URL is in
 `packages/data/src/config.ts`, the deployed page shows "Not connected to the team server yet".

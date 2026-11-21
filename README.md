@@ -7,16 +7,16 @@ editor to a coded site that uses Wix as the backend (Wix-managed headless). The 
 
 | Phase | Where it runs | Status |
 | --- | --- | --- |
-| 0. Setup | | **Done** ([docs/PHASE-0.md](docs/PHASE-0.md), [Wix CLI test](docs/WIX-CLI-SPIKE.md)) |
+| 0. Setup | | **Done** ([History Phase 0](https://github.com/Team-6220/team6220.org/wiki/History-Phase-0), [Wix CLI test](https://github.com/Team-6220/team6220.org/wiki/History-Wix-CLI-Spike)) |
 | 1. Prototype | GitHub Pages at `dev.team6220.org` | In progress: homepage, `/apps` login + dashboard, GoldSim and WingIt live; other apps and pages next; styling waits for branding guidelines |
 | 2. Migration preview | Wix hosting, hidden preview | Not started |
 | 3. Switch over | `team6220.org` | Before kickoff (early January 2027) |
 
 The real `team6220.org` stays on Wix, untouched, until the last step of Phase 3.
 
-The full plan is [docs/MIGRATION-PLAN.md](docs/MIGRATION-PLAN.md).
+The full plan is [History Migration Plan](https://github.com/Team-6220/team6220.org/wiki/History-Migration-Plan).
 
-**New here, or need to change something?** Start with the [documentation index](docs/README.md): how it all fits together, a "how do I change X" cookbook, adding an app, Wix and Apps Script setup, deploys, troubleshooting and branding.
+**New here, or need to change something?** Start with the [documentation index](https://github.com/Team-6220/team6220.org/wiki/Home): how it all fits together, a "how do I change X" cookbook, adding an app, Wix and Apps Script setup, deploys, troubleshooting and branding.
 
 ## Run it
 
@@ -40,7 +40,7 @@ packages/assets/    Shared logos, fonts and favicon that anyone may use
 packages/ui         Shared brand styles and components
 packages/data       The only code that talks to Wix / Apps Script
 integrations/       Build helpers (sync-media copies media to where the browser finds it; build-apps builds the imported apps)
-docs/               Migration plan, Phase 0 checklist, redirects, Site Manager plan
+docs/               The redirect map that scripts check (the documentation lives in the wiki)
 .github/            CI, Pages deploy, CODEOWNERS, Dependabot
 ```
 
@@ -67,5 +67,5 @@ It is published at `/assets/main/...`, `/assets/<app>/...` and `/assets/shared/.
 
 ## License
 
-Code is [MIT](LICENSE). Logos, photos, site text and other media are © Los Al Robotics (FRC Team 6220), all rights reserved, and
+Code is [MIT](LICENSE). Logos, photos, site text and other media are Â© Los Al Robotics (FRC Team 6220), all rights reserved, and
 third-party material keeps its own license. See [NOTICE.md](NOTICE.md) for exactly what is and isn't covered.

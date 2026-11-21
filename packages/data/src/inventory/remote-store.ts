@@ -1,4 +1,4 @@
-// The browser's inventory store on the Wix build (docs/PHASE-2.md, issue #100): reads come straight from the Wix
+// The browser's inventory store on the Wix build (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, issue #100): reads come straight from the Wix
 // collections (any signed-in member may read), every change goes to POST /api/inventory, because the collections only
 // let the server write. Same InventoryStore interface as WixStore, so the app and the service layer don't change.
 import { META_COLLECTION, type MetaKey, type TableKey } from "./schema.ts";

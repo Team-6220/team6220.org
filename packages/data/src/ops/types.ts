@@ -1,4 +1,4 @@
-// Shapes shared by the operations apps (Icarus, Production, BOM). Plan: docs/operations/ARCHITECTURE.md.
+// Shapes shared by the operations apps (Icarus, Production, BOM). Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Architecture.
 
 /** One stored record. Every collection item has an _id; the other fields depend on the collection. */
 export type Item = { _id: string } & Record<string, unknown>;

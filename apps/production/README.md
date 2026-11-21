@@ -2,7 +2,7 @@
 
 Parts from request to finished. It replaces the Production Form (Google Form), the "Production List" sheet and the
 to-do doc where people typed their name next to a part. The plan is in
-[docs/operations/PRODUCTION.md](../../docs/operations/PRODUCTION.md).
+[Operations Production](https://github.com/Team-6220/team6220.org/wiki/Operations-Production).
 
 ## What is built
 
@@ -89,4 +89,4 @@ pnpm --filter @team6220/data test        # the steps of a part's life
 
 ## Going live
 
-See [docs/operations/SETUP.md](../../docs/operations/SETUP.md).
+See [Operations Setup](https://github.com/Team-6220/team6220.org/wiki/Operations-Setup).

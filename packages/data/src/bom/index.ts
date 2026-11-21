@@ -1,4 +1,4 @@
-// bom: the functions /apps/bom uses. Plan: docs/operations/BOM.md.
+// bom: the functions /apps/bom uses. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-BOM.
 //
 //   import { bom } from "@team6220/data";
 //   const boms = await bom.listBoms();

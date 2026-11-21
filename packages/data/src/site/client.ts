@@ -1,4 +1,4 @@
-// site: the functions /apps/site uses (browser side). See docs/SITE-MANAGER.md.
+// site: the functions /apps/site uses (browser side). See https://github.com/Team-6220/team6220.org/wiki/Site-Manager-Plan.
 //
 //   import { site } from "@team6220/data";
 //   const viewer = await site.getViewer();          // signed-out | pending | member | admin (cosmetic: hides the editor)

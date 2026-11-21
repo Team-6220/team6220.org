@@ -2,7 +2,7 @@
 
 Wix hosting has no scheduler, so this tiny script is the team's clock. It does no work itself: its time triggers call
 `https://www.team6220.org/api/ops-timer`, and the website does the job. The jobs are in
-[docs/operations/SERVER.md](../../../docs/operations/SERVER.md#timer-and-webhook).
+[Operations Server](https://github.com/Team-6220/team6220.org/wiki/Operations-Server#timer-and-webhook).
 
 | Function | Trigger | Does |
 | --- | --- | --- |

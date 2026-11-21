@@ -1,4 +1,4 @@
-// production: the functions /apps/production uses. Plan: docs/operations/PRODUCTION.md.
+// production: the functions /apps/production uses. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Production.
 //
 //   import { production } from "@team6220/data";
 //   const parts = await production.listParts();

@@ -1,4 +1,4 @@
-// Icarus (tasks and Gantt). Plan: docs/operations/ICARUS.md. SERVER ONLY.
+// Icarus (tasks and Gantt). Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Icarus. SERVER ONLY.
 // Ported from backend/apps-script/ops-api/Icarus.gs; the answers are the same.
 //
 // Tasks themselves are written straight to Wix by members (collection icarus_tasks), like Inventory items.

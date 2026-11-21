@@ -1,4 +1,4 @@
-// /apps/icarus: tasks and the team Gantt chart. Plan: docs/operations/ICARUS.md.
+// /apps/icarus: tasks and the team Gantt chart. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Icarus.
 // This file loads everything and decides which screen shows; each screen is its own file.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, bom, icarus, ops, OpsError, production, type Draft, type IcarusData, type OpsViewer, type Part, type Person, type Project, type Task } from "@team6220/data";

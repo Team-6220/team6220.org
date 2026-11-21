@@ -1,4 +1,4 @@
-// /apps/bom: the list of things to buy. Plan: docs/operations/BOM.md.
+// /apps/bom: the list of things to buy. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-BOM.
 // This file loads who is looking and which BOM and order are open; OrderView.tsx draws the order.
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { auth, bom, ops, OpsError, type Bom as BomRecord, type BomOrder, type BomOrderDetail, type OpsViewer, type Project } from "@team6220/data";

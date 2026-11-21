@@ -1,4 +1,4 @@
-// The operations server (docs/PHASE-2.md): everything the old Apps Script ops-api did, as plain functions that run on
+// The operations server (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2): everything the old Apps Script ops-api did, as plain functions that run on
 // Wix hosting. SERVER ONLY; the browser never imports this (packages/data/src/ops/index.ts is what the apps use).
 export { handleGithubWebhook, handleOpsRequest, handleTimerRequest } from "./handler";
 export { CALLS_PER_REQUEST, withCallBudget } from "./budget";

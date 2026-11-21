@@ -106,7 +106,7 @@ export function isWebAdmin(viewer: Viewer): boolean {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Wix's built-in login (docs/PHASE-2.md): the signed-in member comes from the session cookie
+// Wix's built-in login (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2): the signed-in member comes from the session cookie
 // ---------------------------------------------------------------------------------------------------------
 
 /**

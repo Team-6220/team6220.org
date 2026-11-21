@@ -1,4 +1,4 @@
-// icarus: the functions /apps/icarus uses. Plan: docs/operations/ICARUS.md.
+// icarus: the functions /apps/icarus uses. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Icarus.
 //
 //   import { icarus } from "@team6220/data";
 //   const data = await icarus.loadAll();                     // tasks, milestones, events, seasons, templates
@@ -58,7 +58,7 @@ export function emptyTask(seasonId: string, parentId = ""): Draft<Task> {
 
 /**
  * Who may change a task: a Lead, its owners, and whoever created it. This only decides which buttons show
- * (docs/operations/ARCHITECTURE.md, "Known limit").
+ * (https://github.com/Team-6220/team6220.org/wiki/Operations-Architecture, "Known limit").
  */
 export function canEditTask(me: Me, task: Pick<Task, "ownerIds" | "createdBy">): boolean {
   return me.roles.lead || (me.roles.team && (task.ownerIds.includes(me.id) || task.createdBy === me.id));

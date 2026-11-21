@@ -1,5 +1,5 @@
 // Editable website content: one JSON file and one Zod schema per area.
-// To add an area, see docs/SITE-MANAGER.md ("Add a new editable area").
+// To add an area, see https://github.com/Team-6220/team6220.org/wiki/Site-Manager-Plan ("Add a new editable area").
 import { z } from "zod";
 import summerCampJson from "../../../sites/main/content/summer-camp.json" with { type: "json" };
 import sponsorsJson from "../../../sites/main/content/sponsors.json" with { type: "json" };

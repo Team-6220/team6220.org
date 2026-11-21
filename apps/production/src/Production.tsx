@@ -1,5 +1,5 @@
 // /apps/production: part requests, the manufacturing tracker and the print queue.
-// Plan: docs/operations/PRODUCTION.md. Two sections, Design and Manufacturing, each with its own screens.
+// Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Production. Two sections, Design and Manufacturing, each with its own screens.
 import { useCallback, useEffect, useState } from "react";
 import { auth, ops, production, type OpsViewer, type Part, type PartMethod, type Project } from "@team6220/data";
 import { AppShell, type AppShellState } from "@team6220/ui";

@@ -1,4 +1,4 @@
-// What is new in the Wix version of the operations server (docs/PHASE-2.md): the 20-calls-per-request limit, the timer,
+// What is new in the Wix version of the operations server (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2): the 20-calls-per-request limit, the timer,
 // GitHub's webhook, and the actions that had a script lock before. The rules themselves are in ops-api.test.ts,
 // bom-rules.test.ts, icarus.test.ts, events.test.ts and github-sync.test.ts.
 import { beforeEach, describe, expect, it } from "vitest";

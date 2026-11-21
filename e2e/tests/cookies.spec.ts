@@ -1,4 +1,4 @@
-// The cookie default, with no visible banner (docs/PHASE-2.md). Wix's consent manager is faked here: on Wix hosting it
+// The cookie default, with no visible banner (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2). Wix's consent manager is faked here: on Wix hosting it
 // comes from Wix's scripts.
 import { expect, settle, test } from "../helpers";
 

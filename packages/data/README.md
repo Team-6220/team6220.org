@@ -43,7 +43,7 @@ await attendance.lookup("0123456789"); // "did I sign in?" for your own ID: date
 
 ## Operations apps (`ops`)
 
-What Icarus, Production and BOM share. The plan is [docs/operations/ARCHITECTURE.md](../../docs/operations/ARCHITECTURE.md).
+What Icarus, Production and BOM share. The plan is [Operations Architecture](https://github.com/Team-6220/team6220.org/wiki/Operations-Architecture).
 
 ```ts
 import { ops } from "@team6220/data";
@@ -60,7 +60,7 @@ Inside this package there are two ways data moves, and each app's data module us
 | | Used for | Real backend | Demo backend |
 | --- | --- | --- | --- |
 | `ops.store()` | Reads, and edits any member may make | Wix CMS as the signed-in member (`ops/wix-store.ts`) | Memory (`ops/mock.ts`) |
-| `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The operations server, `/api/ops` (`ops/server/`, [docs/operations/SERVER.md](../../docs/operations/SERVER.md)) | The same rules in memory |
+| `ops.callOps(action, args)` | Anything needing a badge, a number or a signature | The operations server, `/api/ops` (`ops/server/`, [Operations Server](https://github.com/Team-6220/team6220.org/wiki/Operations-Server)) | The same rules in memory |
 
 **Demo mode.** `pnpm dev` and tests always use made-up data, signed in as a lead. So does the static build (`pnpm build:static`, which has no
 `/api`), because nothing real could work there. On any page add
@@ -89,7 +89,7 @@ const { pullRequest, changes } = await site.submit("summer-camp", edited); // pu
   `PUBLIC_SITE_MANAGER_API=on`, in which case it POSTs to `/api/site`. Tests use fake `fetch` functions.
 - The server reads `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` (or one ready
   `SITE_MANAGER_GITHUB_TOKEN`) and optionally `SITE_MANAGER_GITHUB_REPO`. Values are secrets: see
-  [docs/SITE-MANAGER.md](../../docs/SITE-MANAGER.md).
+  [Site Manager Plan](https://github.com/Team-6220/team6220.org/wiki/Site-Manager-Plan).
 
 ## How login works (Phase 1, GitHub Pages)
 

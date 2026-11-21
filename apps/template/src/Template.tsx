@@ -165,7 +165,7 @@ function Examples() {
           <li>Add the app to <code>packages/assets/data/apps.json</code> so the dashboard and sidebar list it.</li>
           <li>Replace the examples above with your screens. Keep the four sign-in states.</li>
         </ol>
-        <p>The full steps are in <code>docs/ADD-AN-APP.md</code>.</p>
+        <p>The full steps are in <code>https://github.com/Team-6220/team6220.org/wiki/Add-an-App</code>.</p>
       </section>
     </div>
   );

@@ -1,4 +1,4 @@
-// Reading secrets on Wix hosting (docs/PHASE-2.md). Secrets live in the Wix dashboard's Secrets Manager, never in the
+// Reading secrets on Wix hosting (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2). Secrets live in the Wix dashboard's Secrets Manager, never in the
 // repo or the browser, and are read here with elevated permissions (Wix's documented way for headless server code).
 // Each read is one of the 20 outside calls a request may make, so read only the secrets an action needs.
 import { auth } from "@wix/essentials";

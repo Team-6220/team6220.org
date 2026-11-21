@@ -1,4 +1,4 @@
-// POST /api/inventory: every inventory change (docs/PHASE-2.md, issue #100). The Wix build only (integrations/site-api.mjs).
+// POST /api/inventory: every inventory change (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, issue #100). The Wix build only (integrations/site-api.mjs).
 // All logic is in @team6220/data/site-server (handleInventoryRequest, InventoryWrites), which is unit-tested; this file
 // connects it to Wix: who is asking comes from the session, and the writes run with elevated permissions because the
 // inventory collections only let the server write.

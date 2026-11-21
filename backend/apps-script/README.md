@@ -25,5 +25,5 @@ what the team runs today is exactly what is in git. `attendance-api/` is new cod
 ## Old deployments
 
 The existing Apps Script web-app deployments stay up and unchanged until the new site has run a real team
-meeting with Attendance and Inventory working (see docs/MIGRATION-PLAN.md, Phase 1 "Done when"). Don't delete or
+meeting with Attendance and Inventory working (see https://github.com/Team-6220/team6220.org/wiki/History-Migration-Plan, Phase 1 "Done when"). Don't delete or
 redeploy them before then.
