@@ -6,3 +6,5 @@ if(!seen){var c=document.documentElement.classList;c.add('intro-on');if(matchMed
    Keep the cover up from the first paint so page-loader.js can finish the animation on this page. */
 (function(){var t=0;try{t=+sessionStorage.getItem('g6220-pgl')||0;sessionStorage.removeItem('g6220-pgl')}catch(e){}
 if(t&&Date.now()-t<8000&&!document.documentElement.classList.contains('intro-on'))document.documentElement.classList.add('pgl-arrive','mh-logo')})();
+addEventListener('unhandledrejection',function(e){var r=e.reason;
+if(r&&r.name==='InvalidStateError'&&/transition/i.test(r.message||''))e.preventDefault()});

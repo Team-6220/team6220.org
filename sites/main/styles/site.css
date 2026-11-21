@@ -19,6 +19,10 @@
 html{scroll-behavior:smooth}
 [id]{scroll-margin-top:110px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:no-preference){
+  @view-transition{navigation:auto}
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.35s;animation-timing-function:ease-out}
+}
 body{background:var(--ink);color:var(--paper);font-family:var(--body);font-size:18px;line-height:1.65;font-weight:500;margin:0}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--ink)}
 img{max-width:100%;display:block}
