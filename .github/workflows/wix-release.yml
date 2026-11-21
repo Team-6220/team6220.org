@@ -1,0 +1,56 @@
+name: Wix release
+
+# Releases the site to the live Wix site. Run it by hand: Actions -> "Wix release" -> Run workflow, on `main`.
+# A merge to `main` does not release anything by itself. `wix release` builds on Wix's servers from what is uploaded here,
+# publishes the site, and clears its cache (docs/GO-LIVE.md). Needs the same `wix` environment secrets as the preview.
+on:
+  workflow_dispatch:
+    inputs:
+      comment:
+        description: What this release is (shown in Wix, not to visitors)
+        required: false
+        default: Release from main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wix-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Only the live branch can be released, so a preview branch never goes live by mistake.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: wix
+    env:
+      WIX_CLIENT_ID: ${{ secrets.WIX_CLIENT_ID }}
+      WIX_CLIENT_INSTANCE_ID: ${{ secrets.WIX_CLIENT_INSTANCE_ID }}
+      WIX_CLIENT_PUBLIC_KEY: ${{ secrets.WIX_CLIENT_PUBLIC_KEY }}
+      WIX_CLIENT_SECRET: ${{ secrets.WIX_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24 # The Wix CLI needs Node 24.22.1 or newer
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # GoldSim keeps its own npm workspace; `pnpm wix build` builds it into dist/apps/goldsim.
+      - name: Install GoldSim dependencies
+        run: npm ci --no-audit --no-fund
+        working-directory: apps/goldsim
+      - name: Log in to Wix
+        # Same cleaning as the preview workflow: a stray character pasted with the key makes Wix reject it.
+        run: |
+          key=$(printf '%s' "$WIX_API_KEY" | tr -cd 'A-Za-z0-9._~+/=-')
+          pnpm wix login --api-key "$key"
+        env:
+          WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
+      # `wix release` only uploads what is already built, so always build first.
+      - run: pnpm wix build
+      - name: Release
+        run: pnpm wix release --comment "$COMMENT"
+        env:
+          COMMENT: ${{ inputs.comment }}
