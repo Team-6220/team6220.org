@@ -92,8 +92,9 @@ would stop working.
         - an inventory edit still works for a Team Member and is refused for a Guest.
         To undo it, put the old permissions back (read Site members everywhere, and write Site members on `icarus_tasks`,
         `icarus_comments`, `production_parts`, and the `inventory_*` collections).
-13. [ ] **Webmaster.** Turn **manual signup approval** off only if you want anyone with a Google account to join without a
-        Web Admin's approval. Leave it on otherwise; it is the first gate for every new account.
+13. [x] **Webmaster.** Manual signup approval is **off** (Nov 21, Wix → Settings → Signup & Login: "Everyone who signs up"),
+        after the lock, so anyone with a Google account can join. New accounts have no roles, so the server refuses them
+        everywhere. To turn approval back on, pick "Only people I manually approve" on that page.
 
 ## 4. After the switch
 
