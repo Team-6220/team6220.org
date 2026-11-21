@@ -122,7 +122,7 @@ Nov 16, 2026. The apps overhaul's backend plan (the "Team 6220 Apps: Backend Pla
 - [ ] attendance-api (Apps Script): set the Script Property `WIX_CLIENT_ID` to `74e98aee-3daa-4452-bf00-f13523cae9c5`
       (the new login client) right after the switch. Not before: dev.team6220.org still signs in with the old client.
 
-Follow [MIGRATION-PLAN.md](MIGRATION-PLAN.md#phase-3-switch-over): Complete Migration with only the flags the dialog
+The step-by-step order, with who does each step, is in [GO-LIVE.md](GO-LIVE.md). It follows [MIGRATION-PLAN.md](MIGRATION-PLAN.md#phase-3-switch-over): Complete Migration with only the flags the dialog
 gives, 301 redirects for old pages, SEO check, submit every form once, delete the `dev` DNS record.
 
 ## Open checks (answered while building)
