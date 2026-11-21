@@ -51,19 +51,20 @@ Everything here can be done now, and none of it changes the live site.
 
 ## 2. Switch day, in this order
 
-1. [ ] **Webmaster.** In Wix → Headless Settings, open **Complete Migration** and run `wix finalize-migration` with *only*
-       the flags that dialog gives you. `team6220.org` now shows the new site.
+1. [x] **Webmaster.** In Wix → Headless Settings, open **Complete Migration** and run `wix finalize-migration` with *only*
+       the flags that dialog gives you. `team6220.org` now shows the new site. (Done Nov 21. It rewrites `wix.config.json`
+       to the live site and app; commit that, or releases go to the old project.)
 2. [ ] **Smoke test (Webmaster and Claude).** Open `/` and `/apps`. Sign in with Google. Open Attendance, Inventory,
        Icarus, BOM, and Production. If sign-in or the apps fail, use **Switch Back** and stop.
-3. [ ] **Webmaster.** attendance-api (Apps Script, on `programming@team6220.org`): set the Script Property `WIX_CLIENT_ID`
-       to `74e98aee-3daa-4452-bf00-f13523cae9c5`. Not before step 1, because the dev site still signs in with the old
-       client.
-4. [ ] **Claude, with the webmaster's okay.** Set the site-wide cookie consent policy to essential-only with the
-       [Update Consent Policy API](https://dev.wix.com/docs/api-reference/business-management/site-properties/properties/update-consent-policy),
-       so analytics stay off from the very first page view. It applies to the whole Wix site.
-5. [ ] **Webmaster.** Import `docs/redirects.csv` into the URL Redirect Manager (301 redirects for `/summer`,
-       `/our-team`, `/our-team/subteams`, `/sponsors-donations`, `/contact`, `/gallery`, and the rest of the file). Check a
-       few old addresses by hand.
+3. [ ] **Webmaster.** attendance-api (Apps Script "6220 Attendance API", on `losalfrc@gmail.com`): set the Script Property
+       `WIX_CLIENT_ID` to `74e98aee-3daa-4452-bf00-f13523cae9c5` (edit it if it already exists, or delete it, since that is
+       the default). Not before step 1, because the dev site still signs in with the old client. Until it is set, the
+       kiosk says "Your sign-in has expired" however often you sign in.
+4. [x] **Cookies.** The site-wide consent policy can't be set through the connector (403, needs a Wix owner to grant the
+       permission), and the dashboard has no page for it. Instead `src/components/CookieConsent.astro` switches everything
+       except essential cookies off for every visitor, and shows no banner. Bring a notice back before adding analytics.
+5. [x] **Webmaster.** Redirects: the 12 rows of `docs/redirects.csv` were created through Wix's redirects API on Nov 21
+       (the CSV upload dialog can't be driven from a script). All answer 301.
 6. [ ] **Team.** Submit every form once on the live site (Join, Contact, and any others) and confirm the emails arrive and
        the signups appear in Site Manager → Form signups.
 7. [ ] **Webmaster.** The clock: in the "6220 Ops Timer" script, add the triggers `syncGithub` (time-driven, every 5
