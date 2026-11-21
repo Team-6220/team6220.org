@@ -74,7 +74,7 @@ Everything here can be done now, and none of it changes the live site.
        `https://www.team6220.org/api/github-hook`, content type `application/json`, the secret from
        `GITHUB_WEBHOOK_SECRET`, only the **Issues** event. In "Recent deliveries", the first delivery should be 200.
 9. [x] **Webmaster.** Merge the Apollo pull request (Apollo repository, #21) so Apollo starts using the team apps.
-10. [ ] **Claude.** Remove `.github/workflows/pages.yml` in a pull request. After it merges, delete the `dev` DNS record, so
+10. [x] **Claude.** Remove `.github/workflows/pages.yml` in a pull request (#295). After it merges, delete the `dev` DNS record (done Nov 21, in Wix: the CNAME to `team-6220.github.io`), so
         `dev.team6220.org` stops serving the old static apps. (GitHub Pages can't run the server-side site.)
 
 ## 3. Lock the data (right after step 10)
@@ -82,11 +82,11 @@ Everything here can be done now, and none of it changes the live site.
 Only now, because the old static apps on the `dev` site read and wrote these collections straight from the browser and
 would stop working.
 
-11. [ ] **Webmaster and Claude.** In Wix → CMS, change each collection's permissions as listed in
+11. [x] **Webmaster and Claude.** (Done Nov 21 through the Data Permissions API: the 15 Icarus, BOM, Ops and `production_parts` collections are Admin read and write; the 17 existing `inventory_*` collections are Site-member read, Admin write.) In Wix → CMS, change each collection's permissions as listed in
         [operations/SERVER.md](operations/SERVER.md#setup), step 6 ("Locking the collections"): everything except the
         `inventory_*` collections is read and write **Admin**; the `inventory_*` collections are read **Site members** and
         write **Admin** (this is the inventory lock: changes then go only through `/api/inventory`).
-12. [ ] **Claude and Team.** Check the lock, signed in as each of Guest, Team Member, and a Lead (or Mentor):
+12. [ ] **Claude and Team.** (A visitor with no account is refused on every collection tested, Nov 21. Still to do: the role checks below.) Check the lock, signed in as each of Guest, Team Member, and a Lead (or Mentor):
         - a Guest who calls the Wix Data API directly is refused for every non-inventory collection (read and write);
         - every app still works for each role (tasks, comments, Production, BOM, inventory edits);
         - an inventory edit still works for a Team Member and is refused for a Guest.
