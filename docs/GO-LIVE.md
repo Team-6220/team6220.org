@@ -56,7 +56,7 @@ Everything here can be done now, and none of it changes the live site.
        to the live site and app; commit that, or releases go to the old project.)
 2. [ ] **Smoke test (Webmaster and Claude).** Open `/` and `/apps`. Sign in with Google. Open Attendance, Inventory,
        Icarus, BOM, and Production. If sign-in or the apps fail, use **Switch Back** and stop.
-3. [ ] **Webmaster.** attendance-api (Apps Script "6220 Attendance API", on `losalfrc@gmail.com`): set the Script Property
+3. [x] **Webmaster.** attendance-api (Apps Script "6220 Attendance API", on `losalfrc@gmail.com`): set the Script Property
        `WIX_CLIENT_ID` to `74e98aee-3daa-4452-bf00-f13523cae9c5` (edit it if it already exists, or delete it, since that is
        the default). Not before step 1, because the dev site still signs in with the old client. Until it is set, the
        kiosk says "Your sign-in has expired" however often you sign in.
@@ -65,7 +65,7 @@ Everything here can be done now, and none of it changes the live site.
        except essential cookies off for every visitor, and shows no banner. Bring a notice back before adding analytics.
 5. [x] **Webmaster.** Redirects: the 12 rows of `docs/redirects.csv` were created through Wix's redirects API on Nov 21
        (the CSV upload dialog can't be driven from a script). All answer 301.
-6. [ ] **Team.** Submit every form once on the live site (Join, Contact, and any others) and confirm the emails arrive and
+6. [x] **Team.** Submit every form once on the live site (the Join newsletter, sponsor inquiry and volunteer forms; done Nov 21, all three recorded in Wix; check the emails arrived and delete the test rows) and confirm the emails arrive and
        the signups appear in Site Manager → Form signups.
 7. [ ] **Webmaster.** The clock: in the "6220 Ops Timer" script, add the triggers `syncGithub` (time-driven, every 5
        minutes) and `refreshEvents` (daily). Run `syncGithub` once and check Executions says `syncGithub: 200`. (A 401
@@ -73,7 +73,7 @@ Everything here can be done now, and none of it changes the live site.
 8. [ ] **Webmaster.** GitHub webhook: Team-6220 → Settings → Webhooks → Add webhook, payload URL
        `https://www.team6220.org/api/github-hook`, content type `application/json`, the secret from
        `GITHUB_WEBHOOK_SECRET`, only the **Issues** event. In "Recent deliveries", the first delivery should be 200.
-9. [ ] **Webmaster.** Merge the Apollo pull request (Apollo repository, #21) so Apollo starts using the team apps.
+9. [x] **Webmaster.** Merge the Apollo pull request (Apollo repository, #21) so Apollo starts using the team apps.
 10. [ ] **Claude.** Remove `.github/workflows/pages.yml` in a pull request. After it merges, delete the `dev` DNS record, so
         `dev.team6220.org` stops serving the old static apps. (GitHub Pages can't run the server-side site.)
 
