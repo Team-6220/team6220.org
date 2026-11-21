@@ -67,10 +67,12 @@ Everything here can be done now, and none of it changes the live site.
        (the CSV upload dialog can't be driven from a script). All answer 301.
 6. [x] **Team.** Submit every form once on the live site (the Join newsletter, sponsor inquiry and volunteer forms; done Nov 21, all three recorded in Wix; check the emails arrived and delete the test rows) and confirm the emails arrive and
        the signups appear in Site Manager → Form signups.
-7. [ ] **Webmaster.** The clock: in the "6220 Ops Timer" script, add the triggers `syncGithub` (time-driven, every 5
-       minutes) and `refreshEvents` (daily). Run `syncGithub` once and check Executions says `syncGithub: 200`. (A 401
-       means the two secrets differ, and a 403 or 404 means the site has not switched.)
-8. [ ] **Webmaster.** GitHub webhook: Team-6220 → Settings → Webhooks → Add webhook, payload URL
+7. [x] **Webmaster.** The clock: in the "6220 Ops Timer" script (on `programming@team6220.org`), add the triggers `syncGithub`
+       (time-driven, every 5 minutes) and `refreshEvents` (daily). Run `syncGithub` once and check Executions says
+       `syncGithub: 200`. (A 401 means the two secrets differ, and a 403 or 404 means the site has not switched.) Done
+       Nov 21: the first scheduled run logged `syncGithub: 200 {"ok":true,"repos":0,"pulled":0,"pushed":0}`; `repos: 0`
+       because no project is linked to a GitHub repository yet.
+8. [x] **Webmaster.** GitHub webhook (added Nov 21): Team-6220 → Settings → Webhooks → Add webhook, payload URL
        `https://www.team6220.org/api/github-hook`, content type `application/json`, the secret from
        `GITHUB_WEBHOOK_SECRET`, only the **Issues** event. In "Recent deliveries", the first delivery should be 200.
 9. [x] **Webmaster.** Merge the Apollo pull request (Apollo repository, #21) so Apollo starts using the team apps.
@@ -86,7 +88,10 @@ would stop working.
         [operations/SERVER.md](operations/SERVER.md#setup), step 6 ("Locking the collections"): everything except the
         `inventory_*` collections is read and write **Admin**; the `inventory_*` collections are read **Site members** and
         write **Admin** (this is the inventory lock: changes then go only through `/api/inventory`).
-12. [ ] **Claude and Team.** (A visitor with no account is refused on every collection tested, Nov 21. Still to do: the role checks below.) Check the lock, signed in as each of Guest, Team Member, and a Lead (or Mentor):
+12. [x] **Claude and Team.** (Done Nov 21 with the member `hossfam64@`, swapping its badges and using its own session: Guest only,
+        Team Member, and no badges all behaved as below, and the original four badges were put back. A Lead was not tested
+        separately: Lead differs only in the apps' own role checks, which have unit tests. Any signed-in member can still
+        read the `inventory_*` collections directly, which is accepted.) Check the lock, signed in as each of Guest, Team Member, and a Lead (or Mentor):
         - a Guest who calls the Wix Data API directly is refused for every non-inventory collection (read and write);
         - every app still works for each role (tasks, comments, Production, BOM, inventory edits);
         - an inventory edit still works for a Team Member and is refused for a Guest.
