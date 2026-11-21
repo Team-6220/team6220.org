@@ -6,6 +6,7 @@
 //   sites/<name>/media/             ->  /assets/<name>/
 //   sites/<name>/scripts/           ->  /assets/<name>/js/
 //   apps/<name>/media/              ->  /assets/<name>/
+//   sites/main/content/resources.json -> /assets/shared/data/links.json (the pins menu's links)
 //
 // The output lives in public/ and is git-ignored. Edit the sources, never the copies.
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -35,6 +36,8 @@ export default function syncMedia() {
           copy(join(root, "sites", s, "scripts"), `assets/${s}/js`);
         }
         for (const a of dirs(join(root, "apps"))) copy(join(root, "apps", a, "media"), `assets/${a}`);
+        // The Resources links, for the apps' pins menu (the shared frame in packages/assets/scripts/app-sidebar.js).
+        copy(join(root, "sites/main/content/resources.json"), "assets/shared/data/links.json");
       },
     },
   };

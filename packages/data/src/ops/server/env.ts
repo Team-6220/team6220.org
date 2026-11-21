@@ -71,6 +71,8 @@ export interface OpsEnv {
   members: {
     /** Up to 100 members, starting at `offset`. */
     list(offset: number): Promise<WixMember[]>;
+    /** Approves a pending member (a student who matched the roster). */
+    approve(memberId: string): Promise<void>;
   };
   /** A secret from Wix's Secrets Manager (TBA_KEY, GITHUB_TOKEN, ...), or undefined when it isn't set. Costs one call. */
   secret(name: string): Promise<string | undefined>;

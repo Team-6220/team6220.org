@@ -16,6 +16,7 @@ export function rolesFor(badges: readonly string[]): Roles {
     lead: has(BADGES.lead),
     approver: has(BADGES.mentor) || has(BADGES.booster),
     peopleAdmin: has(BADGES.lead) || has(BADGES.mentor) || has(BADGES.webAdmin),
+    business: has(`${SUBTEAM_BADGE_PREFIX}Operations`) || has(BADGES.lead) || has(BADGES.mentor) || has(BADGES.booster),
   };
 }
 

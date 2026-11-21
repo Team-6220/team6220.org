@@ -23,6 +23,9 @@ export const BADGES = {
   lead: "Lead",
   // Invited people who may only look at the apps listed as guest apps (Icarus and Inventory, view-only).
   guest: "Guest",
+  // Graduated members. They are never removed: they swap Team Member for this badge, so their name stays on old tasks,
+  // orders and history. It gives no app access by itself.
+  alumni: "Alumni",
 } as const;
 export type BadgeName = (typeof BADGES)[keyof typeof BADGES];
 

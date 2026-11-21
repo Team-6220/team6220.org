@@ -131,11 +131,13 @@ export function shortfall(need: MaterialNeed, inStock: number | undefined): numb
 }
 
 /** For the "Needs you" list on the dashboard: this person's open tasks, and how many are overdue. */
-export async function needsMe(me: Me, todayDate: string): Promise<{ open: number; overdue: number }> {
+export async function needsMe(me: Me, todayDate: string): Promise<{ open: number; overdue: number; tasks: Task[] }> {
   const mine = (await store().list<Task>("icarus_tasks")).filter(
     (t) => t.ownerIds.includes(me.id) && (t.status === "not-started" || t.status === "in-progress"),
   );
-  return { open: mine.length, overdue: mine.filter((t) => t.dueDate && t.dueDate < todayDate).length };
+  // Soonest due first; tasks with no date last (for Home's "Your tasks" card).
+  const tasks = mine.slice().sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+  return { open: mine.length, overdue: mine.filter((t) => t.dueDate && t.dueDate < todayDate).length, tasks };
 }
 
 // ----- planning records (Leads) -----

@@ -7,3 +7,6 @@ export { StatusPill, type StatusTone } from "./StatusPill";
 export { RecordChip } from "./RecordChip";
 export { PersonPicker, ProjectPicker, SubteamPicker } from "./Pickers";
 export { HistoryList } from "./HistoryList";
+// The screen building blocks from the apps redesign (styles: "@team6220/ui/kit.css"). See src/kit/index.tsx.
+export * from "./kit";
+export { frame, useFramePrefs, type FramePrefs, type FramePin, type FrameLink, type FrameApp, type FrameContext } from "./frame";

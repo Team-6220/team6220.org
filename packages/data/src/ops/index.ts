@@ -88,6 +88,14 @@ export function demoRole(): DemoRole | null {
   return buildUsesMock() || !hasServer() ? "lead" : null;
 }
 
+/** True when someone asked for the demo (?demo=<role>) or this is `pnpm dev` / a test; false on the static build's
+ *  fallback demo. Home uses it: without a server it shows the real sign-in, not a made-up lead. */
+export function isChosenDemo(): boolean {
+  readDemoFromUrl();
+  const stored = session()?.getItem(DEMO_KEY) as DemoRole | null | undefined;
+  return (!!stored && DEMO_ROLES.includes(stored)) || buildUsesMock();
+}
+
 /** True when the apps show made-up data. */
 export function isDemo(): boolean {
   return demoRole() !== null;

@@ -10,10 +10,15 @@ import type { Roles } from "../types";
 import { APOLLO, sha256Hex, type Actor } from "./context";
 import { apiError, ApiError, type OpsEnv } from "./env";
 
-/** The role an action needs (see rolesFor in ../roles.ts for who has each). */
-export type Who = keyof Roles;
+/** The role an action needs (see rolesFor in ../roles.ts for who has each). "signedIn": anyone signed in, badges or not
+ *  (their own account: finishing their profile, their settings). */
+export type Who = keyof Roles | "signedIn";
 
 export function requireRole(actor: Actor, role: Who): void {
+  if (role === "signedIn") {
+    if (actor.agent) throw apiError("forbidden", "That is for people, not Apollo.");
+    return;
+  }
   if (!actor.approved) throw apiError("pending", "A web admin hasn't approved your account yet.");
   if (!rolesFor(actor.badges)[role]) throw apiError("forbidden", "Your account isn't allowed to do that.");
 }

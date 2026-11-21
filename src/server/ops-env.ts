@@ -19,6 +19,7 @@ const createAssignments = auth.elevate(badgeAssignments.bulkCreateBadgeAssignmen
 const deleteAssignments = auth.elevate(badgeAssignments.bulkDeleteBadgeAssignments);
 const queryBadges = auth.elevate(badgesV2.queryBadges);
 const queryMembers = auth.elevate(members.queryMembers);
+const approveMember = auth.elevate(members.approveMember);
 
 /** Wix takes up to 1000 items per bulk data call and 100 per badge call. */
 const DATA_CHUNK = 1000;
@@ -102,6 +103,9 @@ export const opsEnv: OpsEnv = {
         contact: { firstName: m.contact?.firstName ?? undefined, lastName: m.contact?.lastName ?? undefined },
         profile: { nickname: m.profile?.nickname ?? undefined, slug: m.profile?.slug ?? undefined },
       }));
+    },
+    async approve(memberId) {
+      await approveMember(memberId);
     },
   },
   async secret(name) {

@@ -238,6 +238,10 @@ export function makeOps(members: Record<string, Member>) {
         const all = Object.values(members).map((m) => ({ id: m.id, status: m.status, contact: { firstName: "Pat", lastName: m.id }, profile: { slug: `pat-${m.id}` } }));
         return all.slice(offset, offset + 100);
       },
+      async approve(memberId) {
+        calls.push("members.approve");
+        memberById(memberId)!.status = "APPROVED";
+      },
     },
     async secret(name) {
       calls.push(`secret:${name}`);

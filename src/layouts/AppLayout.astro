@@ -1,8 +1,12 @@
 ---
-// Page shell for team apps under /apps: shared tokens from @team6220/ui, the shared sidebar, no main-site styles.
+// Page shell for team apps under /apps: shared tokens from @team6220/ui, the shared frame (apps rail, the app's menu,
+// pins, search, keybinds: packages/assets/scripts/app-sidebar.js), no main-site styles.
 import BaseLayout from "./BaseLayout.astro";
 import "@team6220/ui/tokens.css";
 import "@team6220/ui/app.css";
+import "@team6220/ui/kit.css";
+import apps from "../../packages/assets/data/apps.json";
+import resources from "../../sites/main/content/resources.json";
 
 interface Props {
   title: string;
@@ -18,12 +22,12 @@ const { title, description } = Astro.props;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="/assets/shared/styles/app-sidebar.css" />
-    <!-- Apply the saved light/dark choice and sidebar size before the page is drawn, so nothing jumps.
-         The buttons for both are in the sidebar (packages/assets/scripts/app-sidebar.js). Default: dark, open. -->
-    <script is:inline>
+    <!-- Apply the saved light/dark choice before the page is drawn, so nothing jumps. The frame
+         (packages/assets/scripts/app-sidebar.js) gets the app list here too, so it can draw before anything loads. -->
+    <script is:inline define:vars={{ frameData: { apps, links: resources.links, server: String(import.meta.env.PUBLIC_WIX_BUILD ?? "") === "on" } }}>
+      window.team6220FrameData = frameData;
       try {
         document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark";
-        document.documentElement.dataset.sidebar = localStorage.getItem("team6220.sidebar") || "open";
       } catch (e) {
         document.documentElement.dataset.theme = "dark";
       }
