@@ -19,8 +19,9 @@ Who does each step:
 
 Everything here can be done now, and none of it changes the live site.
 
-- [ ] **Webmaster.** Give the roles to the real people in Wix → Site Members: `Lead`, `Mentor`, `Booster`, `Supervisor`,
-      and `Guest`. Anyone who should edit the inventory also needs `Team Member` (only that badge and `Web Admin` can).
+- [ ] **Webmaster.** Roles: nobody has signed up yet, so there is nothing to give out now. After the switch, as people
+      sign up, give them roles in Wix → Site Members: `Lead`, `Mentor`, `Booster`, `Supervisor`, and `Guest`. Anyone who
+      should edit the inventory also needs `Team Member` (only that badge and `Web Admin` can).
 - [ ] **Webmaster.** Remove the test badges from `hossfam64@gmail.com` if it should not stay an admin, and sign the test
       browsers out.
 - [ ] **Team.** Test on a fresh preview: sign in, every app, every form, as a Team Member, a Lead, and a Guest. Previews
@@ -38,11 +39,14 @@ Everything here can be done now, and none of it changes the live site.
       on `main`. Generated redirects are in `docs/redirects.csv`, in the format Wix's redirect manager imports.
 - [ ] **Webmaster and Claude.** Confirm the allowed addresses for the built-in login include `https://www.team6220.org`
       (the open check in PHASE-2.md). Without it, nobody can sign in after the switch.
-- [ ] **Webmaster and Claude.** Confirm how a merge to `main` reaches the live Wix site (Wix → Headless Settings →
-      releases) and that the latest `main` has been released. We have only used previews so far.
-- [ ] **Webmaster.** Export a backup: the CMS collections (CMS → each collection → export), and a note of the current
-      redirects and the current site settings. If anything goes wrong, this is what you compare with.
-- [ ] **Webmaster.** Pick a quiet time, not during a build meeting, and tell the team what will be down or changing.
+- [ ] **Webmaster and Claude.** A merge to `main` does not release by itself (no workflow does it). To release, run
+      Actions → **Wix release** → Run workflow on `main` (it builds, runs `wix release`, publishes, and clears the cache).
+      Run it once after the workflow merges, to prove it works, and again after any later merge you want live. Check
+      Wix → Headless Settings for a Git auto-release setting as well, and for what **Complete Migration** does.
+- [ ] **Webmaster.** Backup: a zip of the export is already in the team Drive. Check it has the CMS collections, and a
+      note of the current redirects and site settings. If anything goes wrong, this is what you compare with.
+- [ ] **Webmaster.** Pick a time. Visitors are few, so any time outside a build meeting works; tell the team what will
+      change.
 - [ ] **Everyone.** Freeze merges to `main` from the start of the switch until step 11 is done.
 
 ## 2. Switch day, in this order
