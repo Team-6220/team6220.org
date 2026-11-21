@@ -1,4 +1,4 @@
-// Site-level SEO values copied as-is from the old Wix site (team6220.org). See docs/SEO.md.
+// Site-level SEO values copied as-is from the old Wix site (team6220.org). See https://github.com/Team-6220/team6220.org/wiki/SEO.
 // Nothing here is new copy. Change these only on purpose.
 export const SEO = {
   /** Wix "site display name"; also og:site_name and the WebSite JSON-LD name on the old home page. */

@@ -1,4 +1,4 @@
-// The inventory's WRITES, run on the server (docs/PHASE-2.md, issue #100). The inventory collections only let the server
+// The inventory's WRITES, run on the server (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, issue #100). The inventory collections only let the server
 // change data (admin-only write), so a stranger who signs up can't edit or wipe the team's inventory from a browser.
 // The browser still READS the collections directly (any signed-in member may read), and sends every change here.
 //

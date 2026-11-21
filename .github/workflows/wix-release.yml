@@ -2,7 +2,7 @@ name: Wix release
 
 # Releases the site to the live Wix site. Run it by hand: Actions -> "Wix release" -> Run workflow, on `main`.
 # A merge to `main` does not release anything by itself. `wix release` builds on Wix's servers from what is uploaded here,
-# publishes the site, and clears its cache (docs/GO-LIVE.md). Needs the same `wix` environment secrets as the preview.
+# publishes the site, and clears its cache (https://github.com/Team-6220/team6220.org/wiki/History-Go-Live). Needs the same `wix` environment secrets as the preview.
 on:
   workflow_dispatch:
     inputs:

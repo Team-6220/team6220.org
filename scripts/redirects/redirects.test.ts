@@ -13,7 +13,7 @@ const data = loadRedirects();
 const DIST = join(ROOT, "dist");
 const haveDist = existsSync(join(DIST, "index.html"));
 
-// The old Wix pages (docs/SEO.md) that must each have an entry.
+// The old Wix pages (https://github.com/Team-6220/team6220.org/wiki/SEO) that must each have an entry.
 const OLD_WIX_PAGES = [
   "/summer",
   "/our-team",

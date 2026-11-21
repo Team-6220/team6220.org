@@ -1,4 +1,4 @@
-// BOM: the list of things to buy. Plan: docs/operations/BOM.md. SERVER ONLY.
+// BOM: the list of things to buy. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-BOM. SERVER ONLY.
 // Ported from backend/apps-script/ops-api/Bom.gs; the answers are the same.
 //
 // Members can read the bom_* collections but not write them, so every change goes through here and the rules

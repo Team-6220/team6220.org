@@ -1,7 +1,7 @@
 name: Wix preview
 
 # Phase 2: builds the site for Wix hosting and posts a hidden preview link on every pull request.
-# Needs the `wix` environment's secrets (see docs/PHASE-2.md, "Preview link on every pull request").
+# Needs the `wix` environment's secrets (see https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, "Preview link on every pull request").
 # Pull requests from forks have no access to secrets, so they are skipped.
 on:
   pull_request:
@@ -26,7 +26,7 @@ jobs:
       WIX_CLIENT_PUBLIC_KEY: ${{ secrets.WIX_CLIENT_PUBLIC_KEY }}
       WIX_CLIENT_SECRET: ${{ secrets.WIX_CLIENT_SECRET }}
     steps:
-      # Until the `wix` environment has its secrets (docs/PHASE-2.md), skip quietly instead of failing the pull request.
+      # Until the `wix` environment has its secrets (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2), skip quietly instead of failing the pull request.
       - name: Check for Wix secrets
         id: secrets
         run: |

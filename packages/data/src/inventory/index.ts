@@ -106,7 +106,7 @@ export async function connectInventory(session: MemberSession, backend: Inventor
 let connected: InventoryService | null = null;
 
 /**
- * Shortcut used as `inventory.listItems()` (docs/MIGRATION-PLAN.md). Call `inventory.connect(session)` first;
+ * Shortcut used as `inventory.listItems()` (https://github.com/Team-6220/team6220.org/wiki/History-Migration-Plan). Call `inventory.connect(session)` first;
  * every other method is the InventoryService of the connected backend.
  */
 export const inventory = {

@@ -1,7 +1,7 @@
 # Icarus (`/apps/icarus`)
 
 Tasks and the team Gantt chart. It replaces the Gantt chart Google Sheets (one per season). The plan and the reasons
-behind it are in [docs/operations/ICARUS.md](../../docs/operations/ICARUS.md).
+behind it are in [Operations Icarus](https://github.com/Team-6220/team6220.org/wiki/Operations-Icarus).
 
 ## What is built
 
@@ -78,4 +78,4 @@ always starts three weeks before today, so the chart shows done, running, overdu
 
 ## Going live
 
-See [docs/operations/SETUP.md](../../docs/operations/SETUP.md).
+See [Operations Setup](https://github.com/Team-6220/team6220.org/wiki/Operations-Setup).

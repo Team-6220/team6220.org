@@ -1,6 +1,6 @@
 # Every pull request needs a review from someone listed here.
 # Needs a GitHub team called "webmasters" in the Team-6220 org with Write access
-# to this repo (see docs/PHASE-0.md). Until it exists, GitHub ignores this file.
+# to this repo (see https://github.com/Team-6220/team6220.org/wiki/History-Phase-0). Until it exists, GitHub ignores this file.
 *                    @Team-6220/webmasters
 
 # Per-app maintainers: uncomment and edit as each app moves in (Phase 1).

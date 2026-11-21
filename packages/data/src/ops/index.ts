@@ -1,4 +1,4 @@
-// ops: what the operations apps (Icarus, Production, BOM) share. Plan: docs/operations/ARCHITECTURE.md.
+// ops: what the operations apps (Icarus, Production, BOM) share. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Architecture.
 //
 //   import { ops } from "@team6220/data";
 //   const viewer = await ops.getViewer();          // signed-out | pending | member (with roles and subteams)

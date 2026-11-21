@@ -1,4 +1,4 @@
-// Shapes of the Production app's records. Plan: docs/operations/PRODUCTION.md.
+// Shapes of the Production app's records. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Production.
 // One collection, production_parts, written straight to Wix by members (every Team Member can do everything
 // in Production; the app records who did each step).
 import type { Item } from "../ops/types";

@@ -1,4 +1,4 @@
-// Wix lets one request make 20 calls to outside services (docs/PHASE-2.md). This wraps an OpsEnv, counts every call
+// Wix lets one request make 20 calls to outside services (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2). This wraps an OpsEnv, counts every call
 // the actions make, and refuses the 17th, so a request that is too big fails with a clear message instead of halfway
 // through. The other calls of a request (who is asking: three) are why the limit here is 17, not 20. SERVER ONLY.
 import { apiError, type Doc, type OpsEnv } from "./env";

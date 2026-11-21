@@ -1,4 +1,4 @@
-// Wix's built-in login (docs/PHASE-2.md): who is asking comes from the session, and other websites can't use it.
+// Wix's built-in login (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2): who is asking comes from the session, and other websites can't use it.
 import { describe, expect, it } from "vitest";
 import { handleSiteRequest } from "../src/site/api";
 import { MockSiteStore } from "../src/site/mock";

@@ -1,4 +1,4 @@
-// Shapes of the BOM app's records. Plan: docs/operations/BOM.md. Collections: bom_boms, bom_orders,
+// Shapes of the BOM app's records. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-BOM. Collections: bom_boms, bom_orders,
 // bom_sections, bom_lines (members can read them; every write goes through the ops API).
 import type { Item } from "../ops/types";
 

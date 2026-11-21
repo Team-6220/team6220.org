@@ -1,6 +1,6 @@
 // Member login for every app. Apps call these functions and never see Wix tokens or the Wix SDK.
 //
-// Wix's built-in login from the Astro integration (docs/PHASE-2.md):
+// Wix's built-in login from the Astro integration (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2):
 //   login()   -> /api/auth/login?returnToUrl=...  -> Wix's login page (Google or email) -> back to returnToUrl,
 //                signed in. The session lives in the `wixSession` cookie (see wix.ts).
 //   logout()  -> POST /api/auth/logout?returnToUrl=...

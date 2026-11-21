@@ -1,5 +1,5 @@
 // Two-way sync between Icarus tasks and GitHub issues, for every repository a project is connected to (projects'
-// githubRepo, "Team-6220/<name>"). Plan: docs/operations/ICARUS.md, "GitHub two-way sync". SERVER ONLY.
+// githubRepo, "Team-6220/<name>"). Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Icarus, "GitHub two-way sync". SERVER ONLY.
 // Ported from backend/apps-script/ops-api/GitHub.gs.
 //
 // How it stays safe:
@@ -13,7 +13,7 @@
 //   - Only title, description, open/closed and assignees are synced. Dates, relations, materials and parts are
 //     Icarus-only. Deleting either side never deletes the other. Pull requests are skipped.
 //   - The Wix secret GITHUB_SYNC_PAUSED = "yes" stops the sync at once (a kill switch).
-//   - A request may make 20 calls (docs/PHASE-2.md), so one run reads at most 3 pages of issues per repository,
+//   - A request may make 20 calls (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2), so one run reads at most 3 pages of issues per repository,
 //     pushes only as many tasks as it has calls for, and the next run carries on. Nothing is lost: what wasn't
 //     done is still "changed" next time.
 //

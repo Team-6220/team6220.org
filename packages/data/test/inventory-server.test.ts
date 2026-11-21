@@ -1,4 +1,4 @@
-// The inventory lock (docs/PHASE-2.md, issue #100): who may change inventory through /api/inventory, what the server
+// The inventory lock (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, issue #100): who may change inventory through /api/inventory, what the server
 // writes to Wix, and the browser store that sends changes there.
 import { describe, expect, it } from "vitest";
 import { InventoryWrites, type Modification, type WixItemFns } from "../src/inventory/server-writes";

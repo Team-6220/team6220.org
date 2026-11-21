@@ -1,6 +1,6 @@
 // The one Wix SDK client for the browser. Internal to @team6220/data: apps never import this.
 //
-// Sign-in is Wix's built-in login from the Astro integration (docs/PHASE-2.md): /api/auth/login signs the member in
+// Sign-in is Wix's built-in login from the Astro integration (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2): /api/auth/login signs the member in
 // and keeps the session in the `wixSession` cookie, which the server reads on every request. This client reads and
 // refreshes the same cookie, in the same format as Wix's own browser setup (@wix/astro's astro-auth), so the
 // browser and the server share one sign-in. The SDK refreshes an expired access token by itself and writes the new

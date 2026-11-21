@@ -1,4 +1,4 @@
-// POST /api/inventory: every inventory change (docs/PHASE-2.md, issue #100). A plain function from Request to Response,
+// POST /api/inventory: every inventory change (https://github.com/Team-6220/team6220.org/wiki/History-Phase-2, issue #100). A plain function from Request to Response,
 // so it is tested directly; the Astro route (src/server/inventory-route.ts) is a thin wrapper. SERVER ONLY.
 //
 //   { "action": "insert",    "table": "parts", "rows": [{ "id": "PT-1", ... }] }
