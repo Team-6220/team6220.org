@@ -8,6 +8,21 @@ export function Today({ me }: { me: Me }) {
   const [day, setDay] = useState<DayView | null>(null);
   const [error, setError] = useState("");
   const [find, setFind] = useState("");
+  const [opening, setOpening] = useState(false);
+
+  // As in the prototype: Open kiosk goes full screen and opens the kiosk straight away. (Full screen has to start in
+  // the click itself, so it comes before the kiosk is opened.)
+  const openKiosk = async () => {
+    setOpening(true);
+    void document.documentElement.requestFullscreen?.().catch(() => undefined);
+    try {
+      if (!attendance.currentKiosk()) await attendance.openKiosk();
+      location.assign("/apps/attendance/kiosk");
+    } catch (err) {
+      setError(errorMessage(err, "We couldn't open the kiosk."));
+      setOpening(false);
+    }
+  };
 
   useEffect(() => {
     attendance.today().then((r) => setDay(r.day), (err) => setError(errorMessage(err, "We couldn't load today's attendance.")));
@@ -29,7 +44,7 @@ export function Today({ me }: { me: Me }) {
 
   return (
     <Screen>
-      <PageHeader title="Today" sub={sub} actions={me.roles.attendanceAdmin && <Btn kind="primary" href="/apps/attendance/kiosk">Open kiosk</Btn>} />
+      <PageHeader title="Today" sub={sub} actions={me.roles.attendanceAdmin && <Btn kind="primary" disabled={opening} onClick={openKiosk}>Open kiosk</Btn>} />
       <Stats items={[
         { label: "Here today", value: day.here.length, note: `of ${day.expected} members` },
         { label: "This month", value: day.monthAverage, note: "average per meeting" },
