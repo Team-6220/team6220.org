@@ -8,7 +8,7 @@
  *   OPS_TIMER_SECRET  required. The same value as the Wix secret OPS_TIMER_SECRET (20 or more random characters). SECRET.
  *   SITE_ADDRESS      optional. Defaults to https://www.team6220.org
  *
- * Triggers: run setupTriggers once from the editor (it makes all five; running it again replaces them, never doubles):
+ * Triggers: run setupTriggers once from the editor (it makes all six; running it again replaces them, never doubles):
  *   syncGithub     every 5 minutes   (sends task changes to GitHub; GitHub's own changes arrive at once by webhook)
  *   refreshEvents  once a day        (updates saved competition events' dates from The Blue Alliance)
  *   sendDeliveries every 5 minutes   (sends the Discord notifications that are waiting, and the morning bundle after quiet hours)
