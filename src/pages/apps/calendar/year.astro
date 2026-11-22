@@ -1,0 +1,13 @@
+---
+// /apps/calendar/year: the team calendar (https://github.com/Team-6220/team6220.org/wiki/Operations-Calendar).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Calendar } from "@team6220/calendar";
+import "@team6220/calendar/calendar.css";
+---
+
+<AppLayout title="Year | Los Al Robotics" description="The Los Al Robotics team calendar: meetings, supervision shifts, and competitions.">
+  <Calendar client:only="react" screen="year">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading the calendar…</p></main>
+  </Calendar>
+  <noscript><p class="t-page">The calendar needs JavaScript turned on.</p></noscript>
+</AppLayout>

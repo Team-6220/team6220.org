@@ -37,7 +37,7 @@
     "name": "Calendar",
     "description": "Meetings, supervision shifts, and competitions.",
     "href": "/apps/calendar",
-    "status": "planned",
+    "status": "live",
     "access": "team",
     "alumni": true,
     "category": "Operations",
@@ -49,7 +49,7 @@
           {
             "name": "Month",
             "icon": "cal",
-            "view": "month"
+            "view": ""
           },
           {
             "name": "Year",
@@ -60,70 +60,11 @@
             "name": "Coming up",
             "icon": "list",
             "view": "agenda"
-          },
-          {
-            "name": "Comps & More",
-            "icon": "star",
-            "view": "competitions"
-          }
-        ]
-      },
-      {
-        "label": "Scheduling",
-        "items": [
-          {
-            "name": "New event",
-            "icon": "plus",
-            "view": "new"
-          },
-          {
-            "name": "Meeting schedule",
-            "icon": "gear",
-            "view": "schedule"
-          }
-        ]
-      },
-      {
-        "label": "Subteam meetings (leads)",
-        "items": [
-          {
-            "name": "Assign meetings",
-            "icon": "people",
-            "view": "assign"
-          },
-          {
-            "name": "View as a member",
-            "icon": "eye",
-            "view": "member"
-          }
-        ]
-      },
-      {
-        "label": "Supervision",
-        "items": [
-          {
-            "name": "My shifts",
-            "icon": "me",
-            "view": "myshifts"
-          },
-          {
-            "name": "Open shifts",
-            "icon": "clock",
-            "view": "open"
-          },
-          {
-            "name": "Supervisors",
-            "icon": "shield",
-            "view": "supervisors"
-          },
-          {
-            "name": "Become a supervisor",
-            "icon": "att",
-            "view": "become"
           }
         ]
       }
-    ]
+    ],
+    "ready": true
   },
   {
     "id": "icarus",

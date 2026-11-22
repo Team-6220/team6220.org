@@ -1,0 +1,58 @@
+// One thing on the calendar: a meeting with its supervision shifts, or a competition, event or break.
+import { calendar, type Shift } from "@team6220/data";
+import { DataTable, KeyValue, Note, PageHeader, Pill, Screen, Section, Split } from "@team6220/ui";
+import type { CalendarView } from "./Calendar";
+import { monthHref } from "./shared";
+
+export function EventPage({ view }: { view: CalendarView }) {
+  const { data, me } = view;
+  const id = new URLSearchParams(location.search).get("id");
+  const event = data.events.find((e) => e._id === id);
+  const back = { label: "Calendar", href: event ? monthHref(event.startDate.slice(0, 7)) : "/apps/calendar" };
+  if (!event) return <Screen><PageHeader title="Not found" back={back} /><Note>That isn't on the calendar any more.</Note></Screen>;
+
+  const shifts = calendar.shiftsOf(data.shifts, event._id);
+  const days = event.startDate === event.endDate ? calendar.longDay(event.startDate) : `${calendar.longDay(event.startDate)} – ${calendar.longDay(event.endDate)}`;
+  const time = event.startTime && event.endTime ? `${calendar.longTime(event.startTime)} – ${calendar.longTime(event.endTime)}` : "";
+  const sub = [days, time, event.location].filter(Boolean).join(" · ");
+  const details: [string, React.ReactNode][] = [];
+  if (shifts.length) details.push(["Shifts", shifts.map((s) => calendar.timeRange(s.start, s.end)).join(" and ")]);
+  if (event.setupDate) details.push(["Set-up", calendar.longDay(event.setupDate)]);
+  if (event.notes) details.push(["Notes", event.notes]);
+  details.push(["Who it's for", calendar.audience(event)]);
+  details.push(["Who can see it", event.public ? "Anyone (shifts and supervisors are for the team only)" : "Team members, boosters, and approved supervisors"]);
+
+  const info = <KeyValue items={details} />;
+  if (event.type !== "meeting") {
+    return (
+      <Screen>
+        <PageHeader title={calendar.titleOf(event)} sub={sub} back={back} />
+        {event.mandatory && <Note tone="warn">★ Mandatory for {calendar.audience(event).toLowerCase()}.</Note>}
+        {info}
+      </Screen>
+    );
+  }
+  return (
+    <Screen>
+      <PageHeader title={`${event.mandatory ? "★ " : ""}${calendar.titleOf(event)}`} sub={sub} back={back} />
+      <Split
+        left={
+          <Section title="Supervision shifts">
+            <DataTable<Shift>
+              columns={[
+                { key: "time", label: "Shift", width: "160px", value: (s) => s.start, render: (s) => calendar.timeRange(s.start, s.end) },
+                { key: "who", label: "Supervisor", width: "minmax(0, 1fr)", value: (s) => s.name, render: (s) => (s.memberId === me.id ? "You" : s.name || "Open") },
+                { key: "status", label: "", width: "120px", render: (s) => (s.memberId === me.id ? <Pill tone="ok">Yours</Pill> : !s.name && !s.memberId ? <Pill tone="warn">Open</Pill> : null) },
+              ]}
+              rows={shifts}
+              rowKey={(s) => s._id}
+              statusKey="status"
+              empty="No supervision shifts on this meeting."
+            />
+          </Section>
+        }
+        right={info}
+      />
+    </Screen>
+  );
+}
