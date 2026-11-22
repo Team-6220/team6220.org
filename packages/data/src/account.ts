@@ -44,6 +44,17 @@ export async function saveProfile(changes: Partial<Pick<Profile, "firstName" | "
   return (await callOps<{ profile: Profile }>("saveMyProfile", { profile: changes })).profile;
 }
 
+/** Links your account to your roster row (student ID and last name must match the roster). For someone already in the apps. */
+export async function linkStudentId(studentId: string, lastName: string): Promise<Profile> {
+  if (isDemo()) {
+    // The demo roster has one person to try it with: Ada Lovelace, 4829173650.
+    if (studentId.trim() !== "4829173650" || lastName.trim().toLowerCase() !== "lovelace") throw new Error("We couldn't find that student ID with that last name on the roster.");
+    demoAccount = { ...demoAccount, profile: { ...demoAccount.profile, studentId: "4829173650", grade: "11th" } };
+    return structuredClone(demoAccount.profile);
+  }
+  return (await callOps<{ profile: Profile }>("linkStudentId", { studentId: studentId.trim(), lastName: lastName.trim() })).profile;
+}
+
 /** Saves the frame's settings so they follow the account (called after each change, a moment later). */
 export async function savePrefs(prefs: Record<string, unknown>): Promise<void> {
   if (isDemo()) {

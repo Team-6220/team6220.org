@@ -100,6 +100,11 @@ export async function kioskToday(): Promise<KioskRow[]> {
   return (await asKiosk<{ rows: KioskRow[] }>("attKioskToday")).rows;
 }
 
+/** Kiosk: five random student IDs for "Random quick sign in" (no names). Clicking one is the same as scanning it. */
+export async function quickIds(): Promise<string[]> {
+  return (await asKiosk<{ ids: string[] }>("attKioskQuick")).ids;
+}
+
 // ----- the screens -----
 
 /** Who is here and who isn't, today or on another day (yyyy-mm-dd), and whether a kiosk is open. */

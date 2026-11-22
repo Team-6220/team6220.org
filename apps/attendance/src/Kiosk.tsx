@@ -2,7 +2,7 @@
 // no login needed: the kiosk holds its own token. Sign out is for leaving early. An ID the roster doesn't have can add
 // a name, when Attendance's settings allow it.
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { attendance, OpsError, ops, type KioskRow, type KioskSession, type SignInResult } from "@team6220/data";
+import { attendance, OpsError, type KioskRow, type KioskSession, type SignInResult } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen, Section, Tabs } from "@team6220/ui";
 import { errorMessage, formatTime, longDay } from "./util";
 
@@ -74,18 +74,28 @@ function Open({ today, onClose, onClosed }: { today: string; onClose: () => void
   const [rows, setRows] = useState<KioskRow[]>([]);
   const [sound, setSound] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [quick, setQuick] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
-  const demo = ops.isDemo();
 
   const refresh = useCallback(async () => {
     try {
-      setRows(await attendance.kioskToday());
+      const [today, ids] = await Promise.all([attendance.kioskToday(), attendance.quickIds()]);
+      setRows(today);
+      setQuick(ids);
     } catch (err) {
       if (err instanceof OpsError && err.code === "kiosk-closed") onClosed();
     }
   }, [onClosed]);
   useEffect(() => void refresh(), [refresh]);
   useEffect(() => input.current?.focus(), [shown, mode]);
+  // A kiosk's ID box always has the cursor, so the next student can just scan or type. Clicking the background or a
+  // button takes it away for a moment; it comes straight back unless the cursor went to another box (the name form).
+  const keepFocus = () => {
+    setTimeout(() => {
+      const now = document.activeElement;
+      if (!(now instanceof HTMLInputElement || now instanceof HTMLTextAreaElement || now instanceof HTMLSelectElement)) input.current?.focus();
+    }, 0);
+  };
 
   const show = (result: SignInResult, typed: string) => {
     setShown({ result, id: typed });
@@ -137,7 +147,7 @@ function Open({ today, onClose, onClosed }: { today: string; onClose: () => void
       <Tabs items={[{ id: "in", label: "Sign in" }, { id: "out", label: "Sign out (leaving early)" }]} value={mode} onChange={(m) => { setMode(m); setShown(null); }} />
       <form className="att-id" onSubmit={(e) => { e.preventDefault(); void submit(id); }}>
         <label htmlFor="att-id-input">Scan your ID card or type your student ID</label>
-        <input id="att-id-input" ref={input} className="k-input att-id-input" inputMode="numeric" autoComplete="off" placeholder="Student ID" value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, "").slice(0, 12))} disabled={busy} />
+        <input id="att-id-input" ref={input} className="k-input att-id-input" inputMode="numeric" autoComplete="off" placeholder="Student ID" value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, "").slice(0, 12))} onBlur={keepFocus} readOnly={busy} />
       </form>
       {result && (
         <Note tone={tone === "ok" ? "ok" : tone === "warn" ? "warn" : "bad"}>
@@ -156,10 +166,11 @@ function Open({ today, onClose, onClosed }: { today: string; onClose: () => void
           </div>
         </form>
       )}
-      {demo && (
-        <Section title="Random quick sign in (demo only)">
+      {mode === "in" && quick.length > 0 && (
+        <Section title="Random quick sign in">
+          {/* Five random student IDs, no names. Clicking one is the same as scanning it, so nobody has to type. */}
           <div className="att-quick">
-            {["4829173650", "1057382946", "7731905284", "2946018357", "6182430795"].map((q) => <Btn key={q} onClick={() => void submit(q)}>{q}</Btn>)}
+            {quick.map((q) => <Btn key={q} onClick={() => void submit(q)}>{q}</Btn>)}
           </div>
         </Section>
       )}
