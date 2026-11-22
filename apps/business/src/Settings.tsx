@@ -15,7 +15,8 @@ function whenText(steps: business.BizSettings["reminders"], i: number): string {
   if (i === 0) return `More than ${weeksText(above)} away`;
   const from = steps[i - 1].weeks;
   if (from > 3) return `${from} to ${weeksText(above)} away`;
-  return above === 0 && from < 1 ? `Last ${weeksText(from)} and the due date` : `Last ${weeksText(from)}`;
+  if (above === 0 && from < 1) return `Last ${weeksText(from)} and the due date`;
+  return from === 1 ? "Last week" : `Last ${weeksText(from)}`;
 }
 
 export function Settings({ me }: { me: Me }) {

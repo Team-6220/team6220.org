@@ -15,7 +15,7 @@ import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSpon
 import {
   COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_TEMPLATES, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS, SCHOOL,
   cleanPitch, cleanRestaurant, cleanSale, cleanSettings, cleanStudentGrant, decide, defaultSettings, followUpsFor, grantPlanProblem, isApproved, isReply, merchTotal, miles,
-  pickOption, pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, statusDetail, type StudentRecords,
+  pickOption, pitchPlanProblem, pitchesByMonth, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingCounts, standingOf, statusDetail, type StudentRecords,
 } from "../../business/fundraising";
 import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type EmailTemplate, type Grant, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "../../business/types";
 import { rolesFor } from "../roles";
@@ -442,6 +442,19 @@ export async function bizSaveSettings(ctx: Ctx, body: Doc) {
 export async function bizTemplates(ctx: Ctx) {
   const [templates, settings] = await Promise.all([ctx.data.query(COLLECTION_TEMPLATES, {}, 200), settingsOf(ctx)]);
   return { templates: (templates as unknown as EmailTemplate[]).sort((a, b) => a.order - b.order), cc: settings.pitchCc };
+}
+
+// ----- numbers for Stats -----
+
+/** What Stats takes from 1-2-3-100: restaurant days taken, students by standing, and pitches sent each month. */
+export async function statsExtra(ctx: Ctx, seasonLabelText: string) {
+  if (seasonLabelText !== season(ctx)) return {};
+  const [settings, restaurant, status, pitches] = await Promise.all([settingsOf(ctx), ctx.data.query(COLLECTION_RESTAURANT, { season: seasonLabelText }, 500), bizStatus(ctx), ctx.data.query(COLLECTION_PITCHES, { season: seasonLabelText }, 1000)]);
+  return {
+    restaurant: { used: restaurantDaysUsed(restaurant as unknown as RestaurantDay[]), limit: settings.restaurantLimit },
+    progress: standingCounts(status.rows.filter((r) => r.standing !== "exempt").map((r) => r.standing)),
+    pitchesByMonth: pitchesByMonth(pitches as unknown as Pitch[], Number(seasonLabelText.slice(0, 4))),
+  };
 }
 
 // ----- restaurant distance -----

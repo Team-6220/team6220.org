@@ -11,6 +11,7 @@
 import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSponsor, importGrants, importSponsors, priorGrantTitles, priorNames, publicGrant, publicSponsor, sameName, seasonLabel, statsFor } from "../../business/plan";
 import type { Grant, Sponsor } from "../../business/types";
 import { rolesFor } from "../roles";
+import { statsExtra } from "./fundraising";
 import { getRecord, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
 
@@ -144,5 +145,6 @@ export async function bizGrantToSponsor(ctx: Ctx, body: Doc) {
 /** { season? } -> { stats }. */
 export async function bizStats(ctx: Ctx, body: Doc) {
   const [sponsors, grants] = await Promise.all([allSponsors(ctx), allGrants(ctx)]);
-  return { stats: statsFor(season(ctx, body), sponsors, grants), seasons: seasonsOf([...sponsors, ...grants], ctx.today()) };
+  const here = season(ctx, body);
+  return { stats: statsFor(here, sponsors, grants, await statsExtra(ctx, here)), seasons: seasonsOf([...sponsors, ...grants], ctx.today()) };
 }

@@ -28,7 +28,7 @@ import * as icarus from "./icarus";
 import * as rsvp from "./rsvp";
 import * as inbox from "./inbox";
 import * as notify from "./notify";
-import { runReminders, runRsvpReminders } from "./notify/reminders";
+import { runBizReminders, runReminders, runRsvpReminders } from "./notify/reminders";
 import * as records from "./records";
 import * as shared from "./shared";
 import * as supervision from "./supervision";
@@ -172,6 +172,7 @@ const JOBS: Record<string, Action> = {
   sendDeliveries: (ctx) => notify.sendDeliveries(ctx),
   runReminders: (ctx) => runReminders(ctx),
   runRsvpReminders: (ctx) => runRsvpReminders(ctx),
+  runBizReminders: (ctx) => runBizReminders(ctx),
 };
 
 const MAX_BODY_BYTES = 2_000_000;

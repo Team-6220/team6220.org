@@ -136,6 +136,11 @@ export function bizDecided(what: string, approved: boolean, note: string, to: st
   return { kind: "biz.decided", to: [to], title: approved ? `Approved: ${what}` : `Sent back: ${what}`, text: approved ? "You can go on to the next step." : note, url: "/apps/business" };
 }
 
+/** A follow-up to a sponsor pitch is due (the student sends it themselves, only if there was no reply). */
+export function bizFollowUp(student: string, company: string, n: number, dedupeKey: string): Outgoing {
+  return { kind: "biz.followup", to: [student], title: `Follow-up ${n} to ${company} is due`, text: "Send it if they haven't replied. Skip it if they have.", url: "/apps/business/pitches", dedupeKey };
+}
+
 /** The 1-2-3-100 reminder: to students who aren't done. */
 export function bizReminder(to: string[], deadline: string, dedupeKey?: string): Outgoing {
   return { kind: "biz.reminder", to, title: "Finish your 1-2-3-100", text: deadline ? `It's due ${deadline}.` : "Open it to see your next step.", url: "/apps/business", ...(dedupeKey ? { dedupeKey } : {}) };

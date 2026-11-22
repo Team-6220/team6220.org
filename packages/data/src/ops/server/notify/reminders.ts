@@ -8,7 +8,11 @@ import { COLLECTION_NOTIFICATIONS, send, type Outgoing } from "./outbox";
 import { reminderDue, COLLECTION_ANSWERS, COLLECTION_FORMS } from "../../../rsvp/plan";
 import type { RsvpAnswer, RsvpForm } from "../../../rsvp/types";
 import { settingsOf, teamMembers, unfinished } from "../rsvp";
-import { rsvpReminder, rsvpSummary, shiftReminders } from "./rules";
+import { bizFollowUp, bizReminder, rsvpReminder, rsvpSummary, shiftReminders } from "./rules";
+import { COLLECTION_PITCHES, daysBetween as bizDaysBetween, reminderEvery } from "../../../business/fundraising";
+import { seasonLabel } from "../../../business/plan";
+import type { Pitch } from "../../../business/types";
+import { bizStatus, settingsOf as bizSettingsOf } from "../fundraising";
 
 const SIGNATURES_NEEDED = 2;
 
@@ -89,6 +93,37 @@ export async function rsvpReminders(ctx: Ctx, today: string, events: Doc[]): Pro
 /** The daily RSVP job (its own timer, once each morning: it has more to read than runReminders can fit in one request). */
 export async function runRsvpReminders(ctx: Ctx) {
   const list = await rsvpReminders(ctx, ctx.today(), await ctx.data.query("cal_events", { cancelled: false }));
+  await send(ctx, list);
+  return { reminders: list.length };
+}
+
+/**
+ * The daily 1-2-3-100 job (its own timer: it reads everyone's things). Students who aren't done are reminded on the
+ * schedule in the settings, counted back from the deadline; students whose sponsor pitch follow-up is due hear about it.
+ */
+export async function runBizReminders(ctx: Ctx) {
+  const today = ctx.today();
+  const settings = await bizSettingsOf(ctx);
+  const out: Outgoing[] = [];
+  const anyWay = settings.ways.discord || settings.ways.push || settings.ways.badge;
+  if (settings.deadline && today <= settings.deadline && anyWay) {
+    const daysLeft = bizDaysBetween(today, settings.deadline);
+    if (daysLeft % reminderEvery(settings.reminders, daysLeft) === 0) {
+      const { rows } = await bizStatus(ctx);
+      const to = rows.filter((r) => r.standing !== "done" && r.standing !== "exempt").map((r) => r.memberId);
+      if (to.length) out.push(bizReminder(to, settings.deadline, `biz.reminder:${today}`));
+    }
+  }
+  const pitches = (await ctx.data.query(COLLECTION_PITCHES, { season: seasonLabel(today) }, 1000)) as unknown as Pitch[];
+  for (const p of pitches) {
+    if (!p.sentOn || p.reply !== "none") continue;
+    for (const f of p.followUps) {
+      const late = bizDaysBetween(f.dueOn, today);
+      if (!f.sentOn && late >= 0 && late % 3 === 0) out.push(bizFollowUp(p.memberId, p.company, f.n, `biz.followup:${p._id}:${f.n}:${today}`));
+    }
+  }
+  const [reminded, followed] = await Promise.all([usedKeys(ctx, "biz.reminder"), usedKeys(ctx, "biz.followup")]);
+  const list = out.filter((n) => !(n.kind === "biz.reminder" ? reminded : followed).has(n.dedupeKey ?? ""));
   await send(ctx, list);
   return { reminders: list.length };
 }

@@ -6,9 +6,9 @@ import { addDays as shiftDay, today } from "../calendar/dates";
 import {
   COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_TEMPLATES, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS,
   cleanPitch, cleanRestaurant, cleanSale, cleanSettings, cleanStudentGrant, decide, defaultSettings, followUpsFor, grantPlanProblem, isApproved, isReply, merchTotal, pickOption,
-  pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, statusDetail, type StudentRecords,
+  pitchPlanProblem, pitchesByMonth, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingCounts, standingOf, statusDetail, type StudentRecords,
 } from "./fundraising";
-import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSponsor, sameName, seasonLabel } from "./plan";
+import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSponsor, sameName, seasonLabel, statsFor } from "./plan";
 import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type EmailTemplate, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "./types";
 import "./mock"; // the trackers' demo data comes first
 
@@ -343,6 +343,21 @@ mockActions({
     },
   },
   bizTemplates: { who: "team", run: (_r, _a, db) => ({ templates: q<EmailTemplate>(db, COLLECTION_TEMPLATES).sort((a, b) => a.order - b.order), cc: settingsOf(db).pitchCc }) },
+  bizStats: {
+    who: "team",
+    run: (request, _a, db) => {
+      const here = typeof request.season === "string" && /^\d{4}–\d{2}$/.test(request.season) ? request.season : season();
+      const sponsors = q<Sponsor>(db, COLLECTION_SPONSORS);
+      const grants = q<import("./types").Grant>(db, COLLECTION_GRANTS);
+      const seasons = [...new Set([season(), ...sponsors.map((s) => s.season), ...grants.map((g) => g.season)])].sort().reverse();
+      const extra = here !== season() ? {} : {
+        restaurant: { used: restaurantDaysUsed(q<RestaurantDay>(db, COLLECTION_RESTAURANT).filter((d) => d.season === here)), limit: settingsOf(db).restaurantLimit },
+        progress: standingCounts(teamOf(db).filter((m) => !settingsOf(db).exempt.some((e) => e.memberId === m.memberId)).map((m) => standingOf(recordsOf(db, m.memberId)))),
+        pitchesByMonth: pitchesByMonth(q<Pitch>(db, COLLECTION_PITCHES).filter((p) => p.season === here), Number(here.slice(0, 4))),
+      };
+      return { stats: statsFor(here, sponsors, grants, extra), seasons };
+    },
+  },
   bizGetSettings: { who: "team", run: (_r, _a, db) => ({ settings: settingsOf(db) }) },
   bizSaveSettings: {
     who: "lead",

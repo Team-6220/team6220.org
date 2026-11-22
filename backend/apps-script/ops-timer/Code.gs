@@ -14,6 +14,7 @@
  *   sendDeliveries every 5 minutes   (sends the Discord notifications that are waiting, and the morning bundle after quiet hours)
  *   runReminders   every 15 minutes  (tasks due tomorrow or overdue, BOM lines waiting for signatures, late orders)
  *   runRsvpReminders once a day, 8 am (RSVP forms: the people who have not finished, and the leads' summary the morning a form is due)
+ *   runBizReminders  once a day, 8 am (1-2-3-100: students who are not done, on the schedule in its settings, and sponsor pitch follow-ups that are due)
  */
 
 function syncGithub() {
@@ -36,10 +37,14 @@ function runRsvpReminders() {
   callJob_("runRsvpReminders");
 }
 
+function runBizReminders() {
+  callJob_("runBizReminders");
+}
+
 /** Creates the five time triggers, replacing any this script already has for them. Run it once after each push. */
 function setupTriggers() {
   const every = { syncGithub: 5, sendDeliveries: 5, runReminders: 15 };
-  const names = Object.keys(every).concat(["refreshEvents", "runRsvpReminders"]);
+  const names = Object.keys(every).concat(["refreshEvents", "runRsvpReminders", "runBizReminders"]);
   ScriptApp.getProjectTriggers()
     .filter(function (t) { return names.indexOf(t.getHandlerFunction()) !== -1; })
     .forEach(function (t) { ScriptApp.deleteTrigger(t); });
@@ -48,6 +53,7 @@ function setupTriggers() {
   });
   ScriptApp.newTrigger("refreshEvents").timeBased().everyDays(1).atHour(4).create();
   ScriptApp.newTrigger("runRsvpReminders").timeBased().everyDays(1).atHour(8).create();
+  ScriptApp.newTrigger("runBizReminders").timeBased().everyDays(1).atHour(8).create();
   console.log("Triggers: " + ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); }).join(", "));
 }
 

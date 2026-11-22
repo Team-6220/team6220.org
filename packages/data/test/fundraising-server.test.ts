@@ -195,3 +195,39 @@ describe("everyone's status and settings", () => {
     expect(inbox(s, "m-nik", "biz.reminder")).toHaveLength(0);
   });
 });
+
+describe("reminders", () => {
+  it("picks how often to remind from how close the deadline is", async () => {
+    const { reminderEvery, defaultSettings } = await import("../src/business/fundraising");
+    const steps = defaultSettings("2026–27").reminders;
+    expect(reminderEvery(steps, 80)).toBe(35); // more than 10 weeks away
+    expect(reminderEvery(steps, 56)).toBe(21); // 8 weeks
+    expect(reminderEvery(steps, 28)).toBe(14); // 4 weeks
+    expect(reminderEvery(steps, 14)).toBe(7);
+    expect(reminderEvery(steps, 5)).toBe(2);
+    expect(reminderEvery(steps, 1)).toBe(1);
+    expect(reminderEvery(steps, 0)).toBe(1);
+  });
+
+  it("reminds students who aren't done on the schedule, and a student when a follow-up is due, once a day", async () => {
+    const s = team();
+    await s.post({ action: "bizSaveSettings", token: lead, settings: { deadline: "2026-12-06" } }); // two weeks away: reminded every week, counted back from the deadline, so today
+    await pick(s, ada, "sponsor");
+    const id = (await s.post({ action: "bizItemSave", token: ada, kind: "pitch", slot: 1, fields: { company: "Boeing", contactName: "Bruce", contactEmail: "b@example.com", why: WORDS } })).item._id;
+    await s.post({ action: "bizItemSend", token: ada, kind: "pitch", id, step: "plan" });
+    await s.post({ action: "bizDecide", token: ops, kind: "pitch", id, step: "plan", decision: "approve" });
+    await s.post({ action: "bizPitchSent", token: ada, id, sentOn: "2026-11-15" }); // follow-up 1 was due Nov 22: today
+    expect((await s.job("runBizReminders")).body.ok).toBe(true);
+    expect(inbox(s, "m-ada", "biz.reminder")).toHaveLength(1);
+    expect(inbox(s, "m-nik", "biz.reminder")).toHaveLength(1);
+    expect(inbox(s, "m-ada", "biz.followup")).toHaveLength(1);
+    await s.job("runBizReminders"); // the same day again: nothing new
+    expect(inbox(s, "m-ada", "biz.reminder")).toHaveLength(1);
+    expect(inbox(s, "m-ada", "biz.followup")).toHaveLength(1);
+    // A reply stops the follow-ups.
+    s.setNow(new Date("2026-11-25T20:00:00Z"));
+    await s.post({ action: "bizPitchReply", token: ada, id, reply: "replied" });
+    await s.job("runBizReminders");
+    expect(inbox(s, "m-ada", "biz.followup")).toHaveLength(1);
+  });
+});

@@ -308,3 +308,30 @@ export function statusDetail(r: StudentRecords): string {
     default: return "";
   }
 }
+
+/** Sponsor pitches sent by the end of each month, August to January (a running total). `startYear` is the season's first year. */
+export function pitchesByMonth(pitches: Pick<Pitch, "sentOn" | "visit">[], startYear: number): number[] {
+  const months = [[startYear, 8], [startYear, 9], [startYear, 10], [startYear, 11], [startYear, 12], [startYear + 1, 1]] as const;
+  return months.map(([year, month]) => {
+    const end = `${year}-${String(month).padStart(2, "0")}-31`;
+    return pitches.filter((p) => (p.sentOn || p.visit.date) && (p.sentOn || p.visit.date) <= end).length;
+  });
+}
+
+/** Students by standing, for Stats. Exempt students are left out. */
+export function standingCounts(standings: Standing[]) {
+  const n = (s: Standing) => standings.filter((x) => x === s).length;
+  return { done: n("done"), waiting: n("waiting"), inProgress: n("inProgress"), notStarted: n("notStarted") };
+}
+
+/** How many days apart reminders are, this close to the deadline: the first step whose "above" is below the weeks left. */
+export function reminderEvery(steps: BizSettings["reminders"], daysLeft: number): number {
+  const weeksLeft = daysLeft / 7;
+  const sorted = steps.slice().sort((a, b) => b.weeks - a.weeks);
+  return (sorted.find((step) => weeksLeft > step.weeks) ?? sorted[sorted.length - 1])?.everyDays ?? 1;
+}
+
+/** Whole days from one yyyy-mm-dd to another. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86400000);
+}
