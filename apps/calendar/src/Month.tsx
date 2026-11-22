@@ -2,7 +2,7 @@
 // tasks. Click a meeting or a competition to open it. ‹ › move a month; Today comes back.
 // Leads, mentors and boosters: right-click a meeting to change that day, or a day to add something. With Edit mode on,
 // clicking a day adds something too, and dragging over several days adds a season part or a break.
-import { useEffect, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { calendar, icarus, type CalEvent, type Task } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen, Toggle } from "@team6220/ui";
 import type { CalendarView } from "./Calendar";
@@ -103,37 +103,34 @@ export function Month({ view }: { view: CalendarView }) {
     <Screen>
       <PageHeader
         title={calendar.monthTitle(month)}
-        sub={`Meetings, competitions, and events${openShifts ? ` · ${openShifts} ${openShifts === 1 ? "shift still needs" : "shifts still need"} a supervisor` : ""}${editing ? " · right-click a meeting to edit just that day, or an empty day to add something" : ""} · ★ mandatory meeting · ✦ competition or event`}
+        sub={`Meetings, competitions, and events${openShifts ? ` · ${openShifts} ${openShifts === 1 ? "shift still needs" : "shifts still need"} a supervisor` : ""}${editing ? " · right-click a meeting to edit just that day, or an empty day to add something" : ""} · ★ mandatory meeting · ✦ Competition or event`}
         actions={<>
           <Btn title="Previous month" onClick={() => go(calendar.shiftMonth(month, -1))}>‹</Btn>
           <Btn title="Next month" onClick={() => go(calendar.shiftMonth(month, 1))}>›</Btn>
           <Btn onClick={() => go(today.slice(0, 7))}>Today</Btn>
         </>}
       />
-      <div className="k-row cal-toggles">
+      {canEdit && <div className="k-row cal-toggles">
         {canEdit && <Toggle label="Edit mode" checked={prefs.edit} onChange={(edit) => setPrefs({ edit })} />}
-        <Toggle label="Show shifts" checked={prefs.shifts} onChange={(shifts) => setPrefs({ shifts })} />
-        {editing && <span className="k-hint">For leads, mentors, and boosters. Click a day to add an event. Click and drag over several days to add a season part or a break.</span>}
-      </div>
+        {editing && <span className="k-hint">For leads, mentors, and boosters. Click a day to add an event. Click and drag over several days to add a season part or a break. Click a meeting or event to edit it.</span>}
+      </div>}
       {error && <Note tone="bad">{error}</Note>}
       {comps.map((c) => (
         <a key={c._id} className="cal-banner" href={eventHref(c)}>
           <strong>{calendar.titleOf(c)}</strong>
-          {c.setupDate ? ` set-up ${calendar.shortDay(c.setupDate)} · ` : " "}competition {calendar.dayRange(c.startDate, c.endDate)}{c.location ? ` · ${c.location}` : ""}
+          {c.setupDate ? ` Set-up ${calendar.shortDay(c.setupDate)} · ` : " "}Competition {calendar.dayRange(c.startDate, c.endDate)}{c.location ? ` · ${c.location}` : ""}
         </a>
       ))}
       <div className={`cal-grid${editing ? " is-editing" : ""}`} role="grid" aria-label={calendar.monthTitle(month)}>
         <div className="cal-head" role="row">{WEEKDAYS.map((d) => <span key={d} role="columnheader">{d}</span>)}</div>
         {weeks.map((week) => (
-          <div key={week[0]} className="cal-week" role="row">
-            {week.map((day) => (
-              <DayCell key={day} day={day} week={week} month={month} today={today} events={calendar.eventsOn(visible, day)} view={view} showShifts={prefs.shifts}
-                tasks={prefs.tasks ? tasks.filter((t) => t.dueDate === day) : []} grid={grid} />
-            ))}
-          </div>
+          <WeekRow key={week[0]} week={week} month={month} today={today} events={visible} view={view} showShifts={prefs.shifts}
+            tasks={prefs.tasks ? tasks : []} grid={grid} editing={editing} />
         ))}
       </div>
       <div className="k-box k-form cal-options">
+        <Toggle label="Show shifts" checked={prefs.shifts} onChange={(shifts) => setPrefs({ shifts })} />
+        <span className="k-hint cal-option-hint">Supervision shifts under each meeting.</span>
         {isMember && <Toggle label="Show tasks" checked={prefs.tasks} onChange={(t) => setPrefs({ tasks: t })} />}
         {isMember && <span className="k-hint cal-option-hint">Your Icarus tasks with due dates.</span>}
         <Toggle label="Show other subteams' meetings" checked={prefs.others} onChange={(others) => setPrefs({ others })} />
@@ -154,11 +151,18 @@ type Grid = {
 
 /** The day menu, the "you dragged over N days" popup, and a meeting's or event's menu. */
 function GridMenu({ menu, close, onMandatory, onRemove }: { menu: Menu; close: () => void; onMandatory: (e: CalEvent) => void; onRemove: (e: CalEvent) => void }) {
-  const style = { left: Math.max(8, Math.min(menu.x, window.innerWidth - 270)), top: Math.max(8, Math.min(menu.y, window.innerHeight - 230)) };
+  // Opens where the pointer was, then moves in so all of it stays inside the window.
+  const box = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<CSSProperties>({ left: menu.x, top: menu.y, visibility: "hidden" });
+  useLayoutEffect(() => {
+    const r = box.current?.getBoundingClientRect();
+    if (!r) return;
+    setStyle({ left: Math.max(8, Math.min(menu.x, window.innerWidth - r.width - 8)), top: Math.max(8, Math.min(menu.y, window.innerHeight - r.height - 8)) });
+  }, [menu]);
   let body: ReactNode;
   if (menu.kind === "day") {
     body = (
-      <div className="k-menu cal-menu" role="menu" style={style}>
+      <div ref={box} className="k-menu cal-menu" role="menu" style={style}>
         <p className="cal-menu-title">{calendar.longDay(menu.day)}</p>
         <a role="menuitem" href={newHref("meeting", menu.day)} autoFocus>New event</a>
         <a role="menuitem" href={partHref(menu.day)}>New season part</a>
@@ -168,7 +172,7 @@ function GridMenu({ menu, close, onMandatory, onRemove }: { menu: Menu; close: (
   } else if (menu.kind === "range") {
     const days = calendar.daysBetween(menu.from, menu.to) + 1;
     body = (
-      <div className="k-box cal-popup" role="dialog" aria-label="Add to the calendar" style={style}>
+      <div ref={box} className="k-box cal-popup" role="dialog" aria-label="Add to the calendar" style={style}>
         <p className="cal-menu-title">{calendar.shortDay(menu.from).slice(0, 3)} {calendar.monthDay(menu.from)} – {calendar.shortDay(menu.to).slice(0, 3)} {calendar.monthDay(menu.to)}</p>
         <p className="k-hint">You dragged over {days} days. Add:</p>
         <Btn kind="primary" full href={partHref(menu.from, menu.to)}>New season part</Btn>
@@ -179,7 +183,7 @@ function GridMenu({ menu, close, onMandatory, onRemove }: { menu: Menu; close: (
   } else {
     const e = menu.event;
     body = (
-      <div className="k-menu cal-menu" role="menu" style={style}>
+      <div ref={box} className="k-menu cal-menu" role="menu" style={style}>
         <p className="cal-menu-title">{calendar.titleOf(e)} · {calendar.shortDay(e.startDate)}</p>
         <a role="menuitem" href={editHref(e)} autoFocus>Edit</a>
         {e.type === "meeting" && <button type="button" role="menuitem" onClick={() => onMandatory(e)}>★ {e.mandatory ? "Not mandatory" : "Mark as mandatory"}</button>}
@@ -196,19 +200,56 @@ function GridMenu({ menu, close, onMandatory, onRemove }: { menu: Menu; close: (
   );
 }
 
-function DayCell({ day, week, month, today, events, view, showShifts, tasks, grid }: {
-  day: string; week: string[]; month: string; today: string; events: CalEvent[]; view: CalendarView; showShifts: boolean; tasks: Task[]; grid?: Grid;
+/** One week of the grid. Each day is a background cell under three rows: the day's number and first meeting, a row
+ *  per break (a bar across the days it covers, whose text can wrap), then the rest of the day. */
+function WeekRow({ week, month, today, events, view, showShifts, tasks, grid, editing }: {
+  week: string[]; month: string; today: string; events: CalEvent[]; view: CalendarView; showShifts: boolean; tasks: Task[]; grid?: Grid; editing: boolean;
 }) {
+  const breaks = events.filter((e) => e.type === "break" && e.endDate >= week[0] && e.startDate <= week[6]);
+  const itemsRow = breaks.length + 2;
+  const dayHandlers = (day: string) => (grid ? {
+    onMouseDown: (e: ReactMouseEvent) => grid.onDown(day, e),
+    onMouseEnter: () => grid.onEnter(day),
+    onContextMenu: (e: ReactMouseEvent) => grid.onDayMenu(day, e),
+  } : {});
   const menuFor = (e: CalEvent) => (grid ? { onContextMenu: (m: ReactMouseEvent) => grid.onEventMenu(e, m) } : {});
+  // In edit mode a click opens the thing's Edit page; otherwise its own page.
+  const hrefFor = (e: CalEvent) => (editing ? editHref(e) : eventHref(e));
+  return (
+    <div className="cal-week" role="row" style={{ gridTemplateRows: `auto ${"auto ".repeat(breaks.length)}1fr` }}>
+      {week.map((day, i) => (
+        <div key={day} role="gridcell" aria-label={calendar.longDay(day)} style={{ gridColumn: i + 1 }} {...dayHandlers(day)}
+          className={`cal-day${day.slice(0, 7) !== month ? " is-outside" : ""}${day === today ? " is-today" : ""}${grid?.selected(day) ? " is-picked" : ""}`} />
+      ))}
+      {breaks.map((b, k) => {
+        const from = b.startDate > week[0] ? b.startDate : week[0];
+        const to = b.endDate < week[6] ? b.endDate : week[6];
+        return (
+          <a key={b._id} href={hrefFor(b)} {...menuFor(b)} style={{ gridColumn: `${week.indexOf(from) + 1} / span ${week.indexOf(to) - week.indexOf(from) + 1}`, gridRow: k + 2 }}
+            className={`cal-break${from === b.startDate ? " is-start" : ""}${to === b.endDate ? " is-end" : ""}`}>
+            {calendar.titleOf(b)} · {calendar.dayRange(b.startDate, b.endDate)}
+          </a>
+        );
+      })}
+      {week.map((day, i) => (
+        <DayContent key={day} day={day} column={i + 1} topClass={`${day.slice(0, 7) !== month ? " is-outside" : ""}${day === today ? " is-today" : ""}`} itemsRow={itemsRow} week={week} events={calendar.eventsOn(events, day)} view={view} showShifts={showShifts}
+          tasks={tasks.filter((t) => t.dueDate === day)} handlers={dayHandlers(day)} menuFor={menuFor} hrefFor={hrefFor} />
+      ))}
+    </div>
+  );
+}
+
+function DayContent({ day, column, topClass, itemsRow, week, events, view, showShifts, tasks, handlers, menuFor, hrefFor }: {
+  day: string; column: number; topClass: string; itemsRow: number; week: string[]; events: CalEvent[]; view: CalendarView; showShifts: boolean; tasks: Task[];
+  handlers: object; menuFor: (e: CalEvent) => object; hrefFor: (e: CalEvent) => string;
+}) {
   const { data, me } = view;
-  const outside = day.slice(0, 7) !== month;
-  const brk = events.find((e) => e.type === "break");
   const items: ReactNode[] = [];
   for (const e of events) {
     const mine = calendar.isForMe(e, me);
     if (e.type === "meeting") {
       items.push(
-        <a key={e._id} className={`cal-meeting${mine ? "" : " is-other"}`} href={eventHref(e)} {...menuFor(e)}>
+        <a key={e._id} className={`cal-meeting${mine ? "" : " is-other"}`} href={hrefFor(e)} {...menuFor(e)}>
           <span className="cal-meeting-time">{e.mandatory && <span className="cal-star" aria-label="Mandatory">★ </span>}<span className="cal-word">Meeting </span>{calendar.timeRange(e.startTime, e.endTime)}</span>
           {e.subteams.length > 0 && <span className="cal-for">For {e.subteams.join(", ")}</span>}
         </a>,
@@ -218,7 +259,7 @@ function DayCell({ day, week, month, today, events, view, showShifts, tasks, gri
           const yours = !!s.memberId && s.memberId === me.id;
           const open = !s.name && !s.memberId;
           items.push(
-            <a key={s._id} className={`cal-shift${open ? " is-open" : yours ? " is-mine" : ""}${mine ? "" : " is-other"}`} href={eventHref(e)} {...menuFor(e)}>
+            <a key={s._id} className={`cal-shift${open ? " is-open" : yours ? " is-mine" : ""}${mine ? "" : " is-other"}`} href={hrefFor(e)} {...menuFor(e)}>
               <span>Shift {calendar.compactRange(s.start, s.end)}</span><span className="cal-shift-who">{open ? "Open" : yours ? "You" : s.name}</span>
             </a>,
           );
@@ -228,26 +269,22 @@ function DayCell({ day, week, month, today, events, view, showShifts, tasks, gri
       // Shown on its first day in this week; it reads across the days it lasts.
       if (day !== e.startDate && day !== week[0]) continue;
       items.push(
-        <a key={e._id} className="cal-comp" href={eventHref(e)} {...menuFor(e)}>
+        <a key={e._id} className="cal-comp" href={hrefFor(e)} {...menuFor(e)}>
           <strong>✦ {calendar.titleOf(e)}</strong>
-          <span>{e.type === "competition" ? "competition" : calendar.timeRange(e.startTime, e.endTime) || "event"}{e.location ? ` · ${e.location}` : ""}</span>
+          <span>{e.type === "competition" ? "Competition" : calendar.timeRange(e.startTime, e.endTime) || "Event"}{e.location ? ` · ${e.location}` : ""}</span>
         </a>,
       );
     }
   }
-  const breakStartsHere = brk && (day === brk.startDate || day === week[0]);
-  const span = brk && breakStartsHere ? week.filter((d) => d >= day && d <= brk.endDate).length : 0;
   const [first, ...rest] = items;
   const meetingFirst = events.some((e) => e.type === "meeting") && first;
   return (
-    <div role="gridcell" className={`cal-day${outside ? " is-outside" : ""}${day === today ? " is-today" : ""}${brk ? " is-break" : ""}${grid?.selected(day) ? " is-picked" : ""}`} aria-label={calendar.longDay(day)}
-      onMouseDown={grid && ((e) => grid.onDown(day, e))} onMouseEnter={grid && (() => grid.onEnter(day))} onContextMenu={grid && ((e) => grid.onDayMenu(day, e))}>
-      <div className="cal-top"><span className="cal-num">{Number(day.slice(8))}</span>{meetingFirst}</div>
-      {brk && breakStartsHere && (
-        <span className="cal-break" style={{ width: `calc(${span * 100}% - 12px + ${span - 1}px)` }} {...menuFor(brk)}>{calendar.titleOf(brk)} · {calendar.dayRange(brk.startDate, brk.endDate)}</span>
-      )}
-      <div className="cal-items">{meetingFirst ? rest : items}</div>
-      {tasks.map((t) => <a key={t._id} className="cal-task" href={`/apps/icarus?task=${t._id}`}>t{t.number}</a>)}
-    </div>
+    <>
+      <div className={`cal-top${topClass}`} style={{ gridColumn: column, gridRow: 1 }} {...handlers}><span className="cal-num">{Number(day.slice(8))}</span>{meetingFirst}</div>
+      <div className="cal-items" style={{ gridColumn: column, gridRow: itemsRow }} {...handlers}>
+        {meetingFirst ? rest : items}
+        {tasks.map((t) => <a key={t._id} className="cal-task" href={`/apps/icarus?task=${t._id}`}>t{t.number}</a>)}
+      </div>
+    </>
   );
 }
