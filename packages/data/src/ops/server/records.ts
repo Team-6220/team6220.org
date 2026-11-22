@@ -52,7 +52,12 @@ export async function listRecords(ctx: Ctx, body: Doc) {
   const rows = await ctx.data.query(collection, {}, LIST_LIMIT);
   if (rows.length >= LIST_LIMIT) throw apiError("server-error", `${collection} has ${LIST_LIMIT} or more items, which is more than one request can return. Ask a web admin to archive some.`);
   // The history mixes in the BOM and Production; a Guest only gets what happened to tasks.
-  const items = roles.guest && collection === COLLECTION_HISTORY ? rows.filter((r) => r.recordKind === "task") : rows;
+  let items = roles.guest && collection === COLLECTION_HISTORY ? rows.filter((r) => r.recordKind === "task") : rows;
+  // A supervisor's paperwork steps (TB assessment, fingerprinting) are for the leads, mentors and boosters; everyone
+  // else sees only whether they're approved.
+  if (collection === COLLECTION_PEOPLE && !roles.scheduler) {
+    items = items.map((p) => (p.supervisor && p.memberId !== ctx.actor.id ? { ...p, supervisor: { status: p.supervisor.status, steps: [], approvedMonth: "" } } : p));
+  }
   return { items };
 }
 

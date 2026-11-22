@@ -139,7 +139,7 @@ function changeSubteams(db: MockDb, memberId: string, subteams: string[]): void 
   if (person) person.subteams = subteams;
 }
 
-const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; run: MockAction }> = {
+const SHARED_ACTIONS: Record<string, { who: RoleName; run: MockAction }> = {
   whoAmI: {
     who: "viewer",
     run: (_request, actor) => ({
@@ -229,7 +229,8 @@ const SHARED_ACTIONS: Record<string, { who: keyof ReturnType<typeof rolesFor>; r
 
 // ----- what the other data modules plug in -----
 
-type RoleName = keyof ReturnType<typeof rolesFor>;
+/** A role, or "signedIn": anyone signed in, approved or not (as on the server). */
+type RoleName = keyof ReturnType<typeof rolesFor> | "signedIn";
 const moduleActions: Record<string, { who: RoleName; run: MockAction }> = {};
 const moduleSeeds: ((db: MockDb) => void)[] = [];
 
@@ -278,8 +279,10 @@ export const mockTransport: Transport = async (request) => {
     const action = SHARED_ACTIONS[request.action] ?? moduleActions[request.action];
     if (!action) throw new OpsError("bad-request", "Unknown action.");
     const actor = actorFor(request.token);
-    if (!rolesFor(actor.badges).viewer) throw new OpsError("pending", "A web admin hasn't approved your account yet.");
-    if (!rolesFor(actor.badges)[action.who]) throw new OpsError("forbidden", "Your account isn't allowed to do that.");
+    if (action.who !== "signedIn") {
+      if (!rolesFor(actor.badges).viewer) throw new OpsError("pending", "A web admin hasn't approved your account yet.");
+      if (!rolesFor(actor.badges)[action.who]) throw new OpsError("forbidden", "Your account isn't allowed to do that.");
+    }
     return { ok: true, ...action.run(request, actor, mockDb()) };
   } catch (err) {
     if (err instanceof OpsError) return { ok: false, error: err.code, message: err.message };

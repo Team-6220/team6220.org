@@ -2,10 +2,13 @@
 // competition, a break and a few subteam meetings, so every screen has something to show in demo mode. Below it, the
 // demo versions of the server's calendar actions, which use the same plan.ts as the server.
 import { mockActions, mockWantedSubteams, seedMock, type MockDb } from "../ops/mock";
+import { rolesFor } from "../ops/roles";
 import { OpsError } from "../ops/types";
 import { addDays, eachDay, today, weekday } from "./dates";
 import { assignRows, cleanEvent, COLLECTION_EVENTS, COLLECTION_SHIFTS, eventRows, PlanError, removedRows, scheduleSave } from "./plan";
-import type { CalEvent, Shift } from "./types";
+import type { Person } from "../ops/types";
+import { cleanSupervisorInfo, FIRST_STEPS, linkedShifts, signUp, supervisorFor, supervisorsFrom, withdraw } from "./supervision";
+import type { CalEvent, Shift, Supervisor } from "./types";
 
 const NAMES = ["Alex Parker", "Jordan Rivera-Nakamura", "Sam Torres", "Casey Montgomery", "Robin Lee"];
 
@@ -49,6 +52,13 @@ seedMock((db) => {
     });
     n++;
   }
+  // Supervisors' paperwork is on their account rows: the demo supervisor (approved), Alex Parker (approved), and one parent still doing the paperwork.
+  const done = ["done", "done", "done", "done", "done"] as Supervisor["steps"];
+  db.save<Person>("ops_people", { memberId: "demo-supervisor", name: "Demo Supervisor", username: "demosupervisor", subteams: [], active: true, supervisor: { status: "approved", steps: done, approvedMonth: "2025-08" } });
+  db.save<Person>("ops_people", { memberId: "p-alex", name: "Alex Parker", username: "alexparker", subteams: [], active: true, supervisor: { status: "approved", steps: done, approvedMonth: "2026-09" } });
+  db.save<Person>("ops_people", { memberId: "p-pat", name: "Pat Okafor", username: "patokafor", subteams: [], active: true, supervisor: { status: "started", steps: ["done", "done", "waiting", "", ""], approvedMonth: "" } });
+  // Approving Alex moved the old shifts with Alex's name onto the account.
+  for (const shift of linkedShifts("p-alex", "Alex Parker", db.rows<Shift>("cal_shifts"))) db.save("cal_shifts", shift);
 });
 
 // ----- the demo backend's calendar actions (the server's are in ops/server/calendar.ts) -----
@@ -78,7 +88,66 @@ function saveAll(db: MockDb, eventRows: CalEvent[], shiftRows: Shift[]) {
   for (const s of shiftRows) db.save(COLLECTION_SHIFTS, s);
 }
 
+const people = (db: MockDb) => db.rows<Person>("ops_people");
+const supervisors = (db: MockDb) => supervisorsFrom(people(db));
+const mine = (db: MockDb, memberId: string): Supervisor | null => supervisors(db).find((s) => s.memberId === memberId) ?? null;
+const isScheduler = (badges: string[]) => rolesFor(badges).scheduler;
+
+function shiftAndEvent(db: MockDb, id: unknown): { shift: Shift; event: CalEvent | undefined } {
+  const shift = shifts(db).find((s) => s._id === id);
+  if (!shift) throw new OpsError("bad-request", "That shift doesn't exist any more. Reload the page.");
+  return { shift, event: events(db).find((e) => e._id === shift.eventId) };
+}
+
 mockActions({
+  signUpShift: {
+    who: "viewer",
+    run: (request, actor, db) => {
+      const { shift, event } = shiftAndEvent(db, request.shiftId);
+      const forSomeoneElse = typeof request.memberId === "string" && request.memberId && request.memberId !== actor.id;
+      if (forSomeoneElse && !isScheduler(actor.badges)) throw new OpsError("forbidden", "Your account isn't allowed to do that.");
+      const who = supervisorFor(supervisors(db), forSomeoneElse ? String(request.memberId) : actor.id);
+      if (!who) throw new OpsError(forSomeoneElse ? "bad-request" : "forbidden", forSomeoneElse ? "That person isn't a supervisor." : "Only approved supervisors can sign up for a shift. See Become a supervisor.");
+      const saved = plan(() => signUp(shift, event, who, today(), new Date().toISOString()));
+      db.save(COLLECTION_SHIFTS, saved);
+      return { shift: saved };
+    },
+  },
+  withdrawShift: {
+    who: "viewer",
+    run: (request, actor, db) => {
+      const { shift, event } = shiftAndEvent(db, request.shiftId);
+      if (shift.memberId !== actor.id && !isScheduler(actor.badges)) throw new OpsError("forbidden", "Your account isn't allowed to do that.");
+      const saved = plan(() => withdraw(shift, event, today()));
+      db.save(COLLECTION_SHIFTS, saved);
+      return { shift: saved };
+    },
+  },
+  saveSupervisor: {
+    who: "scheduler",
+    run: (request, actor, db) => {
+      const row = people(db).find((p) => p.memberId === request.memberId);
+      if (!row) throw new OpsError("bad-request", "That person hasn't signed in to the apps yet.");
+      const info = plan(() => cleanSupervisorInfo((request.supervisor ?? {}) as Record<string, unknown>));
+      const was = row.supervisor?.status;
+      db.save("ops_people", { ...row, supervisor: info });
+      if (info.status === "approved" && was !== "approved") for (const s of linkedShifts(row.memberId, row.name, shifts(db))) db.save(COLLECTION_SHIFTS, s);
+      db.writeHistory(actor, { kind: "person", id: row.memberId }, "supervisor", `${row.name}: ${info.status}`);
+      return { supervisor: mine(db, row.memberId) };
+    },
+  },
+  mySupervisorRow: { who: "signedIn", run: (_request, actor, db) => ({ supervisor: mine(db, actor.id) }) },
+  askToSupervise: {
+    who: "signedIn",
+    run: (_request, actor, db) => {
+      const row = people(db).find((p) => p.memberId === actor.id);
+      if (!row?.supervisor) {
+        db.save("ops_people", { ...(row ?? { memberId: actor.id, name: actor.name, username: "", subteams: [], active: true }), supervisor: { ...FIRST_STEPS, steps: [...FIRST_STEPS.steps] } });
+        for (const s of linkedShifts(actor.id, row?.name ?? actor.name, shifts(db))) db.save(COLLECTION_SHIFTS, s);
+      }
+      return { supervisor: mine(db, actor.id) };
+    },
+  },
   saveCalEvent: {
     who: "scheduler",
     run: (request, actor, db) => {

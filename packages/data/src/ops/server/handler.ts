@@ -24,6 +24,7 @@ import * as notify from "./notify";
 import { runReminders } from "./notify/reminders";
 import * as records from "./records";
 import * as shared from "./shared";
+import * as supervision from "./supervision";
 
 type Action = (ctx: Ctx, body: Doc) => Promise<object>;
 
@@ -79,6 +80,12 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   removeCalEvent: { who: "scheduler", run: calendar.removeCalEvent },
   saveSchedule: { who: "scheduler", run: calendar.saveSchedule },
   assignMeetings: { who: "lead", run: calendar.assignMeetings },
+  // Calendar supervision (supervision.ts). The actions check who may sign up or take someone off a shift.
+  signUpShift: { who: "viewer", run: supervision.signUpShift },
+  withdrawShift: { who: "viewer", run: supervision.withdrawShift },
+  saveSupervisor: { who: "scheduler", run: supervision.saveSupervisor },
+  mySupervisorRow: { who: "signedIn", run: supervision.mySupervisorRow },
+  askToSupervise: { who: "signedIn", run: supervision.askToSupervise },
   // Icarus (icarus.ts)
   saveIcarusRecord: { who: "lead", run: icarus.saveIcarusRecord },
   removeIcarusRecord: { who: "lead", run: icarus.removeIcarusRecord },

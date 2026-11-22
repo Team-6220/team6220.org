@@ -7,7 +7,7 @@
 //
 // To add a kind: add an entry here, then the rule that sends it in packages/data/src/ops/server/notify/rules.ts.
 
-export type NotificationApp = "Icarus" | "Production" | "BOM" | "Account";
+export type NotificationApp = "Icarus" | "Production" | "BOM" | "Calendar" | "Account";
 
 /** The Discord channels the server may post in. Their IDs are in DISCORD_CHANNELS (config.ts). */
 export type ChannelKey = "announcements" | "apolloUpdates";
@@ -40,6 +40,10 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
   { id: "bom.toSign", app: "BOM", label: "Lines need your signature (one summary a day)", who: "Mentors and boosters", discord: true, push: false },
   { id: "bom.line", app: "BOM", label: "Your line was signed, ordered, or arrived", who: "Whoever requested it", discord: true, push: false },
   { id: "bom.late", app: "BOM", label: "An order is late (not received after its expected date)", who: "Leads", discord: true, push: false },
+  { id: "shift.reminder", app: "Calendar", label: "You supervise a meeting tomorrow", who: "The supervisor", discord: true, push: true },
+  { id: "shift.changed", app: "Calendar", label: "Your shift moved, was removed, or someone put you in one", who: "The supervisor", discord: true, push: true },
+  { id: "shift.opened", app: "Calendar", label: "A supervisor withdrew, so a shift is open", who: "Leads, mentors, boosters, and approved supervisors", discord: true, push: false },
+  { id: "supervisor.request", app: "Calendar", label: "Someone wants to become a supervisor", who: "Leads, mentors, and boosters", discord: true, push: false },
   { id: "account.newMember", app: "Account", label: "A new member is waiting for approval", who: "Web Admins", discord: true, push: false },
   { id: "account.changed", app: "Account", label: "You were approved, or Discord was linked", who: "You", discord: false, push: false, inboxOnly: true },
 ];

@@ -1,4 +1,5 @@
 // Shapes shared by the operations apps (Icarus, Production, BOM). Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Architecture.
+import type { SupervisorInfo } from "../calendar/types";
 
 /** One stored record. Every collection item has an _id; the other fields depend on the collection. */
 export type Item = { _id: string } & Record<string, unknown>;
@@ -76,6 +77,8 @@ export interface Person extends Item {
   githubLogin?: string;
   subteams: string[];
   active: boolean;
+  /** A parent who supervises (or is doing the paperwork to): see the Calendar's Supervisors screen. */
+  supervisor?: SupervisorInfo;
 }
 
 export type ProjectStatus = "active" | "done" | "cancelled";

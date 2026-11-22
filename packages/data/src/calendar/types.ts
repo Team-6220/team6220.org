@@ -66,4 +66,25 @@ export interface Shift extends Item {
 export interface CalendarData {
   events: CalEvent[];
   shifts: Shift[];
+  supervisors: Supervisor[];
+}
+
+/** The paperwork, in order. "Tell the lead parent" is step 1. */
+export type StepStatus = "done" | "waiting" | "";
+
+/** A parent's supervisor paperwork, kept on their own account row (ops_people.supervisor). Approved supervisors can
+ *  sign up for shifts. */
+export interface SupervisorInfo {
+  /** started: asked to supervise, paperwork under way. approved: the school approved them. inactive: no longer supervising. */
+  status: "started" | "approved" | "inactive";
+  /** One status per step in SUPERVISOR_STEPS. */
+  steps: StepStatus[];
+  /** yyyy-mm, or "" when unknown. */
+  approvedMonth: string;
+}
+
+/** Someone with supervisor paperwork, as the Supervisors screen lists them. */
+export interface Supervisor extends SupervisorInfo {
+  memberId: string;
+  name: string;
 }

@@ -10,10 +10,13 @@ import { callOps, store } from "../ops";
 import type { Me } from "../ops/types";
 import { addDays } from "./dates";
 import { COLLECTION_EVENTS, COLLECTION_SHIFTS } from "./plan";
-import type { CalEvent, CalendarData, Shift } from "./types";
+import type { Person } from "../ops/types";
+import { supervisorsFrom } from "./supervision";
+import type { CalEvent, CalendarData, Shift, Supervisor, SupervisorInfo } from "./types";
 
 export * from "./dates";
-export type { CalEvent, CalEventType, CalendarData, PartDay, Shift } from "./types";
+export type { CalEvent, CalEventType, CalendarData, PartDay, Shift, StepStatus, Supervisor, SupervisorInfo } from "./types";
+export { isApproved, supervised, SUPERVISOR_STEPS, supervisorFor } from "./supervision";
 
 export { COLLECTION_EVENTS, COLLECTION_SHIFTS };
 export { addShift, MAX_SHIFTS, parsePattern, patternText, PlanError, splitShifts, uncovered, WEEKDAYS } from "./plan";
@@ -23,8 +26,12 @@ const byStart = (a: CalEvent, b: CalEvent) => a.startDate.localeCompare(b.startD
 /** Every event and shift, events in date order. */
 export async function load(): Promise<CalendarData> {
   const s = store();
-  const [events, shifts] = await Promise.all([s.list<CalEvent>(COLLECTION_EVENTS), s.list<Shift>(COLLECTION_SHIFTS)]);
-  return { events: events.filter((e) => !e.cancelled).sort(byStart), shifts: shifts.filter((s) => !s.cancelled).sort((a, b) => a.start.localeCompare(b.start)) };
+  const [events, shifts, supervisors] = await Promise.all([s.list<CalEvent>(COLLECTION_EVENTS), s.list<Shift>(COLLECTION_SHIFTS), s.list<Person>("ops_people")]);
+  return {
+    events: events.filter((e) => !e.cancelled).sort(byStart),
+    shifts: shifts.filter((s) => !s.cancelled).sort((a, b) => a.start.localeCompare(b.start)),
+    supervisors: supervisorsFrom(supervisors),
+  };
 }
 
 // ----- changes (Leads, Mentors and Boosters; assigning subteams is Leads only) -----
@@ -50,6 +57,33 @@ export async function saveSchedule(parts: Partial<CalEvent>[], breaks: Partial<C
 /** Sets who each meeting is for and whether it is mandatory. */
 export async function assignMeetings(changes: { id: string; subteams: string[]; mandatory: boolean }[]): Promise<number> {
   return (await callOps<{ saved: number }>("assignMeetings", { changes })).saved;
+}
+
+// ----- supervision -----
+
+/** Signs yourself up for an open shift, or (leads, mentors and boosters) puts an approved supervisor in it. */
+export async function signUpShift(shiftId: string, memberId?: string): Promise<Shift> {
+  return (await callOps<{ shift: Shift }>("signUpShift", { shiftId, ...(memberId ? { memberId } : {}) })).shift;
+}
+
+/** Takes yourself (or, for leads, mentors and boosters, anyone) off a shift. */
+export async function withdrawShift(shiftId: string): Promise<Shift> {
+  return (await callOps<{ shift: Shift }>("withdrawShift", { shiftId })).shift;
+}
+
+/** Sets someone's supervisor paperwork (leads, mentors and boosters). Approving gives them the Supervisor badge. */
+export async function saveSupervisor(memberId: string, supervisor: SupervisorInfo): Promise<Supervisor> {
+  return (await callOps<{ supervisor: Supervisor }>("saveSupervisor", { memberId, supervisor })).supervisor;
+}
+
+/** Your own row on the supervisor list, if any. Works before your account is approved. */
+export async function mySupervisorRow(): Promise<Supervisor | null> {
+  return (await callOps<{ supervisor: Supervisor | null }>("mySupervisorRow")).supervisor;
+}
+
+/** "I want to supervise": puts you on the list with the paperwork to do, and tells the leads, mentors and boosters. */
+export async function askToSupervise(): Promise<Supervisor> {
+  return (await callOps<{ supervisor: Supervisor }>("askToSupervise")).supervisor;
 }
 
 /** The season part a day falls in, if any (the latest-starting one where two overlap). */

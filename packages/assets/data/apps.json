@@ -64,6 +64,31 @@
         ]
       },
       {
+        "label": "Supervision",
+        "items": [
+          {
+            "name": "My shifts",
+            "icon": "user",
+            "view": "myshifts"
+          },
+          {
+            "name": "Open shifts",
+            "icon": "list",
+            "view": "open"
+          },
+          {
+            "name": "Supervisors",
+            "icon": "people",
+            "view": "supervisors"
+          },
+          {
+            "name": "Become a supervisor",
+            "icon": "shield",
+            "view": "become"
+          }
+        ]
+      },
+      {
         "label": "Manage",
         "items": [
           {

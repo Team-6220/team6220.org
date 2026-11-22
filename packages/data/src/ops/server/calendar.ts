@@ -10,6 +10,7 @@ import { assignRows, COLLECTION_EVENTS, COLLECTION_SHIFTS, cleanEvent, eventRows
 import type { CalEvent, Shift } from "../../calendar/types";
 import { getRecord, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
+import * as notify from "./notify";
 import { checkSubteams } from "./shared";
 
 /** Runs a plan step, turning what the person typed wrong into a bad-request answer. */
@@ -41,6 +42,7 @@ export async function saveCalEvent(ctx: Ctx, body: Doc) {
   await ctx.data.save(COLLECTION_EVENTS, event as unknown as Doc);
   await ctx.data.saveMany(COLLECTION_SHIFTS, shifts as unknown as Doc[]);
   ctx.log({ kind: "calendar", id: event._id }, before ? "updated" : "created", `${event.type} ${event.startDate}`);
+  await tellBumped(ctx, shifts.filter((s) => s.cancelled && s.memberId), [event]);
   return { event, shifts: shifts.filter((s) => !s.cancelled) };
 }
 
@@ -52,6 +54,7 @@ export async function removeCalEvent(ctx: Ctx, body: Doc) {
   await ctx.data.save(COLLECTION_EVENTS, gone.event as unknown as Doc);
   await ctx.data.saveMany(COLLECTION_SHIFTS, gone.shifts as unknown as Doc[]);
   ctx.log({ kind: "calendar", id: event._id }, "removed", `${event.type} ${event.startDate}`);
+  await tellBumped(ctx, gone.shifts.filter((s) => s.memberId), [event]);
   return {};
 }
 
@@ -63,7 +66,7 @@ export async function saveSchedule(ctx: Ctx, body: Doc) {
   const result = plan(() => scheduleSave(events as unknown as CalEvent[], shifts as unknown as Shift[], parts, breaks, ctx.today()));
   await ctx.data.saveMany(COLLECTION_EVENTS, result.events as unknown as Doc[]);
   await ctx.data.saveMany(COLLECTION_SHIFTS, result.shifts as unknown as Doc[]);
-  // Supervisors taken off a moved shift get told once Supervision (sign-ups) launches; until then no one can sign up.
+  await tellBumped(ctx, result.bumped, events as unknown as CalEvent[]);
   ctx.log({ kind: "calendar", id: "schedule" }, "updated", `${result.added} added, ${result.moved} moved, ${result.removed} removed`);
   return { added: result.added, moved: result.moved, removed: result.removed };
 }
@@ -79,4 +82,9 @@ export async function assignMeetings(ctx: Ctx, body: Doc) {
   await ctx.data.saveMany(COLLECTION_EVENTS, rows as unknown as Doc[]);
   ctx.log({ kind: "calendar", id: "assign" }, "updated", `${rows.length} meetings`);
   return { saved: rows.length };
+}
+
+/** Supervisors taken off a shift because its meeting changed hear about it (only future meetings change). */
+function tellBumped(ctx: Ctx, shifts: Shift[], events: CalEvent[]) {
+  return shifts.length ? notify.sendAll(ctx, notify.rules.shiftsBumped(shifts as unknown as Doc[], events as unknown as Doc[])) : undefined;
 }
