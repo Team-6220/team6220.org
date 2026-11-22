@@ -23,6 +23,9 @@ export function Account({ member }: { member: Member }) {
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem(THEME_KEY) ?? "dark"; } catch { return "dark"; } });
   const [newPin, setNewPin] = useState<{ name: string; url: string } | null>(null);
   const [deleting, setDeleting] = useState<"" | "ask" | "busy">("");
+  const [link, setLink] = useState({ studentId: "", lastName: "" });
+  const [linking, setLinking] = useState(false);
+  const [linkError, setLinkError] = useState("");
 
   useEffect(() => {
     account.getAccount().then((a) => {
@@ -50,6 +53,19 @@ export function Account({ member }: { member: Member }) {
     } catch {
       setError("That didn't save. Check your connection and try again.");
     }
+  };
+  const linkStudentId = async () => {
+    setLinking(true);
+    setLinkError("");
+    try {
+      const p = await account.linkStudentId(link.studentId, link.lastName);
+      setProfile(p);
+      setDraft(p);
+      setLink({ studentId: "", lastName: "" });
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : "That didn't work. Try again.");
+    }
+    setLinking(false);
   };
   const toggleSubteam = async (name: string) => {
     const next = subteams.includes(name) ? subteams.filter((s) => s !== name) : subteams.concat([name]);
@@ -90,6 +106,19 @@ export function Account({ member }: { member: Member }) {
               ...(profile?.studentId ? [["Student ID", profile.studentId] as [string, string]] : []),
             ]} />
           </Section>
+          {profile && !profile.studentId && (
+            <Section title="Link my student ID">
+              <Note>Attendance shows you your own sign-ins and hours by matching your account to the team roster. Type your student ID and last name as they are on the roster. It only links a roster entry nobody else has.</Note>
+              <div className="k-box k-form">
+                <Fields cols={2}>
+                  <Field label="Student ID"><input className="k-input" inputMode="numeric" autoComplete="off" value={link.studentId} onChange={(e) => setLink({ ...link, studentId: e.target.value.replace(/\D/g, "").slice(0, 12) })} /></Field>
+                  <Field label="Last name"><input className="k-input" autoComplete="off" value={link.lastName} onChange={(e) => setLink({ ...link, lastName: e.target.value })} /></Field>
+                </Fields>
+                {linkError && <Note tone="bad">{linkError}</Note>}
+                <div className="k-row"><Btn kind="primary" disabled={linking || !link.studentId || !link.lastName.trim()} onClick={linkStudentId}>Link</Btn></div>
+              </div>
+            </Section>
+          )}
           {(student || subteams.length > 0 || roles.includes("Team Member")) && allSubteams.length > 0 && (
             <Section title="Subteam · students only">
               <div className="k-box k-form">

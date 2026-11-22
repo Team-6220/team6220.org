@@ -181,6 +181,19 @@ mockActions({
       return { result: signIn(db, person, "in") };
     },
   },
+  attKioskQuick: {
+    who: "anyone",
+    run: (request, _actor, db) => {
+      kiosk(db, request.kioskToken);
+      const signed = new Set(db.rows<SignIn>("att_signins").filter((s) => s.date === today()).map((s) => s.studentId));
+      const all = db.rows<Item>("ops_roster").map((r) => String(r.studentId));
+      const waiting = all.filter((id) => !signed.has(id));
+      const pool = [...(waiting.length >= 5 ? waiting : all)];
+      const ids: string[] = [];
+      while (ids.length < 5 && pool.length) ids.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+      return { ids };
+    },
+  },
   attKioskToday: {
     who: "anyone",
     run: (request, _actor, db) => {

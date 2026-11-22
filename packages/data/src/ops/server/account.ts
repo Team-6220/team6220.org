@@ -36,6 +36,27 @@ export async function getAccount(ctx: Ctx) {
   };
 }
 
+/**
+ * { studentId, lastName } -> { profile }. Link your account to your roster row after signing up, for someone who is
+ * already in (a lead, someone who signed up before the roster, or whose ID didn't match then). It checks the student ID and
+ * last name against the roster like signing up does, and links only a row nobody else has. It gives no badge: roles come
+ * from badges. Attendance uses the link for Did I sign in? and My hours.
+ */
+export async function linkStudentId(ctx: Ctx, body: Doc) {
+  const studentId = text(body.studentId, "student ID", 12);
+  if (!/^\d{6,12}$/.test(studentId)) throw apiError("bad-request", "A student ID is 6 to 12 digits.");
+  const lastName = text(body.lastName, "last name", 60);
+  if ((await ctx.data.query(COLLECTION_ROSTER, { memberId: ctx.actor.id }, 1))[0]) throw apiError("bad-request", "Your account is already linked to the roster.");
+  const row = (await ctx.data.query(COLLECTION_ROSTER, { studentId }, 1))[0];
+  const same = (a: unknown, b: string) => String(a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
+  // The same answer for a wrong ID and a wrong last name, so this can't be used to find out which IDs exist.
+  if (!row || !same(row.lastName, lastName)) throw apiError("bad-request", "We couldn't find that student ID with that last name on the roster.");
+  if (row.memberId && row.memberId !== ctx.actor.id) throw apiError("bad-request", "That student ID is already linked to another account. Ask a lead or a web admin.");
+  await ctx.data.save(COLLECTION_ROSTER, { ...row, memberId: ctx.actor.id });
+  ctx.log({ kind: "person", id: ctx.actor.id }, "linked", "linked their account to the roster");
+  return { profile: (await getAccount(ctx)).profile };
+}
+
 /** { profile: { firstName, lastName, githubLogin } } -> { profile }. A name typed here wins over the Google name. (Discord is linked, never typed: inbox.ts.) */
 export async function saveMyProfile(ctx: Ctx, body: Doc) {
   const p = (body.profile ?? {}) as Doc;

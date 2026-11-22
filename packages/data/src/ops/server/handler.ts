@@ -42,6 +42,7 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   getAccount: { who: "signedIn", run: account.getAccount },
   saveMyProfile: { who: "signedIn", run: account.saveMyProfile },
   savePrefs: { who: "signedIn", run: account.savePrefs },
+  linkStudentId: { who: "signedIn", run: account.linkStudentId },
   finishProfile: { who: "signedIn", run: account.finishProfile },
   setMyPhoto: { who: "signedIn", run: account.setMyPhoto },
   deleteMyAccount: { who: "signedIn", run: account.deleteMyAccount },
@@ -103,6 +104,7 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   attKioskSignIn: { who: "anyone", run: attendance.attKioskSignIn },
   attKioskRegister: { who: "anyone", run: attendance.attKioskRegister },
   attKioskToday: { who: "anyone", run: attendance.attKioskToday },
+  attKioskQuick: { who: "anyone", run: attendance.attKioskQuick },
   // Icarus (icarus.ts)
   saveIcarusRecord: { who: "lead", run: icarus.saveIcarusRecord },
   removeIcarusRecord: { who: "lead", run: icarus.removeIcarusRecord },

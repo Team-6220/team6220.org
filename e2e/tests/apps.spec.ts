@@ -105,7 +105,7 @@ test.describe("attendance ?demo= modes", () => {
     expect(collected.errors).toEqual([]);
   });
 
-  test("?demo=attendance opens the kiosk and signs a student in, then out", async ({ page, collected }) => {
+  test("?demo=attendance opens the kiosk and signs students in and out, by typing or with Random quick sign in", async ({ page, collected }) => {
     await page.goto("apps/attendance/kiosk?demo=attendance");
     await settle(page);
     await page.getByRole("button", { name: "Open kiosk" }).click();
@@ -116,8 +116,34 @@ test.describe("attendance ?demo= modes", () => {
     await page.getByLabel("Scan your ID card or type your student ID").fill("4829173650");
     await page.keyboard.press("Enter");
     await expect(page.getByText("See you next time, Ada!")).toBeVisible();
+    // The ID box always has the cursor: clicking the page background doesn't take it away.
+    await page.getByRole("heading", { level: 1, name: "Take attendance" }).click();
+    await expect(page.getByLabel("Scan your ID card or type your student ID")).toBeFocused();
+    // Random quick sign in (only on the Sign in tab): five random IDs, no names. Clicking one is the same as scanning it.
+    await expect(page.locator(".att-quick button")).toHaveCount(0);
+    await page.getByRole("tab", { name: "Sign in", exact: true }).click();
+    await expect(page.locator(".att-quick button")).toHaveCount(5);
+    await page.locator(".att-quick button").first().click();
+    await expect(page.getByText(/^Welcome, /)).toBeVisible();
     await page.getByRole("button", { name: "Close kiosk" }).click();
     await expect(page.getByRole("button", { name: "Open kiosk" })).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+});
+
+test.describe("linking a student ID (demo)", () => {
+  test("Account lets someone already in link their student ID to the roster", async ({ page, collected }) => {
+    await page.goto("apps/account?demo=lead");
+    await settle(page);
+    await expect(page.getByRole("heading", { name: "Link my student ID" })).toBeVisible();
+    await page.getByLabel("Student ID").fill("4829173650");
+    await page.getByLabel("Last name", { exact: true }).last().fill("Wrong");
+    await page.getByRole("button", { name: "Link", exact: true }).click();
+    await expect(page.getByText("We couldn't find that student ID with that last name on the roster.")).toBeVisible();
+    await page.getByLabel("Last name", { exact: true }).last().fill("Lovelace");
+    await page.getByRole("button", { name: "Link", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Link my student ID" })).toHaveCount(0);
+    await expect(page.getByText("4829173650")).toBeVisible();
     expect(collected.errors).toEqual([]);
   });
 });

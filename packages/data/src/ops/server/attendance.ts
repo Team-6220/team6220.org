@@ -11,7 +11,7 @@
 //   attCopyMonth    a month's sign-ins with names and IDs, for a Sheet Attendance Admin
 //   attImport       brings in sign-ins from the old Google Sheet        Attendance Admin
 //   attOpenKiosk    opens the sign-in kiosk                            Attendance Admin
-//   attKiosk*       sign in / out, add a name, close, list (with the kiosk's own token; no login needed)
+//   attKiosk*       sign in / out, add a name, close, list, five random IDs (with the kiosk's own token; no login needed)
 import { countedMinutes, dayView, meetingsFrom, membersFrom, myView, pastMeetings, seasonOf, teamStats, teamTime } from "../../attendance/stats";
 import type { AttData } from "../../attendance/stats";
 import { teamIso } from "../../attendance/import";
@@ -238,6 +238,29 @@ export async function attKioskRegister(ctx: Ctx, body: Doc) {
   const saved = await ctx.data.save(COLLECTION_ROSTER, row);
   ctx.log({ kind: "attendance", id: studentId }, "registered", `${row.firstName} ${row.lastName} added at the kiosk`);
   return { result: await signIn(ctx, { ...row, _id: saved._id }, "in") };
+}
+
+/** { kioskToken } -> { ids }: five random student IDs for "Random quick sign in", no names. Clicking one on the kiosk is
+ *  the same as scanning it. People who already signed in today are left out, so each button can sign someone in; if fewer
+ *  than five are left, the rest come from everyone. */
+export async function attKioskQuick(ctx: Ctx, body: Doc) {
+  await kioskFor(ctx, body.kioskToken);
+  const [roster, today] = await Promise.all([ctx.data.query(COLLECTION_ROSTER, {}, 1000), ctx.data.query(SIGNINS, { date: ctx.today() }, 1000)]);
+  const signed = new Set(today.map((s) => String(s.studentId)));
+  const ids = roster.filter((r) => r.active !== false).map((r) => String(r.studentId));
+  const waiting = ids.filter((id) => !signed.has(id));
+  return { ids: pickFive(waiting.length >= 5 ? waiting : ids) };
+}
+
+/** Five different entries, chosen at random. */
+function pickFive(list: string[]): string[] {
+  const pool = [...list];
+  const out: string[] = [];
+  while (out.length < 5 && pool.length) {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0] % pool.length;
+    out.push(pool.splice(n, 1)[0]);
+  }
+  return out;
 }
 
 /** { kioskToken } -> { rows }: today's sign-ins, newest first (names and times only). */

@@ -155,3 +155,44 @@ describe("importing the old Sheet", () => {
     expect((await s.post({ action: "attImport", token: admin, rows: [{ studentId: "x", date: "2026-11-21", time: "" }] })).error).toBe("bad-request");
   });
 });
+
+describe("random quick sign in", () => {
+  it("gives the kiosk random student IDs, none of them people who already signed in, and nothing without the kiosk's token", async () => {
+    const s = team();
+    for (let i = 0; i < 8; i++) s.rows("ops_roster").push({ _id: `x${i}`, studentId: `20000000${i}0`, firstName: `Kid${i}`, lastName: "Test", grade: "", subteam: "", memberId: "", active: true });
+    const kiosk = (await s.post({ action: "attOpenKiosk", token: admin })).kioskToken;
+    const first = (await s.post({ action: "attKioskQuick", kioskToken: kiosk })).ids as string[];
+    expect(first).toHaveLength(5);
+    expect(new Set(first).size).toBe(5);
+    await s.post({ action: "attKioskSignIn", kioskToken: kiosk, studentId: first[0], mode: "in" });
+    for (let n = 0; n < 5; n++) expect((await s.post({ action: "attKioskQuick", kioskToken: kiosk })).ids).not.toContain(first[0]);
+    // The IDs are only IDs: no names.
+    expect(JSON.stringify(await s.post({ action: "attKioskQuick", kioskToken: kiosk }))).not.toMatch(/Kid|Test|Lovelace/);
+    expect((await s.post({ action: "attKioskQuick", kioskToken: "x".repeat(64) })).error).toBe("kiosk-closed");
+  });
+});
+
+describe("linking your account to the roster", () => {
+  it("links a roster row nobody has, when the ID and last name match, once", async () => {
+    const s = team();
+    const lead = "tok-lead-0123456789abcdef";
+    s.members[lead] = { id: "m-lead", status: "APPROVED", badges: ["b-team", "b-lead"] };
+    s.rows("ops_roster").push({ _id: "r3", studentId: "7773331119", firstName: "Hossegor", lastName: "Harman", grade: "12th", subteam: "Design", memberId: "", active: true });
+    const wrong = await s.post({ action: "linkStudentId", token: lead, studentId: "7773331119", lastName: "Smith" });
+    const unknown = await s.post({ action: "linkStudentId", token: lead, studentId: "7770000000", lastName: "Harman" });
+    // A wrong last name and an unknown ID answer the same, so this can't be used to look IDs up.
+    expect(wrong.error).toBe("bad-request");
+    expect(wrong.message).toBe(unknown.message);
+    const linked = await s.post({ action: "linkStudentId", token: lead, studentId: "7773331119", lastName: " harman " });
+    expect(linked.profile).toMatchObject({ studentId: "7773331119", grade: "12th" });
+    expect(s.rows("ops_roster").find((r) => r._id === "r3")?.memberId).toBe("m-lead");
+    expect((await s.post({ action: "attMine", token: lead })).mine.onRoster).toBe(true);
+    expect((await s.post({ action: "linkStudentId", token: lead, studentId: "4829173650", lastName: "Lovelace" })).message).toContain("already linked to the roster");
+  });
+
+  it("refuses a roster row that belongs to someone else, and a signed-out request", async () => {
+    const s = team();
+    expect((await s.post({ action: "linkStudentId", token: admin, studentId: "4829173650", lastName: "Lovelace" })).message).toContain("another account");
+    expect((await s.post({ action: "linkStudentId", studentId: "4829173650", lastName: "Lovelace" })).error).toBe("signed-out");
+  });
+});
