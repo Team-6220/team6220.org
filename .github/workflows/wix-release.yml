@@ -1,9 +1,12 @@
 name: Wix release
 
-# Releases the site to the live Wix site. Run it by hand: Actions -> "Wix release" -> Run workflow, on `main`.
-# A merge to `main` does not release anything by itself. `wix release` builds on Wix's servers from what is uploaded here,
-# publishes the site, and clears its cache (https://github.com/Team-6220/team6220.org/wiki/History-Go-Live). Needs the same `wix` environment secrets as the preview.
+# Releases the site to the live Wix site every time something is merged into `main` (pull requests must pass `ci` and be
+# approved first). To release again without a change (say, to clear the cache): Actions -> "Wix release" -> Run workflow.
+# `wix release` builds on Wix's servers from what is uploaded here, publishes the site, and clears its cache
+# (https://github.com/Team-6220/team6220.org/wiki/Deploy-and-CI). Needs the same `wix` environment secrets as the preview.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       comment:
@@ -51,6 +54,7 @@ jobs:
       # `wix release` only uploads what is already built, so always build first.
       - run: pnpm wix build
       - name: Release
-        run: pnpm wix release --comment "$COMMENT"
+        # The comment shows in Wix's release list: the typed one, or the merged commit's first line.
+        run: pnpm wix release --comment "$(printf '%s\n' "$COMMENT" | head -n 1 | cut -c1-200)"
         env:
-          COMMENT: ${{ inputs.comment }}
+          COMMENT: ${{ inputs.comment || github.event.head_commit.message || 'Release from main' }}
