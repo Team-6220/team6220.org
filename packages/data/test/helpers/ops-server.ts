@@ -24,6 +24,7 @@ const BADGE_TITLES: Record<string, string> = {
   "b-design": "Subteam: Design",
   "b-programming": "Subteam: Programming",
   "b-webadmin": "Web Admin",
+  "b-attendance": "Attendance Admin",
 };
 
 export interface Member {
@@ -207,11 +208,11 @@ export function makeOps(members: Record<string, Member>) {
 
   const env: OpsEnv = {
     data: {
-      async query(collection, filter = {}, limit = 1000, sort) {
+      async query(collection, filter = {}, limit = 1000, sort, skip = 0) {
         calls.push("query");
         const found = rows(collection).filter((r) => Object.entries(filter).every(([k, v]) => r[k] === v));
         if (sort) found.sort((a, b) => (String(a[sort.field] ?? "") < String(b[sort.field] ?? "") ? -1 : 1) * (sort.descending ? -1 : 1));
-        return found.slice(0, limit).map(keep);
+        return found.slice(skip, skip + limit).map(keep);
       },
       async queryIds(collection, ids) {
         calls.push("queryIds");

@@ -9,8 +9,9 @@ export function rolesFor(badges: readonly string[]): Roles {
   const has = (badge: string) => badges.includes(badge);
   const team = has(BADGES.teamMember) || has(BADGES.mentor) || has(BADGES.booster) || has(BADGES.lead);
   const guest = has(BADGES.guest) && !team && !has(BADGES.supervisor);
+  const attendanceAdmin = has(BADGES.attendanceAdmin);
   return {
-    viewer: team || has(BADGES.supervisor) || guest,
+    viewer: team || attendanceAdmin || has(BADGES.supervisor) || guest,
     guest,
     team,
     lead: has(BADGES.lead),
@@ -18,6 +19,8 @@ export function rolesFor(badges: readonly string[]): Roles {
     peopleAdmin: has(BADGES.lead) || has(BADGES.mentor) || has(BADGES.webAdmin),
     business: has(`${SUBTEAM_BADGE_PREFIX}Operations`) || has(BADGES.lead) || has(BADGES.mentor) || has(BADGES.booster),
     scheduler: has(BADGES.lead) || has(BADGES.mentor) || has(BADGES.booster),
+    attendance: team || attendanceAdmin,
+    attendanceAdmin,
   };
 }
 

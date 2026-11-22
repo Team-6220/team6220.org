@@ -1,167 +1,64 @@
-import { useCallback, useEffect, useState } from "react";
-import { attendance, auth, type Viewer } from "@team6220/data";
-import Kiosk from "./Kiosk";
-import MemberView from "./MemberView";
-import { errorMessage } from "./util";
+// /apps/attendance: meeting attendance. One component for every Attendance page; `screen` says which one.
+//   today  (/apps/attendance)           who is here and who isn't, today
+//   mine   (/apps/attendance/mine)      Did I sign in?
+//   hours  (/apps/attendance/hours)     My hours and my attendance
+//   past   (/apps/attendance/past)      every past meeting, with who missed it
+//   stats  (/apps/attendance/stats)     the season's numbers
+//   kiosk  (/apps/attendance/kiosk)     Attendance Admins: the sign-in kiosk
+//   import (/apps/attendance/import)    Attendance Admins: bring in the old Sheet's sign-ins, once
+// Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Attendance
+import { useEffect, useState, type ReactNode } from "react";
+import { auth, ops, type Me } from "@team6220/data";
+import { Btn, Note, PageHeader, Screen } from "@team6220/ui";
+import { Hours, Mine } from "./Mine";
+import { Import } from "./Import";
+import { Kiosk } from "./Kiosk";
+import { Past } from "./Past";
+import { Stats } from "./Stats";
+import { Today } from "./Today";
 
-type State =
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
-  | { kind: "viewer"; viewer: Viewer }
-  | { kind: "kiosk"; name: string };
+export type AttendanceScreen = "today" | "mine" | "hours" | "past" | "stats" | "kiosk" | "import";
 
-/** Reads ?demo=admin|member|pending|signed-out (or ?demo=off) and switches demo mode for this tab. */
-function applyDemoParam() {
-  const url = new URL(window.location.href);
-  const demo = url.searchParams.get("demo");
-  if (demo === null) return;
-  attendance.setDemoRole(demo === "off" ? null : (demo as attendance.DemoRole));
-  url.searchParams.delete("demo");
-  window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-}
+type State = { kind: "loading" } | { kind: "signed-out" } | { kind: "pending" } | { kind: "error"; message: string } | { kind: "ready"; me: Me };
 
-export default function Attendance() {
+export default function Attendance({ screen = "today" }: { screen?: AttendanceScreen }) {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [notice, setNotice] = useState<string>();
-
-  const load = useCallback(async () => {
-    try {
-      const viewer = await attendance.getViewer();
-      if (viewer.kind === "member" && viewer.isAdmin && attendance.currentKiosk()) {
-        setState({ kind: "kiosk", name: viewer.name });
-      } else {
-        setState({ kind: "viewer", viewer });
-      }
-    } catch (err) {
-      console.warn("Couldn't load the signed-in member", err);
-      setState({ kind: "error", message: errorMessage(err, "We couldn't reach the team login service.") });
-    }
-  }, []);
 
   useEffect(() => {
-    applyDemoParam();
-    void load();
-  }, [load]);
+    ops.readDemoFromUrl();
+    ops.getViewer().then(
+      (viewer) => setState(viewer.kind === "member" && viewer.me.roles.attendance ? { kind: "ready", me: viewer.me } : viewer.kind === "signed-out" ? { kind: "signed-out" } : { kind: "pending" }),
+      (err) => setState({ kind: "error", message: err instanceof Error ? err.message : "We couldn't load attendance." }),
+    );
+  }, []);
 
-  if (state.kind === "kiosk") {
+  if (state.kind === "loading") return <Screen><p className="k-hint" role="status">Loading attendance…</p></Screen>;
+  if (state.kind === "signed-out") {
     return (
-      <Kiosk
-        adminName={state.name}
-        onClosed={(message) => {
-          setNotice(message);
-          void load();
-        }}
-      />
+      <Screen>
+        <PageHeader title="Attendance" />
+        <Note>Sign in to see meeting attendance.</Note>
+        <div><Btn kind="primary" onClick={() => auth.login(location.pathname + location.search)}>Sign in with Google</Btn></div>
+      </Screen>
     );
   }
+  if (state.kind === "pending") return <Screen><PageHeader title="Attendance" /><Note tone="warn">Attendance opens once a web admin approves your account and you have the Team Member badge.</Note></Screen>;
+  if (state.kind === "error") return <Screen><PageHeader title="Attendance" /><Note tone="bad">{state.message}</Note></Screen>;
 
-  const demo = attendance.demoRole();
-  return (
-    <main className="t-page att">
-      {demo && (
-        <p className="t-demo" role="note">
-          Demo mode ({demo}): made-up data, nothing is saved to the real attendance sheet.{" "}
-          <a href="?demo=off">Leave demo</a>
-        </p>
-      )}
-      <header className="t-header">
-        <div>
-          <p className="t-eyebrow">Los Al Robotics</p>
-          <h1 className="t-title">Attendance</h1>
-        </div>
-        <nav className="t-nav">
-          {state.kind === "viewer" && state.viewer.kind !== "signed-out" && (
-            <span className="t-who">{state.viewer.name}</span>
-          )}
-          <a className="t-button t-button--quiet" href="/apps">
-            Team apps
-          </a>
-        </nav>
-      </header>
-
-      {notice && (
-        <p className="att__flash" role="status">
-          {notice}
-        </p>
-      )}
-      {state.kind === "loading" && (
-        <p className="t-muted" role="status">
-          Checking sign-in…
-        </p>
-      )}
-      {state.kind === "error" && (
-        <div className="t-panel" role="alert">
-          <p>{state.message} Try again in a minute.</p>
-          <button type="button" className="t-button" onClick={() => void load()}>
-            Try again
-          </button>
-        </div>
-      )}
-      {state.kind === "viewer" && state.viewer.kind === "signed-out" && <SignedOut />}
-      {state.kind === "viewer" && state.viewer.kind === "pending" && (
-        <div className="t-panel t-panel--notice">
-          <h2>Waiting for approval</h2>
-          <p>
-            You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge
-            yet. Ask a team lead, then reload this page.
-          </p>
-        </div>
-      )}
-      {state.kind === "viewer" && state.viewer.kind === "member" && (
-        <MemberView
-          isAdmin={state.viewer.isAdmin}
-          onKioskOpened={() => {
-            setNotice(undefined);
-            setState({ kind: "kiosk", name: (state.viewer as { name: string }).name });
-          }}
-        />
-      )}
-    </main>
-  );
+  const notice = ops.demoNotice();
+  return <>{notice && <div className="att-demo"><Note tone="blue">{notice}</Note></div>}{pageFor(screen, state.me)}</>;
 }
 
-function SignedOut() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
-  return (
-    <div className="t-panel">
-      <h2>Sign in to see attendance</h2>
-      <p>
-        Attendance is for team members. Sign in on the <a href="/apps">team apps page</a> with Google, then come back
-        here.
-      </p>
-      <p className="att__actions">
-        <button
-          type="button"
-          className="t-button"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setError(undefined);
-            if (attendance.demoRole()) {
-              window.location.assign("?demo=member");
-              return;
-            }
-            try {
-              await auth.login("/apps/attendance");
-            } catch (err) {
-              setError(errorMessage(err, "Couldn't start sign-in."));
-              setBusy(false);
-            }
-          }}
-        >
-          {busy ? "Opening sign-in…" : "Sign in"}
-        </button>
-        <a className="t-button t-button--quiet" href="/apps">
-          Go to team apps
-        </a>
-      </p>
-      {error && (
-        <p className="att__error" role="alert">
-          {error}
-        </p>
-      )}
-      <p className="t-muted">Signing in at a meeting? Use the kiosk at the door; you don't need to sign in here.</p>
-    </div>
-  );
+function pageFor(screen: AttendanceScreen, me: Me): ReactNode {
+  switch (screen) {
+    case "mine": return <Mine />;
+    case "hours": return <Hours />;
+    case "past": return <Past me={me} />;
+    case "stats": return <Stats />;
+    case "kiosk":
+      return me.roles.attendanceAdmin ? <Kiosk /> : <Screen><PageHeader title="Kiosk" back={{ label: "Attendance", href: "/apps/attendance" }} /><Note>Only Attendance Admins can open the kiosk.</Note></Screen>;
+    case "import":
+      return me.roles.attendanceAdmin ? <Import /> : <Screen><PageHeader title="Import" back={{ label: "Attendance", href: "/apps/attendance" }} /><Note>Only Attendance Admins can import.</Note></Screen>;
+    default: return <Today me={me} />;
+  }
 }

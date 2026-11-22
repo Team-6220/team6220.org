@@ -10,6 +10,7 @@ export type Doc = Record<string, any> & { _id?: string };
 
 /** The codes the apps understand (OpsErrorCode in ../types.ts, minus "network", which the browser makes up). */
 export type ApiErrorCode =
+  | "kiosk-closed"
   | "signed-out"
   | "pending"
   | "forbidden"
@@ -35,7 +36,7 @@ export const apiError = (code: ApiErrorCode, message: string) => new ApiError(co
 /** Wix CMS collections. Missing `_id`s are made up on insert. */
 export interface OpsData {
   /** Items whose fields equal the filter's (up to `limit`, default 1000). */
-  query(collection: string, filter?: Record<string, unknown>, limit?: number, sort?: { field: string; descending?: boolean }): Promise<Doc[]>;
+  query(collection: string, filter?: Record<string, unknown>, limit?: number, sort?: { field: string; descending?: boolean }, skip?: number): Promise<Doc[]>;
   /** Items with these `_id`s, in one request. */
   queryIds(collection: string, ids: string[]): Promise<Doc[]>;
   insert(collection: string, doc: Doc): Promise<Doc>;

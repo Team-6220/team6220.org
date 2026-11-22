@@ -7,8 +7,8 @@ import { BADGES, SUBTEAM_BADGE_PREFIX } from "../config";
 import { rolesFor, subteamsOf } from "./roles";
 import { OpsError, type ApiRequest, type Draft, type Item, type Person, type Store, type Transport } from "./types";
 
-export type MockRole = "member" | "lead" | "mentor" | "booster" | "supervisor" | "pending";
-export const MOCK_ROLES: MockRole[] = ["member", "lead", "mentor", "booster", "supervisor", "pending"];
+export type MockRole = "member" | "lead" | "mentor" | "booster" | "supervisor" | "attendance" | "pending";
+export const MOCK_ROLES: MockRole[] = ["member", "lead", "mentor", "booster", "supervisor", "attendance", "pending"];
 export const MOCK_SUBTEAMS = ["Design", "Manufacturing", "Programming", "Electrical", "Operations"];
 
 /** Who is calling a mock action. */
@@ -26,6 +26,7 @@ const DEMO_PEOPLE: Record<MockRole, MockActor> = {
   mentor: { id: "demo-mentor", name: "Demo Mentor", badges: [BADGES.mentor], agent: false },
   booster: { id: "demo-booster", name: "Demo Booster", badges: [BADGES.booster], agent: false },
   supervisor: { id: "demo-supervisor", name: "Demo Supervisor", badges: [BADGES.supervisor], agent: false },
+  attendance: { id: "demo-attendance", name: "Demo Attendance Admin", badges: [BADGES.teamMember, BADGES.attendanceAdmin, "Subteam: Operations"], agent: false },
   pending: { id: "demo-pending", name: "Demo Visitor", badges: [], agent: false },
 };
 

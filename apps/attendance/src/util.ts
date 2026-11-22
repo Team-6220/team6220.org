@@ -1,24 +1,39 @@
-import { AttendanceError } from "@team6220/data";
+// Small things every Attendance screen uses.
+import { OpsError } from "@team6220/data";
 
 export function errorMessage(err: unknown, fallback: string): string {
-  if (err instanceof AttendanceError) return err.message;
+  if (err instanceof OpsError) return err.message;
   if (err instanceof Error && err.message) return err.message;
   return fallback;
 }
 
-/** "Mon, Nov 9" for a yyyy-MM-dd date (read as a calendar date, no time zone shift). */
-export function formatDay(date: string): string {
-  const [y, m, d] = date.split("-").map(Number);
-  if (!y || !m || !d) return date;
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
-}
-
 /** Short time like "3:45 PM" from an ISO timestamp, in the team's time zone. */
-export function formatTime(iso: string, fallback = ""): string {
+export function formatTime(iso: string): string {
   const t = Date.parse(iso);
-  if (Number.isNaN(t)) return fallback;
-  return new Date(t).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" });
+  return Number.isNaN(t) ? "" : new Date(t).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" });
 }
 
-/** Student IDs are exactly 10 digits (same rule as the server). */
-export const STUDENT_ID = /^\d{10}$/;
+/** "Sat Nov 14" for a yyyy-mm-dd date. */
+export function shortDay(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }).replace(",", "");
+}
+
+/** "Nov 14" */
+export function monthDay(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
+}
+
+/** "Saturday, November 14" */
+export function longDay(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric" });
+}
+
+/** "Design · Manufacturing" */
+export const subteamText = (subteams: string[]) => subteams.join(" · ") || "—";
+
+/** "71 h" */
+export const hoursText = (hours: number) => `${hours} h`;
+
+/** "Aug", "Sep" ... for yyyy-mm. */
+export const monthShort = (month: string) => new Date(`${month}-15T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "short" });
+export const monthLong = (month: string) => new Date(`${month}-15T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "long" });

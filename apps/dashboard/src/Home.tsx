@@ -1,7 +1,7 @@
 // Home: what needs you, your inbox, your pins, and today at a glance. Each part reads the app it comes from; if one can't be
 // loaded it is left out rather than breaking Home.
 import { useEffect, useState } from "react";
-import { bom, calendar, icarus, ops, production, type CalendarData, type Me, type Task, type Part } from "@team6220/data";
+import { attendance, bom, calendar, icarus, ops, production, type CalendarData, type Me, type Task, type Part } from "@team6220/data";
 import { Cards, DataTable, Note, PageHeader, Pill, Screen, Section, type CardItem, type Tone } from "@team6220/ui";
 import type { DashView } from "./Dashboard";
 import { Inbox } from "./Inbox";
@@ -17,7 +17,7 @@ const NONE: Today = { tasks: null, openTasks: 0, parts: null, meetings: [], supe
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The Calendar's part of Home: today's meetings, shifts nobody has taken, and a supervisor's hours so far. */
-function fromCalendar(data: CalendarData, me: Me, now: string): { needs: Need[]; meetings: Card[]; supervision: Supervision | null } {
+function fromCalendar(data: CalendarData, me: Me, now: string, signedIn: number | null): { needs: Need[]; meetings: Card[]; supervision: Supervision | null } {
   const mine = calendar.supervisorFor(data.supervisors, me.id);
   const approved = mine?.status === "approved";
   const needs: Need[] = [];
@@ -31,7 +31,7 @@ function fromCalendar(data: CalendarData, me: Me, now: string): { needs: Need[];
   const meetings = calendar.eventsOn(data.events, now).filter((e) => e.type === "meeting" && calendar.isForMe(e, me)).map((e): Card => {
     const names = calendar.shiftsOf(data.shifts, e._id).map((s) => s.name).filter(Boolean).map((n) => n.replace(/^(\S+) (\S).*$/, "$1 $2."));
     const where = [e.location, names.length ? `supervisors ${names.join(" and ")}` : ""].filter(Boolean).join(" · ");
-    return { key: `meeting-${e._id}`, title: calendar.titleOf(e), pill: { label: calendar.timeRange(e.startTime, e.endTime), tone: "calm" }, href: "/apps/calendar", lines: [where || "No supervisors yet"] };
+    return { key: `meeting-${e._id}`, title: calendar.titleOf(e), pill: { label: calendar.timeRange(e.startTime, e.endTime), tone: "calm" }, href: "/apps/calendar", lines: [where || "No supervisors yet", ...(signedIn !== null ? [`${signedIn} signed in so far`] : [])] };
   });
   const year = calendar.schoolYear(now);
   const events = data.events.filter((e) => e.startDate >= `${year[0]}-01` && e.startDate <= `${year[11]}-31`);
@@ -48,7 +48,8 @@ async function load(): Promise<{ needs: Need[]; today: Today }> {
     icarus.needsMe(me, icarus.today()).catch(() => null),
     bom.needsMe(me).catch(() => null),
     production.needsMe(me).catch(() => null),
-    calendar.load().then((d) => fromCalendar(d, me, calendar.today()), () => null),
+    Promise.all([calendar.load(), me.roles.attendance ? attendance.today().then((r) => r.day.here.length, () => null) : null])
+      .then(([d, signedIn]) => fromCalendar(d, me, calendar.today(), signedIn), () => null),
   ]);
   const needs: Need[] = [];
   if (me.roles.team && me.subteams.length === 0) needs.push({ id: "subteams", what: "Pick your subteams so the right meetings and tasks show up for you", app: "Account", status: "Pick", tone: "warn", href: "/apps/account" });

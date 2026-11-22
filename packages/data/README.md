@@ -17,29 +17,22 @@ Wix calls only run in the browser in Phase 1. Mount components that use them wit
 
 ## Attendance
 
+Sign-ins live in Wix (`att_signins`) and go through the team server, like the Calendar. Plan: the wiki's Operations Attendance page.
+
 ```ts
 import { attendance } from "@team6220/data";
-
-await attendance.getViewer(); // { kind: "signed-out" | "pending" | "member", name, isAdmin } (cosmetic)
-await attendance.openKiosk(); // Attendance Admin: opens the kiosk in this tab (token kept in sessionStorage)
-await attendance.signIn("0123456789"); // on the open kiosk: { status: "signed-in" | "duplicate" | "needs-registration" | "invalid", name, time, message }
-await attendance.register(id, first, last); // unknown ID: add to the roster and sign in
+const { day } = await attendance.today(); // who is here and who isn't (names, times, hours; never student IDs)
+await attendance.mine(); // your sign-ins, hours and attendance this season
+await attendance.past(); await attendance.stats(); // Past meetings, Stats
+await attendance.openKiosk(); // Attendance Admin: opens the kiosk in this tab (its token is kept in sessionStorage)
+await attendance.signIn("0123456789", "in"); // on the open kiosk: "in", or "out" for leaving early
+await attendance.register(id, first, last); // an ID not on the roster: add the name and sign in
 await attendance.closeKiosk();
-await attendance.today(); // Team Member: [{ name, time, at }], never student IDs
-await attendance.historyDays(); // [{ date, count }]; attendance.historyFor("2026-11-09")
-await attendance.lookup("0123456789"); // "did I sign in?" for your own ID: dates and times only
+await attendance.copyMonth("2026-11"); // Attendance Admin: a month's sign-ins with student IDs, for a Sheet
 ```
 
-- Talks to the Apps Script in [`backend/apps-script/attendance-api`](../../backend/apps-script/attendance-api/README.md)
-  with `POST`, `Content-Type: text/plain`, JSON body (no CORS preflight). Viewer and admin calls send the member's Wix
-  access token (refreshed first if needed); the script verifies it with Wix and checks the badges. Errors are
-  `AttendanceError` with a `code` (`signed-out`, `forbidden`, `kiosk-closed`, `not-configured`, …).
-- The URL is `ATTENDANCE_API_URL` in [`src/config.ts`](src/config.ts) (or the `PUBLIC_ATTENDANCE_API_URL` build
-  variable). It isn't a secret. Empty means "not connected yet".
-- `src/attendance/mock.ts` is an in-memory stand-in with the same rules, used by tests and by demo mode
-  (`attendance.setDemoRole("admin")`, or `?demo=admin` on the page).
-- Tests: `pnpm --filter @team6220/data test` (vitest). `test/apps-script.test.ts` also runs the Apps Script `Code.gs`
-  against fake Apps Script services.
+The numbers (who was expected, hours, percentages) are worked out in `src/attendance/stats.ts`, which the server and the demo backend share. Demo: `?demo=attendance` (Attendance Admin), `?demo=member`.
+
 
 ## Operations apps (`ops`)
 
