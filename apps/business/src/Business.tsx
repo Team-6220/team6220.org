@@ -1,5 +1,5 @@
 // /apps/business: one component for every Business page; `screen` says which one. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Business
-//   Trackers:  sponsor-tracker, grant-tracker (everyone on the team; Operations, leads, mentors and boosters edit), stats (those four roles)
+//   Trackers:  sponsor-tracker, grant-tracker (everyone on the team; Operations, leads, mentors and boosters edit), stats (everyone on the team)
 import { useEffect, useState, type ReactNode } from "react";
 import { auth, ops, type Me } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen } from "@team6220/ui";
@@ -40,11 +40,9 @@ export default function Business({ screen = "sponsor-tracker" }: { screen?: Busi
 }
 
 function pageFor(screen: BusinessScreen, me: Me): ReactNode {
-  const business = me.roles.business;
-  const only = (title: string, page: ReactNode) => (business ? page : <Screen><PageHeader title={title} /><Note>Only Operations, leads, mentors and boosters can see this.</Note></Screen>);
   switch (screen) {
-    case "grant-tracker": return <GrantTracker canEdit={business} />;
-    case "stats": return only("Team stats", <Stats />);
-    default: return <SponsorTracker canEdit={business} />;
+    case "grant-tracker": return <GrantTracker me={me} />;
+    case "stats": return <Stats />;
+    default: return <SponsorTracker me={me} />;
   }
 }

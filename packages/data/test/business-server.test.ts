@@ -71,10 +71,26 @@ describe("sponsor tracker", () => {
   });
 });
 
+describe("tier", () => {
+  it("is filled in for a money sponsor from the amount, follows the amount, and keeps a tier someone chose", async () => {
+    const s = business();
+    const id = (await s.post({ action: "bizAddSponsor", token: ada, sponsor: { company: "Acme" } })).sponsor._id;
+    const save = async (fields: object) => (await s.post({ action: "bizSaveSponsor", token: ops, sponsor: { _id: id, ...fields } })).sponsor;
+    expect((await save({ amount: "3,000" })).tier).toBe(""); // not a money sponsor yet
+    expect((await save({ support: "Sponsorship (money)" })).tier).toBe("Griffin");
+    expect((await save({ amount: "800" })).tier).toBe("Lion"); // it still matched the old amount, so it follows
+    expect((await save({ amount: "2,000" })).tier).toBe("Eagle");
+    expect((await save({ tier: "Griffin" })).tier).toBe("Griffin"); // chosen on purpose
+    expect((await save({ amount: "500" })).tier).toBe("Griffin"); // so it stays
+    const inKind = (await s.post({ action: "bizAddSponsor", token: ada, sponsor: { company: "Wix" } })).sponsor._id;
+    expect((await s.post({ action: "bizSaveSponsor", token: ops, sponsor: { _id: inKind, support: "In-kind", amount: "Hosting" } })).sponsor.tier).toBe("");
+  });
+});
+
 describe("grant tracker", () => {
   it("adds, changes and imports grants, and offers a received grant to the Sponsor tracker", async () => {
     const s = business();
-    s.rows("biz_grants").push({ _id: "old-rev", season: "2025–26", title: "REV Robotics", organization: "REV", status: "5. Received", amount: "1,000", deadline: "Rolling", link: "", writer: "", notes: "", questions: "", prior: false, sponsored: false });
+    s.rows("biz_grants").push({ _id: "old-rev", season: "2025–26", title: "REV Robotics", organization: "REV", status: "5. Received", amount: "1,000", deadline: "Rolling", link: "", writer: "", notes: "", questions: "", prior: false, sponsored: false, kind: "" });
     const added = await s.post({ action: "bizAddGrant", token: ada, grant: { title: "PTSA Grant", link: "https://example.com/ptsa" } });
     expect(added.grant).toEqual({ _id: expect.any(String), season: "2026–27", title: "PTSA Grant", link: "https://example.com/ptsa", status: "0. Needs research", deadline: "", prior: false });
     const id = added.grant._id;
@@ -90,7 +106,7 @@ describe("grant tracker", () => {
 });
 
 describe("stats", () => {
-  it("counts stages and money for a season, for the business roles only", async () => {
+  it("counts stages and money for a season, for everyone on the team, with kinds and seasons", async () => {
     const s = business();
     s.rows("biz_sponsors").push(
       { _id: "a", season: "2026–27", company: "A", status: "5. Received monetary", amount: "1,500", prior: false },
@@ -100,6 +116,7 @@ describe("stats", () => {
     s.rows("biz_grants").push({ _id: "g", season: "2026–27", title: "G", status: "5. Received", amount: "1,000", prior: false });
     const { stats } = await s.post({ action: "bizStats", token: ops });
     expect(stats).toMatchObject({ season: "2026–27", raised: { sponsors: 1500, grants: 1000 }, sponsorStages: [0, 0, 1, 0, 1, 1], pitches: { accepted: 1, declined: 1, deciding: 1 }, grants: { applied: 1, accepted: 1 } });
-    expect((await s.post({ action: "bizStats", token: ada })).error).toBe("forbidden");
+    expect((await s.post({ action: "bizStats", token: ada })).stats.season).toBe("2026–27");
+    expect((await s.post({ action: "bizStats", token: guest })).error).toBe("forbidden");
   });
 });

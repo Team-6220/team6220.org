@@ -7,7 +7,8 @@
 .k-input.biz-edit:focus { border-color: var(--color-gold); background: var(--color-bg); outline: none; }
 textarea.k-input.biz-edit--text { min-height: 30px; padding: 4px 6px; resize: none; height: 30px; line-height: 20px; white-space: nowrap; overflow: hidden; field-sizing: fixed; display: block; }
 .biz-wrap textarea.k-input.biz-edit--text { white-space: pre-wrap; overflow-wrap: break-word; height: auto; field-sizing: content; }
-select.k-input.biz-edit { appearance: none; }
+select.k-input.biz-edit { cursor: pointer; }
+select.k-input.biz-edit option { background: var(--color-surface); color: var(--color-ink); }
 .biz-company { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .biz-stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .biz-add { padding: 4px 0 12px; }
@@ -15,18 +16,57 @@ select.k-input.biz-edit { appearance: none; }
 .biz-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .biz-row .k-input { width: auto; min-width: 140px; }
 
-/* "How it works": the stages in a row (a column on a phone). */
-.biz-stages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
-.biz-stages li { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface, transparent); }
-.biz-stage-n { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
-@media (max-width: 800px) { .biz-stages { grid-template-columns: 1fr; } }
+/* "How it works": the stages left to right, each in its own colour, with arrows (a column on a phone). */
+.biz-stages { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.biz-stage { flex: 1 1 120px; min-width: 110px; padding: 10px 12px; border: 1px solid; border-radius: 8px; background: var(--color-surface); display: flex; flex-direction: column; gap: 4px; }
+.biz-stage strong { font-size: 14px; }
+.biz-stage-n { font-size: 11px; letter-spacing: 0.14em; }
+.biz-arrow { align-self: center; color: #4e4a5b; }
+@media (max-width: 600px) { .biz-arrow { display: none; } .biz-stage { flex-basis: 100%; } }
 
-/* Stats bars. */
+/* The note that says who sees what: amber, with a lock. */
+.biz-lock { margin: 0; padding: 10px 14px; border: 1px solid #6b4a07; border-radius: 6px; background: #140f04; font-size: 14px; }
+
+/* The company name and the small grey line under it start at the same place as the text in the box above. */
+.biz-prior { padding-left: 7px; }
+.biz-private { display: flex; align-items: center; gap: 4px; min-width: 0; color: var(--color-muted); }
+.biz-private .t-icon { flex: none; }
+
+/* "Received. Add X to the Sponsor tracker?" under a received grant. */
+.biz-offer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 0; padding: 10px 12px; border: 1px solid var(--color-ok); border-radius: 6px; background: var(--color-ok-bg); font-size: 14px; }
+.biz-edit-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Export ▾ */
+.biz-export { position: relative; }
+.biz-export > summary { list-style: none; cursor: pointer; }
+.biz-export > summary::-webkit-details-marker { display: none; }
+.biz-export .k-menu { left: auto; right: 0; }
+
+/* Stats: four tiles, then panels two to a row (one on a phone). */
+.biz-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.biz-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px; }
+.biz-tile strong { font-size: 26px; font-weight: 500; }
+.biz-tile-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
+.biz-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.biz-panel { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.biz-panel h3 { margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-muted); font-weight: 400; }
+.biz-panel > .k-hint:first-of-type { margin: -8px 0 0; font-size: 13px; color: var(--color-ink); }
+@media (max-width: 900px) { .biz-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .biz-panels { grid-template-columns: 1fr; } }
+
 .biz-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.biz-bars li { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) 36px; gap: 12px; align-items: center; font-size: 14px; }
+.biz-bars li { display: grid; grid-template-columns: minmax(110px, 38%) minmax(0, 1fr) 56px; gap: 12px; align-items: center; font-size: 14px; }
+.biz-bars li > strong { text-align: right; font-weight: 500; }
 .biz-bar { display: block; height: 12px; border-radius: 6px; background: color-mix(in srgb, var(--color-border) 45%, var(--color-bg)); overflow: hidden; }
-.biz-bar > span { display: block; height: 100%; background: var(--color-gold); }
-@media (max-width: 600px) { .biz-bars li { grid-template-columns: minmax(0, 1fr) 36px; } .biz-bars .biz-bar { grid-column: 1 / -1; grid-row: 2; } }
+.biz-bar > span { display: block; height: 100%; border-radius: 6px; }
+
+.biz-donut { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; padding: 8px 0; }
+.biz-donut ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.biz-donut li { display: flex; align-items: center; gap: 8px; }
+.biz-donut li span { width: 14px; height: 14px; border-radius: 3px; }
+.biz-donut-n { fill: var(--color-ink); font-size: 24px; }
+.biz-donut-l { fill: var(--color-muted); font-size: 11px; }
+.biz-line { width: 100%; height: auto; }
+.biz-line-l { fill: var(--color-muted); font-size: 12px; }
 
 /* "+ Add a company": a section you open and close. */
 .biz-fold { border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface, transparent); }
@@ -37,4 +77,3 @@ select.k-input.biz-edit { appearance: none; }
 /* An amount with its $ outside the box. */
 .biz-money { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .biz-money > span:first-child { width: 8px; color: var(--color-muted); }
-.biz-offer { margin: 0; padding: 8px 12px; border: 1px solid var(--color-ok); border-radius: 6px; background: var(--color-ok-bg); font-size: 13px; }

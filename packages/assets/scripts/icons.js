@@ -46,6 +46,7 @@
     people: '<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M2 21a7 7 0 0 1 14 0 M16 3a4 4 0 0 1 0 8 M22 21a7 7 0 0 0-4-6"/>',
     shield: '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/>',
     plus: '<path d="M12 5v14 M5 12h14"/>',
+    lock: '<path d="M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3"/>',
     download: '<path d="M12 4v12 M7 11l5 5 5-5 M4 20h16"/>',
     upload: '<path d="M12 16V4 M7 9l5-5 5 5 M4 20h16"/>',
     chart: '<path d="M4 20V10 M10 20V4 M16 20v-7 M3 20h18"/>',

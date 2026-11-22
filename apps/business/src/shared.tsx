@@ -1,7 +1,7 @@
 // Small things every Business screen uses: the colour of each status, links between pages, text you edit in place.
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { business, ops, type Person } from "@team6220/data";
-import { Chips, Icon, Section, type StatusOption, type Tone } from "@team6220/ui";
+import { Chips, Icon, Note, Section, type StatusOption, type Tone } from "@team6220/ui";
 
 export const businessHref = (view: string) => `/apps/business/${view}`;
 
@@ -66,17 +66,47 @@ export function PeopleList({ id }: { id: string }) {
   return <datalist id={id}>{people.map((p) => <option key={p.memberId} value={p.name} />)}</datalist>;
 }
 
-/** "How it works": the stages, left to right. */
+const STAGE_COLORS = ["#8a8a96", "#4054e4", "#ffa300", "#4054e4", "#7fb38a", "#7fb38a"];
+
+/** "How it works": the stages left to right, each in its own colour, with arrows between them. */
 export function Stages({ title = "How it works", stages, notes, footer }: { title?: string; stages: readonly string[]; notes: readonly string[]; footer: ReactNode }) {
   return (
     <Section title={title}>
-      <ol className="biz-stages">
+      <div className="biz-stages">
         {stages.map((name, i) => (
-          <li key={name}><span className="biz-stage-n">Stage {i}</span><strong>{name}</strong><span className="k-hint">{notes[i]}</span></li>
+          <Fragment key={name}>
+            {i > 0 && <span className="biz-arrow" aria-hidden="true">→</span>}
+            <div className="biz-stage" style={{ borderColor: STAGE_COLORS[i] }}>
+              <span className="biz-stage-n" style={{ color: STAGE_COLORS[i] }}>STAGE {i}</span>
+              <strong>{name}</strong>
+              <span className="k-hint">{notes[i]}</span>
+            </div>
+          </Fragment>
         ))}
-      </ol>
-      <p className="k-hint">{footer}</p>
+      </div>
+      <Note>{footer}</Note>
     </Section>
+  );
+}
+
+/** The note that says who sees what: amber, with a lock, because some of it is private. */
+export function PrivateNote({ children }: { children: ReactNode }) {
+  return <p className="biz-lock"><Icon name="lock" inline /> {children}</p>;
+}
+
+/** "Export ▾": downloads what is on the screen as a CSV file. */
+export function ExportMenu({ filename, rows }: { filename: string; rows: () => string[][] }) {
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([ops.toCsv(rows())], { type: "text/csv" }));
+    const link = Object.assign(document.createElement("a"), { href: url, download: filename });
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <details className="biz-export">
+      <summary className="k-btn k-btn--quiet">Export ▾</summary>
+      <div className="k-menu" role="menu"><button type="button" role="menuitem" onClick={download}>Download as CSV</button></div>
+    </details>
   );
 }
 

@@ -117,7 +117,7 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   bizSaveGrant: { who: "business", run: business.bizSaveGrant },
   bizImportGrants: { who: "business", run: business.bizImportGrants },
   bizGrantToSponsor: { who: "business", run: business.bizGrantToSponsor },
-  bizStats: { who: "business", run: business.bizStats },
+  bizStats: { who: "team", run: business.bizStats },
   // RSVP (rsvp.ts)
   rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
   rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },

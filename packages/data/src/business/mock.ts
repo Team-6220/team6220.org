@@ -33,7 +33,7 @@ seedMock((db) => {
   sponsor({ company: "Wix Website", status: "5. Received in-kind", amount: "Website hosting", tier: "Lion", support: "In-kind" }, last);
   sponsor({ company: "Old Tool Supply", status: "4. Declined", contact: "Lou", notes: "Not sponsoring this year." }, last);
   const grant = (g: Partial<Grant> & Pick<Grant, "title">, when = season) =>
-    db.save<Grant>(COLLECTION_GRANTS, { season: when, organization: "", link: "", writer: "", status: "0. Needs research", deadline: "Rolling", amount: "", notes: "", questions: "", prior: false, sponsored: false, createdAt: new Date().toISOString(), ...g });
+    db.save<Grant>(COLLECTION_GRANTS, { season: when, organization: "", link: "", writer: "", status: "0. Needs research", deadline: "Rolling", amount: "", notes: "", questions: "", prior: false, sponsored: false, kind: "", createdAt: new Date().toISOString(), ...g });
   grant({ title: "PTSA Innovation Grant", organization: "LAHS PTSA", link: "https://example.com/ptsa", writer: "Hedy", status: "1. Applying", amount: "986.15 + 78.89 tax" });
   grant({ title: "SWYFT Robotics", organization: "SWYFT", writer: "Ada", status: "2. Submitted", deadline: "Jan 17, 2027" });
   grant({ title: "REV Robotics", organization: "REV Robotics", status: "5. Received", amount: "1,000", writer: "Nikola" });
@@ -141,5 +141,5 @@ mockActions({
       return { sponsor };
     },
   },
-  bizStats: { who: "business", run: (request, _a, db) => ({ stats: statsFor(seasonOf(request), sponsors(db), grants(db)), seasons: seasonsOf([...sponsors(db), ...grants(db)]) }) },
+  bizStats: { who: "team", run: (request, _a, db) => ({ stats: statsFor(seasonOf(request), sponsors(db), grants(db)), seasons: seasonsOf([...sponsors(db), ...grants(db)]) }) },
 });

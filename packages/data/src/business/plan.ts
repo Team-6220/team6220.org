@@ -1,7 +1,7 @@
 // The Business app's rules, worked out in one place. The server (ops/server/business.ts) and the demo backend (./mock.ts)
 // both use this file, so a rule is written once. No Wix, no network. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Business
 import { seasonOf } from "../attendance/stats";
-import { GRANT_STATUSES, SPONSOR_STATUSES, SUPPORT_TYPES, TIERS, stageOf, type BizStats, type Grant, type GrantPublic, type NewRow, type Sponsor, type SponsorPublic } from "./types";
+import { GRANT_KINDS, GRANT_STATUSES, SPONSOR_STATUSES, SUPPORT_TYPES, TIERS, stageOf, type BizStats, type Grant, type GrantPublic, type NewRow, type Sponsor, type SponsorPublic } from "./types";
 
 export const COLLECTION_SPONSORS = "biz_sponsors";
 export const COLLECTION_GRANTS = "biz_grants";
@@ -26,21 +26,42 @@ export function seasonLabel(date: string): string {
 
 // ----- the Sponsor tracker -----
 
+/** The tier an amount earns (from the sponsorship packet): Lion up to $1,000, Eagle up to $2,500, Griffin over $2,500. "" when there is no amount. */
+export function tierFor(amount: string): Sponsor["tier"] {
+  const n = dollars(amount);
+  return n <= 0 ? "" : n <= 1000 ? "Lion" : n <= 2500 ? "Eagle" : "Griffin";
+}
+
+/** Money coming in: the support is money, or the status says money was received. */
+const isMonetary = (support: string, status: string) => support === "Sponsorship (money)" || support === "Both" || status === "5. Received monetary";
+
 /** A new company, or changes to one. Only the fields sent are changed; the rest stay as they were. */
 export function cleanSponsor(input: Input, before: Sponsor | null, season: string): NewRow<Sponsor> {
   const pick = <T extends readonly string[]>(list: T, value: unknown, fallback: T[number] | ""): T[number] | "" => (typeof value === "string" && (list as readonly string[]).includes(value) ? (value as T[number]) : fallback);
   const has = (key: string) => key in input;
   const base = before ?? { season, company: "", studentContact: "", contact: "", status: SPONSOR_STATUSES[0], support: "" as const, amount: "", notes: "", tier: "" as const, prior: false };
+
+  const status = has("status") ? (pick(SPONSOR_STATUSES, input.status, base.status) as Sponsor["status"]) : base.status;
+  const support = has("support") ? (pick(SUPPORT_TYPES, input.support, "") as Sponsor["support"]) : base.support;
+  const amount = has("amount") ? clean(input.amount, "amount", 100) : base.amount;
+  const picked = has("tier") ? (pick(TIERS, input.tier, "") as Sponsor["tier"]) : base.tier;
+
+  // For a money sponsor the tier follows the amount (Lion, Eagle, Griffin), unless someone chose a different tier on purpose.
+  // It is filled in while empty, and moves with the amount while it still matches what the old amount earned.
+  let tier = picked;
+  const choseOne = has("tier") && picked !== base.tier;
+  if (!choseOne && isMonetary(support, status) && (picked === "" || picked === tierFor(base.amount))) tier = tierFor(amount) || picked;
+
   return {
     season: base.season,
     company: has("company") ? clean(input.company, "company's name", 100, true) : base.company,
     studentContact: has("studentContact") ? clean(input.studentContact, "student contact", 100) : base.studentContact,
     contact: has("contact") ? clean(input.contact, "contact", 250) : base.contact,
-    status: has("status") ? (pick(SPONSOR_STATUSES, input.status, base.status) as Sponsor["status"]) : base.status,
-    support: has("support") ? (pick(SUPPORT_TYPES, input.support, "") as Sponsor["support"]) : base.support,
-    amount: has("amount") ? clean(input.amount, "amount", 100) : base.amount,
+    status,
+    support,
+    amount,
     notes: has("notes") ? clean(input.notes, "notes", 2000) : base.notes,
-    tier: has("tier") ? (pick(TIERS, input.tier, "") as Sponsor["tier"]) : base.tier,
+    tier,
     prior: base.prior,
   };
 }
@@ -74,7 +95,7 @@ export function importSponsors(from: Sponsor[], here: Sponsor[], everything: Spo
 
 export function cleanGrant(input: Input, before: Grant | null, season: string): NewRow<Grant> {
   const has = (key: string) => key in input;
-  const base = before ?? { season, title: "", organization: "", link: "", writer: "", status: GRANT_STATUSES[0], deadline: "", amount: "", notes: "", questions: "", prior: false, sponsored: false };
+  const base = before ?? { season, title: "", organization: "", link: "", writer: "", status: GRANT_STATUSES[0], deadline: "", amount: "", notes: "", questions: "", prior: false, sponsored: false, kind: "" as const };
   const status = typeof input.status === "string" && (GRANT_STATUSES as readonly string[]).includes(input.status) ? (input.status as Grant["status"]) : base.status;
   return {
     season: base.season,
@@ -87,6 +108,7 @@ export function cleanGrant(input: Input, before: Grant | null, season: string): 
     amount: has("amount") ? clean(input.amount, "amount", 100) : base.amount,
     notes: has("notes") ? clean(input.notes, "notes", 2000) : base.notes,
     questions: has("questions") ? clean(input.questions, "questions", 6000) : base.questions,
+    kind: has("kind") ? ((GRANT_KINDS as readonly string[]).includes(input.kind as string) ? (input.kind as Grant["kind"]) : "") : base.kind,
     prior: base.prior,
     sponsored: base.sponsored,
   };
@@ -115,11 +137,18 @@ export function dollars(text: string): number {
   return match ? Number(match[1]) : 0;
 }
 
+/** The numbers the 1-2-3-100 side adds to Stats (until it has any, these are empty). */
+export type StatsExtra = Partial<Pick<BizStats, "pitchesByMonth" | "restaurant" | "progress">>;
+
 /** The Stats screen's numbers for one season. */
-export function statsFor(season: string, sponsors: Sponsor[], grants: Grant[]): BizStats {
+export function statsFor(season: string, sponsors: Sponsor[], grants: Grant[], extra: StatsExtra = {}): BizStats {
   const mine = sponsors.filter((s) => s.season === season);
   const gmine = grants.filter((g) => g.season === season);
   const count = (stages: number[], rows: { status: string }[]) => stages.map((n) => rows.filter((r) => stageOf(r.status) === n).length);
+  const raisedIn = (s: string) =>
+    sponsors.filter((x) => x.season === s && x.status.startsWith("5. Received")).reduce((sum, x) => sum + dollars(x.amount), 0) +
+    grants.filter((x) => x.season === s && x.status === "5. Received").reduce((sum, x) => sum + dollars(x.amount), 0);
+  const seasons = [...new Set([...sponsors.map((x) => x.season), ...grants.map((x) => x.season)])].sort();
   return {
     season,
     raised: {
@@ -134,5 +163,13 @@ export function statsFor(season: string, sponsors: Sponsor[], grants: Grant[]): 
     },
     grantStages: count([0, 1, 2, 3, 4, 5], gmine),
     grants: { applied: gmine.filter((g) => stageOf(g.status) >= 2).length, accepted: gmine.filter((g) => g.status === "4. Accepted" || g.status === "5. Received").length },
+    kinds: GRANT_KINDS.map((kind) => {
+      const filled = gmine.filter((g) => g.kind === kind && stageOf(g.status) >= 2);
+      return { kind, filled: filled.length, accepted: filled.filter((g) => g.status === "4. Accepted" || g.status === "5. Received").length };
+    }),
+    seasonsRaised: seasons.map((s) => ({ season: s, raised: raisedIn(s) })),
+    pitchesByMonth: extra.pitchesByMonth ?? [0, 0, 0, 0, 0, 0],
+    restaurant: extra.restaurant ?? { used: 0, limit: 3 },
+    progress: extra.progress ?? { done: 0, waiting: 0, inProgress: 0, notStarted: 0 },
   };
 }

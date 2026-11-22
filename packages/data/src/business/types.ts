@@ -64,8 +64,14 @@ export interface Grant extends Item {
   prior: boolean;
   /** A received grant's giver was added to the Sponsor tracker. */
   sponsored: boolean;
+  /** What kind of funder it is (Stats counts grants by kind). Empty until someone picks one. */
+  kind: GrantKind | "";
   createdAt: string;
 }
+
+/** What kind of funder a grant is, for the Stats screen. */
+export const GRANT_KINDS = ["FIRST / FRC-specific", "Local (school, city)", "Corporate", "Foundation", "Government"] as const;
+export type GrantKind = (typeof GRANT_KINDS)[number];
 
 export type GrantPublic = Pick<Grant, "_id" | "season" | "title" | "link" | "status" | "deadline" | "prior">;
 
@@ -79,6 +85,16 @@ export interface BizStats {
   pitches: { accepted: number; declined: number; deciding: number };
   grantStages: number[];
   grants: { applied: number; accepted: number };
+  /** Grants filled out (stage 2 and on) and accepted, for each kind. */
+  kinds: { kind: GrantKind; filled: number; accepted: number }[];
+  /** Money raised in each season that has anything, oldest first. */
+  seasonsRaised: { season: string; raised: number }[];
+  /** Sponsor pitches sent by the end of each month, August to January (a running total). */
+  pitchesByMonth: number[];
+  /** Restaurant fundraiser days taken this season, and the limit. */
+  restaurant: { used: number; limit: number };
+  /** Students by 1-2-3-100 status. */
+  progress: { done: number; waiting: number; inProgress: number; notStarted: number };
 }
 
 /** The first number of a status: its stage. */

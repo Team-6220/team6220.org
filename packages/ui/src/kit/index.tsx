@@ -197,6 +197,8 @@ export interface Column<R> {
   /** Header menu: sort by text / number / date, and "group" (only for choose-from-a-set columns). */
   menu?: ColumnMenu[];
   render?: (row: R) => ReactNode;
+  /** A thin line to the left of the column, to group columns (the status columns in a tracker). */
+  divider?: boolean;
   /** The value sorting and grouping use (defaults to row[key]). */
   value?: (row: R) => string | number;
   wrap?: boolean;
@@ -214,6 +216,8 @@ export interface DataTableProps<R> {
   /** The column whose pill shows on the phone card. */
   statusKey?: string;
   empty?: ReactNode;
+  /** Something under a row, across all its columns (for example "Received. Add to the Sponsor tracker?"). Return null for none. */
+  rowExtra?: (row: R) => ReactNode;
   /** Extra attributes on each row, e.g. { "data-mine": "1" } for a "Just mine" toggle. */
   rowAttrs?: (row: R) => Record<string, string>;
 }
@@ -224,7 +228,7 @@ function cellValue<R>(c: Column<R>, r: R): string | number {
   return typeof v === "number" ? v : v == null ? "" : String(v);
 }
 
-export function DataTable<R>({ columns, rows, rowKey, sort: initialSort, onRowClick, onReorder, actions, statusKey, empty, rowAttrs }: DataTableProps<R>) {
+export function DataTable<R>({ columns, rows, rowKey, sort: initialSort, onRowClick, onReorder, actions, statusKey, empty, rowAttrs, rowExtra }: DataTableProps<R>) {
   const [sort, setSort] = useState(initialSort ?? null);
   const [groupBy, setGroupBy] = useState<string | null>(null);
   const drag = useRef<string | null>(null);
@@ -269,7 +273,7 @@ export function DataTable<R>({ columns, rows, rowKey, sort: initialSort, onRowCl
   const header = (
     <div className="k-thead" style={{ gridTemplateColumns: grid }}>
       {onReorder && <><span /><span title="Priority: 1 is first">Order</span></>}
-      {columns.map((c) => <HeaderCell key={c.key} col={c} sort={onReorder ? null : sort} setSort={setSort} groupBy={groupBy} setGroupBy={setGroupBy} />)}
+      {columns.map((c) => <span key={c.key} className={c.divider ? "k-th--divider" : undefined}><HeaderCell col={c} sort={onReorder ? null : sort} setSort={setSort} groupBy={groupBy} setGroupBy={setGroupBy} /></span>)}
       {hasActions && <span />}
     </div>
   );
@@ -289,8 +293,9 @@ export function DataTable<R>({ columns, rows, rowKey, sort: initialSort, onRowCl
         onClick={onRowClick ? (e) => { if (!(e.target as HTMLElement).closest("button,a,input,select,textarea,summary")) onRowClick(r); } : undefined}
         {...dragProps}>
         {onReorder && <><span className="k-handle" title="Drag to change the order" aria-hidden="true">⋮⋮</span><b style={{ color: "var(--color-gold)", textAlign: "center" }}>{i + 1}</b></>}
-        {columns.map((c) => <span key={c.key} className={`k-td${c.wrap ? " k-td--wrap" : ""}`}>{c.render ? c.render(r) : String(cellValue(c, r))}</span>)}
+        {columns.map((c) => <span key={c.key} className={`k-td${c.wrap ? " k-td--wrap" : ""}${c.divider ? " k-td--divider" : ""}`}>{c.render ? c.render(r) : String(cellValue(c, r))}</span>)}
         {hasActions && <span className="k-row" style={{ flexWrap: "nowrap" }}>{actions!(r)}{onReorder && <MoveButtons onUp={() => move(k, i - 1)} onDown={() => move(k, i + 1)} />}</span>}
+        {rowExtra?.(r) && <div className="k-tr-extra">{rowExtra(r)}</div>}
       </div>
     );
   };
@@ -308,6 +313,7 @@ export function DataTable<R>({ columns, rows, rowKey, sort: initialSort, onRowCl
         {rest.filter((c) => c !== statusCol).map((c) => String(cellValue(c, r))).filter(Boolean).join(" · ")}
       </span>
       {(hasActions || onReorder) && <div className="k-row">{actions?.(r)}{onReorder && <MoveButtons onUp={() => move(rowKey(r), i - 1)} onDown={() => move(rowKey(r), i + 1)} />}</div>}
+      {rowExtra?.(r)}
     </div>
   );
   const sortable = columns.filter((c) => c.menu?.some((m) => m !== "group"));

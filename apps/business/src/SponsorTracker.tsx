@@ -2,16 +2,24 @@
 // sees the company, its stage and the student contact (so two people never pitch the same company); Operations, leads,
 // mentors and boosters also see contacts, amounts and notes, and click any text to change it.
 import { useEffect, useMemo, useState } from "react";
-import { business, type Sponsor, type SponsorPublic } from "@team6220/data";
-import { Btn, DataTable, Field, Fields, Note, PageHeader, Screen, StatusChip, Tabs, Toggle, type Column } from "@team6220/ui";
-import { EditChoice, EditMoney, EditText, Fold, PeopleList, SPONSOR_OPTIONS, SeasonChips, Stages } from "./shared";
+import { business, type Me, type Sponsor, type SponsorPublic } from "@team6220/data";
+import { Btn, DataTable, Field, Fields, Icon, Note, PageHeader, Screen, StatusChip, Tabs, Toggle, type Column } from "@team6220/ui";
+import { EditChoice, EditMoney, EditText, ExportMenu, Fold, PeopleList, PrivateNote, SPONSOR_OPTIONS, SeasonChips, Stages } from "./shared";
 
 type Row = Sponsor | SponsorPublic;
 const isFull = (r: Row): r is Sponsor => "contact" in r;
 
 const STAGE_NOTES = ["Find who to write to", "Writing the pitch", "Sent. Waiting for a reply", "They replied", "Accepted or declined", "Money or in-kind"];
 
-export function SponsorTracker({ canEdit }: { canEdit: boolean }) {
+/** "a lead", "in Operations", "a mentor": why this person sees the private columns. */
+function whyYouSee(me: Me): string {
+  if (me.roles.lead) return "a lead";
+  if (me.roles.approver) return me.badges.includes("Mentor") ? "a mentor" : "a booster";
+  return "in Operations";
+}
+
+export function SponsorTracker({ me }: { me: Me }) {
+  const canEdit = me.roles.business;
   const [list, setList] = useState<business.SponsorList | null>(null);
   const [season, setSeason] = useState<string | undefined>();
   const [stage, setStage] = useState("all");
@@ -55,20 +63,25 @@ export function SponsorTracker({ canEdit }: { canEdit: boolean }) {
     { key: "company", label: "Company", width: "minmax(0, 1.3fr)", menu: ["text"], render: (r) => (
       <span className="biz-company">
         {canEdit && isFull(r) ? <EditText value={r.company} label="Company" onSave={(company) => change(r, { company })} /> : <strong>{r.company}</strong>}
-        {r.prior && <span className="k-hint">Prior sponsor</span>}
+        {r.prior && <span className="k-hint biz-prior">Prior sponsor</span>}
       </span>
     ) },
-    { key: "studentContact", label: "Student contact", width: "130px", menu: ["text"], render: (r) => canEdit ? <EditText value={r.studentContact} label="Student contact" list="biz-people" onSave={(studentContact) => change(r, { studentContact })} /> : r.studentContact || <span className="k-hint">None yet</span> },
+    { key: "studentContact", label: "Student contact", width: "130px", menu: ["text"], render: (r) => canEdit ? <EditText value={r.studentContact} label="Student contact" list="biz-people" placeholder="Type a name" onSave={(studentContact) => change(r, { studentContact })} /> : r.studentContact || <span className="k-hint">None yet</span> },
     ...(canEdit ? [
-      { key: "contact", label: "Contact", width: "minmax(0, 1.4fr)", menu: ["text"], value: (r: Row) => (isFull(r) ? r.contact : ""), render: (r: Row) => isFull(r) ? <EditText value={r.contact} label="Contact" multiline placeholder="Name, email, phone" onSave={(contact) => change(r, { contact })} /> : null },
+      { key: "contact", label: "Contact", width: "minmax(0, 1.4fr)", menu: ["text"], value: (r: Row) => (isFull(r) ? r.contact : ""), render: (r: Row) => isFull(r) ? <span className="biz-private"><Icon name="lock" inline /><EditText value={r.contact} label="Contact" multiline placeholder="Name, email, phone" onSave={(contact) => change(r, { contact })} /></span> : null },
     ] as Column<Row>[] : []),
-    { key: "status", label: "Status", width: "210px", menu: ["group"], render: (r) => <StatusChip value={r.status} options={SPONSOR_OPTIONS} label={`${r.company} status`} onChange={canEdit ? (status) => change(r, { status: status as Sponsor["status"] }) : undefined} /> },
+    { key: "status", label: "Status", width: "210px", menu: ["group"], divider: true, render: (r) => <StatusChip value={r.status} options={SPONSOR_OPTIONS} label={`${r.company} status`} onChange={canEdit ? (status) => change(r, { status: status as Sponsor["status"] }) : undefined} /> },
     ...(canEdit ? [
-      { key: "support", label: "Type of support", width: "170px", menu: ["group"], render: (r: Row) => isFull(r) ? <EditChoice value={r.support} label="Type of support" options={business.SUPPORT_TYPES} onSave={(support) => change(r, { support: support as Sponsor["support"] })} /> : null },
+      { key: "support", label: "Type of support", width: "170px", menu: ["group"], divider: true, render: (r: Row) => isFull(r) ? <EditChoice value={r.support} label="Type of support" options={business.SUPPORT_TYPES} onSave={(support) => change(r, { support: support as Sponsor["support"] })} /> : null },
       { key: "amount", label: "Amount or details", width: "minmax(0, 1fr)", menu: ["text"], render: (r: Row) => isFull(r) ? <EditMoney value={r.amount} label="Amount or details" onSave={(amount) => change(r, { amount })} /> : null },
-      { key: "notes", label: "Notes", width: "minmax(0, 1.5fr)", render: (r: Row) => isFull(r) ? <EditText value={r.notes} label="Notes" multiline onSave={(notes) => change(r, { notes })} /> : null },
+      { key: "notes", label: "Notes", width: "minmax(0, 1.5fr)", menu: ["text"], divider: true, render: (r: Row) => isFull(r) ? <EditText value={r.notes} label="Notes" multiline placeholder="Add a note" onSave={(notes) => change(r, { notes })} /> : null },
       { key: "tier", label: "Tier", width: "100px", menu: ["group"], render: (r: Row) => isFull(r) ? <EditChoice value={r.tier} label="Tier" options={business.TIERS} onSave={(tier) => change(r, { tier: tier as Sponsor["tier"] })} /> : null },
     ] as Column<Row>[] : []),
+  ];
+
+  const exportRows = () => [
+    ["Company", "Student contact", ...(canEdit ? ["Contact"] : []), "Status", ...(canEdit ? ["Type of support", "Amount or details", "Notes", "Tier"] : [])],
+    ...shown.map((r) => [r.company, r.studentContact, ...(isFull(r) ? [r.contact] : []), r.status, ...(isFull(r) ? [r.support, r.amount, r.notes, r.tier] : [])]),
   ];
 
   if (error && !list) return <Screen><PageHeader title="Sponsor tracker" /><Note tone="bad">{error}</Note></Screen>;
@@ -77,9 +90,8 @@ export function SponsorTracker({ canEdit }: { canEdit: boolean }) {
 
   return (
     <Screen>
-      <PageHeader title="Sponsor tracker" sub="Every company we are asking for support, and how far along it is." />
+      <PageHeader title="Sponsor tracker" sub="Every company we are asking for support, and how far along it is." actions={<ExportMenu filename={`sponsor-tracker-${list.season}.csv`} rows={exportRows} />} />
       <SeasonChips seasons={list.seasons} value={list.season} onChange={(s) => void load(s)} />
-      <Note tone="blue">{canEdit ? "Everyone sees the company, its stage and the student contact, so two people never pitch the same company. Operations, leads, boosters and mentors see the company contact, amounts and notes, and can change anything. Click any text to change it." : "You can see each company, its stage and the student contact, so two people never pitch the same company. Operations, leads, boosters and mentors see the rest."}</Note>
       {error && <Note tone="bad">{error}</Note>}
       <Fold icon="plus" title="Add a company">
         <p className="k-hint">Anyone can add a company and who to contact. The rest is filled in as it moves along.</p>
@@ -106,6 +118,10 @@ export function SponsorTracker({ canEdit }: { canEdit: boolean }) {
       {note && <p className="k-hint" role="status">{note}</p>}
       <Toggle label="Wrap text (show everything that is cut off)" checked={wrap} onChange={setWrap} />
       <Tabs items={[{ id: "all", label: `All ${rows.length}` }, ...counts.map((n, i) => ({ id: String(i), label: `Stage ${i} · ${n}` }))]} value={stage} onChange={setStage} />
+      <PrivateNote>
+        Everyone sees the company, its stage and the student contact, so two people never pitch the same company and you know who to ask. Operations, leads, boosters, and mentors can see the company contact, amounts, and notes, and change anything in the tracker.
+        {canEdit ? ` You are seeing them because you are ${whyYouSee(me)}. Click any text to change it.` : ""}
+      </PrivateNote>
       <div className={`biz-table${wrap ? " biz-wrap" : ""}`}>
         <DataTable columns={columns} rows={shown} rowKey={(r) => r._id} statusKey="status" empty={rows.length ? "Nothing at this stage." : "No companies yet this season. Add one above."} />
       </div>
