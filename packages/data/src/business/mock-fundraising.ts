@@ -4,12 +4,12 @@ import { mockActions, seedMock, type MockDb } from "../ops/mock";
 import { OpsError, type Person } from "../ops/types";
 import { addDays as shiftDay, today } from "../calendar/dates";
 import {
-  COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS,
+  COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_TEMPLATES, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS,
   cleanPitch, cleanRestaurant, cleanSale, cleanSettings, cleanStudentGrant, decide, defaultSettings, followUpsFor, grantPlanProblem, isApproved, isReply, merchTotal, pickOption,
-  pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, type StudentRecords,
+  pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, statusDetail, type StudentRecords,
 } from "./fundraising";
 import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSponsor, sameName, seasonLabel } from "./plan";
-import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "./types";
+import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type EmailTemplate, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "./types";
 import "./mock"; // the trackers' demo data comes first
 
 const plan = <T>(step: () => T): T => {
@@ -26,8 +26,26 @@ const approved = (by = "Demo Lead"): Approval => ({ status: "approved", sentAt: 
 const waiting = (): Approval => ({ status: "waiting", sentAt: "2026-11-09T10:00:00Z", decidedAt: "", by: "", note: "" });
 const WORDS = "Los Al Robotics is a natural fit for the Discovery Cube: both of us inspire the next generation of innovators through science and technology, and many of our members first found STEM there. We have taken part in their Open House days for years, our members still talk about the exhibits that first made them curious about engineering, and we would love to help the next group of local kids find the same spark through the hands-on robotics demos our team runs at its own events every year.";
 
+const PITCH_BODY = `Dear [Contact],
+
+We are writing to request [Company]'s partnership with our student-led robotics team in this year's FIRST Robotics Competition (FRC). Los Al Robotics, known in competition as Team 6220 or the Golden Griffins, is a growing group of students based out of Los Alamitos High School who share a passion for Science, Technology, Engineering, and Mathematics (STEM), Business, and Marketing.
+
+[Why this company fits us]
+
+Each year, as we construct a new robot from scratch, the team uses a great deal of resources. We rely on gracious support, like materials and capital, from our sponsors. We would be grateful for any financial or in-kind support from [Company].
+
+Our 501(c)(3) nonprofit status qualifies any of your contributions as tax-deductible (EIN 00-0000000). We would be happy to answer any questions you have by replying here.
+
+Sincerely,
+6220 [Your name] - [Your subteam]
+Los Al Robotics / Golden Griffins / FRC Team 6220`;
+
 seedMock((db) => {
   const here = season();
+  const template = (order: number, name: string, subject: string, body: string) => db.save<EmailTemplate>(COLLECTION_TEMPLATES, { kind: "pitch", name, subject, body, order });
+  template(1, "Main", "[Local?] Sponsorship Invitation - Los Al Robotics Team", PITCH_BODY);
+  template(2, "Follow-up 1", "Following up: partnership with Los Al Robotics", "Dear [Contact],\n\nI hope this message finds you well. I wanted to follow up on our previous email regarding a potential partnership between [Company] and Los Al Robotics (FRC Team 6220).\n\nBest regards,\n6220 [Your name] - [Your subteam]");
+  template(3, "Follow-up 2", "Checking in: Los Al Robotics sponsorship request", "Dear [Contact],\n\nI am writing to check in regarding our sponsorship request and to see if you had a chance to review our materials.\n\nSincerely,\n6220 [Your name] - [Your subteam]");
   db.save(COLLECTION_SETTINGS, { ...defaultSettings(here), deadline: shiftDay(today(), 56) });
   const choice = (memberId: string, option: Choice["option"], merchDone: Approval = NO_APPROVAL) => db.save<Choice>(COLLECTION_CHOICES, { season: here, memberId, option, merchDone, touchedAt: new Date().toISOString() });
   const pitch = (memberId: string, slot: number, p: Partial<Pitch>) =>
@@ -36,6 +54,13 @@ seedMock((db) => {
   choice("demo-member", "sponsor");
   pitch("demo-member", 1, { company: "Boeing", contactName: "Bruce Wayne", contactEmail: "bruce@example.com", plan: approved(), sentOn: shiftDay(today(), -19), sentBy: "email", followUps: followUpsFor(shiftDay(today(), -19), 2) });
   pitch("demo-member", 2, { company: "Discovery Cube", contactName: "Mr. Adams", contactEmail: "outreach@example.com", plan: approved() });
+  // The other demo people each try a different option: the lead a restaurant day, the mentor merch, the booster grants.
+  choice("demo-lead", "restaurant");
+  choice("demo-mentor", "merch");
+  for (const [item, quantity, price, boughtBy, payment] of [["Team shirt", 1, 20, "Mr. Jones", ""], ["Hoodie", 1, 40, "Family member", ""], ["Custom: tote bag", 1, 5, "Friend", "Venmo"]] as const) {
+    db.save<MerchSale>(COLLECTION_MERCH, { season: here, memberId: "demo-mentor", item, quantity, price: item === "Hoodie" ? 40 : price, boughtBy, date: shiftDay(today(), -7), payment });
+  }
+  choice("demo-booster", "grant");
   // Everyone else, in every standing, so Approvals and Everyone's status have something to show.
   const people = db.rows<Person>("ops_people");
   const by = (name: string) => people.find((p) => p.name.toLowerCase().includes(name))?.memberId ?? "";
@@ -82,7 +107,7 @@ const kindOf = (value: unknown): Kind => {
 const OPTION_FOR = { restaurant: "restaurant", grant: "grant", pitch: "sponsor" } as const;
 const SLOTS = { restaurant: 1, grant: 2, pitch: 3 } as const;
 const BLANK: Record<Kind, Record<string, unknown>> = {
-  restaurant: { restaurant: "", partner: "", date: "", allDay: true, startTime: "", endTime: "", address: "", miles: 0, link: "", notes: "", plan: NO_APPROVAL, flyer: null, proof: null, setupNotes: "", setUp: false },
+  restaurant: { restaurant: "", partner: "", date: "", allDay: false, startTime: "", endTime: "", address: "", miles: 0, link: "", notes: "", plan: NO_APPROVAL, flyer: null, proof: null, setupNotes: "", setUp: false },
   grant: { title: "", organization: "", link: "", deadline: "", asking: "", amount: "", notes: "", application: null, plan: NO_APPROVAL, submittedOn: "", finalFile: null, resultNotes: "", result: NO_APPROVAL, trackerId: "" },
   pitch: { company: "", contactName: "", contactEmail: "", contactPhone: "", method: "email", why: "", plan: NO_APPROVAL, visit: { date: "", who: "", what: "" }, template: "", sentOn: "", sentBy: "", followUps: [], reply: "none", result: { status: "", support: "", amount: "", tier: "", expires: false, endDate: "", followUpsDone: false, notes: "" }, resultApproval: NO_APPROVAL, trackerId: "" },
 };
@@ -179,6 +204,18 @@ mockActions({
       return { item: db.save(KINDS[kind], { ...row, touchedAt: at } as never) };
     },
   },
+  bizAttach: {
+    who: "team",
+    run: (request, actor, db) => {
+      const kind = kindOf(request.kind);
+      const row = ownRow(db, kind, request.id, actor.id);
+      const field = String(request.field);
+      if (!["flyer", "proof", "application", "finalFile"].includes(field)) throw new OpsError("bad-request", "That isn't a place for a file.");
+      const size = Math.floor((String(request.data ?? "").length * 3) / 4);
+      return { item: db.save(KINDS[kind], { ...row, [field]: { id: `demo-${Date.now()}`, name: String(request.name ?? "file"), size }, touchedAt: new Date().toISOString() } as never) };
+    },
+  },
+  bizFile: { who: "team", run: () => ({ name: "demo.pdf", mime: "text/plain", data: btoa("This is a demo file. Real files open from the team's Drive folder.") }) },
   bizPitchSent: {
     who: "team",
     run: (request, actor, db) => {
@@ -289,9 +326,8 @@ mockActions({
       const exempt = new Set(settings.exempt.map((e) => e.memberId));
       const rows = teamOf(db).map((m) => {
         const r = recordsOf(db, m.memberId);
-        const steps = r.choice?.option ? progressRows(r, today()) : [];
         const touched = [r.choice, ...r.restaurant, ...r.grants, ...r.pitches].map((x) => String((x as { touchedAt?: string } | null)?.touchedAt ?? "")).sort().pop() ?? "";
-        return { memberId: m.memberId, name: m.name, subteams: m.subteams, option: r.choice?.option ?? "", standing: exempt.has(m.memberId) ? "exempt" : standingOf(r), progress: Math.max(0, steps.filter((s) => s.status === "Done" || s.status === "Approved").length - 1), total: Math.max(0, steps.length - 1), merch: merchTotal(r.sales), pitches: r.pitches.filter((p) => isApproved(p.resultApproval)).length, lastActivity: touched };
+        return { memberId: m.memberId, name: m.name, subteams: m.subteams, option: r.choice?.option ?? "", standing: exempt.has(m.memberId) ? "exempt" : standingOf(r), detail: statusDetail(r), lastActivity: touched };
       });
       return { deadline: settings.deadline, exempt: settings.exempt, rows };
     },
@@ -306,6 +342,7 @@ mockActions({
       return { sent: teamOf(db).filter((m) => !exempt.has(m.memberId) && standingOf(recordsOf(db, m.memberId)) !== "done" && (!ask || ask.has(m.memberId))).length };
     },
   },
+  bizTemplates: { who: "team", run: (_r, _a, db) => ({ templates: q<EmailTemplate>(db, COLLECTION_TEMPLATES).sort((a, b) => a.order - b.order), cc: settingsOf(db).pitchCc }) },
   bizGetSettings: { who: "team", run: (_r, _a, db) => ({ settings: settingsOf(db) }) },
   bizSaveSettings: {
     who: "lead",

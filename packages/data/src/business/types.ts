@@ -252,7 +252,20 @@ export interface BizSettings extends Item {
   minWords: number;
   restaurantLimit: number;
   exempt: ExemptStudent[];
+  /** Who is copied on every pitch email, as typed: "a@x.org, b@y.org". Kept in Wix, never in the code. */
+  pitchCc: string;
 }
 
 /** A student's overall standing, for Everyone's status and Stats. */
 export type Standing = "done" | "waiting" | "inProgress" | "notStarted" | "exempt";
+
+/** An email template (collection biz_templates): the master copy of an email to sponsors. */
+export interface EmailTemplate extends Item {
+  /** "pitch" (first email, follow-ups), "invitation", "thanks" or "update". */
+  kind: "pitch" | "invitation" | "thanks" | "update";
+  name: string;
+  subject: string;
+  /** Paragraphs separated by a blank line. [Company], [Contact], [Your name] and the like are filled in. */
+  body: string;
+  order: number;
+}

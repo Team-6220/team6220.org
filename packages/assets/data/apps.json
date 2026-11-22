@@ -452,12 +452,12 @@
           {
             "name": "Grants",
             "icon": "coin",
-            "view": "grant"
+            "view": "grants"
           },
           {
             "name": "Sponsor pitches",
             "icon": "mail",
-            "view": "sponsor"
+            "view": "pitches"
           },
           {
             "name": "Merch",

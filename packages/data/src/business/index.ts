@@ -45,7 +45,7 @@ export type My = { settings: BizSettings; records: StudentRecords; rows: Progres
 export type ItemKind = "restaurant" | "grant" | "pitch";
 export type ItemOf<K extends ItemKind> = K extends "restaurant" ? RestaurantDay : K extends "grant" ? StudentGrant : Pitch;
 export type ApprovalRow = { kind: ItemKind | "merch"; id: string; step: "plan" | "result" | "done"; memberId: string; student: string; option: string; what: string; sentAt: string; status: Approval["status"] };
-export type StatusRow = { memberId: string; name: string; subteams: string[]; option: Option | ""; standing: Standing; progress: number; total: number; merch: number; pitches: number; lastActivity: string };
+export type StatusRow = { memberId: string; name: string; subteams: string[]; option: Option | ""; standing: Standing; detail: string; lastActivity: string };
 export type Review = { item: Record<string, unknown> & { _id: string }; student: string; records: StudentRecords; rows: ProgressRow[]; settings: BizSettings };
 
 /** Your pick, your things, and what is left to do. */
@@ -71,3 +71,30 @@ export const status = (): Promise<{ deadline: string; exempt: { memberId: string
 export const remind = async (memberIds?: string[]) => (await callOps<{ sent: number }>("bizRemind", { memberIds })).sent;
 export const settings = async (): Promise<BizSettings> => (await callOps<{ settings: BizSettings }>("bizGetSettings")).settings;
 export const saveSettings = async (changes: Partial<BizSettings>): Promise<BizSettings> => (await callOps<{ settings: BizSettings }>("bizSaveSettings", { settings: changes })).settings;
+
+/** Reads a file as base64 (without the "data:...;base64," start). */
+const toBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(new Error("We couldn't read that file."));
+    reader.readAsDataURL(file);
+  });
+
+/** Puts a PDF or image in the team's Drive folder and attaches it to a step (up to 8 MB). */
+export async function attach<K extends ItemKind>(kind: K, id: string, field: "flyer" | "proof" | "application" | "finalFile", file: File): Promise<ItemOf<K>> {
+  if (file.size > 8 * 1024 * 1024) throw new Error("Pick a file up to 8 MB.");
+  return (await callOps<{ item: ItemOf<K> }>("bizAttach", { kind, id, field, name: file.name, mime: file.type, data: await toBase64(file) })).item;
+}
+
+/** Opens a file (Operations, or the student who sent it) in a new tab. */
+export async function openFile(kind: ItemKind, id: string, field: string): Promise<void> {
+  const file = await callOps<{ name: string; mime: string; data: string }>("bizFile", { kind, id, field });
+  const bytes = Uint8Array.from(atob(file.data), (c) => c.charCodeAt(0));
+  window.open(URL.createObjectURL(new Blob([bytes], { type: file.mime })), "_blank");
+}
+
+export type { EmailTemplate } from "./types";
+export { fillTemplate } from "./fundraising";
+/** The pitch emails, and who is copied on them. */
+export const templates = (): Promise<{ templates: import("./types").EmailTemplate[]; cc: string }> => callOps("bizTemplates");

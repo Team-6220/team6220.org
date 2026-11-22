@@ -124,6 +124,8 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   bizPick: { who: "team", run: fundraising.bizPick },
   bizItemSave: { who: "team", run: fundraising.bizItemSave },
   bizItemSend: { who: "team", run: fundraising.bizItemSend },
+  bizAttach: { who: "team", run: fundraising.bizAttach },
+  bizFile: { who: "team", run: fundraising.bizFile },
   bizPitchSent: { who: "team", run: fundraising.bizPitchSent },
   bizPitchReply: { who: "team", run: fundraising.bizPitchReply },
   bizFollowUpSent: { who: "team", run: fundraising.bizFollowUpSent },
@@ -138,6 +140,7 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   bizGetSettings: { who: "team", run: fundraising.bizGetSettings },
   bizSaveSettings: { who: "lead", run: fundraising.bizSaveSettings },
   bizDistance: { who: "team", run: fundraising.bizDistance },
+  bizTemplates: { who: "team", run: fundraising.bizTemplates },
   // RSVP (rsvp.ts)
   rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
   rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },

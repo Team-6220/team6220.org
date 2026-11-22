@@ -10,6 +10,7 @@ export const COLLECTION_RESTAURANT = "biz_restaurant";
 export const COLLECTION_STUDENT_GRANTS = "biz_student_grants";
 export const COLLECTION_PITCHES = "biz_pitches";
 export const COLLECTION_MERCH = "biz_merch_sales";
+export const COLLECTION_TEMPLATES = "biz_templates";
 
 /** Los Alamitos High School, for working out how far a restaurant is. */
 export const SCHOOL = { lat: 33.7983, lon: -118.0645, name: "Los Alamitos High School" };
@@ -24,12 +25,13 @@ export function defaultSettings(season: string): Omit<BizSettings, "_id"> {
   return {
     season,
     deadline: "",
-    reminders: [{ weeks: 10, everyDays: 35 }, { weeks: 5, everyDays: 21 }, { weeks: 3, everyDays: 14 }, { weeks: 1, everyDays: 7 }, { weeks: 0.2, everyDays: 2 }, { weeks: 0, everyDays: 1 }],
+    reminders: [{ weeks: 10, everyDays: 35 }, { weeks: 5, everyDays: 21 }, { weeks: 3, everyDays: 14 }, { weeks: 1, everyDays: 7 }, { weeks: 0.29, everyDays: 2 }, { weeks: 0, everyDays: 1 }],
     ways: { discord: true, badge: true, push: true },
     followUps: 2,
     minWords: 75,
     restaurantLimit: 3,
     exempt: [],
+    pitchCc: "",
   };
 }
 
@@ -52,6 +54,7 @@ export function cleanSettings(input: Input, before: Omit<BizSettings, "_id">): O
     followUps: "followUps" in input ? int(input.followUps, "Follow-ups per pitch", 0, 5) : before.followUps,
     minWords: "minWords" in input ? int(input.minWords, "The fewest words", 0, 500) : before.minWords,
     restaurantLimit: "restaurantLimit" in input ? int(input.restaurantLimit, "Restaurant days allowed", 0, 50) : before.restaurantLimit,
+    pitchCc: "pitchCc" in input ? clean(input.pitchCc, "copy list", 400) : before.pitchCc,
     exempt: Array.isArray(input.exempt) ? (input.exempt as Input[]).map((e) => ({ memberId: clean(e.memberId, "student", 100, true), reason: clean(e.reason, "reason", 200) })) : before.exempt,
   };
 }
@@ -284,3 +287,24 @@ export function progressRows(r: StudentRecords, today: string): ProgressRow[] {
   return rows;
 }
 
+
+// ----- email templates -----
+
+/** What a template's [Brackets] are filled with. Anything else in brackets is left as typed. */
+export function fillTemplate(text: string, values: Record<string, string>): string {
+  return text.replace(/\[([^\]]+)\]/g, (whole, name: string) => (name in values && values[name] ? values[name] : whole));
+}
+
+/** The short line under a student's name on Everyone's status: "Plan sent", "2 of 3", "$45 of $100". */
+export function statusDetail(r: StudentRecords): string {
+  switch (r.choice?.option) {
+    case "restaurant": {
+      const d = r.restaurant[0];
+      return !d ? "" : d.setUp ? "Set up" : d.plan.status === "approved" ? "Plan approved" : d.plan.status === "waiting" ? "Plan sent" : d.plan.status === "sent-back" ? "Plan sent back" : "Plan started";
+    }
+    case "grant": return `${r.grants.filter((g) => isApproved(g.result)).length} of 2`;
+    case "sponsor": return `${r.pitches.filter((p) => isApproved(p.resultApproval)).length} of 3`;
+    case "merch": return `$${merchTotal(r.sales)} of $${MERCH_GOAL}`;
+    default: return "";
+  }
+}

@@ -13,17 +13,18 @@
 import { BADGES } from "../../config";
 import { BizError, COLLECTION_GRANTS, COLLECTION_SPONSORS, cleanGrant, cleanSponsor, sameName, seasonLabel } from "../../business/plan";
 import {
-  COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS, SCHOOL,
+  COLLECTION_CHOICES, COLLECTION_MERCH, COLLECTION_TEMPLATES, COLLECTION_PITCHES, COLLECTION_RESTAURANT, COLLECTION_SETTINGS, COLLECTION_STUDENT_GRANTS, FAR_MILES, MERCH_GOAL, REPLY_STATUS, SCHOOL,
   cleanPitch, cleanRestaurant, cleanSale, cleanSettings, cleanStudentGrant, decide, defaultSettings, followUpsFor, grantPlanProblem, isApproved, isReply, merchTotal, miles,
-  pickOption, pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, type StudentRecords,
+  pickOption, pitchPlanProblem, progressRows, restaurantDaysUsed, restaurantProblem, sendApproval, standingOf, statusDetail, type StudentRecords,
 } from "../../business/fundraising";
-import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type Grant, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "../../business/types";
+import { NO_APPROVAL, type Approval, type BizSettings, type Choice, type EmailTemplate, type Grant, type MerchSale, type Pitch, type RestaurantDay, type Sponsor, type StudentGrant } from "../../business/types";
+import { rolesFor } from "../roles";
 import { COLLECTION_PEOPLE, getRecord, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
 import * as notify from "./notify";
 import { teamMembers } from "./rsvp";
 
-export const FUNDRAISING_COLLECTIONS = [COLLECTION_SETTINGS, COLLECTION_CHOICES, COLLECTION_RESTAURANT, COLLECTION_STUDENT_GRANTS, COLLECTION_PITCHES, COLLECTION_MERCH] as const;
+export const FUNDRAISING_COLLECTIONS = [COLLECTION_TEMPLATES, COLLECTION_SETTINGS, COLLECTION_CHOICES, COLLECTION_RESTAURANT, COLLECTION_STUDENT_GRANTS, COLLECTION_PITCHES, COLLECTION_MERCH] as const;
 
 function plan<T>(step: () => T): T {
   try {
@@ -79,6 +80,55 @@ export async function bizPick(ctx: Ctx, body: Doc) {
   return { choice: saved };
 }
 
+// ----- files -----
+
+/** Which fields of which kind hold a file, and when the student may still change it. */
+const FILE_FIELDS: Record<Kind, Record<string, (row: Doc) => boolean>> = {
+  restaurant: { flyer: (r) => isApproved(r.plan as Approval), proof: (r) => isApproved(r.plan as Approval) },
+  grant: { application: (r) => !isApproved(r.plan as Approval) && (r.plan as Approval).status !== "waiting", finalFile: (r) => isApproved(r.plan as Approval) && !isApproved(r.result as Approval) },
+  pitch: {},
+};
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+/** The team's Drive helper (an Apps Script on the team Google account): its address and secret are Wix secrets. */
+async function drive(ctx: Ctx, call: Record<string, unknown>): Promise<Record<string, any>> {
+  const [url, secret] = await Promise.all([ctx.env.secret("BIZ_FILES_URL"), ctx.env.secret("BIZ_FILES_SECRET")]);
+  if (!url || !secret) throw apiError("bad-request", "Uploads aren't set up yet: ask a web admin to finish the Drive helper (BIZ_FILES_URL and BIZ_FILES_SECRET).");
+  const response = await ctx.env.fetch(url, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ secret, ...call }) });
+  const answer = (await response.json().catch(() => null)) as Record<string, any> | null;
+  if (!response.ok || !answer || answer.ok === false) throw apiError("bad-request", "The file didn't go through. Try again in a minute.");
+  return answer;
+}
+
+/** { kind, id, field, name, mime, data (base64) } -> { item }. Puts the file in the team's Drive folder and keeps its ID. */
+export async function bizAttach(ctx: Ctx, body: Doc) {
+  const kind = kindOf(body.kind);
+  const row = await own(ctx, kind, body.id);
+  const field = String(body.field);
+  const allowed = FILE_FIELDS[kind][field];
+  if (!allowed) throw apiError("bad-request", "That isn't a place for a file.");
+  if (!allowed(row)) throw apiError("bad-request", "That step isn't open for files right now.");
+  const data = typeof body.data === "string" ? body.data : "";
+  const size = Math.floor((data.length * 3) / 4);
+  if (!data || size > MAX_FILE_BYTES) throw apiError("bad-request", "Pick a file up to 8 MB.");
+  const name = String(body.name ?? "file").replace(/[^\w .()-]/g, "_").slice(0, 100);
+  const stored = await drive(ctx, { action: "put", season: season(ctx), student: ctx.actor.name, name, mime: String(body.mime ?? "application/octet-stream"), data });
+  const saved = await ctx.data.save(KINDS[kind], { ...row, [field]: { id: String(stored.id), name, size }, touchedAt: now(ctx) } as Doc);
+  return { item: saved };
+}
+
+/** { kind, id, field } -> { name, mime, data }. Operations, or the student who sent it, opens a file. */
+export async function bizFile(ctx: Ctx, body: Doc) {
+  const kind = kindOf(body.kind);
+  const row = await getRecord(ctx, KINDS[kind], body.id, "item");
+  const mine = row.memberId === ctx.actor.id;
+  if (!mine && !rolesFor(ctx.actor.badges).business) throw apiError("forbidden", "Only Operations and the student who sent it can open this.");
+  const file = row[String(body.field)] as { id: string; name: string } | null;
+  if (!file) throw apiError("bad-request", "There is no file there.");
+  const got = await drive(ctx, { action: "get", id: file.id });
+  return { name: file.name, mime: String(got.mime ?? "application/octet-stream"), data: String(got.data ?? "") };
+}
+
 // ----- a restaurant day, grant or pitch -----
 
 const KINDS = { restaurant: COLLECTION_RESTAURANT, grant: COLLECTION_STUDENT_GRANTS, pitch: COLLECTION_PITCHES } as const;
@@ -123,7 +173,7 @@ export async function bizItemSave(ctx: Ctx, body: Doc) {
 
 const A = NO_APPROVAL;
 const BLANK: Record<Kind, Doc> = {
-  restaurant: { restaurant: "", partner: "", date: "", allDay: true, startTime: "", endTime: "", address: "", miles: 0, link: "", notes: "", plan: A, flyer: null, proof: null, setupNotes: "", setUp: false },
+  restaurant: { restaurant: "", partner: "", date: "", allDay: false, startTime: "", endTime: "", address: "", miles: 0, link: "", notes: "", plan: A, flyer: null, proof: null, setupNotes: "", setUp: false },
   grant: { title: "", organization: "", link: "", deadline: "", asking: "", amount: "", notes: "", application: null, plan: A, submittedOn: "", finalFile: null, resultNotes: "", result: A, trackerId: "" },
   pitch: { company: "", contactName: "", contactEmail: "", contactPhone: "", method: "email", why: "", plan: A, visit: { date: "", who: "", what: "" }, template: "", sentOn: "", sentBy: "", followUps: [], reply: "none", result: { status: "", support: "", amount: "", tier: "", expires: false, endDate: "", followUpsDone: false, notes: "" }, resultApproval: A, trackerId: "" },
 };
@@ -355,9 +405,7 @@ export async function bizStatus(ctx: Ctx) {
     const records: StudentRecords = { choice: (by(choices)[0] as unknown as Choice) ?? null, restaurant: by(restaurant) as unknown as RestaurantDay[], grants: by(grants) as unknown as StudentGrant[], pitches: by(pitches) as unknown as Pitch[], sales: by(sales) as unknown as MerchSale[] };
     const standing = exempt.has(m.memberId) ? ("exempt" as const) : standingOf(records);
     const touched = [...by(choices), ...by(restaurant), ...by(grants), ...by(pitches)].map((x) => String(x.touchedAt ?? "")).sort().pop() ?? "";
-    const progress = records.choice?.option ? progressRows(records, ctx.today()).filter((r) => r.status === "Done" || r.status === "Approved").length - 1 : 0;
-    const total = records.choice?.option ? progressRows(records, ctx.today()).length - 1 : 0;
-    return { memberId: m.memberId, name: m.name, subteams: m.subteams, option: records.choice?.option ?? "", standing, progress: Math.max(0, progress), total, merch: merchTotal(records.sales), pitches: records.pitches.filter((p) => isApproved(p.resultApproval)).length, lastActivity: touched };
+    return { memberId: m.memberId, name: m.name, subteams: m.subteams, option: records.choice?.option ?? "", standing, detail: statusDetail(records), lastActivity: touched };
   });
   return { deadline: settings.deadline, exempt: settings.exempt, rows };
 }
@@ -386,6 +434,14 @@ export async function bizSaveSettings(ctx: Ctx, body: Doc) {
   const saved = await ctx.data.save(COLLECTION_SETTINGS, { ...(before as unknown as Doc), ...clean } as unknown as Doc);
   ctx.log({ kind: "biz", id: "settings" }, "updated", "1-2-3-100 settings");
   return { settings: saved };
+}
+
+// ----- email templates -----
+
+/** {} -> { templates, cc }. The pitch emails students fill in, and who is copied on them. */
+export async function bizTemplates(ctx: Ctx) {
+  const [templates, settings] = await Promise.all([ctx.data.query(COLLECTION_TEMPLATES, {}, 200), settingsOf(ctx)]);
+  return { templates: (templates as unknown as EmailTemplate[]).sort((a, b) => a.order - b.order), cc: settings.pitchCc };
 }
 
 // ----- restaurant distance -----
