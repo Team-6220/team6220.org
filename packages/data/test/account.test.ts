@@ -62,6 +62,12 @@ describe("finishing your profile", () => {
     expect(s.rows("ops_history").some((h) => h.type === "person.approved")).toBe(true);
   });
 
+  it("gives a roster student their roster subteam even if they pick none", async () => {
+    s.rows("ops_roster")[0].subteam = "Design";
+    await s.post({ action: "finishProfile", token: newbie, form: form({ subteams: [] }) });
+    expect(s.members[newbie].badges).toEqual(["b-team", "b-design"]);
+  });
+
   it("leaves a student who doesn't match for a web admin", async () => {
     const answer = await s.post({ action: "finishProfile", token: newbie, form: form({ lastName: "Lovelace" }) });
     expect(answer).toMatchObject({ ok: true, approved: false });

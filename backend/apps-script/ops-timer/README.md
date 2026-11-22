@@ -8,6 +8,8 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 | --- | --- | --- |
 | `syncGithub` | every 5 minutes | Sends task changes in Icarus to GitHub (GitHub's changes arrive at once by webhook) |
 | `refreshEvents` | once a day | Updates saved competition events' dates from The Blue Alliance |
+| `sendDeliveries` | every 5 minutes | Sends Discord notifications that are waiting (and, after quiet hours, each person's overnight ones as one message) |
+| `runReminders` | every 15 minutes | Tasks due tomorrow or overdue, BOM lines waiting for signatures (one summary a day), late orders |
 
 ## Setup (once, with the team Google account)
 
@@ -30,8 +32,8 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 2. Make a long random secret (20 or more characters). Save it **twice**: as the Wix secret `OPS_TIMER_SECRET` (Wix
    dashboard → Developer Tools → Secrets Manager) and as the Script Property `OPS_TIMER_SECRET` here. Never put it in
    the repo.
-3. Triggers → Add trigger: `syncGithub`, time-driven, minutes timer, every 5 minutes; and `refreshEvents`,
-   time-driven, day timer.
+3. Triggers → Add trigger: `syncGithub` and `sendDeliveries`, time-driven, minutes timer, every 5 minutes;
+   `runReminders`, minutes timer, every 15 minutes; and `refreshEvents`, time-driven, day timer.
 4. Run `syncGithub` once from the editor to give the permission, then open Executions: it should say
    `syncGithub: 200`.
 

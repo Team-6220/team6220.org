@@ -11,6 +11,8 @@
  * Triggers (Triggers > Add trigger), both time-driven:
  *   syncGithub     every 5 minutes   (sends task changes to GitHub; GitHub's own changes arrive at once by webhook)
  *   refreshEvents  once a day        (updates saved competition events' dates from The Blue Alliance)
+ *   sendDeliveries every 5 minutes   (sends the Discord notifications that are waiting, and the morning bundle after quiet hours)
+ *   runReminders   every 15 minutes  (tasks due tomorrow or overdue, BOM lines waiting for signatures, late orders)
  */
 
 function syncGithub() {
@@ -19,6 +21,14 @@ function syncGithub() {
 
 function refreshEvents() {
   callJob_("refreshEvents");
+}
+
+function sendDeliveries() {
+  callJob_("sendDeliveries");
+}
+
+function runReminders() {
+  callJob_("runReminders");
 }
 
 function callJob_(job) {

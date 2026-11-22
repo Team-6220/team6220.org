@@ -69,6 +69,9 @@ export function makeOps(members: Record<string, Member>) {
     ["GITHUB_TOKEN", "gh-token"],
     ["OPS_TIMER_SECRET", TIMER_SECRET],
     ["GITHUB_WEBHOOK_SECRET", WEBHOOK_SECRET],
+    ["DISCORD_BOT_TOKEN", "bot-token"],
+    ["DISCORD_CLIENT_ID", "client-1"],
+    ["DISCORD_CLIENT_SECRET", "client-secret"],
   ]);
   const cache = new Map<string, string>();
   const tbaEvents: TbaEvent[] = [
@@ -76,6 +79,17 @@ export function makeOps(members: Record<string, Member>) {
     { key: "2027cala", name: "Los Angeles Regional", event_code: "cala", city: "Los Angeles", state_prov: "CA", start_date: "2027-03-25", end_date: "2027-03-28", year: 2027 },
   ];
   const tbaCalls: string[] = [];
+  /**
+   * The fake Discord: messages sent (by channel), DM channels opened, and switches for tests: `closed` (users whose DMs
+   * are closed: 403) and `down` (Discord answers 500). `oauthUser` is who signs in with "Link with Discord".
+   */
+  const discord = {
+    sent: [] as { channelId: string; content: string }[],
+    dmsOpened: [] as string[],
+    closed: new Set<string>(),
+    down: false,
+    oauthUser: { id: "555000111", username: "pat.discord" },
+  };
   /** The fake GitHub: issues per repository, and what the sync sent. Tests edit issues to act as someone on GitHub. */
   const github = {
     clock: 0,
@@ -155,6 +169,26 @@ export function makeOps(members: Record<string, Member>) {
       const matching = issues.filter((i) => i.updated_at >= since).sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1));
       return json(200, matching.slice((page - 1) * 100, page * 100));
     }
+    // ----- Discord (bot messages, and the OAuth sign-in for "Link with Discord") -----
+    if (url.startsWith("https://discord.com/api/v10/")) {
+      const path = url.slice("https://discord.com/api/v10".length);
+      if (path === "/oauth2/token") return String(init.body).includes("code=good-code") ? json(200, { access_token: "user-token" }) : json(400, {});
+      if (path === "/users/@me") return headers.Authorization === "Bearer user-token" ? json(200, discord.oauthUser) : json(401, {});
+      if (headers.Authorization !== "Bot bot-token") return json(401, {});
+      if (discord.down) return json(500, {});
+      const payload = init.body ? JSON.parse(String(init.body)) : {};
+      if (path === "/users/@me/channels") {
+        if (discord.closed.has(payload.recipient_id)) return json(403, {});
+        discord.dmsOpened.push(payload.recipient_id);
+        return json(200, { id: `dm-${payload.recipient_id}` });
+      }
+      const m = path.match(/^\/channels\/([^/]+)\/messages$/);
+      if (m) {
+        discord.sent.push({ channelId: m[1], content: payload.content });
+        return json(200, { id: "msg" });
+      }
+      return json(404, {});
+    }
     // ----- The Blue Alliance (made-up answers in its real shape) -----
     if (url.startsWith("https://www.thebluealliance.com/api/v3/")) {
       tbaCalls.push(url);
@@ -173,9 +207,11 @@ export function makeOps(members: Record<string, Member>) {
 
   const env: OpsEnv = {
     data: {
-      async query(collection, filter = {}, limit = 1000) {
+      async query(collection, filter = {}, limit = 1000, sort) {
         calls.push("query");
-        return rows(collection).filter((r) => Object.entries(filter).every(([k, v]) => r[k] === v)).slice(0, limit).map(keep);
+        const found = rows(collection).filter((r) => Object.entries(filter).every(([k, v]) => r[k] === v));
+        if (sort) found.sort((a, b) => (String(a[sort.field] ?? "") < String(b[sort.field] ?? "") ? -1 : 1) * (sort.descending ? -1 : 1));
+        return found.slice(0, limit).map(keep);
       },
       async queryIds(collection, ids) {
         calls.push("queryIds");
@@ -338,6 +374,12 @@ export function makeOps(members: Record<string, Member>) {
     tbaEvents,
     tbaCalls,
     github,
+    discord,
+    /** Sends a GET like a browser does (the "Link with Discord" routes). The answer is the Response. */
+    get: async (path: string, token: string | undefined, handler: (request: Request, deps: { verify: () => Promise<Viewer>; env: OpsEnv }) => Promise<Response>) => {
+      calls.length = 0;
+      return handler(new Request(`https://www.team6220.org${path}`), { verify: verifyFor(token), env });
+    },
     /** The Wix calls the latest request made. */
     calls,
     uploads,

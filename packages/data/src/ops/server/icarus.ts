@@ -12,6 +12,7 @@
 import { getRecord, text, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
 import { COLLECTION_LINES, SIGNATURES_NEEDED } from "./bom";
+import * as notify from "./notify";
 import { checkSubteams } from "./shared";
 
 export const COLLECTION_TASKS = "icarus_tasks";
@@ -180,6 +181,7 @@ export async function saveTask(ctx: Ctx, body: Doc) {
   }
   const saved = await ctx.data.save(COLLECTION_TASKS, task);
   ctx.log({ kind: "task", id: String(saved._id) }, existing ? "edited" : "created", `t${saved.number} ${saved.title} (${saved.status})`);
+  await notify.taskSaved(ctx, existing ?? null, saved);
   return { task: saved };
 }
 
@@ -193,6 +195,7 @@ export async function addTaskComment(ctx: Ctx, body: Doc) {
     body: text(body.body, "comment", 4000),
     at: ctx.env.now().toISOString(),
   });
+  await notify.commentAdded(ctx, comment, task);
   return { comment };
 }
 

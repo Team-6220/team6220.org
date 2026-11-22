@@ -40,3 +40,14 @@ export const ATTENDANCE_API_URL: string =
 // adding a subteam means creating its badge in Wix.
 export const SUBTEAM_BADGE_PREFIX = "Subteam: ";
 
+
+// The live site's address, for links in Discord messages.
+export const SITE_URL = "https://www.team6220.org";
+
+// The Discord channels the server posts team-wide notifications in (see packages/data/src/notifications/catalog.ts).
+// Channel IDs are not secret: in Discord, turn on Developer Mode, right-click the channel, Copy Channel ID. An empty ID
+// means that channel's posts are skipped.
+export const DISCORD_CHANNELS = {
+  announcements: "",
+  apolloUpdates: "",
+};

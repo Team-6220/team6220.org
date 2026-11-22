@@ -17,7 +17,9 @@ export default function siteApi() {
         injectRoute({ pattern: "/api/ops", entrypoint: "./src/server/ops-route.ts", prerender: false });
         injectRoute({ pattern: "/api/ops-timer", entrypoint: "./src/server/ops-timer-route.ts", prerender: false });
         injectRoute({ pattern: "/api/github-hook", entrypoint: "./src/server/github-hook-route.ts", prerender: false });
-        logger.info("added /api/site, /api/inventory, /api/ops, /api/ops-timer and /api/github-hook");
+        injectRoute({ pattern: "/api/discord-link", entrypoint: "./src/server/discord-link-route.ts", prerender: false });
+        injectRoute({ pattern: "/api/discord-link/callback", entrypoint: "./src/server/discord-link-callback-route.ts", prerender: false });
+        logger.info("added /api/site, /api/inventory, /api/ops, /api/ops-timer, /api/github-hook and /api/discord-link");
       },
     },
   };
