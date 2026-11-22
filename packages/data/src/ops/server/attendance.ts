@@ -252,13 +252,23 @@ export async function attKioskQuick(ctx: Ctx, body: Doc) {
   return { ids: pickFive(waiting.length >= 5 ? waiting : ids) };
 }
 
+/** A fair random whole number from 0 up to (not including) `size`: keep only the low bits that can hold it, and draw again
+ *  when the number is too big. (A remainder or a rounded fraction would favour some numbers.) */
+function randomBelow(size: number): number {
+  if (size <= 1) return 0;
+  const mask = 2 ** (32 - Math.clz32(size - 1)) - 1;
+  for (;;) {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0] & mask;
+    if (n < size) return n;
+  }
+}
+
 /** Five different entries, chosen at random. */
 function pickFive(list: string[]): string[] {
   const pool = [...list];
   const out: string[] = [];
   while (out.length < 5 && pool.length) {
-    const n = crypto.getRandomValues(new Uint32Array(1))[0] % pool.length;
-    out.push(pool.splice(n, 1)[0]);
+    out.push(pool.splice(randomBelow(pool.length), 1)[0]);
   }
   return out;
 }
