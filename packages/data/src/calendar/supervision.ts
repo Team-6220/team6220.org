@@ -20,6 +20,9 @@ export const SUPERVISOR_STEPS = [
   "The school emails you when you're approved",
 ];
 
+/** Hours of supervising the team hopes each supervisor does in a school year. */
+export const SUPERVISION_GOAL_HOURS = 20;
+
 const STATUSES: SupervisorInfo["status"][] = ["started", "approved", "inactive"];
 const STEP_STATUSES: StepStatus[] = ["done", "waiting", ""];
 

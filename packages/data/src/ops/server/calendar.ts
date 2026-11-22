@@ -5,8 +5,10 @@
 //   saveCalEvent    a meeting, event, competition or break (one day's meeting from a season part too)
 //   removeCalEvent  one of those, with its shifts
 //   saveSchedule    Meeting schedule: season parts and breaks, then the meetings they make
+//   publicCalendar  what anyone sees, signed in or not: public meetings, competitions, events and breaks
 //   assignMeetings  which subteams each meeting is for, and which are mandatory (Leads only)
 import { assignRows, COLLECTION_EVENTS, COLLECTION_SHIFTS, cleanEvent, eventRows, PlanError, removedRows, scheduleSave } from "../../calendar/plan";
+import { publicEvents } from "../../calendar/public";
 import type { CalEvent, Shift } from "../../calendar/types";
 import { getRecord, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
@@ -87,4 +89,10 @@ export async function assignMeetings(ctx: Ctx, body: Doc) {
 /** Supervisors taken off a shift because its meeting changed hear about it (only future meetings change). */
 function tellBumped(ctx: Ctx, shifts: Shift[], events: CalEvent[]) {
   return shifts.length ? notify.sendAll(ctx, notify.rules.shiftsBumped(shifts as unknown as Doc[], events as unknown as Doc[])) : undefined;
+}
+
+/** {} -> { events }. For anyone, signed in or not. Only public events, and only the fields a visitor needs. */
+export async function publicCalendar(ctx: Ctx) {
+  const rows = (await ctx.data.query(COLLECTION_EVENTS, { public: true }, 1000)) as unknown as CalEvent[];
+  return { events: publicEvents(rows) };
 }

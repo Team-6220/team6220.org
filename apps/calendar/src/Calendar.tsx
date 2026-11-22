@@ -2,7 +2,10 @@
 //   month    (/apps/calendar)         the month grid
 //   year     (/apps/calendar/year)    the whole school year at a glance
 //   agenda   (/apps/calendar/agenda)  Coming up: the next two weeks, in order
+//   comps    (/apps/calendar/comps)   Comps & More: competitions, kickoff and other events
 //   event    (/apps/calendar/event?id=...)  one meeting with its shifts, or a competition, break or event
+// Month, Year, Coming up, Comps & More and a meeting or competition also open for anyone, signed in or not, as the
+// public calendar: only the public meetings, competitions, events and breaks, never shifts or supervisors.
 // Leads, mentors and boosters:
 //   new      (/apps/calendar/new?type=&date=)  New event or New break
 //   edit     (/apps/calendar/edit?id=...)      one day's meeting, or any event
@@ -20,6 +23,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { auth, calendar, ops, type CalendarData, type Me, type Supervisor } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen } from "@team6220/ui";
 import { Agenda } from "./Agenda";
+import { Comps } from "./Comps";
 import { Assign, MemberPreview } from "./Assign";
 import { EventForm } from "./EventForm";
 import { EventPage } from "./EventPage";
@@ -28,7 +32,7 @@ import { NewPart, Schedule } from "./Schedule";
 import { Become, MyShifts, OpenShifts, Supervisors } from "./Supervision";
 import { Year } from "./Year";
 
-export type CalendarScreen = "month" | "year" | "agenda" | "event" | "new" | "edit" | "schedule" | "part" | "assign" | "member" | "myshifts" | "open" | "supervisors" | "become";
+export type CalendarScreen = "month" | "year" | "agenda" | "comps" | "event" | "new" | "edit" | "schedule" | "part" | "assign" | "member" | "myshifts" | "open" | "supervisors" | "become";
 
 /** What every screen gets. */
 export interface CalendarView {
@@ -37,11 +41,19 @@ export interface CalendarView {
   /** Every subteam, in the team's order. */
   subteams: string[];
   today: string;
+  /** Not a team member: signed out, waiting for approval, a guest or an alumnus. They get the public calendar. */
+  visitor: null | "signed-out" | "pending" | "guest";
   /** Loads the calendar again after a change. */
   reload: () => Promise<void>;
 }
 
 type State = { kind: "loading" } | { kind: "become"; row: Supervisor | null } | { kind: "signed-out" } | { kind: "pending" } | { kind: "error"; message: string } | { kind: "ready"; view: CalendarView };
+
+/** The screens anyone may open. */
+const PUBLIC_SCREENS: CalendarScreen[] = ["month", "year", "agenda", "comps", "event"];
+
+/** Who a visitor is as far as the screens go: no roles, no subteams. */
+const VISITOR_ME: Me = { id: "", name: "", badges: [], subteams: [], roles: ops.rolesFor([]) };
 
 export default function Calendar({ screen = "month" }: { screen?: CalendarScreen }) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -50,12 +62,16 @@ export default function Calendar({ screen = "month" }: { screen?: CalendarScreen
     ops.readDemoFromUrl();
     (async () => {
       const viewer = await ops.getViewer();
-      if (viewer.kind === "signed-out") return setState({ kind: "signed-out" });
       // Become a supervisor works before a web admin approves the account: a parent signs up there first.
-      if (viewer.kind !== "member" && screen === "become") return setState({ kind: "become", row: await calendar.mySupervisorRow() });
-      if (viewer.kind !== "member") return setState({ kind: "pending" });
+      if (viewer.kind !== "member" && viewer.kind !== "signed-out" && screen === "become") return setState({ kind: "become", row: await calendar.mySupervisorRow() });
+      if (viewer.kind !== "member") {
+        if (!PUBLIC_SCREENS.includes(screen)) return setState({ kind: viewer.kind === "signed-out" ? "signed-out" : "pending" });
+        const visitor = viewer.kind;
+        const reload = async () => setState({ kind: "ready", view: { data: await calendar.loadPublic(), me: VISITOR_ME, subteams: [], today: calendar.today(), visitor, reload } });
+        return await reload();
+      }
       const { me, subteams } = viewer;
-      const reload = async () => setState({ kind: "ready", view: { data: await calendar.load(), me, subteams, today: calendar.today(), reload } });
+      const reload = async () => setState({ kind: "ready", view: { data: await calendar.load(), me, subteams, today: calendar.today(), visitor: null, reload } });
       await reload();
     })().catch((err) => setState({ kind: "error", message: err instanceof Error ? err.message : "We couldn't load the calendar." }));
   }, []);
@@ -86,6 +102,7 @@ function pageFor(screen: CalendarScreen, view: CalendarView): ReactNode {
   switch (screen) {
     case "year": return <Year view={view} />;
     case "agenda": return <Agenda view={view} />;
+    case "comps": return <Comps view={view} />;
     case "event": return <EventPage view={view} />;
     case "new": return only(roles.scheduler, "leads, mentors, and boosters", <EventForm view={view} mode="new" />);
     case "edit": return only(roles.scheduler, "leads, mentors, and boosters", <EventForm view={view} mode="edit" />);

@@ -14,7 +14,10 @@ import * as account from "./account";
 import * as bom from "./bom";
 import * as calendar from "./calendar";
 import { withCallBudget } from "./budget";
-import { Ctx, sha256Hex, type Actor } from "./context";
+import { eventItems, icsText } from "../../calendar/ics";
+import { publicEvents } from "../../calendar/public";
+import type { CalEvent } from "../../calendar/types";
+import { Ctx, sha256Hex, VISITOR, type Actor } from "./context";
 import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
 import * as github from "./github";
@@ -75,7 +78,8 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   receiveLines: { who: "team", agent: true, run: bom.receiveLines },
   linkLineToInventory: { who: "team", agent: true, run: bom.linkLineToInventory },
   importOrder: { who: "lead", run: bom.importOrder },
-  // Calendar (calendar.ts)
+  // Calendar (calendar.ts). publicCalendar is for anyone, signed in or not.
+  publicCalendar: { who: "anyone", run: calendar.publicCalendar },
   saveCalEvent: { who: "scheduler", run: calendar.saveCalEvent },
   removeCalEvent: { who: "scheduler", run: calendar.removeCalEvent },
   saveSchedule: { who: "scheduler", run: calendar.saveSchedule },
@@ -144,12 +148,31 @@ export async function handleOpsRequest(request: Request, deps: OpsDeps): Promise
     // Sign-in lives in a cookie, so refuse other websites' requests. Apollo sends a key, not a cookie.
     if (typeof body.apiKey !== "string" || !body.apiKey) guardSameSite(request);
     const env = withCallBudget(deps.env);
-    const actor = await actorFor(body, deps.verify, env);
+    const actor = action.who === "anyone" ? VISITOR : await actorFor(body, deps.verify, env);
     if (actor.agent && !action.agent) throw apiError("forbidden", "Apollo isn't allowed to do that.");
     if (!actor.agent) requireRole(actor, action.who);
     return await run(new Ctx(env, actor), action.run, body);
   } catch (err) {
     return opsFailure(err, "ops api");
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The calendar feed
+// ---------------------------------------------------------------------------------------------------------
+
+/** GET /api/calendar.ics: the public calendar as an .ics feed, for "Add to Google Calendar" and "Subscribe" on Apple
+ *  Calendar, which keep it current by themselves. Public meetings, competitions, events and breaks only: no shifts,
+ *  supervisors, team-only meetings or notes. */
+export async function handleCalendarFeed(request: Request, deps: { env: OpsEnv }): Promise<Response> {
+  try {
+    if (request.method !== "GET") throw apiError("bad-request", "Use GET.");
+    const env = withCallBudget(deps.env);
+    const rows = (await env.data.query("cal_events", { public: true }, 1000)) as unknown as CalEvent[];
+    const text = icsText(eventItems(publicEvents(rows)), "Team 6220 calendar", env.now());
+    return new Response(text, { status: 200, headers: { "content-type": "text/calendar; charset=utf-8", "cache-control": "public, max-age=900" } });
+  } catch (err) {
+    return opsFailure(err, "calendar feed");
   }
 }
 
