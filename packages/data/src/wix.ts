@@ -56,7 +56,23 @@ const MEMBER_HINT_KEY = "team6220.member";
 
 export function saveMemberHint(hint: { name: string; photoUrl?: string }) {
   try {
-    window.localStorage.setItem(MEMBER_HINT_KEY, JSON.stringify(hint));
+    // Keep what saveAccessHint learned about which apps they can open.
+    const old = JSON.parse(window.localStorage.getItem(MEMBER_HINT_KEY) || "null");
+    const access = old && typeof old === "object" ? { access: old.access, webAdmin: old.webAdmin } : {};
+    window.localStorage.setItem(MEMBER_HINT_KEY, JSON.stringify({ ...hint, ...access }));
+  } catch {
+    // ignore
+  }
+}
+
+/** Which apps this member can open, kept with their name so the frame's rail, the top bar and the main site's Apps
+ *  menu can leave out the rest (account.js: canOpen). Cosmetic only: every app and the server check for themselves. */
+export function saveAccessHint(access: "member" | "guest" | "visitor", webAdmin: boolean) {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(MEMBER_HINT_KEY) || "null");
+    if (!stored || typeof stored.name !== "string") return; // not signed in here
+    window.localStorage.setItem(MEMBER_HINT_KEY, JSON.stringify({ ...stored, access, webAdmin }));
+    window.dispatchEvent(new Event("team6220:access"));
   } catch {
     // ignore
   }

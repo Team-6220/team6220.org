@@ -13,6 +13,8 @@
 // uses made-up data in memory and never talks to Wix.
 import * as auth from "../auth";
 import { onWixBuild } from "../runtime";
+import { BADGES } from "../config";
+import { saveAccessHint } from "../wix";
 import { httpTransport } from "./http";
 import { MOCK_ROLES, mockStore, mockTransport, type MockRole } from "./mock";
 import { rolesFor, subteamsOf } from "./roles";
@@ -170,6 +172,14 @@ export async function callOps<T = Record<string, unknown>>(action: string, args:
 
 // ----- who is looking -----
 
+export { saveAccessHint } from "../wix";
+
+/** Tells the page chrome which apps this person can open (account.js: canOpen), then returns the viewer unchanged. */
+function rememberAccess(viewer: OpsViewer, badges: readonly string[] = []): OpsViewer {
+  if (!isDemo()) saveAccessHint(viewer.kind === "member" ? "member" : viewer.kind === "guest" ? "guest" : "visitor", badges.includes(BADGES.webAdmin));
+  return viewer;
+}
+
 /**
  * Who is looking, for choosing what to show. Hiding a button is only cosmetic: the ops API checks every action.
  * If the ops API isn't connected yet, roles come from the badges the browser can see, so viewing still works.
@@ -183,20 +193,20 @@ export async function getViewer(options: { guests?: boolean } = {}): Promise<Ops
     if (!isConnected()) {
       const badges = member.status === "APPROVED" ? await auth.getBadges() : [];
       const roles = rolesFor(badges);
-      if (!roles.viewer) return { kind: "pending", name: member.name };
-      if (roles.guest && !options.guests) return { kind: "guest", name: member.name };
+      if (!roles.viewer) return rememberAccess({ kind: "pending", name: member.name });
+      if (roles.guest && !options.guests) return rememberAccess({ kind: "guest", name: member.name }, badges);
       const me: Me = { id: member.id, name: member.name, badges, subteams: subteamsOf(badges), roles };
-      return { kind: "member", me, subteams: [] };
+      return rememberAccess({ kind: "member", me, subteams: [] }, badges);
     }
   }
   try {
     const { me, subteams } = await callOps<{ me: Me; subteams: string[] }>("whoAmI");
     // Guests may open only the apps that say so (Icarus); everywhere else they see the "not open to guests" screen.
-    if (me.roles.guest && !options.guests) return { kind: "guest", name: me.name };
-    return { kind: "member", me, subteams };
+    if (me.roles.guest && !options.guests) return rememberAccess({ kind: "guest", name: me.name }, me.badges);
+    return rememberAccess({ kind: "member", me, subteams }, me.badges);
   } catch (err) {
     if (err instanceof OpsError && (err.code === "pending" || err.code === "forbidden")) {
-      return { kind: "pending", name: isDemo() ? "Demo Visitor" : ((await auth.getMember())?.name ?? "") };
+      return rememberAccess({ kind: "pending", name: isDemo() ? "Demo Visitor" : ((await auth.getMember())?.name ?? "") });
     }
     if (err instanceof OpsError && err.code === "signed-out") return { kind: "signed-out" };
     throw err;

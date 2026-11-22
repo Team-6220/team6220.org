@@ -34,8 +34,9 @@ export interface AppEntry {
   access: AppAccess;
   /** Also open to guests (Guest badge), view-only. */
   guests?: boolean;
-  /** Also open to alumni (Alumni badge). The Calendar only, checked by its server from step 2 of the overhaul. */
-  alumni?: boolean;
+  /** Anyone can open it for a public view (signed out, waiting for approval, guests, alumni): the Calendar. The app
+   *  itself decides what that view shows. */
+  publicView?: boolean;
   /** Shown as a small note on the card, e.g. who can take admin actions. */
   note?: string;
   /** Operations, Mechanical, Strategy, Fun or Admin (null for Home). */

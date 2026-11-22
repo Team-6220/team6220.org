@@ -26,7 +26,30 @@
     }
   }
 
+  /* Which apps a person can open, to decide which to SHOW (the rail, the top bar, the main site's Apps menu). Each
+     app checks for itself; this protects nothing. level: "visitor" (signed out, waiting for approval, alumni),
+     "guest", "member" (any team member, mentor, booster, lead or supervisor) or "unknown" (signed in, not looked up
+     yet: the apps' own pages save it as soon as they know). */
+  function accessOf(member) {
+    if (!member) return { level: "visitor", webAdmin: false };
+    var hint = read("team6220.member") || {};
+    var level = hint.access === "member" || hint.access === "guest" || hint.access === "visitor" ? hint.access : "unknown";
+    return { level: level, webAdmin: hint.webAdmin === true };
+  }
+
   window.team6220Account = {
+    /** { level, webAdmin } */
+    access: function () {
+      return accessOf(this.member());
+    },
+    /** True when this person can open the app (an entry from apps.json: access, guests, publicView, status). */
+    canOpen: function (app) {
+      var who = this.access();
+      if (app.access === "web-admin") return who.webAdmin;
+      if (who.level === "member" || who.level === "unknown") return true;
+      if (app.status !== "live") return false;
+      return app.access === "public" || app.publicView === true || (who.level === "guest" && app.guests === true);
+    },
     member: function () {
       var tokens = sessionTokens();
       var member = read("team6220.member");
