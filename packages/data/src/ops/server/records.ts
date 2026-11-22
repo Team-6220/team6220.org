@@ -25,6 +25,8 @@ const READABLE = [
   "bom_sections",
   "bom_lines",
   "production_parts",
+  "cal_events",
+  "cal_shifts",
 ];
 
 /** What a Guest sees: all of Icarus, with people's names. Not the BOM, Production, or the history of anything but tasks. */
