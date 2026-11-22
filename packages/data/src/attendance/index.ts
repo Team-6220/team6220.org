@@ -11,9 +11,11 @@
 import "./mock"; // the demo data (only used in demo mode)
 import { callOps } from "../ops";
 import { OpsError } from "../ops/types";
+import type { ImportRow } from "./import";
 import type { DayView, KioskRow, KioskSession, MyView, PastMeeting, SignInResult, TeamStats } from "./types";
 
 export * from "./types";
+export { parseSheet, type ImportRow, type ParsedSheet } from "./import";
 export { countedMinutes, dayView, isExpected, myView, pastMeetings, seasonOf, teamStats } from "./stats";
 
 // ----- the kiosk, which lives in the tab that opened it -----
@@ -123,4 +125,10 @@ export async function stats(): Promise<TeamStats> {
 /** Attendance Admin: a month's sign-ins (date, first name, last name, student ID) to paste into a Sheet. */
 export async function copyMonth(month: string): Promise<{ date: string; firstName: string; lastName: string; studentId: string }[]> {
   return (await callOps<{ rows: { date: string; firstName: string; lastName: string; studentId: string }[] }>("attCopyMonth", { month })).rows;
+}
+
+/** Attendance Admin: brings in sign-ins read from the old Sheet (a few hundred at a time). Safe to repeat: a person who
+ *  already has a sign-in that day is skipped. */
+export async function importRows(rows: ImportRow[]): Promise<{ added: number; skipped: number; unknown: number }> {
+  return callOps("attImport", { rows });
 }

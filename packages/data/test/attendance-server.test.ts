@@ -134,3 +134,24 @@ describe("attendance", () => {
     expect((await s.post({ action: "attStats", token: member })).ok).toBe(true);
   });
 });
+
+describe("importing the old Sheet", () => {
+  it("brings in sign-ins for people on the roster, once, for an Attendance Admin only", async () => {
+    const s = team();
+    const rows = [
+      { studentId: "4829173650", date: "2026-11-21", time: "10:05" },
+      { studentId: "1057382946", date: "2026-11-21", time: "" },
+      { studentId: "7770000000", date: "2026-11-21", time: "10:00" },
+    ];
+    expect((await s.post({ action: "attImport", token: member, rows })).error).toBe("forbidden");
+    const first = await s.post({ action: "attImport", token: admin, rows });
+    expect(first).toMatchObject({ added: 2, skipped: 0, unknown: 1 });
+    const saved = s.rows("att_signins");
+    expect(saved).toHaveLength(2);
+    expect(saved.every((r) => r.source === "import" && r.season === "2026")).toBe(true);
+    // A day with no time starts when that day's meeting did (10:00 AM Pacific).
+    expect(saved.find((r) => r.studentId === "1057382946")?.signedInAt).toBe("2026-11-21T18:00:00.000Z");
+    expect(await s.post({ action: "attImport", token: admin, rows })).toMatchObject({ added: 0, skipped: 2, unknown: 1 });
+    expect((await s.post({ action: "attImport", token: admin, rows: [{ studentId: "x", date: "2026-11-21", time: "" }] })).error).toBe("bad-request");
+  });
+});

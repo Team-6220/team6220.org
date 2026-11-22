@@ -97,6 +97,7 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   attPast: { who: "attendance", run: attendance.attPast },
   attStats: { who: "attendance", run: attendance.attStats },
   attCopyMonth: { who: "attendanceAdmin", run: attendance.attCopyMonth },
+  attImport: { who: "attendanceAdmin", run: attendance.attImport },
   attOpenKiosk: { who: "attendanceAdmin", run: attendance.attOpenKiosk },
   attCloseKiosk: { who: "anyone", run: attendance.attCloseKiosk },
   attKioskSignIn: { who: "anyone", run: attendance.attKioskSignIn },

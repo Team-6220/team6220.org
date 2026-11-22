@@ -9,10 +9,12 @@
 //   attPast         past meetings with who missed them                 attendance
 //   attStats        the season's numbers                               attendance
 //   attCopyMonth    a month's sign-ins with names and IDs, for a Sheet Attendance Admin
+//   attImport       brings in sign-ins from the old Google Sheet        Attendance Admin
 //   attOpenKiosk    opens the sign-in kiosk                            Attendance Admin
 //   attKiosk*       sign in / out, add a name, close, list (with the kiosk's own token; no login needed)
 import { countedMinutes, dayView, meetingsFrom, membersFrom, myView, pastMeetings, seasonOf, teamStats, teamTime } from "../../attendance/stats";
 import type { AttData } from "../../attendance/stats";
+import { teamIso } from "../../attendance/import";
 import { DEFAULT_SETTINGS, type AttSettings, type KioskRow, type SignIn, type SignInResult } from "../../attendance/types";
 import { schoolYear } from "../../calendar/dates";
 import type { CalEvent } from "../../calendar/types";
@@ -100,6 +102,44 @@ export async function attCopyMonth(ctx: Ctx, body: Doc) {
     .map((s) => ({ date: s.date, firstName: String(byId.get(s.studentId)?.firstName ?? ""), lastName: String(byId.get(s.studentId)?.lastName ?? ""), studentId: s.studentId }));
   ctx.log({ kind: "attendance", id: month }, "copied", `${rows.length} sign-ins`);
   return { rows };
+}
+
+/** { rows: [{ studentId, date, time }] } (up to 500) -> { added, skipped, unknown }. The one-time import of the old Sheet's
+ *  sign-ins. A sign-in with no time (typed by hand) starts when that day's meeting did. Someone who already has a sign-in
+ *  that day, or whose ID isn't on the roster, is skipped. */
+export async function attImport(ctx: Ctx, body: Doc) {
+  const input = Array.isArray(body.rows) ? (body.rows as Record<string, unknown>[]) : [];
+  if (!input.length || input.length > 500) throw apiError("bad-request", "Send between 1 and 500 sign-ins at a time.");
+  const rows = input.map((r, i) => {
+    const studentId = String(r.studentId ?? "");
+    const date = String(r.date ?? "");
+    const time = String(r.time ?? "");
+    if (!/^\d{6,12}$/.test(studentId) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || (time && !/^\d{2}:\d{2}$/.test(time))) throw apiError("bad-request", `Row ${i + 1} isn't a sign-in.`);
+    return { studentId, date, time };
+  });
+  const seasons = [...new Set(rows.map((r) => seasonOf(r.date)))];
+  const [roster, events, ...existing] = await Promise.all([
+    ctx.data.query(COLLECTION_ROSTER, {}, 1000),
+    ctx.data.query("cal_events", { type: "meeting" }, 1000),
+    ...seasons.map((season) => seasonSignIns(ctx, season)),
+  ]);
+  const known = new Set(roster.map((r) => String(r.studentId)));
+  const have = new Set(existing.flat().map((s) => `${s.studentId}|${s.date}`));
+  const meetings = new Map((events as unknown as CalEvent[]).filter((e) => e.type === "meeting" && !e.cancelled).map((e) => [e.startDate, e]));
+  const docs: Doc[] = [];
+  let unknown = 0;
+  let skipped = 0;
+  for (const r of rows) {
+    if (!known.has(r.studentId)) unknown++;
+    else if (have.has(`${r.studentId}|${r.date}`)) skipped++;
+    else {
+      have.add(`${r.studentId}|${r.date}`);
+      docs.push({ season: seasonOf(r.date), date: r.date, studentId: r.studentId, signedInAt: teamIso(r.date, r.time || meetings.get(r.date)?.startTime || "15:00"), signedOutAt: "", source: "import" });
+    }
+  }
+  await ctx.data.saveMany(SIGNINS, docs);
+  ctx.log({ kind: "attendance", id: "import" }, "imported", `${docs.length} sign-ins`);
+  return { added: docs.length, skipped, unknown };
 }
 
 // ---------------------------------------------------------------------------------------------------------

@@ -235,6 +235,11 @@
             "name": "Kiosk",
             "icon": "grid",
             "view": "kiosk"
+          },
+          {
+            "name": "Import from the Sheet",
+            "icon": "list",
+            "view": "import"
           }
         ]
       }

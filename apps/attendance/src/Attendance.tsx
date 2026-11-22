@@ -5,17 +5,19 @@
 //   past   (/apps/attendance/past)      every past meeting, with who missed it
 //   stats  (/apps/attendance/stats)     the season's numbers
 //   kiosk  (/apps/attendance/kiosk)     Attendance Admins: the sign-in kiosk
+//   import (/apps/attendance/import)    Attendance Admins: bring in the old Sheet's sign-ins, once
 // Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Attendance
 import { useEffect, useState, type ReactNode } from "react";
 import { auth, ops, type Me } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen } from "@team6220/ui";
 import { Hours, Mine } from "./Mine";
+import { Import } from "./Import";
 import { Kiosk } from "./Kiosk";
 import { Past } from "./Past";
 import { Stats } from "./Stats";
 import { Today } from "./Today";
 
-export type AttendanceScreen = "today" | "mine" | "hours" | "past" | "stats" | "kiosk";
+export type AttendanceScreen = "today" | "mine" | "hours" | "past" | "stats" | "kiosk" | "import";
 
 type State = { kind: "loading" } | { kind: "signed-out" } | { kind: "pending" } | { kind: "error"; message: string } | { kind: "ready"; me: Me };
 
@@ -55,6 +57,8 @@ function pageFor(screen: AttendanceScreen, me: Me): ReactNode {
     case "stats": return <Stats />;
     case "kiosk":
       return me.roles.attendanceAdmin ? <Kiosk /> : <Screen><PageHeader title="Kiosk" back={{ label: "Attendance", href: "/apps/attendance" }} /><Note>Only Attendance Admins can open the kiosk.</Note></Screen>;
+    case "import":
+      return me.roles.attendanceAdmin ? <Import /> : <Screen><PageHeader title="Import" back={{ label: "Attendance", href: "/apps/attendance" }} /><Note>Only Attendance Admins can import.</Note></Screen>;
     default: return <Today me={me} />;
   }
 }

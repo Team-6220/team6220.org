@@ -127,3 +127,27 @@ describe("past meetings and stats", () => {
     expect(stats.aboveMinimum).toBe(1);
   });
 });
+
+describe("importing the old Sheet", () => {
+  it("reads copied rows, keeping a person once a day with their earliest time", async () => {
+    const { parseSheet } = await import("../src/attendance/import");
+    const text = ["Timestamp\tStudent ID #", "1/10/2026 10:42:02\t1190116790", "1/10/2026 10:30:00\t1190116790", "1/12/2026 0:00:00\t1190117229", "1/12/2026 15:22:18\t1", "garbage"].join("\n");
+    const parsed = parseSheet(text);
+    expect(parsed.rows).toEqual([
+      { studentId: "1190116790", date: "2026-01-10", time: "10:30" },
+      { studentId: "1190117229", date: "2026-01-12", time: "" },
+    ]);
+    expect(parsed.skipped).toBe(3);
+  });
+
+  it("reads comma-separated rows too", async () => {
+    const { parseSheet } = await import("../src/attendance/import");
+    expect(parseSheet('"11/3/2026 15:20:00","4829173650"').rows).toEqual([{ studentId: "4829173650", date: "2026-11-03", time: "15:20" }]);
+  });
+
+  it("turns a team time into the right ISO time in winter and summer", async () => {
+    const { teamIso } = await import("../src/attendance/import");
+    expect(teamIso("2026-11-03", "15:20")).toBe("2026-11-03T23:20:00.000Z");
+    expect(teamIso("2026-07-01", "15:20")).toBe("2026-07-01T22:20:00.000Z");
+  });
+});

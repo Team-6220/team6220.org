@@ -6,6 +6,7 @@ import { OpsError, type Item } from "../ops/types";
 import type { Person } from "../ops/types";
 import { addDays, today } from "../calendar/dates";
 import type { CalEvent } from "../calendar/types";
+import { teamIso } from "./import";
 import { countedMinutes, dayView, meetingsFrom, membersFrom, myView, pastMeetings, seasonOf, teamStats } from "./stats";
 import { DEFAULT_SETTINGS, type AttSettings, type KioskRow, type SignIn, type SignInResult } from "./types";
 
@@ -117,6 +118,25 @@ mockActions({
         .map((s) => ({ date: s.date, firstName: String(roster.get(s.studentId)?.firstName ?? ""), lastName: String(roster.get(s.studentId)?.lastName ?? ""), studentId: s.studentId }));
       db.writeHistory(actor, { kind: "attendance", id: month }, "copied", `${rows.length} sign-ins`);
       return { rows };
+    },
+  },
+  attImport: {
+    who: "attendanceAdmin",
+    run: (request, _actor, db) => {
+      const rows = Array.isArray(request.rows) ? (request.rows as { studentId: string; date: string; time: string }[]) : [];
+      const known = new Set(db.rows<Item>("ops_roster").map((r) => String(r.studentId)));
+      const have = new Set(db.rows<SignIn>("att_signins").map((s) => `${s.studentId}|${s.date}`));
+      let added = 0, skipped = 0, unknown = 0;
+      for (const r of rows) {
+        if (!known.has(r.studentId)) unknown++;
+        else if (have.has(`${r.studentId}|${r.date}`)) skipped++;
+        else {
+          have.add(`${r.studentId}|${r.date}`);
+          db.save("att_signins", { season: seasonOf(r.date), date: r.date, studentId: r.studentId, signedInAt: teamIso(r.date, r.time || "15:00"), signedOutAt: "", source: "import" });
+          added++;
+        }
+      }
+      return { added, skipped, unknown };
     },
   },
   attOpenKiosk: {
