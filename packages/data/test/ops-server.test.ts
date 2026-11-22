@@ -119,7 +119,8 @@ describe("each request stays inside Wix's 20 calls", () => {
       {
         data: { query: async () => [], queryIds: async () => [], insert: async (_c, d) => d, insertMany: async (_c, d) => d, save: async (_c, d) => d, saveMany: async (_c, d) => d, remove: async () => {}, increment: async () => null },
         badges: { list: async () => [], assignmentsOf: async () => [], assign: async () => {}, removeAssignments: async () => {} },
-        members: { list: async () => [], approve: async () => {} },
+        members: { list: async () => [], approve: async () => {}, setPhoto: async () => {}, remove: async () => {} },
+        media: { uploadImage: async () => "" },
         secret: async () => undefined,
         fetch: (async () => new Response("{}")) as typeof fetch,
         cache: { get: () => undefined, put: () => {}, remove: () => {} },

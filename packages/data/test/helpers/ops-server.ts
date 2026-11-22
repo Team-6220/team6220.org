@@ -30,6 +30,8 @@ export interface Member {
   id: string;
   status: string;
   badges: string[]; // badge IDs
+  /** Set by setPhoto. */
+  photoUrl?: string;
 }
 
 /** Made-up events, in The Blue Alliance's "simple" shape. Tests can change them (for example a date) to see a refresh. */
@@ -88,6 +90,8 @@ export function makeOps(members: Record<string, Member>) {
   let clock: Date | undefined;
   /** Wix calls made by the latest request, by name. */
   const calls: string[] = [];
+  /** Images sent to Wix Media. */
+  const uploads: { folder: string; fileName: string; size: number }[] = [];
   const memberById = (id: string) => Object.values(members).find((m) => m.id === id);
   const keep = (doc: Doc) => structuredClone(doc);
   const store = (collection: string, doc: Doc): Doc => {
@@ -242,6 +246,21 @@ export function makeOps(members: Record<string, Member>) {
         calls.push("members.approve");
         memberById(memberId)!.status = "APPROVED";
       },
+      async setPhoto(memberId, url) {
+        calls.push("members.setPhoto");
+        memberById(memberId)!.photoUrl = url;
+      },
+      async remove(memberId) {
+        calls.push("members.remove");
+        memberById(memberId)!.status = "DELETED";
+      },
+    },
+    media: {
+      async uploadImage({ folder, fileName, bytes }) {
+        calls.push("media.upload", "media.upload");
+        uploads.push({ folder, fileName, size: bytes.length });
+        return `https://static.wixstatic.com/media/${fileName}`;
+      },
     },
     async secret(name) {
       calls.push(`secret:${name}`);
@@ -321,6 +340,7 @@ export function makeOps(members: Record<string, Member>) {
     github,
     /** The Wix calls the latest request made. */
     calls,
+    uploads,
     /** Makes "now" a fixed time. */
     setNow: (date: Date) => void (clock = date),
   };

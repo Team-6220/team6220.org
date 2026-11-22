@@ -34,6 +34,8 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   saveMyProfile: { who: "signedIn", run: account.saveMyProfile },
   savePrefs: { who: "signedIn", run: account.savePrefs },
   finishProfile: { who: "signedIn", run: account.finishProfile },
+  setMyPhoto: { who: "signedIn", run: account.setMyPhoto },
+  deleteMyAccount: { who: "signedIn", run: account.deleteMyAccount },
   importRoster: { who: "peopleAdmin", run: account.importRoster },
   nextNumber: { who: "team", agent: true, run: shared.nextNumber },
   logHistory: { who: "team", run: shared.logHistory },

@@ -1,8 +1,7 @@
 /* Home, All apps and Account (apps/dashboard). Most of the look comes from the shared kit (@team6220/ui/kit.css);
    this file only holds what is special to these screens. */
-.dash-pin { display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 14px 0 7px; border: 1px solid var(--color-border); border-radius: 11px; background: color-mix(in srgb, var(--color-border) 45%, var(--color-bg)); color: var(--color-ink); text-decoration: none; }
+.dash-pin { display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: 11px; background: color-mix(in srgb, var(--color-border) 45%, var(--color-bg)); color: var(--color-ink); text-decoration: none; }
 .dash-pin:hover { border-color: var(--color-muted); }
-.dash-kbd { min-width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--color-gold); border-radius: 4px; background: var(--color-bg); color: var(--color-gold); font: 700 12px var(--font-body); }
 
 .dash-signin { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .dash-signin h3 { margin: 0; font-family: var(--font-title); font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -51,3 +50,10 @@
   .dash-cat-grip { display: none; }
   .dash-phone-only, .dash-phone-only.k-move { display: inline-flex; }
 }
+
+/* the profile picture box */
+.dash-photo { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1px dashed var(--color-border); border-radius: 8px; cursor: pointer; font-weight: 400; }
+.dash-photo:hover, .dash-photo.is-over { border-color: var(--color-gold); }
+.dash-photo-img { width: 56px; height: 56px; flex: none; border-radius: 50%; object-fit: cover; background: color-mix(in srgb, var(--color-border) 60%, var(--color-bg)); }
+.dash-photo-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.dash-photo:focus-within { outline: 2px solid var(--color-gold); outline-offset: 2px; }

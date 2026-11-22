@@ -4,6 +4,7 @@ import { useState } from "react";
 import { account, auth, type AccountRole, type Member } from "@team6220/data";
 import { Btn, Cards, Field, Fields, Note, PageHeader, Screen, Section, type CardItem } from "@team6220/ui";
 import { APPS } from "./apps";
+import { PhotoField } from "./PhotoField";
 
 const SUBTEAMS = ["Design", "Manufacturing", "Programming", "Electrical", "Operations"];
 
@@ -89,6 +90,7 @@ export function Pending({ member }: { member: Member }) {
               </select>
             </Field>
             <span />
+            {role !== "public" && <PhotoField current={member.photoUrl} />}
             <Field label="First name" hint="from your Google account"><input className="k-input" value={first} onChange={(e) => setFirst(e.target.value)} /></Field>
             <Field label="Last name" hint="from your Google account"><input className="k-input" value={last} onChange={(e) => setLast(e.target.value)} /></Field>
             {student && <Field label="Student ID" hint="your school ID, required for students"><input className="k-input" inputMode="numeric" value={studentId} onChange={(e) => setStudentId(e.target.value)} /></Field>}

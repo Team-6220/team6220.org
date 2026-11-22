@@ -40,7 +40,20 @@ export function withCallBudget(env: OpsEnv, max = CALLS_PER_REQUEST): OpsEnv {
       assign: one(badges.assign.bind(badges)),
       removeAssignments: one(badges.removeAssignments.bind(badges)),
     },
-    members: { list: one(members.list.bind(members)), approve: one(members.approve.bind(members)) },
+    members: {
+      list: one(members.list.bind(members)),
+      approve: one(members.approve.bind(members)),
+      setPhoto: one(members.setPhoto.bind(members)),
+      remove: one(members.remove.bind(members)),
+    },
+    // Two calls: asking for the upload address, then the upload.
+    media: {
+      async uploadImage(image) {
+        spend();
+        spend();
+        return env.media.uploadImage(image);
+      },
+    },
     secret: one(env.secret.bind(env)),
     fetch: (async (...args: Parameters<typeof fetch>) => {
       spend();

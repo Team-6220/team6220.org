@@ -85,3 +85,38 @@ describe("finishing your profile", () => {
     expect(s.rows("ops_roster")).toHaveLength(1);
   });
 });
+
+describe("profile picture and deleting your account", () => {
+  let s: ReturnType<typeof team>;
+  beforeEach(() => {
+    s = team();
+  });
+  const jpeg = `data:image/jpeg;base64,${Buffer.from("fake jpeg bytes").toString("base64")}`;
+
+  it("uploads a picture to Wix Media and makes it the profile photo", async () => {
+    const answer = await s.post({ action: "setMyPhoto", token: member, photo: jpeg });
+    expect(answer.ok).toBe(true);
+    expect(s.uploads[0]).toMatchObject({ folder: "/team6220/profile-photos", size: 15 });
+    expect(s.members[member].photoUrl).toBe(answer.photoUrl);
+    expect((await s.post({ action: "getAccount", token: member })).profile.photoUrl).toBe(answer.photoUrl);
+  });
+
+  it("refuses anything that isn't a picture, or is too big", async () => {
+    expect((await s.post({ action: "setMyPhoto", token: member, photo: "data:text/html;base64,PGI+" })).error).toBe("bad-request");
+    const big = `data:image/png;base64,${Buffer.alloc(500_000).toString("base64")}`;
+    expect((await s.post({ action: "setMyPhoto", token: member, photo: big })).error).toBe("bad-request");
+  });
+
+  it("deletes the member, their badges and settings, but keeps their name and the roster row", async () => {
+    await s.post({ action: "importRoster", token: lead, rows: [{ studentId: "1234567", firstName: "Ada", lastName: "Byron" }] });
+    await s.post({ action: "finishProfile", token: newbie, form: { role: "student", firstName: "Ada", lastName: "Byron", studentId: "1234567", discordName: "ada", subteams: ["Design"] } });
+    await s.post({ action: "savePrefs", token: newbie, prefs: { layout: "top" } });
+    expect((await s.post({ action: "deleteMyAccount", token: newbie })).ok).toBe(true);
+    expect(s.members[newbie]).toMatchObject({ status: "DELETED", badges: [] });
+    const row = s.rows("ops_people").find((p) => p.memberId === "m-new")!;
+    expect(row).toMatchObject({ name: "Ada Byron", active: false, deleted: true });
+    expect(row.prefs).toBeUndefined();
+    expect(row.discordName).toBeUndefined();
+    expect(s.rows("ops_roster")[0]).toMatchObject({ studentId: "1234567", memberId: "" });
+  });
+});

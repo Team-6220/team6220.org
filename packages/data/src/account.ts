@@ -15,6 +15,8 @@ export interface Profile {
   studentId?: string;
   /** The Google account you signed in with. */
   email?: string;
+  /** A picture you uploaded (otherwise the frame shows your Google picture). */
+  photoUrl?: string;
 }
 
 export interface AccountInfo {
@@ -67,4 +69,29 @@ export interface ProfileForm {
 export async function finishProfile(form: ProfileForm): Promise<{ approved: boolean; message: string }> {
   if (isDemo()) return { approved: form.role === "student", message: form.role === "student" ? "You're on the roster. Welcome!" : "Thanks! A web admin will approve you soon." };
   return callOps<{ approved: boolean; message: string }>("finishProfile", { form });
+}
+
+/** Shrinks a picture to a 256px square (cropped to the middle) as a JPEG, so uploads stay small. */
+export async function shrinkPhoto(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  canvas.getContext("2d")!.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 256, 256);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+/** Your profile picture: send a picture from shrinkPhoto. Returns its address. */
+export async function setPhoto(photo: string): Promise<string> {
+  if (isDemo()) {
+    demoAccount = { ...demoAccount, profile: { ...demoAccount.profile, photoUrl: photo } };
+    return photo;
+  }
+  return (await callOps<{ photoUrl: string }>("setMyPhoto", { photo })).photoUrl;
+}
+
+/** Deletes your account for good (the sign-in, your badges and your settings). Sign out right after. */
+export async function deleteMyAccount(): Promise<void> {
+  if (isDemo()) return;
+  await callOps("deleteMyAccount");
 }

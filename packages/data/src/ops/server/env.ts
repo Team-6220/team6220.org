@@ -73,6 +73,15 @@ export interface OpsEnv {
     list(offset: number): Promise<WixMember[]>;
     /** Approves a pending member (a student who matched the roster). */
     approve(memberId: string): Promise<void>;
+    /** Sets the member's profile picture (a Wix Media URL). */
+    setPhoto(memberId: string, url: string): Promise<void>;
+    /** Deletes the member from the site (Delete my account). */
+    remove(memberId: string): Promise<void>;
+  };
+  /** The site's Media Manager. Profile pictures now; Inventory's photos later. */
+  media: {
+    /** Uploads an image into `folder` and returns its public URL. */
+    uploadImage(image: { folder: string; fileName: string; mimeType: string; bytes: Uint8Array }): Promise<string>;
   };
   /** A secret from Wix's Secrets Manager (TBA_KEY, GITHUB_TOKEN, ...), or undefined when it isn't set. Costs one call. */
   secret(name: string): Promise<string | undefined>;

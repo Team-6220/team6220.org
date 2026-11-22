@@ -5,6 +5,7 @@ import { account, ops, type Member, type Profile } from "@team6220/data";
 import { Btn, Field, Fields, KeyValue, Note, PageHeader, Screen, Section, Split, frame, useFramePrefs } from "@team6220/ui";
 import { APPS } from "./apps";
 import { Keybinds } from "./Keybinds";
+import { PhotoField } from "./PhotoField";
 
 const CATS = ["Operations", "Mechanical", "Strategy", "Fun", "Admin"];
 const THEME_KEY = "team6220.theme";
@@ -20,6 +21,7 @@ export function Account({ member }: { member: Member }) {
   const [error, setError] = useState("");
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem(THEME_KEY) ?? "dark"; } catch { return "dark"; } });
   const [newPin, setNewPin] = useState<{ name: string; url: string } | null>(null);
+  const [deleting, setDeleting] = useState<"" | "ask" | "busy">("");
 
   useEffect(() => {
     account.getAccount().then((a) => {
@@ -76,6 +78,7 @@ export function Account({ member }: { member: Member }) {
                 <Field label="Last name"><input className="k-input" value={draft.lastName ?? ""} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></Field>
                 <Field label="GitHub username" hint="Only needed when you sync a task with GitHub"><input className="k-input" value={draft.githubLogin ?? ""} onChange={(e) => setDraft({ ...draft, githubLogin: e.target.value })} /></Field>
                 <Field label="Discord username"><input className="k-input" value={draft.discordName ?? ""} onChange={(e) => setDraft({ ...draft, discordName: e.target.value })} /></Field>
+                {profile && <PhotoField current={profile.photoUrl ?? member.photoUrl} />}
               </Fields>
               <div className="k-row"><Btn kind="primary" onClick={saveProfile}>Save</Btn>{saved && <span className="k-hint" role="status">{saved}</span>}</div>
             </div>
@@ -173,9 +176,27 @@ export function Account({ member }: { member: Member }) {
           <Section title="Account">
             <div className="k-row">
               <Btn href="/apps/logout">Sign out</Btn>
+              <Btn kind="danger" onClick={() => setDeleting("ask")}>Delete my account</Btn>
             </div>
             <p className="k-hint">Signed in as {member.name}.</p>
           </Section>
+          {deleting && (
+            <div className="dash-modal" role="dialog" aria-label="Delete my account" onKeyDown={(e) => { if (e.key === "Escape" && deleting === "ask") setDeleting(""); }}>
+              <div className="dash-modal-box">
+                <div className="dash-modal-head"><h2>Delete my account?</h2></div>
+                <div className="k-stack" style={{ padding: 18 }}>
+                  <p style={{ margin: 0 }}>This deletes your sign-in, your badges, your settings, and your picture, and it can't be undone. Your name stays on tasks, orders, and history you were part of. Leaving the team? Ask a lead to make you alumni instead, so you keep your account.</p>
+                  <div className="k-row">
+                    <Btn onClick={() => setDeleting("")} disabled={deleting === "busy"}>Cancel</Btn>
+                    <Btn kind="danger" disabled={deleting === "busy"} onClick={async () => {
+                      setDeleting("busy");
+                      try { await account.deleteMyAccount(); location.assign("/apps/logout"); } catch { setDeleting(""); setError("Your account wasn't deleted. Try again in a minute."); }
+                    }}>{deleting === "busy" ? "Deleting…" : "Delete my account"}</Btn>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>}
       />
     </Screen>

@@ -28,6 +28,7 @@ export async function getAccount(ctx: Ctx) {
       lastName: String(row?.lastName ?? last),
       githubLogin: String(row?.githubLogin ?? ""),
       discordName: String(row?.discordName ?? ""),
+      ...(row?.photoUrl ? { photoUrl: String(row.photoUrl) } : {}),
       ...(r ? { grade: String(r.grade ?? ""), studentId: String(r.studentId ?? "") } : {}),
     },
     prefs: row?.prefs && typeof row.prefs === "object" ? row.prefs : null,
@@ -126,4 +127,42 @@ export async function importRoster(ctx: Ctx, body: Doc) {
   ctx.log({ kind: "person", id: "roster" }, "imported", `${docs.length} roster rows`, { type: "roster.imported" });
   const updated = clean.filter((r) => existing.has(r.studentId)).length;
   return { added: clean.length - updated, updated };
+}
+
+const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const MAX_PHOTO_BYTES = 400_000;
+
+/**
+ * { photo: "data:image/jpeg;base64,..." } -> { photoUrl }. Your profile picture: the browser shrinks it first (Account and
+ * "Finish your profile" send a 256px square), it goes into the Media Manager's profile-photos folder, and it becomes your
+ * Wix profile photo (in place of the Google one).
+ */
+export async function setMyPhoto(ctx: Ctx, body: Doc) {
+  const match = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/.exec(String(body.photo ?? ""));
+  const ext = match ? PHOTO_TYPES[match[1]] : undefined;
+  if (!match || !ext) throw apiError("bad-request", "Pick a JPEG, PNG or WebP picture.");
+  const bytes = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+  if (bytes.length > MAX_PHOTO_BYTES) throw apiError("bad-request", "That picture is too big. Try a smaller one.");
+  const photoUrl = await ctx.env.media.uploadImage({ folder: "/team6220/profile-photos", fileName: `${ctx.actor.id}-${ctx.env.now().getTime()}.${ext}`, mimeType: match[1], bytes });
+  await ctx.env.members.setPhoto(ctx.actor.id, photoUrl);
+  const row = (await myRow(ctx)) ?? { memberId: ctx.actor.id, name: ctx.actor.name, subteams: [], active: true };
+  await ctx.data.save(COLLECTION_PEOPLE, { ...row, photoUrl });
+  return { photoUrl };
+}
+
+/**
+ * {} -> {}. Delete my account: the Wix member is deleted, their badges go, the roster row is unlinked (it stays for
+ * next year), and their row in ops_people keeps only the name, so old tasks, orders and history still read right.
+ * Someone leaving the team is made alumni by a person instead (see Wix Setup and Maintenance in the wiki).
+ */
+export async function deleteMyAccount(ctx: Ctx) {
+  const id = ctx.actor.id;
+  const [row, roster, titles] = await Promise.all([myRow(ctx), ctx.data.query(COLLECTION_ROSTER, { memberId: id }, 1).catch(() => []), ctx.siteBadges()]);
+  if (row) await ctx.data.save(COLLECTION_PEOPLE, { _id: row._id, memberId: id, name: row.name, username: row.username, subteams: [], active: false, deleted: true });
+  if (roster[0]) await ctx.data.save(COLLECTION_ROSTER, { ...roster[0], memberId: "" });
+  const held = await ctx.env.badges.assignmentsOf([id], Object.keys(titles));
+  if (held.length) await ctx.env.badges.removeAssignments(held.map((a) => a.id));
+  ctx.log({ kind: "person", id }, "deleted", `${row?.name ?? ctx.actor.name} deleted their account`, { type: "person.deleted" });
+  await ctx.env.members.remove(id);
+  return {};
 }

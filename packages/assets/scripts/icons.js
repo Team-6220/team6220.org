@@ -13,7 +13,8 @@
     external: '<path d="M7 17L17 7M8 7h9v9"/>',
     arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
-    home: '<path d="M3 11l9-8 9 8 M5 10v10h14V10"/>',
+    // Home is the team's mark: the gold 6220 circle (filled, so it ignores the stroke style).
+    home: '<circle cx="12" cy="12" r="11" style="fill:var(--color-gold,#ffa300);stroke:none"/><text x="12" y="14.6" text-anchor="middle" style="fill:#000;stroke:none;font:800 7.4px Karnivore,Orbitron,sans-serif">6220</text>',
     grid: '<path d="M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z"/>',
     parts: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
     tools: '<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 0-2-2z"/><path d="M14.5 6.5L17 4"/>',
