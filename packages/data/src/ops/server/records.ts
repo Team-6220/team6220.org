@@ -38,6 +38,21 @@ const WRITABLE = ["icarus_tasks", "icarus_comments", "production_parts"];
 /** The most one query returns. A collection that reaches it is refused rather than cut short without a word. */
 const LIST_LIMIT = 1000;
 
+/**
+ * The parts of someone's ops_people row that other members may see: what the pickers and task owners need (Person in
+ * ../types.ts). Everything else on the row (Discord link, notification and frame settings, real name parts) is private
+ * to its owner, who still gets the whole row.
+ */
+const PUBLIC_PERSON_FIELDS = ["_id", "memberId", "name", "username", "githubLogin", "subteams", "active"];
+
+/** A supervisor's paperwork (TB assessment, fingerprinting) is for leads, mentors and boosters (`scheduler`); everyone
+ *  else sees only whether they're a supervisor, which the Calendar needs. */
+function publicPerson(row: Doc, scheduler: boolean): Doc {
+  const out = Object.fromEntries(PUBLIC_PERSON_FIELDS.filter((f) => f in row).map((f) => [f, row[f]]));
+  if (row.supervisor) out.supervisor = scheduler ? row.supervisor : { status: row.supervisor.status, steps: [], approvedMonth: "" };
+  return out;
+}
+
 function collectionOf(body: Doc, allowed: string[]): string {
   const collection = typeof body.collection === "string" ? body.collection : "";
   if (!allowed.includes(collection)) throw apiError("bad-request", "Unknown collection.");
@@ -52,13 +67,10 @@ export async function listRecords(ctx: Ctx, body: Doc) {
   const rows = await ctx.data.query(collection, {}, LIST_LIMIT);
   if (rows.length >= LIST_LIMIT) throw apiError("server-error", `${collection} has ${LIST_LIMIT} or more items, which is more than one request can return. Ask a web admin to archive some.`);
   // The history mixes in the BOM and Production; a Guest only gets what happened to tasks.
-  let items = roles.guest && collection === COLLECTION_HISTORY ? rows.filter((r) => r.recordKind === "task") : rows;
-  // A supervisor's paperwork steps (TB assessment, fingerprinting) are for the leads, mentors and boosters; everyone
-  // else sees only whether they're approved.
-  if (collection === COLLECTION_PEOPLE && !roles.scheduler) {
-    items = items.map((p) => (p.supervisor && p.memberId !== ctx.actor.id ? { ...p, supervisor: { status: p.supervisor.status, steps: [], approvedMonth: "" } } : p));
-  }
-  return { items };
+  if (collection === COLLECTION_HISTORY && roles.guest) return { items: rows.filter((r) => r.recordKind === "task") };
+  // Everyone sees the people list, but only their own row in full.
+  if (collection === COLLECTION_PEOPLE) return { items: rows.map((r) => (r.memberId === ctx.actor.id ? r : publicPerson(r, roles.scheduler))) };
+  return { items: rows };
 }
 
 /** { collection, item } -> { item }. Adds the item, or replaces the one with the same `_id`. Then sends the notifications it causes. */
