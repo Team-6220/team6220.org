@@ -71,6 +71,15 @@ jobs:
           url=$(grep -Eo 'https://[^ )]+(wix-site-host|wixsite)\.com[^ )]*' preview.log | head -n 1)
           if [ -z "$url" ]; then echo "No preview link found in the output above." >&2; exit 1; fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+      # Lets sign-in work on this preview: adds its callback to the headless app's allowed redirect list (needs the API key
+      # to have the "Manage OAuth Apps" permission). Never fails the pull request.
+      - name: Allow the preview to sign in
+        if: steps.secrets.outputs.ready == 'true'
+        continue-on-error: true
+        run: node scripts/wix-allow-preview.mjs "$PREVIEW_URL"
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       - name: Post the link on the pull request
         if: steps.secrets.outputs.ready == 'true'
         uses: actions/github-script@v8
