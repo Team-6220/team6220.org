@@ -58,7 +58,8 @@ async function main() {
   }
   const put = await fetch(`${API}/${clientId}`, { method: "PATCH", headers, body: JSON.stringify({ oAuthApp: { allowedRedirectUris: next }, mask: { paths: ["allowedRedirectUris"] } }) });
   if (!put.ok) throw new Error(`Changing the redirect list failed (${put.status}).`);
-  console.log(`Allowed ${callback} to sign in (${next.length} of ${MAX_URIS} redirect URIs used).`);
+  // Only the address from the command line is printed: the app's own record (read above) also holds its secret.
+  console.log(`Allowed ${callback} to sign in.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
