@@ -7,6 +7,8 @@
 .k-input.biz-edit:focus { border-color: var(--color-gold); background: var(--color-bg); outline: none; }
 textarea.k-input.biz-edit--text { min-height: 30px; padding: 4px 6px; resize: none; height: 30px; line-height: 20px; white-space: nowrap; overflow: hidden; field-sizing: fixed; display: block; }
 .biz-wrap textarea.k-input.biz-edit--text { white-space: pre-wrap; overflow-wrap: break-word; height: auto; field-sizing: content; }
+/* Name boxes still suggest names as you type; Chrome's own arrow for that list is hidden (the design has none). */
+.k-input.biz-edit::-webkit-calendar-picker-indicator { display: none !important; }
 select.k-input.biz-edit { cursor: pointer; }
 select.k-input.biz-edit option { background: var(--color-surface); color: var(--color-ink); }
 .biz-company { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

@@ -144,7 +144,7 @@ export function GrantTracker({ me }: { me: Me }) {
 
 /** "Editing: <grant>": the fields that don't fit in a row, saved together with Save. */
 function EditGrant({ grant, onSave }: { grant: Grant; onSave: (fields: Partial<Grant>) => Promise<void> }) {
-  const [form, setForm] = useState({ title: grant.title, organization: grant.organization, link: grant.link, deadline: grant.deadline, questions: grant.questions });
+  const [form, setForm] = useState({ title: grant.title, organization: grant.organization, link: grant.link, deadline: grant.deadline, questions: grant.questions, kind: grant.kind });
   const set = (key: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value });
   return (
     <Section title="Edit">
@@ -155,6 +155,12 @@ function EditGrant({ grant, onSave }: { grant: Grant; onSave: (fields: Partial<G
           <Field label="Organization or company"><input className="k-input" value={form.organization} onChange={set("organization")} /></Field>
           <Field label="Application link"><input className="k-input" type="url" value={form.link} onChange={set("link")} /></Field>
           <Field label="Deadline"><input className="k-input" value={form.deadline} onChange={set("deadline")} /></Field>
+          <Field label="Kind of funder" hint="Stats counts the grants we fill out by kind.">
+            <select className="k-input" value={form.kind} onChange={set("kind")}>
+              <option value=""></option>
+              {business.GRANT_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+          </Field>
         </Fields>
         <Field label="Questions from the application (optional, but highly recommended)" hint="These load into the Answer bank under Longer answers, so the next person has them.">
           <textarea className="k-input" rows={4} placeholder="Paste every question from the application here." value={form.questions} onChange={set("questions")} />
