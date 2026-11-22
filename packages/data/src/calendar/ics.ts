@@ -40,7 +40,7 @@ export interface IcsItem {
   description?: string;
 }
 
-const escapeText = (text: string) => text.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+const escapeText = (text: string) => text.replace(/[\\;,]/g, (c) => `\\${c}`).replace(/\r?\n/g, "\\n");
 const compactDate = (date: string) => date.replace(/-/g, "");
 const compactTime = (time: string) => `${time.replace(":", "")}00`;
 
