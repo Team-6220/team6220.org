@@ -4,7 +4,7 @@ import { seedMock } from "../ops/mock";
 import { addDays, eachDay, today, weekday } from "./dates";
 import type { CalEvent, Shift } from "./types";
 
-const NAMES = ["Alex P.", "Jordan R.", "Sam T.", "Casey M.", "Robin L."];
+const NAMES = ["Alex Parker", "Jordan Rivera-Nakamura", "Sam Torres", "Casey Montgomery", "Robin Lee"];
 
 seedMock((db) => {
   const now = today();
