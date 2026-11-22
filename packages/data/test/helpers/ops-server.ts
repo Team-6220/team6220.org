@@ -23,6 +23,7 @@ const BADGE_TITLES: Record<string, string> = {
   "b-guest": "Guest",
   "b-design": "Subteam: Design",
   "b-programming": "Subteam: Programming",
+  "b-operations": "Subteam: Operations",
   "b-webadmin": "Web Admin",
   "b-attendance": "Attendance Admin",
 };

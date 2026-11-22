@@ -472,12 +472,12 @@
           {
             "name": "Sponsor tracker",
             "icon": "list",
-            "view": "sponsors_t"
+            "view": "sponsor-tracker"
           },
           {
             "name": "Grant tracker",
             "icon": "list",
-            "view": "grants_t"
+            "view": "grant-tracker"
           },
           {
             "name": "Stats",

@@ -20,6 +20,9 @@ importers:
       '@team6220/bom':
         specifier: workspace:*
         version: link:apps/bom
+      '@team6220/business':
+        specifier: workspace:*
+        version: link:apps/business
       '@team6220/calendar':
         specifier: workspace:*
         version: link:apps/calendar
@@ -131,6 +134,18 @@ importers:
         version: 18.3.1
 
   apps/bom:
+    dependencies:
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+
+  apps/business:
     dependencies:
       '@team6220/data':
         specifier: workspace:*

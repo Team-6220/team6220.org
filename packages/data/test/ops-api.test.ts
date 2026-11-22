@@ -43,7 +43,7 @@ describe("ops-api", () => {
     expect(answer).toMatchObject({
       ok: true,
       me: { id: "m-member", subteams: ["Programming"], roles: { viewer: true, team: true, lead: false, approver: false } },
-      subteams: ["Design", "Programming"],
+      subteams: ["Design", "Programming", "Operations"],
     });
     expect(s.rows("ops_people")).toMatchObject([{ memberId: "m-member", subteams: ["Programming"], active: true }]);
   });

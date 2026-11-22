@@ -13,6 +13,7 @@ import { actorFor, requireRole, type Who } from "./auth";
 import * as account from "./account";
 import * as attendance from "./attendance";
 import * as bom from "./bom";
+import * as business from "./business";
 import * as calendar from "./calendar";
 import { withCallBudget } from "./budget";
 import { eventItems, icsText } from "../../calendar/ics";
@@ -106,6 +107,17 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   attKioskRegister: { who: "anyone", run: attendance.attKioskRegister },
   attKioskToday: { who: "anyone", run: attendance.attKioskToday },
   attKioskQuick: { who: "anyone", run: attendance.attKioskQuick },
+  // Business: Sponsor tracker, Grant tracker, Stats (business.ts)
+  bizSponsors: { who: "team", run: business.bizSponsors },
+  bizAddSponsor: { who: "team", run: business.bizAddSponsor },
+  bizSaveSponsor: { who: "business", run: business.bizSaveSponsor },
+  bizImportSponsors: { who: "business", run: business.bizImportSponsors },
+  bizGrants: { who: "team", run: business.bizGrants },
+  bizAddGrant: { who: "team", run: business.bizAddGrant },
+  bizSaveGrant: { who: "business", run: business.bizSaveGrant },
+  bizImportGrants: { who: "business", run: business.bizImportGrants },
+  bizGrantToSponsor: { who: "business", run: business.bizGrantToSponsor },
+  bizStats: { who: "business", run: business.bizStats },
   // RSVP (rsvp.ts)
   rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
   rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },
