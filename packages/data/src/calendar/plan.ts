@@ -77,13 +77,19 @@ function schoolTime(text: string): string | null {
   return clock((h <= 7 ? h + 12 : h) * 60 + min);
 }
 
-/** "Sat 10:00–2:00" -> { days: [6], value: "10:00–2:00" }; "3:20–5:00" -> { days: null, ... } */
+/** "Sat 10:00–2:00" -> { days: [6], value: "10:00–2:00" }; "3:20–5:00" -> { days: null, ... }. Reads word by word (no
+ *  regular expression that could backtrack on long text). */
 function segments(text: string): { days: number[] | null; value: string }[] {
   return text.split("·").map((part) => part.trim()).filter(Boolean).map((part) => {
-    const m = /^((?:(?:sun|mon|tue|wed|thu|fri|sat)[a-z]*[\s,&]*)+)\s+(.*)$/i.exec(part);
-    if (!m) return { days: null, value: part };
-    const days = [...m[1].matchAll(/sun|mon|tue|wed|thu|fri|sat/gi)].map((d) => WEEKDAYS.findIndex((w) => w.toLowerCase() === d[0].toLowerCase()));
-    return { days, value: m[2].trim() };
+    const words = part.split(/[\s,&]+/).filter(Boolean);
+    const days: number[] = [];
+    while (words.length > 1) {
+      const day = WEEKDAYS.findIndex((w) => words[0].toLowerCase().startsWith(w.toLowerCase()));
+      if (day < 0) break;
+      days.push(day);
+      words.shift();
+    }
+    return { days: days.length ? days : null, value: words.join(" ") };
   });
 }
 

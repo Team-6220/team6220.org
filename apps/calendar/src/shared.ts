@@ -3,7 +3,8 @@ import { useState } from "react";
 import type { CalEvent } from "@team6220/data";
 
 export const eventHref = (e: Pick<CalEvent, "_id">) => `/apps/calendar/event?id=${encodeURIComponent(e._id)}`;
-export const monthHref = (month: string) => `/apps/calendar?month=${month}`;
+/** The month view for "2026-11" (anything else: this month). */
+export const monthHref = (month: string) => (/^\d{4}-\d{2}$/.test(month) ? `/apps/calendar?month=${month}` : "/apps/calendar");
 /** New event, break or meeting; `end` for a break dragged over several days. */
 export const newHref = (type: "meeting" | "event" | "break", date: string, end = date) => `/apps/calendar/new?type=${type}&date=${date}${end !== date ? `&end=${end}` : ""}`;
 export const editHref = (e: Pick<CalEvent, "_id">) => `/apps/calendar/edit?id=${encodeURIComponent(e._id)}`;
