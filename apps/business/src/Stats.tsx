@@ -2,7 +2,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { business } from "@team6220/data";
 import { Note, PageHeader, Screen } from "@team6220/ui";
-import { ExportMenu, SeasonChips, money } from "./shared";
+import { ExportMenu, SeasonPicker, savedSeason, money } from "./shared";
 
 const BLUE = "#4054e4";
 const GOLD = "var(--color-gold)";
@@ -15,7 +15,7 @@ export function Stats() {
   const [data, setData] = useState<{ stats: business.BizStats; seasons: string[] } | null>(null);
   const [error, setError] = useState("");
   const load = (season?: string) => business.stats(season).then(setData, (e) => setError(e instanceof Error ? e.message : "We couldn't load the numbers."));
-  useEffect(() => void load(), []);
+  useEffect(() => void load(savedSeason()), []);
 
   if (error) return <Screen><PageHeader title="Team stats" /><Note tone="bad">{error}</Note></Screen>;
   if (!data) return <Screen><p className="k-hint" role="status">Loading…</p></Screen>;
@@ -34,8 +34,8 @@ export function Stats() {
 
   return (
     <Screen>
-      <PageHeader title="Team stats" sub="Sponsorship, grants and fundraising for a season." actions={<ExportMenu filename={`business-stats-${stats.season}.csv`} rows={exportRows} />} />
-      <SeasonChips seasons={data.seasons} value={stats.season} onChange={(s) => void load(s)} />
+      <PageHeader title="Team stats" sub="Sponsorship, grants and fundraising for the season chosen at the top of the sidebar" actions={<ExportMenu filename={`business-stats-${stats.season}.csv`} rows={exportRows} />} />
+      <SeasonPicker seasons={data.seasons} value={stats.season} onChange={(s) => void load(s)} />
       <div className="biz-tiles">
         <Tile label="Money raised" value={money(raised)} note={`sponsors ${money(stats.raised.sponsors)} · grants ${money(stats.raised.grants)}`} />
         <Tile label="Sponsor pitches" value={String(pitches)} note={percent(stats.pitches.accepted, pitches)} />

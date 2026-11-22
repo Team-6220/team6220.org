@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { business, type Grant, type GrantPublic, type Me } from "@team6220/data";
 import { Btn, DataTable, Field, Fields, Note, PageHeader, Screen, Section, StatusChip, Tabs, Toggle, type Column } from "@team6220/ui";
-import { EditMoney, EditText, ExportMenu, Fold, GRANT_OPTIONS, PeopleList, PrivateNote, SeasonChips, Stages } from "./shared";
+import { EditMoney, EditText, ExportMenu, Fold, GRANT_OPTIONS, PeopleList, PrivateNote, SeasonPicker, savedSeason, Stages } from "./shared";
 
 type Row = Grant | GrantPublic;
 const isFull = (r: Row): r is Grant => "writer" in r;
@@ -25,7 +25,7 @@ export function GrantTracker({ me }: { me: Me }) {
   const [added, setAdded] = useState<string[]>([]);
 
   const load = (s?: string) => business.grants(s).then((l) => { setList(l); setSeason(l.season); }, (e) => setError(e instanceof Error ? e.message : "We couldn't load the tracker."));
-  useEffect(() => void load(), []);
+  useEffect(() => void load(savedSeason()), []);
 
   const rows = list?.rows ?? [];
   const shown = stage === "all" ? rows : rows.filter((r) => business.stageOf(r.status) === Number(stage));
@@ -100,8 +100,8 @@ export function GrantTracker({ me }: { me: Me }) {
 
   return (
     <Screen>
-      <PageHeader title="Grant tracker" sub="Every grant we could apply to, and how far along it is." actions={<ExportMenu filename={`grant-tracker-${list.season}.csv`} rows={exportRows} />} />
-      <SeasonChips seasons={list.seasons} value={list.season} onChange={(s) => void load(s)} />
+      <PageHeader title="Grant tracker" sub="Season shown is the one chosen at the top of the sidebar" actions={<ExportMenu filename={`grant-tracker-${list.season}.csv`} rows={exportRows} />} />
+      <SeasonPicker seasons={list.seasons} value={list.season} onChange={(s) => void load(s)} />
       {error && <Note tone="bad">{error}</Note>}
       <Fold icon="plus" title="Add a grant">
         <p className="k-hint">Anyone can add a grant and its link. The rest is filled in as it moves along.</p>

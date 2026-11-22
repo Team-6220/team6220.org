@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { business, type Me, type Sponsor, type SponsorPublic } from "@team6220/data";
 import { Btn, DataTable, Field, Fields, Icon, Note, PageHeader, Screen, StatusChip, Tabs, Toggle, type Column } from "@team6220/ui";
-import { EditChoice, EditMoney, EditText, ExportMenu, Fold, PeopleList, PrivateNote, SPONSOR_OPTIONS, SeasonChips, Stages } from "./shared";
+import { EditChoice, EditMoney, EditText, ExportMenu, Fold, PeopleList, PrivateNote, SPONSOR_OPTIONS, SeasonPicker, savedSeason, Stages } from "./shared";
 
 type Row = Sponsor | SponsorPublic;
 const isFull = (r: Row): r is Sponsor => "contact" in r;
@@ -30,7 +30,7 @@ export function SponsorTracker({ me }: { me: Me }) {
   const [note, setNote] = useState("");
 
   const load = (s?: string) => business.sponsors(s).then((l) => { setList(l); setSeason(l.season); }, (e) => setError(e instanceof Error ? e.message : "We couldn't load the tracker."));
-  useEffect(() => void load(), []);
+  useEffect(() => void load(savedSeason()), []);
 
   const rows = list?.rows ?? [];
   const shown = stage === "all" ? rows : rows.filter((r) => business.stageOf(r.status) === Number(stage));
@@ -90,8 +90,8 @@ export function SponsorTracker({ me }: { me: Me }) {
 
   return (
     <Screen>
-      <PageHeader title="Sponsor tracker" sub="Every company we are asking for support, and how far along it is." actions={<ExportMenu filename={`sponsor-tracker-${list.season}.csv`} rows={exportRows} />} />
-      <SeasonChips seasons={list.seasons} value={list.season} onChange={(s) => void load(s)} />
+      <PageHeader title="Sponsor tracker" sub="Season shown is the one chosen at the top of the sidebar" actions={<ExportMenu filename={`sponsor-tracker-${list.season}.csv`} rows={exportRows} />} />
+      <SeasonPicker seasons={list.seasons} value={list.season} onChange={(s) => void load(s)} />
       {error && <Note tone="bad">{error}</Note>}
       <Fold icon="plus" title="Add a company">
         <p className="k-hint">Anyone can add a company and who to contact. The rest is filled in as it moves along.</p>

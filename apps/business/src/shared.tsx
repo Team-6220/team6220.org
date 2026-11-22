@@ -1,7 +1,7 @@
 // Small things every Business screen uses: the colour of each status, links between pages, text you edit in place.
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { business, ops, type Person } from "@team6220/data";
-import { Chips, Icon, Note, Section, type StatusOption, type Tone } from "@team6220/ui";
+import { Chips, Icon, Note, Section, frame, type StatusOption, type Tone } from "@team6220/ui";
 
 export const businessHref = (view: string) => `/apps/business/${view}`;
 
@@ -10,10 +10,30 @@ const toneOf = (status: string): Tone => SPONSOR_TONE[status] ?? SPONSOR_TONE[st
 export const SPONSOR_OPTIONS: StatusOption[] = business.SPONSOR_STATUSES.map((label) => ({ label, tone: toneOf(label) }));
 export const GRANT_OPTIONS: StatusOption[] = business.GRANT_STATUSES.map((label) => ({ label, tone: toneOf(label) }));
 
-/** A season's Chips: this season first, then earlier ones. */
-export function SeasonChips({ seasons, value, onChange }: { seasons: string[]; value: string; onChange: (season: string) => void }) {
-  if (seasons.length < 2) return null;
-  return <Chips items={seasons.map((s) => ({ id: s, label: s }))} value={value} onChange={onChange} />;
+const SEASON_KEY = "team6220.business.season";
+
+/** The season picked last time (kept in this browser), so it follows you from screen to screen. "" means this season. */
+export function savedSeason(): string | undefined {
+  try { return localStorage.getItem(SEASON_KEY) || undefined; } catch { return undefined; }
+}
+
+/**
+ * The season picker: at the top of the left menu, as in the design (the frame draws it). On a phone, where there is
+ * no left menu, it is a row of buttons on the page instead.
+ */
+export function SeasonPicker({ seasons, value, onChange }: { seasons: string[]; value: string; onChange: (season: string) => void }) {
+  const pick = (season: string) => {
+    try { localStorage.setItem(SEASON_KEY, season); } catch { /* the choice still applies on this screen */ }
+    onChange(season);
+  };
+  useEffect(() => {
+    const api = frame();
+    api.setContext?.({ label: `Season ${value}`, options: seasons.map((s) => ({ label: s, current: s === value })), onPick: pick });
+    return () => api.setContext?.(null);
+  }, [seasons.join("|"), value]);
+  const phone = typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
+  if (!phone || seasons.length < 2) return null;
+  return <Chips items={seasons.map((s) => ({ id: s, label: s }))} value={value} onChange={pick} />;
 }
 
 /** Text you click to change. It saves when you leave the box (or press Enter in a one-line box) and only if it changed. */
