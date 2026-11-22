@@ -11,6 +11,7 @@ import { SiteError } from "../../site/types";
 import type { VerifyViewer } from "../../site/verify";
 import { actorFor, requireRole, type Who } from "./auth";
 import * as account from "./account";
+import * as attendance from "./attendance";
 import * as bom from "./bom";
 import * as calendar from "./calendar";
 import { withCallBudget } from "./budget";
@@ -90,6 +91,17 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   saveSupervisor: { who: "scheduler", run: supervision.saveSupervisor },
   mySupervisorRow: { who: "signedIn", run: supervision.mySupervisorRow },
   askToSupervise: { who: "signedIn", run: supervision.askToSupervise },
+  // Attendance (attendance.ts). The kiosk actions use the kiosk's own token, not a login.
+  attDay: { who: "attendance", run: attendance.attDay },
+  attMine: { who: "attendance", run: attendance.attMine },
+  attPast: { who: "attendance", run: attendance.attPast },
+  attStats: { who: "attendance", run: attendance.attStats },
+  attCopyMonth: { who: "attendanceAdmin", run: attendance.attCopyMonth },
+  attOpenKiosk: { who: "attendanceAdmin", run: attendance.attOpenKiosk },
+  attCloseKiosk: { who: "anyone", run: attendance.attCloseKiosk },
+  attKioskSignIn: { who: "anyone", run: attendance.attKioskSignIn },
+  attKioskRegister: { who: "anyone", run: attendance.attKioskRegister },
+  attKioskToday: { who: "anyone", run: attendance.attKioskToday },
   // Icarus (icarus.ts)
   saveIcarusRecord: { who: "lead", run: icarus.saveIcarusRecord },
   removeIcarusRecord: { who: "lead", run: icarus.removeIcarusRecord },

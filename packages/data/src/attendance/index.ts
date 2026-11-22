@@ -1,29 +1,26 @@
-// attendance: the functions /apps/attendance uses. See packages/data/README.md ("Attendance").
+// attendance: the functions /apps/attendance uses. Plan: https://github.com/Team-6220/team6220.org/wiki/Operations-Attendance.
 //
 //   import { attendance } from "@team6220/data";
-//   const viewer = await attendance.getViewer();       // signed-out | pending | member (+ isAdmin)
-//   await attendance.openKiosk();                       // Attendance Admin, on the kiosk
-//   await attendance.signIn("0123456789");              // on the open kiosk, no login needed per student
-//   await attendance.today();                           // Team Member: names + times
+//   const { day } = await attendance.today();                  // who is here and who isn't
+//   const mine = await attendance.mine();                       // your sign-ins and hours
+//   const kiosk = await attendance.openKiosk();                 // Attendance Admin: opens the sign-in kiosk
+//   await attendance.signIn("0123456789", "in");                // on the open kiosk, no login needed per student
 //
-// Real checks happen in the Apps Script (it verifies the Wix token and badges on every request).
-// getViewer() is only for choosing what to show.
-//
-// Demo mode (?demo=admin|member|pending|signed-out on the page) swaps in the mock with made-up data and a
-// fake sign-in, for trying the screens without the server. It never talks to Wix or the real Sheet.
-import { BADGES, ATTENDANCE_API_URL } from "../config";
-import * as auth from "../auth";
-import { memberAccessToken } from "../wix";
-import { createAttendanceClient } from "./client";
-import { httpTransport } from "./http";
-import { mockTransport, type MockRole } from "./mock";
-import type { Transport, Viewer } from "./types";
+// Every call goes to the team server (/api/ops), which checks who is asking. Demo mode (?demo=attendance|member|lead|
+// pending|signed-out) uses made-up data (./mock.ts).
+import "./mock"; // the demo data (only used in demo mode)
+import { callOps } from "../ops";
+import { OpsError } from "../ops/types";
+import type { DayView, KioskRow, KioskSession, MyView, PastMeeting, SignInResult, TeamStats } from "./types";
 
-export type DemoRole = MockRole | "signed-out";
-const DEMO_KEY = "team6220.attendance.demo";
-const DEMO_ROLES: DemoRole[] = ["admin", "member", "pending", "signed-out"];
+export * from "./types";
+export { countedMinutes, dayView, isExpected, myView, pastMeetings, seasonOf, teamStats } from "./stats";
 
-function session(): Storage | null {
+// ----- the kiosk, which lives in the tab that opened it -----
+
+const KIOSK_KEY = "team6220.attendance.kiosk";
+
+function tabStorage(): Storage | null {
   try {
     return typeof window === "undefined" ? null : window.sessionStorage;
   } catch {
@@ -31,84 +28,99 @@ function session(): Storage | null {
   }
 }
 
-/** The demo role for this tab, or null when using the real server. */
-export function demoRole(): DemoRole | null {
-  const v = session()?.getItem(DEMO_KEY) as DemoRole | null | undefined;
-  return v && DEMO_ROLES.includes(v) ? v : null;
-}
-
-/** Turn demo mode on (with a role) or off (null) for this tab. */
-export function setDemoRole(role: DemoRole | null): void {
-  const s = session();
-  if (!s) return;
+function forgetKiosk() {
   try {
-    if (role && DEMO_ROLES.includes(role)) s.setItem(DEMO_KEY, role);
-    else s.removeItem(DEMO_KEY);
-    s.removeItem("team6220.attendance.kiosk");
+    tabStorage()?.removeItem(KIOSK_KEY);
   } catch {
-    // storage blocked: demo mode can't be used
+    // ignore
   }
 }
 
-/** True when attendance can reach a server (real URL configured, or demo mode). */
-export function isConfigured(): boolean {
-  return !!demoRole() || /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(ATTENDANCE_API_URL);
-}
-
-let mock: Transport | undefined;
-let http: Transport | undefined;
-
-const client = createAttendanceClient({
-  transport: () => {
-    if (demoRole()) return (mock ??= mockTransport({ storage: session() }));
-    if (!isConfigured()) return null;
-    return (http ??= httpTransport(ATTENDANCE_API_URL));
-  },
-  getToken: async () => {
-    const role = demoRole();
-    if (role) return role === "signed-out" ? null : `mock:${role}`;
-    return memberAccessToken();
-  },
-  kioskStorage: session(),
-});
-
-/** Who is looking (from the browser's sign-in; cosmetic). */
-export async function getViewer(): Promise<Viewer> {
-  const role = demoRole();
-  if (role) {
-    if (role === "signed-out") return { kind: "signed-out" };
-    if (role === "pending") return { kind: "pending", name: "Demo Visitor" };
-    return { kind: "member", name: role === "admin" ? "Demo Admin" : "Demo Member", isAdmin: role === "admin" };
+/** The kiosk opened in this tab, if it hasn't expired. */
+export function currentKiosk(): KioskSession | null {
+  try {
+    const raw = tabStorage()?.getItem(KIOSK_KEY);
+    if (!raw) return null;
+    const kiosk = JSON.parse(raw) as KioskSession;
+    if (typeof kiosk.kioskToken !== "string" || !(Date.parse(kiosk.expiresAt) > Date.now())) {
+      forgetKiosk();
+      return null;
+    }
+    return kiosk;
+  } catch {
+    return null;
   }
-  const member = await auth.getMember();
-  if (!member) return { kind: "signed-out" };
-  const badges = member.status === "APPROVED" ? await auth.getBadges() : [];
-  const isAdmin = badges.includes(BADGES.attendanceAdmin);
-  if (!isAdmin && !badges.includes(BADGES.teamMember)) return { kind: "pending", name: member.name };
-  return { kind: "member", name: member.name, isAdmin };
 }
 
-/** True while this browser holds a member sign-in (or a demo sign-in). Doesn't call anything. */
-export function isSignedIn(): boolean {
-  const role = demoRole();
-  if (role) return role !== "signed-out";
-  return auth.isLoggedIn();
+/** Asks as the kiosk (its own token, no login). A closed kiosk is forgotten. */
+async function asKiosk<T>(action: string, args: Record<string, unknown> = {}): Promise<T> {
+  const kiosk = currentKiosk();
+  if (!kiosk) throw new OpsError("kiosk-closed", "The kiosk is closed. An Attendance Admin has to open it.");
+  try {
+    return await callOps<T>(action, { kioskToken: kiosk.kioskToken, ...args });
+  } catch (err) {
+    if (err instanceof OpsError && err.code === "kiosk-closed") forgetKiosk();
+    throw err;
+  }
 }
 
-export const {
-  status,
-  openKiosk,
-  closeKiosk,
-  currentKiosk,
-  signIn,
-  register,
-  today,
-  historyDays,
-  historyFor,
-  lookup,
-} = client;
+/** Attendance Admin: opens the kiosk in this tab. Students can then sign in here without logging in. */
+export async function openKiosk(): Promise<KioskSession> {
+  const session = await callOps<KioskSession>("attOpenKiosk");
+  const kiosk: KioskSession = { kioskToken: session.kioskToken, expiresAt: session.expiresAt };
+  try {
+    tabStorage()?.setItem(KIOSK_KEY, JSON.stringify(kiosk));
+  } catch {
+    // without storage the kiosk only lasts until the page reloads
+  }
+  return kiosk;
+}
 
-export { createAttendanceClient } from "./client";
-export { httpTransport } from "./http";
-export { mockTransport, MOCK_STUDENTS, type MockRole } from "./mock";
-export * from "./types";
+/** Closes this tab's kiosk on the server and forgets it. Safe to call when none is open. */
+export async function closeKiosk(): Promise<void> {
+  const kiosk = currentKiosk();
+  forgetKiosk();
+  if (kiosk) await callOps("attCloseKiosk", { kioskToken: kiosk.kioskToken });
+}
+
+/** Kiosk: signs a student in (or out, when leaving early) by their ID. */
+export async function signIn(studentId: string, mode: "in" | "out" = "in"): Promise<SignInResult> {
+  return (await asKiosk<{ result: SignInResult }>("attKioskSignIn", { studentId: studentId.trim(), mode })).result;
+}
+
+/** Kiosk: adds an ID that isn't on the roster and signs them in. */
+export async function register(studentId: string, firstName: string, lastName: string): Promise<SignInResult> {
+  return (await asKiosk<{ result: SignInResult }>("attKioskRegister", { studentId: studentId.trim(), firstName, lastName })).result;
+}
+
+/** Kiosk: who signed in today, newest first. */
+export async function kioskToday(): Promise<KioskRow[]> {
+  return (await asKiosk<{ rows: KioskRow[] }>("attKioskToday")).rows;
+}
+
+// ----- the screens -----
+
+/** Who is here and who isn't, today or on another day (yyyy-mm-dd), and whether a kiosk is open. */
+export async function today(date?: string): Promise<{ day: DayView; kioskOpen: boolean }> {
+  return callOps("attDay", date ? { date } : {});
+}
+
+/** Your sign-ins, hours and attendance this season. */
+export async function mine(): Promise<MyView> {
+  return (await callOps<{ mine: MyView }>("attMine")).mine;
+}
+
+/** Every past meeting this season, newest first. */
+export async function past(): Promise<PastMeeting[]> {
+  return (await callOps<{ meetings: PastMeeting[] }>("attPast")).meetings;
+}
+
+/** The season's numbers. */
+export async function stats(): Promise<TeamStats> {
+  return (await callOps<{ stats: TeamStats }>("attStats")).stats;
+}
+
+/** Attendance Admin: a month's sign-ins (date, first name, last name, student ID) to paste into a Sheet. */
+export async function copyMonth(month: string): Promise<{ date: string; firstName: string; lastName: string; studentId: string }[]> {
+  return (await callOps<{ rows: { date: string; firstName: string; lastName: string; studentId: string }[] }>("attCopyMonth", { month })).rows;
+}

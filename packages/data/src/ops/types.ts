@@ -48,6 +48,10 @@ export interface Roles {
   business: boolean;
   /** May change the Calendar: events, breaks, Meeting schedule, one day's meeting (Leads, Mentors and Boosters). */
   scheduler: boolean;
+  /** May see Attendance: the team, and Attendance Admins who are not on it. */
+  attendance: boolean;
+  /** May open the sign-in kiosk and copy sign-in data with student IDs (the Attendance Admin badge). */
+  attendanceAdmin: boolean;
 }
 
 /** The signed-in person. */
@@ -108,6 +112,7 @@ export interface HistoryEntry extends Item {
 }
 
 export type OpsErrorCode =
+  | "kiosk-closed"
   | "signed-out"
   | "pending"
   | "forbidden"

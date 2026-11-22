@@ -140,7 +140,7 @@ const lazyWixStore: Store = {
 };
 
 const ERROR_CODES: OpsErrorCode[] = [
-  "signed-out", "pending", "forbidden", "not-configured", "bad-request", "busy", "conflict", "wix-unavailable",
+  "kiosk-closed", "signed-out", "pending", "forbidden", "not-configured", "bad-request", "busy", "conflict", "wix-unavailable",
   "server-error", "network",
 ];
 let http: Transport | undefined;

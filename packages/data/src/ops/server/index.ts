@@ -4,6 +4,7 @@ export { handleCalendarFeed, handleGithubWebhook, handleOpsRequest, handleTimerR
 export { handleDiscordLinkCallback, handleDiscordLinkStart } from "./discord-link";
 export { CALLS_PER_REQUEST, withCallBudget } from "./budget";
 export { apiError, ApiError, withId, type Doc, type OpsBadges, type OpsData, type OpsEnv, type WixMember } from "./env";
+export { ATTENDANCE_COLLECTIONS } from "./attendance";
 export { BOM_COLLECTIONS } from "./bom";
 export { ICARUS_COLLECTIONS } from "./icarus";
 export { REQUIRED_COLLECTIONS } from "./context";

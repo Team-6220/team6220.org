@@ -42,10 +42,11 @@ const answerCache = new Map<string, { value: string; until: number }>();
 
 export const opsEnv: OpsEnv = {
   data: {
-    async query(collection, filter = {}, limit = 1000, sort) {
+    async query(collection, filter = {}, limit = 1000, sort, skip = 0) {
       let q = query(collection);
       for (const [field, value] of Object.entries(filter)) q = q.eq(field, value);
       if (sort) q = sort.descending ? q.descending(sort.field) : q.ascending(sort.field);
+      if (skip) q = q.skip(skip);
       return (await q.limit(limit).find()).items as Doc[];
     },
     async queryIds(collection, ids) {

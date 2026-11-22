@@ -47,12 +47,10 @@ test.describe("/apps dashboard (signed out)", () => {
 });
 
 test.describe("member apps, signed out", () => {
-  test("/apps/attendance shows the sign-in prompt", async ({ page, collected }) => {
+  test("/apps/attendance, with no team server (this build), opens the made-up demo like the other ops apps", async ({ page, collected }) => {
     await page.goto("apps/attendance");
     await settle(page);
-    await expect(page.getByRole("heading", { level: 1, name: "Attendance" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Sign in to see attendance" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Go to team apps" })).toHaveAttribute("href", "/apps");
+    await expect(page.getByRole("heading", { level: 1, name: "Today" })).toBeVisible();
     expect(collected.errors).toEqual([]);
   });
 
@@ -73,29 +71,53 @@ test.describe("member apps, signed out", () => {
   });
 });
 
-test.describe("attendance ?demo= modes (work on the deployed build)", () => {
-  const cases: [string, RegExp | string][] = [
-    ["signed-out", "Sign in to see attendance"],
-    ["pending", "Waiting for approval"],
+test.describe("attendance ?demo= modes", () => {
+  const cases: [string, string][] = [
+    ["signed-out", "Sign in to see meeting attendance."],
+    ["pending", "Attendance opens once a web admin approves your account"],
   ];
-  for (const [mode, heading] of cases) {
+  for (const [mode, text] of cases) {
     test(`?demo=${mode}`, async ({ page, collected }) => {
       await page.goto(`apps/attendance?demo=${mode}`);
       await settle(page);
-      await expect(page.getByRole("note")).toContainText(`Demo mode (${mode})`);
-      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expect(page.getByText(text)).toBeVisible();
       expect(collected.errors).toEqual([]);
     });
   }
 
-  test("?demo=member shows the member view, ?demo=off leaves demo mode", async ({ page, collected }) => {
+  test("?demo=member shows who is here today, without the kiosk button", async ({ page, collected }) => {
     await page.goto("apps/attendance?demo=member");
     await settle(page);
-    await expect(page.getByRole("note")).toContainText("Demo mode (member)");
-    await expect(page.getByRole("heading", { name: "Sign in to see attendance" })).toHaveCount(0);
-    await page.getByRole("link", { name: "Leave demo" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Today" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open kiosk" })).toHaveCount(0);
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("?demo=member opens every screen it should, and not the kiosk", async ({ page, collected }) => {
+    for (const [view, heading] of [["mine", "Did I sign in?"], ["hours", "My hours"], ["past", "Past meetings"], ["stats", "Stats"]]) {
+      await page.goto(`apps/attendance/${view}?demo=member`);
+      await settle(page);
+      await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    }
+    await page.goto("apps/attendance/kiosk?demo=member");
     await settle(page);
-    await expect(page.getByRole("heading", { name: "Sign in to see attendance" })).toBeVisible();
+    await expect(page.getByText("Only Attendance Admins can open the kiosk.")).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("?demo=attendance opens the kiosk and signs a student in, then out", async ({ page, collected }) => {
+    await page.goto("apps/attendance/kiosk?demo=attendance");
+    await settle(page);
+    await page.getByRole("button", { name: "Open kiosk" }).click();
+    await page.getByLabel("Scan your ID card or type your student ID").fill("4829173650");
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("Welcome, Ada!")).toBeVisible();
+    await page.getByRole("tab", { name: "Sign out (leaving early)" }).click();
+    await page.getByLabel("Scan your ID card or type your student ID").fill("4829173650");
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("See you next time, Ada!")).toBeVisible();
+    await page.getByRole("button", { name: "Close kiosk" }).click();
+    await expect(page.getByRole("button", { name: "Open kiosk" })).toBeVisible();
     expect(collected.errors).toEqual([]);
   });
 });

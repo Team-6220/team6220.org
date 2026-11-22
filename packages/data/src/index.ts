@@ -5,18 +5,7 @@ export { WIX_CLIENT_ID, APPS_HOME_PATH, LOGIN_CALLBACK_PATH, BADGES, SUBTEAM_BAD
 export * as auth from "./auth";
 export type { Member, MemberStatus } from "./auth";
 export * as attendance from "./attendance";
-export {
-  AttendanceError,
-  type AttendanceErrorCode,
-  type AttendanceStatus,
-  type DayEntry,
-  type DaySummary,
-  type KioskSession,
-  type LookupResult,
-  type SignInResult,
-  type SignInStatus,
-  type Viewer,
-} from "./attendance/types";
+export type { AbsentRow, AttMeeting, AttMember, AttSettings, DayView, HereRow, KioskRow, KioskSession, MyRow, MyView, PastMeeting, SignInResult, SignInStatus, TeamStats } from "./attendance/types";
 // Site Manager (apps/site). Browser side only; the server side is "@team6220/data/site-server".
 export * as site from "./site";
 // Inventory app data (apps/inventory). Also importable as "@team6220/data/inventory".

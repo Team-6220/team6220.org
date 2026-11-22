@@ -1,294 +1,16 @@
+// The sign-in kiosk (Attendance Admins open it on the meeting room's screen). Students type or scan their student ID,
+// no login needed: the kiosk holds its own token. Sign out is for leaving early. An ID the roster doesn't have can add
+// a name, when Attendance's settings allow it.
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { attendance, auth, AttendanceError, type SignInResult } from "@team6220/data";
-import { errorMessage, STUDENT_ID } from "./util";
+import { attendance, OpsError, ops, type KioskRow, type KioskSession, type SignInResult } from "@team6220/data";
+import { Btn, Note, PageHeader, Screen, Section, Tabs } from "@team6220/ui";
+import { errorMessage, formatTime, longDay } from "./util";
 
-type Feedback = { tone: "ok" | "warn" | "error"; title: string; detail?: string };
-
-const FEEDBACK_MS = 5000;
-
-/**
- * Full-screen sign-in kiosk. Works with a USB/Bluetooth barcode or QR scanner that "types" the ID and presses
- * Enter, or with the on-screen keyboard. The input keeps focus so scans always land in it.
- */
-export default function Kiosk({ adminName, onClosed }: { adminName: string; onClosed: (message?: string) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [id, setId] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<Feedback>();
-  const [register, setRegister] = useState<string>(); // student ID being registered
-  const [recent, setRecent] = useState<{ name: string; time: string }[]>([]);
-  const [sound, setSound] = useState(true);
-  const [confirmClose, setConfirmClose] = useState(false);
-  const closing = useRef(false);
-
-  const focusInput = useCallback(() => {
-    if (!register) inputRef.current?.focus();
-  }, [register]);
-
-  const close = useCallback(
-    async (message?: string, signOut = false) => {
-      if (closing.current) return;
-      closing.current = true;
-      try {
-        await attendance.closeKiosk();
-      } catch {
-        // already closed or offline: the server closes it at its expiry time anyway
-      }
-      if (document.fullscreenElement) await document.exitFullscreen?.().catch(() => {});
-      if (signOut && !attendance.demoRole()) {
-        await auth.logout("/apps/attendance");
-        return;
-      }
-      if (signOut) attendance.setDemoRole("signed-out");
-      onClosed(message);
-    },
-    [onClosed],
-  );
-
-  // Signing out (in any tab) or the kiosk expiring closes the kiosk.
-  useEffect(() => {
-    const check = () => {
-      if (!attendance.isSignedIn()) void close("The kiosk closed because the admin signed out.");
-      else if (!attendance.currentKiosk()) void close("The kiosk closed (it was open for the maximum time).");
-    };
-    const timer = window.setInterval(check, 5000);
-    window.addEventListener("storage", check);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("storage", check);
-    };
-  }, [close]);
-
-  // Clear feedback after a few seconds and keep the input focused.
-  useEffect(() => {
-    if (!feedback) return;
-    const t = window.setTimeout(() => setFeedback(undefined), FEEDBACK_MS);
-    return () => window.clearTimeout(t);
-  }, [feedback]);
-  useEffect(focusInput, [focusInput, busy, feedback]);
-
-  function show(result: SignInResult) {
-    if (result.status === "signed-in") {
-      setFeedback({ tone: "ok", title: result.message });
-      setRecent((r) => [{ name: result.name ?? "", time: result.time ?? "" }, ...r].slice(0, 8));
-      beep(sound, "ok");
-    } else if (result.status === "duplicate") {
-      setFeedback({ tone: "warn", title: `Already signed in, ${result.name}`, detail: `You signed in today at ${result.time}.` });
-      beep(sound, "warn");
-    } else {
-      setFeedback({ tone: "error", title: result.message });
-      beep(sound, "error");
-    }
-  }
-
-  async function handleError(err: unknown) {
-    if (err instanceof AttendanceError && err.code === "kiosk-closed") {
-      await close(err.message);
-      return;
-    }
-    setFeedback({ tone: "error", title: "Not signed in", detail: errorMessage(err, "Something went wrong. Try again.") });
-    beep(sound, "error");
-  }
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const value = id.trim();
-    if (!value || busy) return;
-    setId("");
-    if (!STUDENT_ID.test(value)) {
-      setFeedback({ tone: "error", title: "That isn't a student ID", detail: "Student IDs are exactly 10 digits." });
-      beep(sound, "error");
-      return;
-    }
-    setBusy(true);
-    try {
-      const result = await attendance.signIn(value);
-      if (result.status === "needs-registration") {
-        setFeedback(undefined);
-        setRegister(value);
-      } else {
-        show(result);
-      }
-    } catch (err) {
-      await handleError(err);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="kiosk" role="application" aria-label="Attendance kiosk" onClick={focusInput}>
-      <header className="kiosk__bar">
-        <div>
-          <strong>Attendance kiosk</strong>
-          <span className="kiosk__sub">
-            Opened by {adminName}
-            {attendance.demoRole() ? " · demo data" : ""}
-          </span>
-        </div>
-        <div className="kiosk__tools">
-          <label className="kiosk__sound">
-            <input type="checkbox" checked={sound} onChange={(e) => setSound(e.target.checked)} /> Sound
-          </label>
-          {confirmClose ? (
-            <>
-              <button type="button" className="t-button" onClick={() => void close("The kiosk is closed.")}>
-                Close kiosk
-              </button>
-              <button type="button" className="t-button t-button--quiet" onClick={() => void close("Kiosk closed and signed out.", true)}>
-                Close and sign out
-              </button>
-              <button type="button" className="t-button t-button--quiet" onClick={() => setConfirmClose(false)}>
-                Keep open
-              </button>
-            </>
-          ) : (
-            <button type="button" className="t-button t-button--quiet" onClick={() => setConfirmClose(true)}>
-              Close kiosk…
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="kiosk__main">
-        {register ? (
-          <RegisterForm
-            studentId={register}
-            onDone={(result) => {
-              setRegister(undefined);
-              if (result) show(result);
-            }}
-            onError={async (err) => {
-              setRegister(undefined);
-              await handleError(err);
-            }}
-          />
-        ) : (
-          <form className="kiosk__form" onSubmit={submit}>
-            <label htmlFor="kiosk-id" className="kiosk__label">
-              Scan your ID card or type your student ID
-            </label>
-            <div className="kiosk__entry">
-              <input
-                id="kiosk-id"
-                ref={inputRef}
-                className="kiosk__input"
-                inputMode="numeric"
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                autoFocus
-                maxLength={32}
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                aria-describedby="kiosk-feedback"
-              />
-              <button type="submit" className="t-button kiosk__go" disabled={busy || !id.trim()}>
-                {busy ? "…" : "Sign in"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div id="kiosk-feedback" className="kiosk__feedback-slot" role="status" aria-live="assertive">
-          {busy && <div className="kiosk__feedback kiosk__feedback--busy">Signing in…</div>}
-          {!busy && feedback && (
-            <div className={`kiosk__feedback kiosk__feedback--${feedback.tone}`}>
-              <p className="kiosk__feedback-title">{feedback.title}</p>
-              {feedback.detail && <p>{feedback.detail}</p>}
-            </div>
-          )}
-        </div>
-
-        {recent.length > 0 && (
-          <section className="kiosk__recent" aria-label="Just signed in">
-            <h2>Just signed in</h2>
-            <ul>
-              {recent.map((r, i) => (
-                <li key={i}>
-                  <span>{r.name}</span>
-                  <span className="kiosk__time">{r.time}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </main>
-    </div>
-  );
-}
-
-function RegisterForm({
-  studentId,
-  onDone,
-  onError,
-}: {
-  studentId: string;
-  onDone: (result?: SignInResult) => void;
-  onError: (err: unknown) => void;
-}) {
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
-  const firstRef = useRef<HTMLInputElement>(null);
-  useEffect(() => firstRef.current?.focus(), []);
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!first.trim() || !last.trim()) {
-      setError("Type your first and last name.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const result = await attendance.register(studentId, first, last);
-      if (result.status === "invalid") {
-        setError(result.message);
-        setBusy(false);
-      } else {
-        onDone(result);
-      }
-    } catch (err) {
-      onError(err);
-    }
-  }
-
-  return (
-    <form className="kiosk__form kiosk__register" onSubmit={submit} onClick={(e) => e.stopPropagation()}>
-      <h2>New here? Add your name</h2>
-      <p>
-        We don't have student ID <b>{studentId}</b> yet. Type your name once and you're signed in.
-      </p>
-      <div className="kiosk__names">
-        <label>
-          First name
-          <input ref={firstRef} value={first} onChange={(e) => setFirst(e.target.value)} maxLength={50} autoComplete="off" />
-        </label>
-        <label>
-          Last name
-          <input value={last} onChange={(e) => setLast(e.target.value)} maxLength={50} autoComplete="off" />
-        </label>
-      </div>
-      {error && (
-        <p className="kiosk__inline-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="kiosk__entry">
-        <button type="submit" className="t-button kiosk__go" disabled={busy}>
-          {busy ? "Saving…" : "Sign me in"}
-        </button>
-        <button type="button" className="t-button t-button--quiet" onClick={() => onDone()} disabled={busy}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+type Mode = "in" | "out";
+type Shown = { result: SignInResult; id: string };
 
 let audio: AudioContext | undefined;
-/** Short beep: high for OK, two low for problems. Ignored where audio isn't allowed. */
+/** A short beep: high for OK, two low for problems. Silent where audio isn't allowed. */
 function beep(enabled: boolean, kind: "ok" | "warn" | "error") {
   if (!enabled) return;
   try {
@@ -307,4 +29,150 @@ function beep(enabled: boolean, kind: "ok" | "warn" | "error") {
   } catch {
     // no audio: silent
   }
+}
+
+export function Kiosk() {
+  const [kiosk, setKiosk] = useState<KioskSession | null>(() => attendance.currentKiosk());
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const open = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      setKiosk(await attendance.openKiosk());
+    } catch (err) {
+      setError(errorMessage(err, "We couldn't open the kiosk."));
+    }
+    setBusy(false);
+  };
+  const close = async () => {
+    await attendance.closeKiosk().catch(() => undefined);
+    setKiosk(null);
+  };
+
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+  if (!kiosk) {
+    return (
+      <Screen>
+        <PageHeader title="Take attendance" sub={longDay(today)} back={{ label: "Attendance", href: "/apps/attendance" }} />
+        <Note>Open the kiosk on the screen in the meeting room. Students then sign in with their student ID, with no login. It closes by itself after a few hours, or when you close it.</Note>
+        {error && <Note tone="bad">{error}</Note>}
+        <div><Btn kind="primary" disabled={busy} onClick={open}>{busy ? "Opening…" : "Open kiosk"}</Btn></div>
+      </Screen>
+    );
+  }
+  return <Open today={today} onClose={close} onClosed={() => setKiosk(null)} />;
+}
+
+function Open({ today, onClose, onClosed }: { today: string; onClose: () => void; onClosed: () => void }) {
+  const [mode, setMode] = useState<Mode>("in");
+  const [id, setId] = useState("");
+  const [shown, setShown] = useState<Shown | null>(null);
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
+  const [rows, setRows] = useState<KioskRow[]>([]);
+  const [sound, setSound] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const demo = ops.isDemo();
+
+  const refresh = useCallback(async () => {
+    try {
+      setRows(await attendance.kioskToday());
+    } catch (err) {
+      if (err instanceof OpsError && err.code === "kiosk-closed") onClosed();
+    }
+  }, [onClosed]);
+  useEffect(() => void refresh(), [refresh]);
+  useEffect(() => input.current?.focus(), [shown, mode]);
+
+  const show = (result: SignInResult, typed: string) => {
+    setShown({ result, id: typed });
+    beep(sound, result.status === "signed-in" || result.status === "signed-out" ? "ok" : result.status === "needs-registration" ? "warn" : "error");
+  };
+  const submit = async (typed: string, how: Mode = mode) => {
+    if (!typed.trim() || busy) return;
+    setBusy(true);
+    try {
+      show(await attendance.signIn(typed, how), typed.trim());
+      setId("");
+      void refresh();
+    } catch (err) {
+      if (err instanceof OpsError && err.code === "kiosk-closed") return onClosed();
+      show({ status: "invalid", message: errorMessage(err, "That didn't work. Try again.") }, typed);
+    }
+    setBusy(false);
+  };
+  const register = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!shown || busy) return;
+    setBusy(true);
+    try {
+      show(await attendance.register(shown.id, first, last), shown.id);
+      setFirst("");
+      setLast("");
+      void refresh();
+    } catch (err) {
+      show({ status: "needs-registration", message: errorMessage(err, "We couldn't add that name.") }, shown.id);
+    }
+    setBusy(false);
+  };
+
+  const result = shown?.result;
+  const tone = result?.status === "signed-in" || result?.status === "signed-out" ? "ok" : result?.status === "needs-registration" || result?.status === "duplicate" || result?.status === "not-signed-in" ? "warn" : "bad";
+  return (
+    <Screen>
+      <PageHeader
+        title="Take attendance"
+        sub={longDay(today)}
+        actions={
+          <>
+            <Btn onClick={() => setSound(!sound)}>{sound ? "Sound on" : "Sound off"}</Btn>
+            <Btn icon="expand" title="Full screen" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)}>Full screen</Btn>
+            <Btn kind="primary" onClick={onClose}>Close kiosk</Btn>
+          </>
+        }
+      />
+      <Tabs items={[{ id: "in", label: "Sign in" }, { id: "out", label: "Sign out (leaving early)" }]} value={mode} onChange={(m) => { setMode(m); setShown(null); }} />
+      <form className="att-id" onSubmit={(e) => { e.preventDefault(); void submit(id); }}>
+        <label htmlFor="att-id-input">Scan your ID card or type your student ID</label>
+        <input id="att-id-input" ref={input} className="k-input att-id-input" inputMode="numeric" autoComplete="off" placeholder="Student ID" value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, "").slice(0, 12))} disabled={busy} />
+      </form>
+      {result && (
+        <Note tone={tone === "ok" ? "ok" : tone === "warn" ? "warn" : "bad"}>
+          {result.name && (result.status === "signed-in" || result.status === "signed-out") && <strong>{result.status === "signed-in" ? `Welcome, ${result.name}! ` : `See you next time, ${result.name}! `}</strong>}
+          {result.message}
+        </Note>
+      )}
+      {result?.status === "needs-registration" && (
+        <form className="k-box att-register" onSubmit={register}>
+          <strong>New here? Add your name</strong>
+          <span className="k-hint">Use your real first and last name. Made-up names are removed.</span>
+          <div className="att-register-row">
+            <input className="k-input" placeholder="First name" aria-label="First name" value={first} onChange={(e) => setFirst(e.target.value)} />
+            <input className="k-input" placeholder="Last name" aria-label="Last name" value={last} onChange={(e) => setLast(e.target.value)} />
+            <Btn kind="primary" type="submit" disabled={busy || !first.trim() || !last.trim()}>Sign in</Btn>
+          </div>
+        </form>
+      )}
+      {demo && (
+        <Section title="Random quick sign in (demo only)">
+          <div className="att-quick">
+            {["4829173650", "1057382946", "7731905284", "2946018357", "6182430795"].map((q) => <Btn key={q} onClick={() => void submit(q)}>{q}</Btn>)}
+          </div>
+        </Section>
+      )}
+      <Section title={`Signed in today · ${rows.length}`}>
+        <ul className="att-today">
+          {rows.map((r, i) => (
+            <li key={r.name + r.signedInAt} className={i === 0 && result?.status === "signed-in" ? "is-new" : ""}>
+              <span>{r.name}</span>
+              <span className="k-hint">{formatTime(r.signedInAt)}{r.signedOutAt && ` · left ${formatTime(r.signedOutAt)}`}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    </Screen>
+  );
 }
