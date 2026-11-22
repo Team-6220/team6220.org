@@ -1,0 +1,19 @@
+{
+  "name": "@team6220/rsvp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "/apps/rsvp: who is coming to competitions and events. Forms from Calendar events, answers, results, reminders.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rsvp.css": "./src/rsvp.css"
+  },
+  "dependencies": {
+    "@team6220/data": "workspace:*",
+    "@team6220/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  }
+}

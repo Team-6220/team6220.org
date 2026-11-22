@@ -39,6 +39,9 @@ export * as calendar from "./calendar";
 export type { CalEvent, CalEventType, CalendarData, PartDay, Shift, StepStatus, Supervisor, SupervisorInfo } from "./calendar/types";
 export type { ShiftTimes } from "./calendar";
 export type { EventLinks, IcsItem } from "./calendar";
+// RSVP: forms for competitions and events, answers, who's coming, reminders.
+export * as rsvp from "./rsvp";
+export type { DayAnswer, EventInfo, ManageRow, OpenForm, PrivateRow, Question, QuestionType, ResultRow, Results, RsvpAnswer, RsvpForm, RsvpSettings } from "./rsvp/types";
 // Your inbox, notification settings and Discord link.
 export * as notifications from "./notifications";
 export type { InboxItem, NotificationKind, NotificationPrefs } from "./notifications/catalog";

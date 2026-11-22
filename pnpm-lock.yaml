@@ -38,6 +38,9 @@ importers:
       '@team6220/production':
         specifier: workspace:*
         version: link:apps/production
+      '@team6220/rsvp':
+        specifier: workspace:*
+        version: link:apps/rsvp
       '@team6220/site':
         specifier: workspace:*
         version: link:apps/site
@@ -190,6 +193,18 @@ importers:
       '@team6220/cut-engine':
         specifier: workspace:*
         version: link:../../packages/cut-engine
+      '@team6220/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+
+  apps/rsvp:
+    dependencies:
       '@team6220/data':
         specifier: workspace:*
         version: link:../../packages/data

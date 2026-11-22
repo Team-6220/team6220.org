@@ -5,7 +5,10 @@ import type { Ctx } from "../context";
 import type { Doc } from "../env";
 import { membersWithBadge } from "./index";
 import { COLLECTION_NOTIFICATIONS, send, type Outgoing } from "./outbox";
-import { shiftReminders } from "./rules";
+import { reminderDue, COLLECTION_ANSWERS, COLLECTION_FORMS } from "../../../rsvp/plan";
+import type { RsvpAnswer, RsvpForm } from "../../../rsvp/types";
+import { settingsOf, teamMembers, unfinished } from "../rsvp";
+import { rsvpReminder, rsvpSummary, shiftReminders } from "./rules";
 
 const SIGNATURES_NEEDED = 2;
 
@@ -52,6 +55,42 @@ export function lateOrders(sections: Doc[], lines: Doc[], leads: string[], today
     .filter((s) => s.orderedBy && s.expectedArrival && s.expectedArrival < today)
     .filter((s) => lines.some((l) => l.sectionId === s._id && l.orderedAt && (l.receivedQty || 0) < l.quantity))
     .map((s) => ({ kind: "bom.late", to: leads, title: `The ${s.vendor} order is late`, text: `Expected ${s.expectedArrival}, not all received yet.`, url: "/apps/bom", record: { kind: "bomSection", id: String(s._id) }, dedupeKey: `bom.late:${s._id}:${s.expectedArrival}` }));
+}
+
+/** RSVP forms: on each day the schedule names (days before the answer-by date, the day itself, every few days after), the
+ *  people who haven't finished get a reminder; the morning it is due, the leads hear a summary. Cheap on the days nothing is
+ *  due: it reads the published forms and the schedule, and goes further only for a form that is due. */
+export async function rsvpReminders(ctx: Ctx, today: string, events: Doc[]): Promise<Outgoing[]> {
+  const forms = (await ctx.data.query(COLLECTION_FORMS, { status: "published" }, 1000)) as unknown as RsvpForm[];
+  if (!forms.length) return [];
+  const settings = await settingsOf(ctx);
+  const due = forms.flatMap((form) => {
+    const event = events.find((e) => e._id === form.eventId && !e.cancelled);
+    const when = event && form.remind !== false ? reminderDue(settings, form.answerBy, String(event.endDate), today, form.remindAfter !== false) : null;
+    return event && when ? [{ form, event, when }] : [];
+  });
+  const summaries = forms.flatMap((form) => { const event = events.find((e) => e._id === form.eventId && !e.cancelled); return event && settings.leadSummary && form.answerBy === today && String(event.endDate) >= today ? [{ form, event }] : []; });
+  if (!due.length && !summaries.length) return [];
+  const [team, leads, remindKeys, summaryKeys] = await Promise.all([teamMembers(ctx), membersWithBadge(ctx, [BADGES.lead]), usedKeys(ctx, "rsvp.reminder"), usedKeys(ctx, "rsvp.summary")]);
+  const out: Outgoing[] = [];
+  for (const { form, event, when } of due) {
+    const answers = (await ctx.data.query(COLLECTION_ANSWERS, { formId: form._id }, 1000)) as unknown as RsvpAnswer[];
+    const to = unfinished(team, answers);
+    if (to.length) out.push(rsvpReminder(form as unknown as Doc, event, to, settings.includeLink, `rsvp.reminder:${form._id}:${today}:${when}`));
+  }
+  for (const { form, event } of summaries) {
+    const answers = (await ctx.data.query(COLLECTION_ANSWERS, { formId: form._id }, 1000)) as unknown as RsvpAnswer[];
+    const finished = team.filter((m) => answers.some((a) => a.memberId === m.memberId && a.complete)).length;
+    out.push(rsvpSummary(form as unknown as Doc, event, leads, finished, team.length, `rsvp.summary:${form._id}:${today}`));
+  }
+  return [...out.filter(fresh(remindKeys)).filter((n) => n.kind !== "rsvp.summary"), ...out.filter(fresh(summaryKeys)).filter((n) => n.kind === "rsvp.summary")];
+}
+
+/** The daily RSVP job (its own timer, once each morning: it has more to read than runReminders can fit in one request). */
+export async function runRsvpReminders(ctx: Ctx) {
+  const list = await rsvpReminders(ctx, ctx.today(), await ctx.data.query("cal_events", { cancelled: false }));
+  await send(ctx, list);
+  return { reminders: list.length };
 }
 
 /** The timer job. */

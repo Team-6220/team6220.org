@@ -1,7 +1,7 @@
 // Home: what needs you, your inbox, your pins, and today at a glance. Each part reads the app it comes from; if one can't be
 // loaded it is left out rather than breaking Home.
 import { useEffect, useState } from "react";
-import { attendance, bom, calendar, icarus, ops, production, type CalendarData, type Me, type Task, type Part } from "@team6220/data";
+import { attendance, BADGES, bom, calendar, icarus, rsvp, ops, production, type CalendarData, type Me, type Task, type Part } from "@team6220/data";
 import { Cards, DataTable, Note, PageHeader, Pill, Screen, Section, type CardItem, type Tone } from "@team6220/ui";
 import type { DashView } from "./Dashboard";
 import { Inbox } from "./Inbox";
@@ -44,12 +44,14 @@ async function load(): Promise<{ needs: Need[]; today: Today }> {
   if (viewer.kind !== "member") return { needs: [], today: NONE };
   const me = viewer.me;
   // Each app is asked on its own, so one that fails doesn't hide the others.
-  const [tasks, lines, parts, cal] = await Promise.all([
+  const [tasks, lines, parts, cal, forms] = await Promise.all([
     icarus.needsMe(me, icarus.today()).catch(() => null),
     bom.needsMe(me).catch(() => null),
     production.needsMe(me).catch(() => null),
     Promise.all([calendar.load(), me.roles.attendance ? attendance.today().then((r) => r.day.here.length, () => null) : null])
       .then(([d, signedIn]) => fromCalendar(d, me, calendar.today(), signedIn), () => null),
+    // RSVP forms ask the Team Members: mentors and boosters see the results but aren't asked.
+    me.badges.includes(BADGES.teamMember) ? rsvp.openForms().then((f) => f.filter((x) => x.mine !== "done").length, () => 0) : 0,
   ]);
   const needs: Need[] = [];
   if (me.roles.team && me.subteams.length === 0) needs.push({ id: "subteams", what: "Pick your subteams so the right meetings and tasks show up for you", app: "Account", status: "Pick", tone: "warn", href: "/apps/account" });
@@ -59,6 +61,7 @@ async function load(): Promise<{ needs: Need[]; today: Today }> {
   if (me.roles.team && lines?.toReceive) needs.push({ id: "receive", what: `${plural(lines.toReceive, "ordered item hasn't", "ordered items haven't")} been received yet`, app: "BOM", status: "Receive", tone: "warn", href: "/apps/bom" });
   if (me.roles.team && parts?.pendingSetup) needs.push({ id: "setup", what: `${plural(parts.pendingSetup, "Shapeoko part is", "Shapeoko parts are")} waiting for setup`, app: "Production", status: "Set up", tone: "warn", href: "/apps/production" });
   needs.push(...(cal?.needs ?? []));
+  if (forms) needs.push({ id: "rsvp", what: `${plural(forms, "RSVP form needs", "RSVP forms need")} your answer`, app: "RSVP", status: "Answer", tone: "warn", href: "/apps/rsvp" });
   return { needs, today: { tasks: tasks?.tasks ?? null, openTasks: tasks?.open ?? 0, parts: parts?.unclaimed ?? null, meetings: cal?.meetings ?? [], supervision: cal?.supervision ?? null } };
 }
 
