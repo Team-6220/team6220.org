@@ -60,12 +60,20 @@ export async function saveNotificationPrefs(ctx: Ctx, body: Doc) {
   return {};
 }
 
+/** A random whole number from 0 to max - 1, every value equally likely (numbers past the last full block are drawn again). */
+function randomBelow(max: number): number {
+  const limit = Math.floor(0x1_0000_0000 / max) * max;
+  for (;;) {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0];
+    if (n < limit) return n % max;
+  }
+}
+
 /** {} -> { code, expiresAt }. A new 6-digit code for /link in Discord (any older code of yours stops working). */
 export async function startDiscordLink(ctx: Ctx) {
   const old = await ctx.data.query(COLLECTION_LINK_CODES, { memberId: ctx.actor.id });
   for (const o of old) await ctx.data.remove(COLLECTION_LINK_CODES, String(o._id));
-  const random = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
-  const code = String(random).padStart(6, "0");
+  const code = String(randomBelow(1_000_000)).padStart(6, "0");
   const expiresAt = new Date(ctx.env.now().getTime() + CODE_MINUTES * 60_000).toISOString();
   await ctx.data.insert(COLLECTION_LINK_CODES, { memberId: ctx.actor.id, kind: "code", hash: await sha256Hex(`code:${code}`), expiresAt });
   return { code, expiresAt };
