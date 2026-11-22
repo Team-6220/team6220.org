@@ -7,6 +7,7 @@ export { apiError, ApiError, withId, type Doc, type OpsBadges, type OpsData, typ
 export { ATTENDANCE_COLLECTIONS } from "./attendance";
 export { BOM_COLLECTIONS } from "./bom";
 export { BUSINESS_COLLECTIONS } from "./business";
+export { FUNDRAISING_COLLECTIONS } from "./fundraising";
 export { RSVP_COLLECTIONS } from "./rsvp";
 export { ICARUS_COLLECTIONS } from "./icarus";
 export { REQUIRED_COLLECTIONS } from "./context";

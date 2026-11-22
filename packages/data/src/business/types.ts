@@ -102,3 +102,157 @@ export const stageOf = (status: string): number => Number(status.slice(0, 1)) ||
 
 /** A row's own fields, before it is saved: no _id or createdAt (and none of Item's catch-all index signature). */
 export type NewRow<T> = { [K in keyof T as string extends K ? never : K extends "_id" | "createdAt" ? never : K]: T[K] };
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 1-2-3-100: each student does one of four things, and Operations approves the plan before they start and the result after.
+// ---------------------------------------------------------------------------------------------------------------------
+
+export const OPTIONS = ["restaurant", "grant", "sponsor", "merch"] as const;
+export type Option = (typeof OPTIONS)[number];
+
+/** A file kept in the team's Google Drive folder. Only Operations and the student who sent it can open it. */
+export interface FileRef {
+  id: string;
+  name: string;
+  size: number;
+}
+
+/** Operations' answer to something a student sent. A student can change it until it is approved. */
+export interface Approval {
+  status: "draft" | "waiting" | "approved" | "sent-back";
+  sentAt: string;
+  decidedAt: string;
+  /** Who decided. */
+  by: string;
+  /** What Operations said when sending it back. */
+  note: string;
+}
+export const NO_APPROVAL: Approval = { status: "draft", sentAt: "", decidedAt: "", by: "", note: "" };
+
+/** One student's pick for a season (collection biz_choices). */
+export interface Choice extends Item {
+  season: string;
+  memberId: string;
+  option: Option | "";
+  /** Merch only: "I'm done", confirmed by Operations. */
+  merchDone: Approval;
+}
+
+export interface RestaurantDay extends Item {
+  season: string;
+  memberId: string;
+  restaurant: string;
+  /** The other student doing it with them (required). */
+  partner: string;
+  date: string;
+  allDay: boolean;
+  startTime: string;
+  endTime: string;
+  address: string;
+  /** Miles from Los Alamitos High School, worked out from the address (0 until it is). */
+  miles: number;
+  link: string;
+  notes: string;
+  /** Step 1: approval to do it. */
+  plan: Approval;
+  /** Step 2. */
+  flyer: FileRef | null;
+  proof: FileRef | null;
+  setupNotes: string;
+  /** "Tell Operations it's all set up": there is no result to approve. */
+  setUp: boolean;
+}
+
+/** One of a student's two grants (collection biz_student_grants). Its result becomes a row on the Grant tracker. */
+export interface StudentGrant extends Item {
+  season: string;
+  memberId: string;
+  slot: number;
+  title: string;
+  organization: string;
+  link: string;
+  deadline: string;
+  asking: string;
+  amount: string;
+  notes: string;
+  application: FileRef | null;
+  plan: Approval;
+  submittedOn: string;
+  finalFile: FileRef | null;
+  resultNotes: string;
+  result: Approval;
+  /** The Grant tracker row the approved result wrote. */
+  trackerId: string;
+}
+
+export const PITCH_METHODS = ["email", "person", "phone"] as const;
+export type PitchMethod = (typeof PITCH_METHODS)[number];
+export const REPLIES = ["none", "replied", "yes", "no", "money", "inkind"] as const;
+export type Reply = (typeof REPLIES)[number];
+
+/** One of a student's three sponsor pitches (collection biz_pitches). Its result becomes a row on the Sponsor tracker. */
+export interface Pitch extends Item {
+  season: string;
+  memberId: string;
+  slot: number;
+  company: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  method: PitchMethod;
+  /** "Why this company fits us": at least the minimum number of words (a setting). */
+  why: string;
+  plan: Approval;
+  /** In person or by phone: what happened. */
+  visit: { date: string; who: string; what: string };
+  template: string;
+  /** When it was sent, and how. */
+  sentOn: string;
+  sentBy: string;
+  /** Follow-ups, each due a week after the one before. */
+  followUps: { n: number; dueOn: string; sentOn: string }[];
+  reply: Reply;
+  result: { status: string; support: string; amount: string; tier: string; expires: boolean; endDate: string; followUpsDone: boolean; notes: string };
+  resultApproval: Approval;
+  trackerId: string;
+}
+
+export interface MerchSale extends Item {
+  season: string;
+  memberId: string;
+  item: string;
+  quantity: number;
+  /** Price of one, in dollars. */
+  price: number;
+  /** Who bought it: a description is fine ("friend", "Mr. Jones"). */
+  boughtBy: string;
+  date: string;
+  /** How the money got to a booster. */
+  payment: string;
+}
+
+export interface ExemptStudent {
+  memberId: string;
+  reason: string;
+}
+export interface ReminderStep {
+  /** From this many weeks before the deadline, down to the next step. */
+  weeks: number;
+  everyDays: number;
+}
+/** The 1-2-3-100 settings for one season (collection biz_settings). Leads change them. */
+export interface BizSettings extends Item {
+  season: string;
+  /** The due date for everyone, yyyy-mm-dd. */
+  deadline: string;
+  reminders: ReminderStep[];
+  /** How reminders arrive. */
+  ways: { discord: boolean; badge: boolean; push: boolean };
+  followUps: number;
+  minWords: number;
+  restaurantLimit: number;
+  exempt: ExemptStudent[];
+}
+
+/** A student's overall standing, for Everyone's status and Stats. */
+export type Standing = "done" | "waiting" | "inProgress" | "notStarted" | "exempt";

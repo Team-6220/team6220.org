@@ -22,6 +22,7 @@ import type { CalEvent } from "../../calendar/types";
 import { Ctx, sha256Hex, VISITOR, type Actor } from "./context";
 import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
+import * as fundraising from "./fundraising";
 import * as github from "./github";
 import * as icarus from "./icarus";
 import * as rsvp from "./rsvp";
@@ -118,6 +119,25 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   bizImportGrants: { who: "business", run: business.bizImportGrants },
   bizGrantToSponsor: { who: "business", run: business.bizGrantToSponsor },
   bizStats: { who: "team", run: business.bizStats },
+  // 1-2-3-100 (fundraising.ts)
+  bizMy: { who: "team", run: fundraising.bizMy },
+  bizPick: { who: "team", run: fundraising.bizPick },
+  bizItemSave: { who: "team", run: fundraising.bizItemSave },
+  bizItemSend: { who: "team", run: fundraising.bizItemSend },
+  bizPitchSent: { who: "team", run: fundraising.bizPitchSent },
+  bizPitchReply: { who: "team", run: fundraising.bizPitchReply },
+  bizFollowUpSent: { who: "team", run: fundraising.bizFollowUpSent },
+  bizMerchAdd: { who: "team", run: fundraising.bizMerchAdd },
+  bizMerchRemove: { who: "team", run: fundraising.bizMerchRemove },
+  bizMerchDone: { who: "team", run: fundraising.bizMerchDone },
+  bizApprovals: { who: "business", run: fundraising.bizApprovals },
+  bizReview: { who: "business", run: fundraising.bizReview },
+  bizDecide: { who: "bizApprover", run: fundraising.bizDecide },
+  bizStatus: { who: "business", run: fundraising.bizStatus },
+  bizRemind: { who: "bizApprover", run: fundraising.bizRemind },
+  bizGetSettings: { who: "team", run: fundraising.bizGetSettings },
+  bizSaveSettings: { who: "lead", run: fundraising.bizSaveSettings },
+  bizDistance: { who: "team", run: fundraising.bizDistance },
   // RSVP (rsvp.ts)
   rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
   rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },
