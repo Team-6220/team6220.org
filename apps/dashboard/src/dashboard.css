@@ -57,3 +57,34 @@
 .dash-photo-img { width: 56px; height: 56px; flex: none; border-radius: 50%; object-fit: cover; background: color-mix(in srgb, var(--color-border) 60%, var(--color-bg)); }
 .dash-photo-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .dash-photo:focus-within { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+/* the inbox on Home */
+.dash-inbox { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+.dash-inbox li + li { border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, var(--color-surface)); }
+.dash-inbox-item { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px 16px; border: 0; background: none; color: var(--color-ink); text-align: left; font: inherit; cursor: pointer; }
+.dash-inbox-item:hover { background: color-mix(in srgb, var(--color-border) 35%, var(--color-surface)); }
+.dash-inbox-dot { width: 8px; height: 8px; flex: none; margin-top: 7px; border-radius: 50%; }
+.dash-inbox-item.is-new .dash-inbox-dot { background: var(--color-gold); }
+.dash-inbox-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dash-inbox-title { line-height: 1.35; }
+.dash-inbox-item.is-new .dash-inbox-title { font-weight: 700; }
+.dash-inbox-text { color: var(--color-muted); font-size: 13px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-inbox-when { flex: none; color: var(--color-muted); font-size: 12px; margin-top: 2px; }
+@media (max-width: 760px) {
+  .dash-inbox-item { padding: 12px; }
+  .dash-inbox-text { white-space: normal; }
+}
+
+/* Account → Notifications */
+.dash-discord { gap: 10px; align-items: flex-start; }
+.dash-code { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; }
+.dash-code-cmd { align-self: flex-start; padding: 6px 12px; border: 1px solid var(--color-gold); border-radius: 4px; color: var(--color-gold); font: 700 20px var(--font-body); letter-spacing: 0.06em; user-select: all; }
+.dash-notif { padding: 4px 16px 10px; }
+.dash-notif-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 72px; align-items: center; gap: 8px; min-height: 44px; padding: 6px 0; border-top: 1px solid color-mix(in srgb, var(--color-border) 35%, var(--color-surface)); }
+.dash-notif-row > span:not(:first-child) { text-align: center; }
+.dash-notif-row input { accent-color: var(--color-gold); width: 18px; height: 18px; }
+.dash-notif-head { border-top: 0; font-size: 13px; color: var(--color-muted); }
+.dash-notif-head > span:not(:first-child) { font-weight: 700; color: var(--color-ink); }
+.dash-notif-app { padding: 12px 0 2px; }
+.dash-notif-only { grid-column: span 2; }
+.dash-time { flex: 0 1 140px; }

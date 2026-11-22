@@ -1,9 +1,10 @@
-// Home: what needs you, your pins, and today at a glance. Each part reads the app it comes from; if one can't be
+// Home: what needs you, your inbox, your pins, and today at a glance. Each part reads the app it comes from; if one can't be
 // loaded it is left out rather than breaking Home.
 import { useEffect, useState } from "react";
 import { bom, icarus, ops, production, type Task, type Part } from "@team6220/data";
 import { Cards, DataTable, PageHeader, Pill, Screen, Section, type CardItem, type Tone } from "@team6220/ui";
 import type { DashView } from "./Dashboard";
+import { Inbox } from "./Inbox";
 import { Pins } from "./Pins";
 
 interface Need { id: string; what: string; app: string; status: string; tone: Tone; href: string }
@@ -80,6 +81,7 @@ export function Home({ view }: { view: Extract<DashView, { kind: "approved" | "g
           />
         </Section>
       )}
+      {view.kind === "approved" && <Inbox />}
       <Pins />
       {cards.length > 0 && <Section title="Today"><Cards items={cards} /></Section>}
     </Screen>

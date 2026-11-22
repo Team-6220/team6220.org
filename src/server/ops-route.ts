@@ -7,6 +7,7 @@
 //   TEAM_NUMBER         optional, default 6220.
 //   GITHUB_TOKEN        a GitHub token with read and write access to issues in Team-6220 repositories.
 //   GITHUB_SYNC_PAUSED  optional. "yes" stops the GitHub sync at once.
+//   DISCORD_BOT_TOKEN   the Discord bot's token (the same one Apollo has on the Pi), for sending notifications.
 import type { APIRoute } from "astro";
 import { handleOpsRequest } from "@team6220/data/ops-server";
 import { opsEnv } from "./ops-env";

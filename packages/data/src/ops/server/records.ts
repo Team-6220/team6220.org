@@ -7,6 +7,7 @@
 import { rolesFor } from "../roles";
 import { COLLECTION_HISTORY, COLLECTION_PEOPLE, COLLECTION_PROJECTS, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
+import * as notify from "./notify";
 
 /** Every collection the apps list. A Guest may read only some of them (below). */
 const READABLE = [
@@ -53,12 +54,20 @@ export async function listRecords(ctx: Ctx, body: Doc) {
   return { items };
 }
 
-/** { collection, item } -> { item }. Adds the item, or replaces the one with the same `_id`. */
+/** { collection, item } -> { item }. Adds the item, or replaces the one with the same `_id`. Then sends the notifications it causes. */
 export async function saveRecord(ctx: Ctx, body: Doc) {
   const collection = collectionOf(body, WRITABLE);
-  const item = body.item;
+  const item = body.item as Doc;
   if (!item || typeof item !== "object" || Array.isArray(item)) throw apiError("bad-request", "Send the item to save.");
-  return { item: await ctx.data.save(collection, item as Doc) };
+  const before = item._id ? (await ctx.data.queryIds(collection, [String(item._id)]))[0] ?? null : null;
+  const saved = await ctx.data.save(collection, item);
+  if (collection === "icarus_tasks") await notify.taskSaved(ctx, before, saved);
+  if (collection === "production_parts") await notify.partSaved(ctx, before, saved);
+  if (collection === "icarus_comments" && !before) {
+    const task = (await ctx.data.queryIds("icarus_tasks", [String(saved.taskId)]))[0];
+    if (task) await notify.commentAdded(ctx, saved, task);
+  }
+  return { item: saved };
 }
 
 /** { collection, id } -> {}. */

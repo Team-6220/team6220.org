@@ -1,10 +1,11 @@
 // Account and settings. Everything here follows your account to every device: your profile on the team, your
-// subteams, the frame's layout, which apps you see, your keybinds and your pins.
+// subteams, your notifications and Discord link, the frame's layout, which apps you see, your keybinds and your pins.
 import { useEffect, useState } from "react";
 import { account, ops, type Member, type Profile } from "@team6220/data";
 import { Btn, Field, Fields, KeyValue, Note, PageHeader, Screen, Section, Split, frame, useFramePrefs } from "@team6220/ui";
 import { APPS } from "./apps";
 import { Keybinds } from "./Keybinds";
+import { NotificationSettings } from "./NotificationSettings";
 import { PhotoField } from "./PhotoField";
 
 const CATS = ["Operations", "Mechanical", "Strategy", "Fun", "Admin"];
@@ -42,7 +43,7 @@ export function Account({ member }: { member: Member }) {
   const saveProfile = async () => {
     setError("");
     try {
-      const p = await account.saveProfile({ firstName: draft.firstName, lastName: draft.lastName, githubLogin: draft.githubLogin, discordName: draft.discordName });
+      const p = await account.saveProfile({ firstName: draft.firstName, lastName: draft.lastName, githubLogin: draft.githubLogin });
       setProfile(p);
       setSaved("Saved");
       setTimeout(() => setSaved(""), 1500);
@@ -77,7 +78,6 @@ export function Account({ member }: { member: Member }) {
                 <Field label="First name"><input className="k-input" value={draft.firstName ?? ""} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></Field>
                 <Field label="Last name"><input className="k-input" value={draft.lastName ?? ""} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></Field>
                 <Field label="GitHub username" hint="Only needed when you sync a task with GitHub"><input className="k-input" value={draft.githubLogin ?? ""} onChange={(e) => setDraft({ ...draft, githubLogin: e.target.value })} /></Field>
-                <Field label="Discord username"><input className="k-input" value={draft.discordName ?? ""} onChange={(e) => setDraft({ ...draft, discordName: e.target.value })} /></Field>
                 {profile && <PhotoField current={profile.photoUrl ?? member.photoUrl} />}
               </Fields>
               <div className="k-row"><Btn kind="primary" onClick={saveProfile}>Save</Btn>{saved && <span className="k-hint" role="status">{saved}</span>}</div>
@@ -101,6 +101,7 @@ export function Account({ member }: { member: Member }) {
               </div>
             </Section>
           )}
+          <NotificationSettings />
           <Section title="Layout">
             <div className="k-box k-form">
               <Field label="Desktop layout">

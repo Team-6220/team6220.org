@@ -14,6 +14,7 @@
 // and the other person signs again.
 import { getRecord, money, text, wholeNumber, type Actor, type Ctx } from "./context";
 import { apiError, withId, type Doc } from "./env";
+import * as notify from "./notify";
 
 export const COLLECTION_BOMS = "bom_boms";
 export const COLLECTION_ORDERS = "bom_orders";
@@ -216,6 +217,7 @@ export async function signLines(ctx: Ctx, body: Doc) {
     cents += Math.round(next.unitCost * 100) * next.quantity;
   }
   await ctx.data.saveMany(COLLECTION_LINES, signed);
+  await notify.sendAll(ctx, notify.rules.bomLines(signed.filter((l) => l.signatures.length >= SIGNATURES_NEEDED), "signed"));
   return { signed, skipped, total: cents / 100 };
 }
 
@@ -263,6 +265,7 @@ export async function markOrdered(ctx: Ctx, body: Doc) {
   for (const line of ready) ctx.log({ kind: "bomLine", id: String(line._id) }, "ordered", line.name);
   const saved = await ctx.data.save(COLLECTION_SECTIONS, { ...section, orderedBy: person(ctx), orderDate, finalTotal, expectedArrival });
   ctx.log({ kind: "bomSection", id: String(section._id) }, "ordered", `${section.vendor} $${saved.finalTotal}`);
+  await notify.sendAll(ctx, notify.rules.bomLines(ready, "ordered"));
   return { section: saved, ordered, notReady: lines.length - ready.length - already.length };
 }
 
@@ -322,6 +325,8 @@ export async function receiveLines(ctx: Ctx, body: Doc) {
   }
   const lines = await ctx.data.saveMany(COLLECTION_LINES, [...latest.values()]);
   await ctx.data.saveMany(COLLECTION_INVENTORY_PARTS, [...stock.values()]);
+  // Only lines that are now complete: part of an order arriving isn't news yet.
+  await notify.sendAll(ctx, notify.rules.bomLines(lines.filter((l) => l.receivedQty >= l.quantity), "arrived"));
   return { lines };
 }
 

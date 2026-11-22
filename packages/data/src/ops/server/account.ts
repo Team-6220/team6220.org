@@ -4,6 +4,7 @@
 import { BADGES, SUBTEAM_BADGE_PREFIX } from "../../config";
 import { COLLECTION_PEOPLE, COLLECTION_ROSTER, text, type Ctx } from "./context";
 import { apiError, type Doc } from "./env";
+import * as notify from "./notify";
 
 const ROLES = ["student", "parent", "mentor", "booster", "alumni", "guest", "public"] as const;
 const MAX_PREFS_BYTES = 20_000;
@@ -66,8 +67,9 @@ export async function savePrefs(ctx: Ctx, body: Doc) {
 
 /**
  * { form: { role, firstName, lastName, studentId?, subteams?, discordName?, githubLogin? } } -> { approved, message }.
- * A student whose ID and last name match a roster row (not yet linked to someone else) gets the Team Member badge and
- * the subteams they picked, their Wix account is approved, and the roster row is linked to them. Anyone else is saved for a person to approve.
+ * A student whose ID and last name match a roster row (not yet linked to someone else) gets the Team Member badge, the
+ * roster's subteam and any they picked, their Wix account is approved, and the roster row is linked to them. Anyone else
+ * is saved for a person to approve, and the Web Admins are told.
  */
 export async function finishProfile(ctx: Ctx, body: Doc) {
   const f = (body.form ?? {}) as Doc;
@@ -84,6 +86,7 @@ export async function finishProfile(ctx: Ctx, body: Doc) {
   if (role === "public") return { approved: false, message: "Done. You can use the apps that are open to everyone; nobody needs to approve you." };
   if (role !== "student") {
     ctx.log({ kind: "person", id: ctx.actor.id }, "signup", `${customName} signed up as ${role}`, { type: "person.signup", data: { role } });
+    await tellWebAdmins(ctx, customName, role);
     return { approved: false, message: "Thanks! A web admin will approve your account soon." };
   }
 
@@ -93,6 +96,7 @@ export async function finishProfile(ctx: Ctx, body: Doc) {
   const same = (a: unknown, b: string) => String(a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
   if (!match || !same(match.lastName, lastName) || (match.memberId && match.memberId !== ctx.actor.id)) {
     ctx.log({ kind: "person", id: ctx.actor.id }, "signup", `${customName} signed up as a student (no roster match)`, { type: "person.signup", data: { role, rosterMatch: false } });
+    await tellWebAdmins(ctx, customName, "a student (not on the roster)");
     return { approved: false, message: "We couldn't find you on the roster with that student ID and last name. A web admin will approve you by hand." };
   }
 
@@ -101,16 +105,19 @@ export async function finishProfile(ctx: Ctx, body: Doc) {
   const idOf = (title: string) => Object.keys(titles).find((id) => titles[id] === title);
   const team = idOf(BADGES.teamMember);
   if (!team) throw apiError("not-configured", `The "${BADGES.teamMember}" badge doesn't exist on the site.`);
-  const wanted = (Array.isArray(f.subteams) ? f.subteams.map(String) : []).map((s: string) => idOf(SUBTEAM_BADGE_PREFIX + s)).filter(Boolean) as string[];
+  const picked = Array.isArray(f.subteams) ? f.subteams.map(String) : [];
+  const subteams = [...new Set(match.subteam ? [String(match.subteam), ...picked] : picked)];
+  const wanted = subteams.map((s) => idOf(SUBTEAM_BADGE_PREFIX + s)).filter(Boolean) as string[];
   await ctx.env.badges.assign([team, ...wanted].map((badgeId) => ({ badgeId, memberId: ctx.actor.id })));
   if (!ctx.actor.approved) await ctx.env.members.approve(ctx.actor.id);
   await ctx.data.save(COLLECTION_ROSTER, { ...match, memberId: ctx.actor.id, firstName, lastName });
   ctx.log({ kind: "person", id: ctx.actor.id }, "approved", `${customName} matched the roster and became a Team Member`, { type: "person.approved", data: { by: "roster" } });
+  await notify.sendAll(ctx, [notify.rules.accountNews(ctx.actor.id, "You're approved: welcome to the team!", subteams.length ? `Subteam: ${subteams.join(", ")}` : "")]);
   return { approved: true, message: `You're on the roster${match.grade ? ` (${match.grade})` : ""}. Welcome to the team!` };
 }
 
 /**
- * { rows: [{ studentId, firstName, lastName, grade }] } -> { added, updated }. The one-time import of the roster (and
+ * { rows: [{ studentId, firstName, lastName, grade, subteam? }] } -> { added, updated }. The one-time import of the roster (and
  * later updates). Rows are matched by student ID; links to members are kept. Web Admins, Leads and Mentors.
  */
 export async function importRoster(ctx: Ctx, body: Doc) {
@@ -119,7 +126,7 @@ export async function importRoster(ctx: Ctx, body: Doc) {
   const clean = rows.map((r, i) => {
     const studentId = String(r.studentId ?? "").trim();
     if (!/^\d{6,12}$/.test(studentId)) throw apiError("bad-request", `Row ${i + 1}: a student ID is 6 to 12 digits.`);
-    return { studentId, firstName: text(r.firstName, `row ${i + 1} first name`, 60), lastName: text(r.lastName, `row ${i + 1} last name`, 60), grade: text(r.grade, `row ${i + 1} grade`, 20, true) };
+    return { studentId, firstName: text(r.firstName, `row ${i + 1} first name`, 60), lastName: text(r.lastName, `row ${i + 1} last name`, 60), grade: text(r.grade, `row ${i + 1} grade`, 20, true), subteam: text(r.subteam, `row ${i + 1} subteam`, 40, true) };
   });
   const existing = new Map((await ctx.data.query(COLLECTION_ROSTER, {})).map((d) => [String(d.studentId), d]));
   const docs = clean.map((r) => ({ ...existing.get(r.studentId), ...r, active: true }));
@@ -127,6 +134,15 @@ export async function importRoster(ctx: Ctx, body: Doc) {
   ctx.log({ kind: "person", id: "roster" }, "imported", `${docs.length} roster rows`, { type: "roster.imported" });
   const updated = clean.filter((r) => existing.has(r.studentId)).length;
   return { added: clean.length - updated, updated };
+}
+
+/** Web Admins hear that someone is waiting for approval. */
+async function tellWebAdmins(ctx: Ctx, name: string, role: string) {
+  try {
+    await notify.sendAll(ctx, [notify.rules.newMember(name, role, await notify.membersWithBadge(ctx, [BADGES.webAdmin]))]);
+  } catch (err) {
+    console.error("account: couldn't tell the web admins", err instanceof Error ? err.name : "unknown");
+  }
 }
 
 const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };

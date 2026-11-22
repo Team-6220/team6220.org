@@ -67,10 +67,12 @@ describe("each request stays inside Wix's 20 calls", () => {
     const ordered = await s.post({ action: "markOrdered", token: mentor, sectionId, orderDate: "2027-01-12", finalTotal: 1100 });
     expect(ordered).toMatchObject({ ok: true, notReady: 0 });
     expect(ordered.ordered).toHaveLength(200);
-    expect(s.calls.length).toBeLessThanOrEqual(6);
+    // 6 for the order, plus 2 for the notification (the people, then the inbox rows), sent as one for the requester.
+    expect(s.calls.length).toBeLessThanOrEqual(8);
     const received = await s.post({ action: "receiveLines", token: member, items: ids.map((lineId) => ({ lineId, quantity: 2 })) });
     expect(received.lines).toHaveLength(200);
-    expect(s.calls.length).toBeLessThanOrEqual(6);
+    expect(s.calls.length).toBeLessThanOrEqual(8);
+    expect(s.rows("ops_notifications").filter((n) => n.kind === "bom.line").length).toBeLessThanOrEqual(3);
   });
 
   it("lets Apollo add received stock to a linked part, once per line, even when lines share a part", async () => {

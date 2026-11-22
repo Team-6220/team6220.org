@@ -45,4 +45,7 @@ export * as cutting from "./inventory/cutting";
 export type { CutPlan, Material, PartToPlan, Reserved, StockPiece } from "./inventory/cutting";
 // Your own account: profile, settings that follow you (the frame's layout, pins, keybinds), finishing your profile.
 export * as account from "./account";
+// Your inbox, notification settings and Discord link.
+export * as notifications from "./notifications";
+export type { InboxItem, NotificationKind, NotificationPrefs } from "./notifications/catalog";
 export type { Profile, AccountInfo, ProfileForm, Role as AccountRole } from "./account";

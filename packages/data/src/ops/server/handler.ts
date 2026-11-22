@@ -18,6 +18,9 @@ import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
 import * as github from "./github";
 import * as icarus from "./icarus";
+import * as inbox from "./inbox";
+import * as notify from "./notify";
+import { runReminders } from "./notify/reminders";
 import * as records from "./records";
 import * as shared from "./shared";
 
@@ -37,6 +40,15 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   setMyPhoto: { who: "signedIn", run: account.setMyPhoto },
   deleteMyAccount: { who: "signedIn", run: account.deleteMyAccount },
   importRoster: { who: "peopleAdmin", run: account.importRoster },
+  // Your inbox, notification settings and Discord link (inbox.ts)
+  myInbox: { who: "signedIn", run: inbox.myInbox },
+  markRead: { who: "signedIn", run: inbox.markRead },
+  getNotificationSettings: { who: "signedIn", run: inbox.getNotificationSettings },
+  saveNotificationPrefs: { who: "signedIn", run: inbox.saveNotificationPrefs },
+  startDiscordLink: { who: "signedIn", run: inbox.startDiscordLink },
+  unlinkDiscord: { who: "signedIn", run: inbox.unlinkDiscord },
+  // Apollo only (it checks): someone typed /link <code> in Discord.
+  linkDiscordCode: { who: "signedIn", agent: true, run: inbox.linkDiscordCode },
   nextNumber: { who: "team", agent: true, run: shared.nextNumber },
   logHistory: { who: "team", run: shared.logHistory },
   // Reads and simple writes the apps make through the server (records.ts)
@@ -80,6 +92,8 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
 const JOBS: Record<string, Action> = {
   syncGithub: (ctx) => github.syncGithub(ctx),
   refreshEvents: (ctx) => events.refreshEvents(ctx),
+  sendDeliveries: (ctx) => notify.sendDeliveries(ctx),
+  runReminders: (ctx) => runReminders(ctx),
 };
 
 const MAX_BODY_BYTES = 2_000_000;
