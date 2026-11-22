@@ -55,19 +55,18 @@ export function Pending({ member }: { member: Member }) {
   const [last, setLast] = useState(member.name.split(" ").slice(1).join(" "));
   const [studentId, setStudentId] = useState("");
   const [subteams, setSubteams] = useState<string[]>([]);
-  const [discord, setDiscord] = useState("");
   const [github, setGithub] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ approved: boolean; message: string } | null>(null);
   const [error, setError] = useState("");
   const student = role === "student";
-  const ready = first.trim() && last.trim() && (!student || (/^\d{6,12}$/.test(studentId.trim()) && discord.trim()));
+  const ready = first.trim() && last.trim() && (!student || /^\d{6,12}$/.test(studentId.trim()));
 
   const submit = async () => {
     setBusy(true);
     setError("");
     try {
-      const r = await account.finishProfile({ role, firstName: first.trim(), lastName: last.trim(), studentId: student ? studentId.trim() : undefined, subteams: student ? subteams : undefined, discordName: discord.trim() || undefined, githubLogin: github.trim() || undefined });
+      const r = await account.finishProfile({ role, firstName: first.trim(), lastName: last.trim(), studentId: student ? studentId.trim() : undefined, subteams: student ? subteams : undefined, githubLogin: github.trim() || undefined });
       setResult(r);
       if (r.approved) setTimeout(() => location.assign("/apps"), 1200);
     } catch (err) {
@@ -101,14 +100,13 @@ export function Pending({ member }: { member: Member }) {
                 </div>
               </div>
             )}
-            {role !== "public" && <Field label="Discord username" hint={student ? "required" : "optional"}><input className="k-input" value={discord} onChange={(e) => setDiscord(e.target.value)} /></Field>}
             {role !== "public" && <Field label="GitHub username" hint="optional, only needed to sync a task with GitHub"><input className="k-input" value={github} onChange={(e) => setGithub(e.target.value)} /></Field>}
           </Fields>
           <div className="k-row"><Btn kind="primary" disabled={!ready || busy} title={!ready ? "Fill in the required boxes first" : undefined} onClick={submit}>{student ? "Check the roster" : "Save"}</Btn></div>
           {result && <Note tone={result.approved ? "ok" : undefined}>{result.message}</Note>}
           {error && <Note tone="bad">{error}</Note>}
         </div>
-        <Note>Students: if your student ID and last name match the team roster, you are made a Member automatically and your grade is filled in from the roster. If they do not match, a web admin approves you by hand. Alumni are always approved by a web admin. The button stays off until the required boxes are filled in. Everyone else does not need a student ID, and Discord is optional for them. If you pick "Just using the public apps" there is no approval and no roster check; you keep an account for settings in apps like GoldSim.</Note>
+        <Note>Students: if your student ID and last name match the team roster, you are made a Member automatically and your grade is filled in from the roster. If they do not match, a web admin approves you by hand. Alumni are always approved by a web admin. The button stays off until the required boxes are filled in. Everyone else does not need a student ID. Link your Discord account later, in Account → Notifications. If you pick "Just using the public apps" there is no approval and no roster check; you keep an account for settings in apps like GoldSim.</Note>
       </Section>
       <Section title="Open to everyone"><Cards items={publicCards()} /></Section>
       <div><Btn href="/apps/logout">Sign out</Btn></div>

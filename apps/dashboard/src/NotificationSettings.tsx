@@ -31,7 +31,7 @@ function DiscordLink({ linked, onChange }: { linked: { name: string } | null; on
   return (
     <div className="k-stack dash-discord">
       {result && <Note tone={result.tone}>{result.text}</Note>}
-      <p className="k-hint" style={{ margin: 0 }}>Link your Discord account to get notifications as DMs from Apollo. Required for students.</p>
+      <p className="k-hint" style={{ margin: 0 }}>Link your Discord account to get notifications as DMs from Apollo.</p>
       <div className="k-row">
         <Btn kind="primary" href={ops.isDemo() ? undefined : notifications.DISCORD_LINK_URL} onClick={ops.isDemo() ? () => onChange({ name: "demolead" }) : undefined}>Link with Discord</Btn>
         <Btn onClick={() => notifications.startDiscordLink().then(setCode, () => setError("Couldn't make a code. Try again."))}>Use a code instead</Btn>

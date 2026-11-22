@@ -36,7 +36,7 @@ export async function getAccount(): Promise<AccountInfo> {
   return { profile, prefs };
 }
 
-export async function saveProfile(changes: Partial<Pick<Profile, "firstName" | "lastName" | "githubLogin" | "discordName">>): Promise<Profile> {
+export async function saveProfile(changes: Partial<Pick<Profile, "firstName" | "lastName" | "githubLogin">>): Promise<Profile> {
   if (isDemo()) {
     demoAccount = { ...demoAccount, profile: { ...demoAccount.profile, ...changes } };
     return structuredClone(demoAccount.profile);
@@ -59,7 +59,6 @@ export interface ProfileForm {
   lastName: string;
   studentId?: string;
   subteams?: string[];
-  discordName?: string;
   githubLogin?: string;
 }
 /**
