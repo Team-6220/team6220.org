@@ -148,6 +148,64 @@ test.describe("linking a student ID (demo)", () => {
   });
 });
 
+test.describe("business 1-2-3-100 ?demo= modes", () => {
+  test("a student sees their pick and progress, and the pitch steps with their email ready", async ({ page, collected }) => {
+    await page.goto("apps/business/my?demo=member");
+    await settle(page);
+    await expect(page.getByRole("heading", { level: 1, name: "My 1-2-3-100" })).toBeVisible();
+    await expect(page.getByText("Pitch 1: plan for Boeing").first()).toBeVisible();
+    await expect(page.getByText("Your choice")).toBeVisible();
+    await page.getByRole("link", { name: "Continue my sponsor pitches" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Sponsor pitches" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open in Gmail" })).toBeVisible();
+    await expect(page.getByText("Did they reply?")).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("a mentor adds a merch sale: it needs who bought it, and the total goes up", async ({ page, collected }) => {
+    await page.goto("apps/business/merch?demo=mentor");
+    await settle(page);
+    await expect(page.getByText("of $100 sold")).toBeVisible();
+    await page.getByRole("button", { name: "One more Sticker pack" }).click();
+    await page.getByRole("button", { name: "Add this sale" }).click();
+    await expect(page.getByText("Type the who bought it.")).toBeVisible();
+    await page.getByLabel("Bought by").fill("a neighbor");
+    await page.getByRole("button", { name: "Add this sale" }).click();
+    await expect(page.getByText("a neighbor").first()).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("Operations reads what is waiting, opens one, and can only approve if they are Operations or a lead", async ({ page, collected }) => {
+    await page.goto("apps/business/approvals?demo=lead");
+    await settle(page);
+    await expect(page.getByRole("tab", { name: "Waiting 4" })).toBeVisible();
+    await page.getByRole("link", { name: "Hedy Lamarr" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Hedy · Grants" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
+    await page.getByRole("button", { name: "Send back with a note" }).click();
+    await expect(page.getByRole("button", { name: "Send it back" })).toBeDisabled();
+    expect(collected.errors).toEqual([]);
+    await page.goto("apps/business/approvals?demo=mentor");
+    await settle(page);
+    await page.getByRole("link", { name: "Hedy Lamarr" }).click();
+    await expect(page.getByText("only Operations and the leads approve")).toBeVisible();
+  });
+
+  test("everyone's status and the settings open for a lead, and a plain member can't open them", async ({ page, collected }) => {
+    await page.goto("apps/business/status?demo=lead");
+    await settle(page);
+    await expect(page.getByRole("heading", { level: 1, name: "Everyone's status" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send a reminder to everyone not done" })).toBeVisible();
+    await page.goto("apps/business/settings?demo=lead");
+    await settle(page);
+    await expect(page.getByText("More than 10 weeks away")).toBeVisible();
+    await page.goto("apps/business/status?demo=member");
+    await settle(page);
+    await expect(page.getByText("Only Operations, leads, mentors and boosters can see this.")).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+});
+
 test.describe("rsvp ?demo= modes", () => {
   test("a member sees the open forms and answers one: a Maybe saves but doesn't finish it", async ({ page, collected }) => {
     await page.goto("apps/rsvp?demo=member");

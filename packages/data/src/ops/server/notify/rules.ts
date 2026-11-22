@@ -126,6 +126,26 @@ export function rsvpSummary(form: Doc, event: Doc, to: string[], finished: numbe
   return { kind: "rsvp.summary", to, title: `${event.title} RSVP is due today: ${finished} of ${asked} have answered`, text: `${asked - finished} still need to.`, url: `/apps/rsvp/results?id=${encodeURIComponent(String(form._id))}`, record: { kind: "rsvp", id: String(form._id) }, ...(dedupeKey ? { dedupeKey } : {}) };
 }
 
+/** A student sent a plan or a result: Operations and the leads are asked to look at it. */
+export function bizWaiting(student: string, what: string, to: string[]): Outgoing {
+  return { kind: "biz.waiting", to, title: `${student} sent ${what} for approval`, text: "Open Approvals to read it.", url: "/apps/business/approvals" };
+}
+
+/** Operations approved something, or sent it back with a note: the student hears. */
+export function bizDecided(what: string, approved: boolean, note: string, to: string): Outgoing {
+  return { kind: "biz.decided", to: [to], title: approved ? `Approved: ${what}` : `Sent back: ${what}`, text: approved ? "You can go on to the next step." : note, url: "/apps/business" };
+}
+
+/** A follow-up to a sponsor pitch is due (the student sends it themselves, only if there was no reply). */
+export function bizFollowUp(student: string, company: string, n: number, dedupeKey: string): Outgoing {
+  return { kind: "biz.followup", to: [student], title: `Follow-up ${n} to ${company} is due`, text: "Send it if they haven't replied. Skip it if they have.", url: "/apps/business/pitches", dedupeKey };
+}
+
+/** The 1-2-3-100 reminder: to students who aren't done. */
+export function bizReminder(to: string[], deadline: string, dedupeKey?: string): Outgoing {
+  return { kind: "biz.reminder", to, title: "Finish your 1-2-3-100", text: deadline ? `It's due ${deadline}.` : "Open it to see your next step.", url: "/apps/business", ...(dedupeKey ? { dedupeKey } : {}) };
+}
+
 /** Someone asked to become a supervisor. */
 export function supervisorRequest(name: string, to: string[]): Outgoing {
   return { kind: "supervisor.request", to, title: `${name} wants to become a supervisor`, text: "Help them through the paperwork, then mark them approved.", url: "/apps/calendar/supervisors" };

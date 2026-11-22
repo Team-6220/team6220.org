@@ -13,6 +13,7 @@ import { actorFor, requireRole, type Who } from "./auth";
 import * as account from "./account";
 import * as attendance from "./attendance";
 import * as bom from "./bom";
+import * as business from "./business";
 import * as calendar from "./calendar";
 import { withCallBudget } from "./budget";
 import { eventItems, icsText } from "../../calendar/ics";
@@ -21,12 +22,13 @@ import type { CalEvent } from "../../calendar/types";
 import { Ctx, sha256Hex, VISITOR, type Actor } from "./context";
 import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
+import * as fundraising from "./fundraising";
 import * as github from "./github";
 import * as icarus from "./icarus";
 import * as rsvp from "./rsvp";
 import * as inbox from "./inbox";
 import * as notify from "./notify";
-import { runReminders, runRsvpReminders } from "./notify/reminders";
+import { runBizReminders, runReminders, runRsvpReminders } from "./notify/reminders";
 import * as records from "./records";
 import * as shared from "./shared";
 import * as supervision from "./supervision";
@@ -106,6 +108,39 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   attKioskRegister: { who: "anyone", run: attendance.attKioskRegister },
   attKioskToday: { who: "anyone", run: attendance.attKioskToday },
   attKioskQuick: { who: "anyone", run: attendance.attKioskQuick },
+  // Business: Sponsor tracker, Grant tracker, Stats (business.ts)
+  bizSponsors: { who: "team", run: business.bizSponsors },
+  bizAddSponsor: { who: "team", run: business.bizAddSponsor },
+  bizSaveSponsor: { who: "business", run: business.bizSaveSponsor },
+  bizImportSponsors: { who: "business", run: business.bizImportSponsors },
+  bizGrants: { who: "team", run: business.bizGrants },
+  bizAddGrant: { who: "team", run: business.bizAddGrant },
+  bizSaveGrant: { who: "business", run: business.bizSaveGrant },
+  bizImportGrants: { who: "business", run: business.bizImportGrants },
+  bizGrantToSponsor: { who: "business", run: business.bizGrantToSponsor },
+  bizStats: { who: "team", run: business.bizStats },
+  // 1-2-3-100 (fundraising.ts)
+  bizMy: { who: "team", run: fundraising.bizMy },
+  bizPick: { who: "team", run: fundraising.bizPick },
+  bizItemSave: { who: "team", run: fundraising.bizItemSave },
+  bizItemSend: { who: "team", run: fundraising.bizItemSend },
+  bizAttach: { who: "team", run: fundraising.bizAttach },
+  bizFile: { who: "team", run: fundraising.bizFile },
+  bizPitchSent: { who: "team", run: fundraising.bizPitchSent },
+  bizPitchReply: { who: "team", run: fundraising.bizPitchReply },
+  bizFollowUpSent: { who: "team", run: fundraising.bizFollowUpSent },
+  bizMerchAdd: { who: "team", run: fundraising.bizMerchAdd },
+  bizMerchRemove: { who: "team", run: fundraising.bizMerchRemove },
+  bizMerchDone: { who: "team", run: fundraising.bizMerchDone },
+  bizApprovals: { who: "business", run: fundraising.bizApprovals },
+  bizReview: { who: "business", run: fundraising.bizReview },
+  bizDecide: { who: "bizApprover", run: fundraising.bizDecide },
+  bizStatus: { who: "business", run: fundraising.bizStatus },
+  bizRemind: { who: "bizApprover", run: fundraising.bizRemind },
+  bizGetSettings: { who: "team", run: fundraising.bizGetSettings },
+  bizSaveSettings: { who: "lead", run: fundraising.bizSaveSettings },
+  bizDistance: { who: "team", run: fundraising.bizDistance },
+  bizTemplates: { who: "team", run: fundraising.bizTemplates },
   // RSVP (rsvp.ts)
   rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
   rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },
@@ -137,6 +172,7 @@ const JOBS: Record<string, Action> = {
   sendDeliveries: (ctx) => notify.sendDeliveries(ctx),
   runReminders: (ctx) => runReminders(ctx),
   runRsvpReminders: (ctx) => runRsvpReminders(ctx),
+  runBizReminders: (ctx) => runBizReminders(ctx),
 };
 
 const MAX_BODY_BYTES = 2_000_000;

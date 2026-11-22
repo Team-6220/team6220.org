@@ -11,6 +11,7 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 | `sendDeliveries` | every 5 minutes | Sends Discord notifications that are waiting (and, after quiet hours, each person's overnight ones as one message) |
 | `runReminders` | every 15 minutes | Tasks due tomorrow or overdue, BOM lines waiting for signatures (one summary a day), late orders |
 | `runRsvpReminders` | once a day, 8 am | RSVP forms: reminds the team members who have not finished a form on the days its schedule names, and tells the leads who has answered the morning a form is due (its own job: it reads more than `runReminders` can fit in one request) |
+| `runBizReminders` | once a day, 8 am | 1-2-3-100: reminds students who are not done on the schedule in the 1-2-3-100 settings (counted back from the deadline), and tells a student when a sponsor pitch follow-up is due |
 
 ## Setup (once, with the team Google account)
 

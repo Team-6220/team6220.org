@@ -1,0 +1,13 @@
+---
+// /apps/business: Business (https://github.com/Team-6220/team6220.org/wiki/Operations-Business).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { Business } from "@team6220/business";
+import "@team6220/business/business.css";
+---
+
+<AppLayout title="Business | Los Al Robotics" description="Los Al Robotics (FRC Team 6220) sponsor and grant trackers and 1-2-3-100.">
+  <Business client:only="react" screen="my">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading Business…</p></main>
+  </Business>
+  <noscript><p class="t-page">Business needs JavaScript turned on.</p></noscript>
+</AppLayout>

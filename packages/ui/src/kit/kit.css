@@ -98,10 +98,13 @@
 .k-thead { padding-top: 10px; padding-bottom: 10px; background: var(--color-bg); border-radius: 8px 8px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
 .k-tr { padding-top: 11px; padding-bottom: 11px; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, var(--color-bg)); font-size: 14px; }
 .k-tr--click { cursor: pointer; }
+.k-tr-extra { grid-column: 1 / -1; }
 .k-tr--click:hover { background: color-mix(in srgb, var(--color-border) 20%, var(--color-surface)); }
 .k-tr.is-dragging { opacity: 0.45; }
 .k-td { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .k-td--wrap { white-space: normal; }
+.k-th--divider, .k-td--divider { border-left: 1px solid var(--color-border); padding-left: 12px; align-self: stretch; display: flex; align-items: center; }
+.k-th--divider { display: flex; }
 .k-group-head { display: flex; gap: 8px; align-items: baseline; padding: 12px 16px 6px; border-top: 1px solid var(--color-border); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-muted); font-weight: 600; }
 .k-hmenu { position: relative; min-width: 0; }
 .k-hmenu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--color-muted); }

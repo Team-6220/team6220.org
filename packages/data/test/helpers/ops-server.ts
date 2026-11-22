@@ -23,6 +23,7 @@ const BADGE_TITLES: Record<string, string> = {
   "b-guest": "Guest",
   "b-design": "Subteam: Design",
   "b-programming": "Subteam: Programming",
+  "b-operations": "Subteam: Operations",
   "b-webadmin": "Web Admin",
   "b-attendance": "Attendance Admin",
 };
@@ -202,6 +203,12 @@ export function makeOps(members: Record<string, Member>) {
         return json(200, tbaEvents.filter((e) => e.year === year));
       }
       return json(404, { Errors: [{ event_key: "not found" }] });
+    }
+    // ----- OpenStreetMap address search (made-up places: "near" is about 4 miles from the school, "far" about 25) -----
+    if (url.startsWith("https://nominatim.openstreetmap.org/search")) {
+      const q = decodeURIComponent(url.split("q=")[1] ?? "");
+      if (q.includes("nowhere")) return json(200, []);
+      return json(200, q.includes("far") ? [{ lat: "34.1", lon: "-118.3" }] : [{ lat: "33.8", lon: "-118.0" }]);
     }
     throw new Error(`unexpected fetch ${method} ${url}`);
   }) as typeof fetch;

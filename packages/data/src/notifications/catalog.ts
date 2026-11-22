@@ -7,7 +7,7 @@
 //
 // To add a kind: add an entry here, then the rule that sends it in packages/data/src/ops/server/notify/rules.ts.
 
-export type NotificationApp = "Icarus" | "Production" | "BOM" | "Calendar" | "RSVP" | "Account";
+export type NotificationApp = "Icarus" | "Production" | "BOM" | "Calendar" | "RSVP" | "Business" | "Account";
 
 /** The Discord channels the server may post in. Their IDs are in DISCORD_CHANNELS (config.ts). */
 export type ChannelKey = "announcements" | "apolloUpdates";
@@ -46,6 +46,10 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
   { id: "supervisor.request", app: "Calendar", label: "Someone wants to become a supervisor", who: "Leads, mentors, and boosters", discord: true, push: false },
   { id: "rsvp.reminder", app: "RSVP", label: "A form still needs your answer (a Maybe doesn't finish it)", who: "Team members who haven't finished the form", discord: true, push: true },
   { id: "rsvp.summary", app: "RSVP", label: "Who has answered, the morning a form is due", who: "Leads", discord: true, push: false },
+  { id: "biz.waiting", app: "Business", label: "A student sent a 1-2-3-100 plan or result for approval", who: "Operations and leads", discord: true, push: true },
+  { id: "biz.decided", app: "Business", label: "Your 1-2-3-100 plan or result was approved or sent back", who: "The student", discord: true, push: true },
+  { id: "biz.followup", app: "Business", label: "A sponsor pitch follow-up is due", who: "The student who sent the pitch", discord: true, push: true },
+  { id: "biz.reminder", app: "Business", label: "Reminder to finish your 1-2-3-100", who: "Students who aren't done", discord: true, push: true },
   { id: "account.newMember", app: "Account", label: "A new member is waiting for approval", who: "Web Admins", discord: true, push: false },
   { id: "account.changed", app: "Account", label: "You were approved, or Discord was linked", who: "You", discord: false, push: false, inboxOnly: true },
 ];
