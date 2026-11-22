@@ -18,6 +18,8 @@ export interface Actor {
 
 /** Apollo, the team's Hermes agent. Everything it does is recorded under this ID and name. */
 export const APOLLO: Actor = { id: "apollo", name: "Apollo", username: "apollo", agent: true, approved: true, badges: [] };
+/** Someone who isn't signed in, for the actions anyone may call (the public calendar). Has no badges and no approval. */
+export const VISITOR: Actor = { id: "", name: "Visitor", approved: false, badges: [] };
 /** Jobs run by the timer, recorded under their own names. */
 export const GITHUB_SYNC: Actor = { id: "github-sync", name: "GitHub sync", agent: true, approved: true, badges: [] };
 export const BLUE_ALLIANCE: Actor = { id: "tba", name: "The Blue Alliance", agent: true, approved: true, badges: [] };

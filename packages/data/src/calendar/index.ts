@@ -16,7 +16,10 @@ import type { CalEvent, CalendarData, Shift, Supervisor, SupervisorInfo } from "
 
 export * from "./dates";
 export type { CalEvent, CalEventType, CalendarData, PartDay, Shift, StepStatus, Supervisor, SupervisorInfo } from "./types";
-export { isApproved, supervised, SUPERVISOR_STEPS, supervisorFor } from "./supervision";
+export { isApproved, supervised, SUPERVISION_GOAL_HOURS, SUPERVISOR_STEPS, supervisorFor } from "./supervision";
+export { eventItems, googleLink, ICS_NOTE, icsText, shiftItems, type IcsItem } from "./ics";
+export { publicEvents } from "./public";
+export { eventLinks, type EventLinks } from "./links";
 
 export { COLLECTION_EVENTS, COLLECTION_SHIFTS };
 export { addShift, MAX_SHIFTS, parsePattern, patternText, PlanError, splitShifts, uncovered, WEEKDAYS } from "./plan";
@@ -32,6 +35,17 @@ export async function load(): Promise<CalendarData> {
     shifts: shifts.filter((s) => !s.cancelled).sort((a, b) => a.start.localeCompare(b.start)),
     supervisors: supervisorsFrom(supervisors),
   };
+}
+
+/** The public calendar: what anyone sees, signed in or not (no shifts, no supervisors). Works without signing in. */
+export async function loadPublic(): Promise<CalendarData> {
+  const { events } = await callOps<{ events: CalEvent[] }>("publicCalendar");
+  return { events: events.sort(byStart), shifts: [], supervisors: [] };
+}
+
+/** Competitions, kickoff and other events (everything but meetings, breaks and season parts), soonest first. */
+export function compsAndMore(events: CalEvent[]): CalEvent[] {
+  return events.filter((e) => e.type === "competition" || e.type === "event").sort(byStart);
 }
 
 // ----- changes (Leads, Mentors and Boosters; assigning subteams is Leads only) -----

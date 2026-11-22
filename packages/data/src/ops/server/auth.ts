@@ -11,10 +11,11 @@ import { APOLLO, sha256Hex, type Actor } from "./context";
 import { apiError, ApiError, type OpsEnv } from "./env";
 
 /** The role an action needs (see rolesFor in ../roles.ts for who has each). "signedIn": anyone signed in, badges or not
- *  (their own account: finishing their profile, their settings). */
-export type Who = keyof Roles | "signedIn";
+ *  (their own account: finishing their profile, their settings). "anyone": the public, signed in or not (the public calendar). */
+export type Who = keyof Roles | "signedIn" | "anyone";
 
 export function requireRole(actor: Actor, role: Who): void {
+  if (role === "anyone") return;
   if (role === "signedIn") {
     if (actor.agent) throw apiError("forbidden", "That is for people, not Apollo.");
     return;

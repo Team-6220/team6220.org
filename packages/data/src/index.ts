@@ -49,6 +49,7 @@ export * as account from "./account";
 export * as calendar from "./calendar";
 export type { CalEvent, CalEventType, CalendarData, PartDay, Shift, StepStatus, Supervisor, SupervisorInfo } from "./calendar/types";
 export type { ShiftTimes } from "./calendar";
+export type { EventLinks, IcsItem } from "./calendar";
 // Your inbox, notification settings and Discord link.
 export * as notifications from "./notifications";
 export type { InboxItem, NotificationKind, NotificationPrefs } from "./notifications/catalog";

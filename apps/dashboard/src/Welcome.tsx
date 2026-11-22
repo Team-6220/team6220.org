@@ -8,10 +8,13 @@ import { PhotoField } from "./PhotoField";
 
 const SUBTEAMS = ["Design", "Manufacturing", "Programming", "Electrical", "Operations"];
 
+/** The Calendar is for the team, but anyone can see its public view: meeting times, competitions and events. */
+const PUBLIC_CALENDAR: CardItem = { key: "calendar", title: "Calendar", icon: "cal", href: "/apps/calendar", pill: { label: "Public", tone: "gold" }, lines: ["Meeting times, competitions, and events. Shifts and supervisors are only for the team."] };
+
 function publicCards(): CardItem[] {
-  return APPS.filter((a) => a.access === "public" && a.status === "live").map((a) => ({
-    key: a.id, title: a.name, icon: a.icon, href: a.href, pill: { label: "Public", tone: "gold" }, lines: [a.description],
-  }));
+  return [PUBLIC_CALENDAR, ...APPS.filter((a) => a.access === "public" && a.status === "live").map((a) => ({
+    key: a.id, title: a.name, icon: a.icon, href: a.href, pill: { label: "Public", tone: "gold" as const }, lines: [a.description],
+  }))];
 }
 
 function SignInButton() {

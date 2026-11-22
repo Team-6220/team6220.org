@@ -45,3 +45,19 @@ export function usePrefs(): [CalendarPrefs, (change: Partial<CalendarPrefs>) => 
   };
   return [prefs, update];
 }
+
+/** Saves text as a file in the browser (the .ics downloads). */
+export function downloadIcs(filename: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** The public calendar's feed, as Google Calendar and Apple Calendar want the address. */
+export function feedLinks() {
+  const feed = `${location.host}/api/calendar.ics`;
+  return { google: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(`webcal://${feed}`)}`, apple: `webcal://${feed}` };
+}

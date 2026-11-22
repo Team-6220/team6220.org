@@ -1,6 +1,7 @@
 // The whole school year (August to July) at a glance: meetings, breaks, competitions and today. Click a month to open it.
 import { calendar, type CalEvent } from "@team6220/data";
 import { PageHeader, Screen } from "@team6220/ui";
+import { PublicNote } from "./PublicNote";
 import type { CalendarView } from "./Calendar";
 import { monthHref } from "./shared";
 
@@ -23,6 +24,7 @@ export function Year({ view }: { view: CalendarView }) {
   return (
     <Screen>
       <PageHeader title={title} sub="The whole school year at a glance. Click a month to open it." />
+      <PublicNote view={view} />
       <div className="cal-legend">
         <span><i className="y-meeting" />Meeting</span><span><i className="y-break" />Break</span><span><i className="y-both" />Meeting during a break</span>
         <span><i className="y-comp" />Competition or event</span><span><i className="y-today" />Today</span>

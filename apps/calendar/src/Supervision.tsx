@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { calendar, ops, type CalEvent, type Shift, type StepStatus, type Supervisor } from "@team6220/data";
 import { Btn, DataTable, Field, Fields, Note, PageHeader, Pill, Screen, Section, type Column } from "@team6220/ui";
 import type { CalendarView } from "./Calendar";
+import { ExportOne } from "./Export";
 import { eventHref } from "./shared";
 
 const WEEKS = 4;
@@ -70,7 +71,8 @@ export function MyShifts({ view }: { view: CalendarView }) {
   return (
     <Screen>
       <PageHeader title="My shifts" sub="Shifts you signed up for" actions={<Btn kind="primary" href="/apps/calendar/open">Find open shifts</Btn>} />
-      <DataTable columns={columns} rows={rows} rowKey={(r) => r.shift._id} statusKey="status" actions={(r) => <ShiftAction view={view} shift={r.shift} />}
+      <DataTable columns={columns} rows={rows} rowKey={(r) => r.shift._id} statusKey="status"
+        actions={(r) => <><ShiftAction view={view} shift={r.shift} /><ExportOne small item={calendar.shiftItems([r.shift], [r.event])[0]} /></>}
         empty={calendar.isApproved(view.data.supervisors, view.me.id) ? "You have no shifts coming up." : <>Only approved supervisors take shifts. See <a href="/apps/calendar/become">Become a supervisor</a>.</>} />
     </Screen>
   );

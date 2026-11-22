@@ -143,13 +143,16 @@ const ERROR_CODES: OpsErrorCode[] = [
 ];
 let http: Transport | undefined;
 
+/** Actions anyone may call, signed in or not (the demo's "signed out" visitor too). */
+const OPEN_ACTIONS = ["publicCalendar"];
+
 /** One protected action on the ops API. Throws OpsError with the server's code and message when it says no. */
 export async function callOps<T = Record<string, unknown>>(action: string, args: Record<string, unknown> = {}): Promise<T> {
   const role = demoRole();
   let transport: Transport;
   let token: string | undefined;
   if (role) {
-    if (role === "signed-out") throw new OpsError("signed-out", "Sign in to continue.");
+    if (role === "signed-out" && !OPEN_ACTIONS.includes(action)) throw new OpsError("signed-out", "Sign in to continue.");
     transport = mockTransport;
     token = `mock:${role}`;
   } else {

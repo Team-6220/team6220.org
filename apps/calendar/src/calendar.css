@@ -116,3 +116,18 @@
 .cal-step .k-input { width: 160px; }
 .cal-link { color: inherit; text-decoration: none; }
 .cal-link:hover { text-decoration: underline; }
+
+/* export */
+.cal-export { position: relative; align-self: flex-start; }
+.cal-export > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.cal-export > summary::-webkit-details-marker { display: none; }
+.cal-export-list { margin-top: 8px; max-width: 520px; padding: 4px 16px; }
+.cal-export-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+.cal-export-row:last-child { border-bottom: 0; }
+.cal-export-row > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cal-export-row .k-hint { margin: 0; }
+.cal-export-one { display: inline-block; }
+.k-menu.cal-export-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 200px; }
+.cal-export-menu a { display: flex; box-sizing: border-box; width: 100%; padding: 8px 12px; color: inherit; text-decoration: none; }
+.cal-export-menu a:hover { background: color-mix(in srgb, var(--color-border) 30%, var(--color-surface)); }
+.cal-export-menu .cal-menu-title { margin: 0 0 4px; padding: 6px 12px 8px; }

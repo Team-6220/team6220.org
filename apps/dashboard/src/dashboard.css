@@ -10,8 +10,8 @@
 .dash-cats { display: flex; flex-direction: column; gap: 22px; }
 .dash-cat-head { align-items: center; }
 .dash-cat-grip { padding: 0 4px; color: #8a8a96; }
-.dash-app { position: relative; }
-.dash-app > .k-card { height: 100%; }
+.dash-app { position: relative; display: flex; }
+.dash-app > .k-card { flex: 1; min-width: 0; }
 .dash-app-menu { left: auto; right: 12px; top: 40px; }
 .dash-menu-item { display: block; padding: 8px 12px; color: inherit; text-decoration: none; }
 .dash-danger { color: var(--color-danger) !important; }

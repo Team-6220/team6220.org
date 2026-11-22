@@ -24,7 +24,9 @@ test.describe("/apps dashboard (signed out)", () => {
       await expect(card.locator(".k-card-title")).toHaveText(a.name);
       await expect(card.locator(".k-card-line")).toHaveText(a.description);
     }
-    await expect(page.locator(".k-card")).toHaveCount(publicLive.length);
+    // And the Calendar, whose public view anyone can open.
+    await expect(page.locator(".k-card").filter({ has: page.locator('a[href="/apps/calendar"]') }).locator(".k-card-title")).toHaveText("Calendar");
+    await expect(page.locator(".k-card")).toHaveCount(publicLive.length + 1);
     expect(collected.errors).toEqual([]);
   });
 

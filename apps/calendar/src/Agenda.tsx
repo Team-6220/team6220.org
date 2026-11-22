@@ -3,6 +3,7 @@
 import { calendar, type CalEvent } from "@team6220/data";
 import { DataTable, PageHeader, Pill, Screen, type Tone } from "@team6220/ui";
 import type { CalendarView } from "./Calendar";
+import { PublicNote } from "./PublicNote";
 import { eventHref } from "./shared";
 
 interface Row { event: CalEvent; when: string; where: string; who: string; status: { label: string; tone: Tone } | null }
@@ -27,11 +28,12 @@ export function Agenda({ view }: { view: CalendarView }) {
   return (
     <Screen>
       <PageHeader title="Coming up" sub="Everything in the next two weeks, in order" />
+      <PublicNote view={view} />
       <DataTable<Row>
         columns={[
           { key: "when", label: "When", width: "minmax(0, 2fr)", render: (r) => <a className="k-link" href={eventHref(r.event)}>{r.when}</a> },
           { key: "where", label: "Where", width: "minmax(0, 1.2fr)" },
-          { key: "who", label: "Supervisors", width: "minmax(0, 1fr)" },
+          ...(view.visitor ? [] : [{ key: "who", label: "Supervisors", width: "minmax(0, 1fr)" }]),
           { key: "status", label: "", width: "120px", render: (r) => (r.status ? <Pill tone={r.status.tone}>{r.status.label}</Pill> : null) },
         ]}
         rows={rows}

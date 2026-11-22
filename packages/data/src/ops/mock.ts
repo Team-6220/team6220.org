@@ -230,7 +230,7 @@ const SHARED_ACTIONS: Record<string, { who: RoleName; run: MockAction }> = {
 // ----- what the other data modules plug in -----
 
 /** A role, or "signedIn": anyone signed in, approved or not (as on the server). */
-type RoleName = keyof ReturnType<typeof rolesFor> | "signedIn";
+type RoleName = keyof ReturnType<typeof rolesFor> | "signedIn" | "anyone";
 const moduleActions: Record<string, { who: RoleName; run: MockAction }> = {};
 const moduleSeeds: ((db: MockDb) => void)[] = [];
 
@@ -278,6 +278,7 @@ export const mockTransport: Transport = async (request) => {
   try {
     const action = SHARED_ACTIONS[request.action] ?? moduleActions[request.action];
     if (!action) throw new OpsError("bad-request", "Unknown action.");
+    if (action.who === "anyone") return { ok: true, ...action.run(request, { id: "", name: "Visitor", badges: [], agent: false }, mockDb()) };
     const actor = actorFor(request.token);
     if (action.who !== "signedIn") {
       if (!rolesFor(actor.badges).viewer) throw new OpsError("pending", "A web admin hasn't approved your account yet.");

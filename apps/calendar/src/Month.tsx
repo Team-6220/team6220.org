@@ -6,6 +6,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { calendar, icarus, type CalEvent, type Task } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen, Toggle } from "@team6220/ui";
 import type { CalendarView } from "./Calendar";
+import { ExportCalendar } from "./Export";
+import { PublicNote } from "./PublicNote";
 import { editHref, eventHref, monthHref, newHref, partHref, usePrefs } from "./shared";
 
 /** The menu or popup open on the grid, where the pointer was. */
@@ -103,13 +105,14 @@ export function Month({ view }: { view: CalendarView }) {
     <Screen>
       <PageHeader
         title={calendar.monthTitle(month)}
-        sub={`Meetings, competitions, and events${openShifts ? ` · ${openShifts} ${openShifts === 1 ? "shift still needs" : "shifts still need"} a supervisor` : ""}${editing ? " · right-click a meeting to edit just that day, or an empty day to add something" : ""} · ★ mandatory meeting · ✦ Competition or event`}
+        sub={`${view.visitor ? "Meetings and events" : "Meetings, competitions, and events"}${openShifts ? ` · ${openShifts} ${openShifts === 1 ? "shift still needs" : "shifts still need"} a supervisor` : ""}${editing ? " · right-click a meeting to edit just that day, or an empty day to add something" : ""} · ★ mandatory meeting · ✦ Competition or event`}
         actions={<>
           <Btn title="Previous month" onClick={() => go(calendar.shiftMonth(month, -1))}>‹</Btn>
           <Btn title="Next month" onClick={() => go(calendar.shiftMonth(month, 1))}>›</Btn>
           <Btn onClick={() => go(today.slice(0, 7))}>Today</Btn>
         </>}
       />
+      <PublicNote view={view} />
       {canEdit && <div className="k-row cal-toggles">
         {canEdit && <Toggle label="Edit mode" checked={prefs.edit} onChange={(edit) => setPrefs({ edit })} />}
         {editing && <span className="k-hint">For leads, mentors, and boosters. Click a day to add an event. Click and drag over several days to add a season part or a break. Click a meeting or event to edit it.</span>}
@@ -128,14 +131,15 @@ export function Month({ view }: { view: CalendarView }) {
             tasks={prefs.tasks ? tasks : []} grid={grid} editing={editing} />
         ))}
       </div>
-      <div className="k-box k-form cal-options">
+      {!view.visitor && <div className="k-box k-form cal-options">
         <Toggle label="Show shifts" checked={prefs.shifts} onChange={(shifts) => setPrefs({ shifts })} />
         <span className="k-hint cal-option-hint">Supervision shifts under each meeting.</span>
         {isMember && <Toggle label="Show tasks" checked={prefs.tasks} onChange={(t) => setPrefs({ tasks: t })} />}
         {isMember && <span className="k-hint cal-option-hint">Your Icarus tasks with due dates.</span>}
         <Toggle label="Show other subteams' meetings" checked={prefs.others} onChange={(others) => setPrefs({ others })} />
         <span className="k-hint cal-option-hint">Meetings for other subteams are hidden unless you turn this on, then they show dimmed. Leads see everything.</span>
-      </div>
+      </div>}
+      <ExportCalendar events={visible} month={month} today={today} />
       {menu && <GridMenu menu={menu} close={() => setMenu(null)} onMandatory={toggleMandatory} onRemove={remove} />}
     </Screen>
   );

@@ -5,6 +5,7 @@ import { mockActions, mockWantedSubteams, seedMock, type MockDb } from "../ops/m
 import { rolesFor } from "../ops/roles";
 import { OpsError } from "../ops/types";
 import { addDays, eachDay, today, weekday } from "./dates";
+import { publicEvents } from "./public";
 import { assignRows, cleanEvent, COLLECTION_EVENTS, COLLECTION_SHIFTS, eventRows, PlanError, removedRows, scheduleSave } from "./plan";
 import type { Person } from "../ops/types";
 import { cleanSupervisorInfo, FIRST_STEPS, linkedShifts, signUp, supervisorFor, supervisorsFrom, withdraw } from "./supervision";
@@ -100,6 +101,7 @@ function shiftAndEvent(db: MockDb, id: unknown): { shift: Shift; event: CalEvent
 }
 
 mockActions({
+  publicCalendar: { who: "anyone", run: (_request, _actor, db) => ({ events: publicEvents(events(db)) }) },
   signUpShift: {
     who: "viewer",
     run: (request, actor, db) => {
