@@ -3,6 +3,7 @@
 // call permissions"). The logic is in packages/data and is unit-tested against a fake; this file is only the plumbing.
 import { auth } from "@wix/essentials";
 import { items } from "@wix/data";
+import { files } from "@wix/media";
 import { badgeAssignments, badgesV2, members } from "@wix/members";
 import { withId, type Doc, type OpsEnv } from "@team6220/data/ops-server";
 import { readSecret } from "./wix-secrets";
@@ -19,6 +20,10 @@ const createAssignments = auth.elevate(badgeAssignments.bulkCreateBadgeAssignmen
 const deleteAssignments = auth.elevate(badgeAssignments.bulkDeleteBadgeAssignments);
 const queryBadges = auth.elevate(badgesV2.queryBadges);
 const queryMembers = auth.elevate(members.queryMembers);
+const approveMember = auth.elevate(members.approveMember);
+const updateMember = auth.elevate(members.updateMember);
+const deleteMember = auth.elevate(members.deleteMember);
+const uploadUrlFor = auth.elevate(files.generateFileUploadUrl);
 
 /** Wix takes up to 1000 items per bulk data call and 100 per badge call. */
 const DATA_CHUNK = 1000;
@@ -102,6 +107,27 @@ export const opsEnv: OpsEnv = {
         contact: { firstName: m.contact?.firstName ?? undefined, lastName: m.contact?.lastName ?? undefined },
         profile: { nickname: m.profile?.nickname ?? undefined, slug: m.profile?.slug ?? undefined },
       }));
+    },
+    async approve(memberId) {
+      await approveMember(memberId);
+    },
+    async setPhoto(memberId, url) {
+      await updateMember(memberId, { profile: { photo: { url } } });
+    },
+    async remove(memberId) {
+      await deleteMember(memberId);
+    },
+  },
+  media: {
+    // Wix Media's two-step upload: ask for an upload address, then PUT the bytes there.
+    async uploadImage({ folder, fileName, mimeType, bytes }) {
+      const { uploadUrl } = await uploadUrlFor(mimeType, { fileName, filePath: `${folder}/${fileName}` });
+      if (!uploadUrl) throw new Error("Wix Media didn't give an upload address.");
+      const res = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": mimeType }, body: bytes.slice().buffer as ArrayBuffer });
+      if (!res.ok) throw new Error(`Wix Media refused the upload (${res.status}).`);
+      const answer = (await res.json()) as { file?: { url?: string } };
+      if (!answer.file?.url) throw new Error("Wix Media didn't return the file's address.");
+      return answer.file.url;
     },
   },
   async secret(name) {

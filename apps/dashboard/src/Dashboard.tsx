@@ -1,36 +1,63 @@
+// /apps, /apps/all and /apps/account: Home, All apps and Account and settings (the Home app in the shared frame).
+// Who you are decides what you see: signed out, signed in without badges yet (finish your profile), or a member.
 import { useEffect, useState } from "react";
-import { auth, BADGES, type Member } from "@team6220/data";
-import { APPS, type AppEntry } from "./apps";
-import { NeedsYou } from "./NeedsYou";
+import { account, auth, BADGES, ops, type Member } from "@team6220/data";
+import { frame, Screen } from "@team6220/ui";
+import { Home } from "./Home";
+import { AllApps } from "./AllApps";
+import { Account } from "./Account";
+import { SignedOut, Pending } from "./Welcome";
 
-type View =
+export type DashScreen = "home" | "all" | "account";
+
+export type DashView =
   | { kind: "loading" }
   | { kind: "signed-out" }
   | { kind: "pending"; member: Member }
-  | { kind: "approved"; member: Member }
+  | { kind: "approved"; member: Member; isWebAdmin: boolean }
   | { kind: "guest"; member: Member }
   | { kind: "error"; message: string };
 
-export default function Dashboard() {
-  const [view, setView] = useState<View>({ kind: "loading" });
-  // Cosmetic: only decides whether the Web Admin cards are shown. The apps and their servers check the badge for real.
-  const [isWebAdmin, setIsWebAdmin] = useState(false);
+const PULLED_KEY = "team6220.frame.pulled";
+
+/** Once per browser session, the frame settings saved on the server replace this browser's, so they follow the account. */
+function pullPrefs() {
+  try {
+    if (sessionStorage.getItem(PULLED_KEY)) return;
+    sessionStorage.setItem(PULLED_KEY, "1");
+  } catch {
+    // no session storage: pull every time
+  }
+  account.getAccount().then((a) => { if (a.prefs) frame().setPrefs?.(a.prefs as never); }, () => {});
+}
+
+export default function Dashboard({ screen = "home" }: { screen?: DashScreen }) {
+  const [view, setView] = useState<DashView>({ kind: "loading" });
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        // Demo mode (?demo=lead and friends): the made-up member, so every screen can be tried without signing in.
+        if (ops.isChosenDemo()) {
+          const viewer = await ops.getViewer();
+          if (viewer.kind === "member") return setView({ kind: "approved", member: { id: viewer.me.id, name: viewer.me.name, status: "APPROVED" } as Member, isWebAdmin: false });
+          return setView({ kind: "signed-out" });
+        }
         const member = await auth.getMember();
         if (!member) return setView({ kind: "signed-out" });
         const access = await auth.getAccess();
-        if (access === "approved") setIsWebAdmin(await auth.hasBadge(BADGES.webAdmin).catch(() => false));
-        if (access === "approved") return setView({ kind: "approved", member });
-        // Cosmetic: a guest is approved and has the Guest badge but not Team Member. The apps and servers check for real.
-        const guest = member.status === "APPROVED" && (await auth.hasBadge(BADGES.guest).catch(() => false));
+        if (access === "approved") {
+          const isWebAdmin = await auth.hasBadge(BADGES.webAdmin).catch(() => false);
+          pullPrefs();
+          return setView({ kind: "approved", member, isWebAdmin });
+        }
+        // Cosmetic: a guest has the Guest badge but not Team Member. The apps and servers check for real.
+        const guest = await auth.hasBadge(BADGES.guest).catch(() => false);
         setView(guest ? { kind: "guest", member } : { kind: "pending", member });
       } catch (err) {
         console.warn("Couldn't load the signed-in member", err);
-        if (!cancelled) setView({ kind: "error", message: "We couldn't reach the team login service." });
+        if (!cancelled) setView({ kind: "error", message: "We couldn't reach the team login service. Try again in a minute." });
       }
     })();
     return () => {
@@ -38,154 +65,10 @@ export default function Dashboard() {
     };
   }, []);
 
-  return (
-    <main className="t-page dash">
-      <header className="t-header">
-        <div>
-          <p className="t-eyebrow">Los Al Robotics</p>
-          <h1 className="t-title">Team apps</h1>
-        </div>
-        {"member" in view && <MemberBadge member={view.member} />}
-      </header>
-
-      {view.kind === "loading" && <p className="dash__status" role="status">Checking sign-in…</p>}
-      {view.kind === "signed-out" && <SignInPrompt />}
-      {view.kind === "pending" && <PendingNotice />}
-      {view.kind === "error" && (
-        <div className="t-panel" role="alert">
-          <p>{view.message} Try again in a minute.</p>
-          <SignInButton label="Sign in again" />
-        </div>
-      )}
-
-      {view.kind === "approved" && <NeedsYou />}
-      {view.kind === "approved" && <AppGrid apps={APPS.filter((a) => a.access !== "web-admin" || isWebAdmin)} />}
-      {view.kind === "guest" && <AppGrid apps={APPS.filter((a) => a.status === "live" && (a.guests || a.access === "public"))} />}
-      {(view.kind === "signed-out" || view.kind === "pending" || view.kind === "error") && (
-        <>
-          <h2 className="dash__section">Open to everyone</h2>
-          <AppGrid apps={APPS.filter((a) => a.access === "public" && a.status === "live")} />
-        </>
-      )}
-    </main>
-  );
-}
-
-function MemberBadge({ member }: { member: Member }) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <div className="dash__member">
-      {member.photoUrl ? (
-        <img className="dash__avatar" src={member.photoUrl} alt="" width={36} height={36} referrerPolicy="no-referrer" />
-      ) : (
-        <span className="dash__avatar dash__avatar--blank" aria-hidden="true">
-          {member.name.slice(0, 1).toUpperCase()}
-        </span>
-      )}
-      <span className="dash__name">{member.name}</span>
-      <button
-        type="button"
-        className="t-button t-button--quiet"
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void auth.logout();
-        }}
-      >
-        Sign out
-      </button>
-    </div>
-  );
-}
-
-function SignInButton({ label = "Sign in" }: { label?: string }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
-  return (
-    <>
-      <button
-        type="button"
-        className="t-button"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          setError(undefined);
-          try {
-            await auth.login("/apps");
-          } catch (err) {
-            console.warn("Sign-in failed to start", err);
-            setError(err instanceof Error ? err.message : "Couldn't start sign-in.");
-            setBusy(false);
-          }
-        }}
-      >
-        {busy ? "Opening sign-in…" : label}
-      </button>
-      {error && (
-        <p className="dash__error" role="alert">
-          {error}
-        </p>
-      )}
-    </>
-  );
-}
-
-function SignInPrompt() {
-  return (
-    <div className="t-panel">
-      <h2>Sign in to use team apps</h2>
-      <p>
-        Team members sign in with Google. New accounts wait for a web admin to approve them, so sign in once and
-        then ask a lead to approve you.
-      </p>
-      <SignInButton />
-    </div>
-  );
-}
-
-function PendingNotice() {
-  return (
-    <div className="t-panel t-panel--notice">
-      <h2>Waiting for approval</h2>
-      <p>
-        You're signed in, but a web admin hasn't approved your account or given you the <b>Team Member</b> badge
-        yet. Ask a team lead to approve you, then reload this page.
-      </p>
-    </div>
-  );
-}
-
-function AppGrid({ apps }: { apps: AppEntry[] }) {
-  return (
-    <ul className="dash__grid">
-      {apps.map((app) => (
-        <li key={app.id}>
-          <AppCard app={app} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function AppCard({ app }: { app: AppEntry }) {
-  const planned = app.status === "planned" || !app.href;
-  const body = (
-    <>
-      {app.icon && <img className="card__icon" src={app.icon} alt="" width={40} height={40} />}
-      <span className="card__name">{app.name}</span>
-      <span className="card__desc">{app.description}</span>
-      {app.note && !planned && <span className="card__note">{app.note}</span>}
-      {planned && <span className="card__tag">Planned</span>}
-      {!planned && app.access === "public" && <span className="card__tag card__tag--public">Public</span>}
-    </>
-  );
-  return planned ? (
-    <div className="card card--planned" aria-disabled="true">
-      {body}
-    </div>
-  ) : (
-    <a className="card" href={app.href}>
-      {body}
-    </a>
-  );
+  if (view.kind === "loading") return <Screen><p className="k-hint" role="status">Checking sign-in…</p></Screen>;
+  if (view.kind === "signed-out" || view.kind === "error") return <SignedOut error={view.kind === "error" ? view.message : undefined} />;
+  if (view.kind === "pending") return <Pending member={view.member} />;
+  if (screen === "account") return <Account member={view.member} />;
+  if (screen === "all") return <AllApps view={view} />;
+  return <Home view={view} />;
 }

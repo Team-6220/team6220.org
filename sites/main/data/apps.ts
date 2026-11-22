@@ -14,7 +14,7 @@ export interface TeamApp {
 /** The apps dashboard (also where "Log In" goes). */
 export const APPS_DASHBOARD = { name: "Apps", href: "/apps" };
 
-export const APPS: TeamApp[] = ALL_APPS.filter((a) => a.status === "live" && a.href && a.access !== "web-admin").map((a) => ({
+export const APPS: TeamApp[] = ALL_APPS.filter((a) => a.id !== "home" && a.status === "live" && a.href && a.access !== "web-admin").map((a) => ({
   name: a.name,
   href: a.href as string,
   blurb: a.description,

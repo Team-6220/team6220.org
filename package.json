@@ -54,6 +54,7 @@
     "@wix/data": "^1.0.544",
     "@wix/essentials": "1.0.15",
     "@wix/forms": "^1.0.545",
+    "@wix/media": "^1.0.369",
     "@wix/members": "^1.0.541",
     "@wix/sdk": "1.21.18",
     "@wix/secrets": "^1.0.76",

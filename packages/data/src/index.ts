@@ -43,3 +43,6 @@ export type { ReceiveInto } from "./bom";
 // Cutting parts from Inventory's raw stock (Production's Cut planner).
 export * as cutting from "./inventory/cutting";
 export type { CutPlan, Material, PartToPlan, Reserved, StockPiece } from "./inventory/cutting";
+// Your own account: profile, settings that follow you (the frame's layout, pins, keybinds), finishing your profile.
+export * as account from "./account";
+export type { Profile, AccountInfo, ProfileForm, Role as AccountRole } from "./account";

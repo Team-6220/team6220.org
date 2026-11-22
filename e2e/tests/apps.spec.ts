@@ -14,19 +14,17 @@ test.describe("/apps dashboard (signed out)", () => {
     await settle(page);
     await expect(page.getByRole("heading", { level: 1, name: "Team apps" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Sign in to use team apps" })).toBeVisible();
-    // Inside the page itself: the shared sidebar has its own "Sign in" link.
-    const main = page.getByRole("main");
-    await expect(main.getByRole("button", { name: /^sign in$/i }).or(main.getByRole("link", { name: /^sign in$/i }))).toBeVisible();
-    // Signed out, the grid lists the live public apps only.
+    await expect(page.getByRole("button", { name: /^sign in with google$/i })).toBeVisible();
+    // Signed out, the cards list the live public apps only.
     const publicLive = APPS.filter((a) => a.access === "public" && a.status === "live");
     expect(publicLive.length).toBeGreaterThan(0);
     for (const a of publicLive) {
-      const card = page.locator(`a.card[href="${a.href}"]`);
+      const card = page.locator(".k-card").filter({ has: page.locator(`a[href="${a.href}"]`) });
       await expect(card).toBeVisible();
-      await expect(card.locator(".card__name")).toHaveText(a.name);
-      await expect(card.locator(".card__desc")).toHaveText(a.description);
+      await expect(card.locator(".k-card-title")).toHaveText(a.name);
+      await expect(card.locator(".k-card-line")).toHaveText(a.description);
     }
-    await expect(page.locator("a.card")).toHaveCount(publicLive.length);
+    await expect(page.locator(".k-card")).toHaveCount(publicLive.length);
     expect(collected.errors).toEqual([]);
   });
 

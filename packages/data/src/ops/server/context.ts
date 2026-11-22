@@ -26,7 +26,9 @@ export const COLLECTION_COUNTERS = "ops_counters";
 export const COLLECTION_HISTORY = "ops_history";
 export const COLLECTION_PROJECTS = "ops_projects";
 export const COLLECTION_PEOPLE = "ops_people";
-export const REQUIRED_COLLECTIONS = [COLLECTION_COUNTERS, COLLECTION_HISTORY, COLLECTION_PROJECTS, COLLECTION_PEOPLE];
+/** The student roster (student ID, name, grade), imported once from its sheet; only the server reads it. */
+export const COLLECTION_ROSTER = "ops_roster";
+export const REQUIRED_COLLECTIONS = [COLLECTION_COUNTERS, COLLECTION_HISTORY, COLLECTION_PROJECTS, COLLECTION_PEOPLE, COLLECTION_ROSTER];
 
 export interface Record_ {
   kind: string;
@@ -57,8 +59,10 @@ export class Ctx {
   }
 
   /** Adds a line to the change log. Written with the other lines at the end of the request (one call). */
-  log(record: Record_, action: string, summary = ""): void {
+  log(record: Record_, action: string, summary = "", event?: { type: string; data?: Record<string, unknown> }): void {
     this.history.push({
+      // What happened, for the notification rules (for example "task.assigned"); see EVENT_TYPES in events-log.ts.
+      ...(event ? { type: event.type, data: event.data ?? {} } : {}),
       recordKind: record.kind,
       recordId: record.id,
       actorId: this.actor.id,

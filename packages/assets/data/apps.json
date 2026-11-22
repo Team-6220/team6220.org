@@ -1,23 +1,129 @@
 [
   {
-    "id": "attendance",
-    "name": "Attendance",
-    "description": "Sign in at meetings and check who's here.",
-    "href": "/apps/attendance",
+    "id": "home",
+    "name": "Home",
+    "description": "",
+    "href": "/apps",
     "status": "live",
     "access": "team",
-    "note": "Attendance Admins open the sign-in kiosk",
-    "symbol": "audits"
+    "category": null,
+    "icon": "home",
+    "sections": [
+      {
+        "label": null,
+        "items": [
+          {
+            "name": "Home",
+            "icon": "home",
+            "view": ""
+          },
+          {
+            "name": "All apps",
+            "icon": "grid",
+            "view": "all"
+          },
+          {
+            "name": "Account and settings",
+            "icon": "me",
+            "view": "account"
+          }
+        ]
+      }
+    ],
+    "ready": true
   },
   {
-    "id": "inventory",
-    "name": "Inventory",
-    "description": "Parts, tools and stock audits.",
-    "href": "/apps/inventory",
-    "status": "live",
+    "id": "calendar",
+    "name": "Calendar",
+    "description": "Meetings, supervision shifts, and competitions.",
+    "href": "/apps/calendar",
+    "status": "planned",
     "access": "team",
-    "guests": true,
-    "symbol": "parts"
+    "alumni": true,
+    "category": "Operations",
+    "icon": "cal",
+    "sections": [
+      {
+        "label": "Calendar",
+        "items": [
+          {
+            "name": "Month",
+            "icon": "cal",
+            "view": "month"
+          },
+          {
+            "name": "Year",
+            "icon": "cal",
+            "view": "year"
+          },
+          {
+            "name": "Coming up",
+            "icon": "list",
+            "view": "agenda"
+          },
+          {
+            "name": "Comps & More",
+            "icon": "star",
+            "view": "competitions"
+          }
+        ]
+      },
+      {
+        "label": "Scheduling",
+        "items": [
+          {
+            "name": "New event",
+            "icon": "plus",
+            "view": "new"
+          },
+          {
+            "name": "Meeting schedule",
+            "icon": "gear",
+            "view": "schedule"
+          }
+        ]
+      },
+      {
+        "label": "Subteam meetings (leads)",
+        "items": [
+          {
+            "name": "Assign meetings",
+            "icon": "people",
+            "view": "assign"
+          },
+          {
+            "name": "View as a member",
+            "icon": "eye",
+            "view": "member"
+          }
+        ]
+      },
+      {
+        "label": "Supervision",
+        "items": [
+          {
+            "name": "My shifts",
+            "icon": "me",
+            "view": "myshifts"
+          },
+          {
+            "name": "Open shifts",
+            "icon": "clock",
+            "view": "open"
+          },
+          {
+            "name": "Supervisors",
+            "icon": "shield",
+            "view": "supervisors"
+          },
+          {
+            "name": "Become a supervisor",
+            "icon": "att",
+            "view": "become"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "icarus",
@@ -28,7 +134,225 @@
     "access": "team",
     "guests": true,
     "note": "Leads plan seasons and target dates",
-    "symbol": "audits"
+    "category": "Operations",
+    "icon": "ica",
+    "filledIcon": true,
+    "sections": [
+      {
+        "label": "Views",
+        "items": [
+          {
+            "name": "Gantt chart",
+            "icon": "gantt",
+            "view": "gantt"
+          },
+          {
+            "name": "Kanban board",
+            "icon": "board",
+            "view": "board"
+          },
+          {
+            "name": "Tasks",
+            "icon": "list",
+            "view": "all"
+          },
+          {
+            "name": "Log",
+            "icon": "clock",
+            "view": "log"
+          }
+        ]
+      },
+      {
+        "label": "Manage",
+        "items": [
+          {
+            "name": "Projects",
+            "icon": "folder",
+            "view": "projects"
+          },
+          {
+            "name": "People",
+            "icon": "people",
+            "view": "people"
+          },
+          {
+            "name": "Plan the season",
+            "icon": "cal",
+            "view": "plan"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "attendance",
+    "name": "Attendance",
+    "description": "Sign in at meetings and check who's here.",
+    "href": "/apps/attendance",
+    "status": "live",
+    "access": "team",
+    "note": "Attendance Admins open the sign-in kiosk",
+    "category": "Operations",
+    "icon": "att",
+    "sections": [
+      {
+        "label": "Me",
+        "items": [
+          {
+            "name": "Today",
+            "icon": "people",
+            "view": "today"
+          },
+          {
+            "name": "Did I sign in?",
+            "icon": "att",
+            "view": "mine"
+          },
+          {
+            "name": "My hours",
+            "icon": "clock",
+            "view": "hours"
+          }
+        ]
+      },
+      {
+        "label": "Team",
+        "items": [
+          {
+            "name": "Past meetings",
+            "icon": "cal",
+            "view": "past"
+          },
+          {
+            "name": "Stats",
+            "icon": "chart",
+            "view": "stats"
+          }
+        ]
+      },
+      {
+        "label": "Attendance admins",
+        "items": [
+          {
+            "name": "Kiosk",
+            "icon": "grid",
+            "view": "kiosk"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rsvp",
+    "name": "RSVP",
+    "description": "Say who is coming to competitions and events.",
+    "href": "/apps/rsvp",
+    "status": "planned",
+    "access": "team",
+    "hiddenByDefault": true,
+    "category": "Operations",
+    "icon": "rsvp",
+    "sections": [
+      {
+        "label": "Forms",
+        "items": [
+          {
+            "name": "Open forms",
+            "icon": "list",
+            "view": "open"
+          },
+          {
+            "name": "Who's coming",
+            "icon": "people",
+            "view": "results"
+          }
+        ]
+      },
+      {
+        "label": "Leads",
+        "items": [
+          {
+            "name": "Manage forms",
+            "icon": "gear",
+            "view": "manage"
+          },
+          {
+            "name": "New form",
+            "icon": "plus",
+            "view": "new"
+          },
+          {
+            "name": "Reminders",
+            "icon": "bell",
+            "view": "reminders"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "inventory",
+    "name": "Inventory",
+    "description": "Parts, tools and stock audits.",
+    "href": "/apps/inventory",
+    "status": "live",
+    "access": "team",
+    "guests": true,
+    "category": "Mechanical",
+    "icon": "inv",
+    "sections": [
+      {
+        "label": "Inventory",
+        "items": [
+          {
+            "name": "Parts",
+            "icon": "box",
+            "view": "parts"
+          },
+          {
+            "name": "Raw Materials",
+            "icon": "layers",
+            "view": "raw"
+          },
+          {
+            "name": "Tools & Equipment",
+            "icon": "tool",
+            "view": "tools"
+          },
+          {
+            "name": "Fastener Reference",
+            "icon": "bolt",
+            "view": "fasteners"
+          },
+          {
+            "name": "Wire Inventory",
+            "icon": "wire",
+            "view": "wire"
+          }
+        ]
+      },
+      {
+        "label": "Manage",
+        "items": [
+          {
+            "name": "Inventory Audits",
+            "icon": "att",
+            "view": "audits"
+          },
+          {
+            "name": "Packing List",
+            "icon": "pack",
+            "view": "packing"
+          },
+          {
+            "name": "Settings",
+            "icon": "gear",
+            "view": "settings"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "bom",
@@ -38,7 +362,187 @@
     "status": "live",
     "access": "team",
     "note": "Mentors and Boosters sign and buy",
-    "symbol": "parts"
+    "category": "Operations",
+    "icon": "bom",
+    "sections": [
+      {
+        "label": "Orders",
+        "items": [
+          {
+            "name": "Order 1",
+            "icon": "list",
+            "view": "order"
+          },
+          {
+            "name": "Summer Bot 1",
+            "icon": "list",
+            "view": "order"
+          },
+          {
+            "name": "Mouser order",
+            "icon": "list",
+            "view": "order"
+          }
+        ]
+      },
+      {
+        "label": "For me",
+        "items": [
+          {
+            "name": "Needs my signature",
+            "icon": "pen",
+            "view": "sign"
+          },
+          {
+            "name": "Waiting to arrive",
+            "icon": "box",
+            "view": "arriving"
+          }
+        ]
+      },
+      {
+        "label": "Manage",
+        "items": [
+          {
+            "name": "New order",
+            "icon": "plus",
+            "view": "neworder"
+          },
+          {
+            "name": "Vendor preferences",
+            "icon": "gear",
+            "view": "prefs"
+          },
+          {
+            "name": "Spending",
+            "icon": "chart",
+            "view": "spending"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business",
+    "name": "Business",
+    "description": "1-2-3-100 fundraising, sponsor and grant trackers.",
+    "href": "/apps/business",
+    "status": "planned",
+    "access": "team",
+    "category": "Operations",
+    "icon": "biz",
+    "sections": [
+      {
+        "label": "1-2-3-100",
+        "items": [
+          {
+            "name": "My 1-2-3-100",
+            "icon": "me",
+            "view": "my"
+          },
+          {
+            "name": "Restaurant day",
+            "icon": "food",
+            "view": "restaurant"
+          },
+          {
+            "name": "Grants",
+            "icon": "coin",
+            "view": "grant"
+          },
+          {
+            "name": "Sponsor pitches",
+            "icon": "mail",
+            "view": "sponsor"
+          },
+          {
+            "name": "Merch",
+            "icon": "pack",
+            "view": "merch"
+          }
+        ]
+      },
+      {
+        "label": "Trackers",
+        "items": [
+          {
+            "name": "Sponsor tracker",
+            "icon": "list",
+            "view": "sponsors_t"
+          },
+          {
+            "name": "Grant tracker",
+            "icon": "list",
+            "view": "grants_t"
+          },
+          {
+            "name": "Stats",
+            "icon": "chart",
+            "view": "stats"
+          }
+        ]
+      },
+      {
+        "label": "Sponsor management",
+        "items": [
+          {
+            "name": "Sponsor benefits",
+            "icon": "star",
+            "view": "benefits"
+          },
+          {
+            "name": "Sponsor emails",
+            "icon": "mail",
+            "view": "emails"
+          }
+        ]
+      },
+      {
+        "label": "Resources",
+        "items": [
+          {
+            "name": "Email templates",
+            "icon": "mail",
+            "view": "templates"
+          },
+          {
+            "name": "Answer bank",
+            "icon": "list",
+            "view": "bank"
+          },
+          {
+            "name": "Sponsorship packet",
+            "icon": "folder",
+            "view": "packet"
+          },
+          {
+            "name": "Social post template",
+            "icon": "star",
+            "view": "social"
+          }
+        ]
+      },
+      {
+        "label": "Operations and leads",
+        "items": [
+          {
+            "name": "Approvals",
+            "icon": "att",
+            "view": "approvals"
+          },
+          {
+            "name": "Everyone's status",
+            "icon": "people",
+            "view": "status"
+          },
+          {
+            "name": "1-2-3-100 settings",
+            "icon": "gear",
+            "view": "settings"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "production",
@@ -47,17 +551,60 @@
     "href": "/apps/production",
     "status": "live",
     "access": "team",
-    "symbol": "tools"
-  },
-  {
-    "id": "site",
-    "name": "Site Manager",
-    "description": "Change the public website's content with forms. Submitting opens a pull request.",
-    "href": "/apps/site",
-    "status": "live",
-    "access": "web-admin",
-    "note": "Web Admins only",
-    "symbol": "edit"
+    "category": "Mechanical",
+    "icon": "prod",
+    "sections": [
+      {
+        "label": "Design",
+        "items": [
+          {
+            "name": "Request a part",
+            "icon": "plus",
+            "view": "request"
+          },
+          {
+            "name": "Requests",
+            "icon": "list",
+            "view": "all"
+          },
+          {
+            "name": "Print queue",
+            "icon": "layers",
+            "view": "print"
+          }
+        ]
+      },
+      {
+        "label": "Manufacturing",
+        "items": [
+          {
+            "name": "Tracker",
+            "icon": "list",
+            "view": "tracker"
+          },
+          {
+            "name": "Shapeoko pending",
+            "icon": "clock",
+            "view": "shapeoko"
+          },
+          {
+            "name": "Cut planner",
+            "icon": "cut",
+            "view": "planner"
+          },
+          {
+            "name": "Cut optimizer",
+            "icon": "grid",
+            "view": "optimizer"
+          },
+          {
+            "name": "Log",
+            "icon": "clock",
+            "view": "log"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "goldsim",
@@ -66,7 +613,77 @@
     "href": "/apps/goldsim/",
     "status": "live",
     "access": "public",
-    "symbol": "production"
+    "category": "Strategy",
+    "icon": "gs",
+    "sections": [
+      {
+        "label": null,
+        "items": [
+          {
+            "name": "Home",
+            "icon": "home",
+            "view": "home"
+          },
+          {
+            "name": "Play",
+            "icon": "play",
+            "view": "play"
+          },
+          {
+            "name": "Match",
+            "icon": "gs",
+            "view": "match"
+          },
+          {
+            "name": "Editor",
+            "icon": "tool",
+            "view": "editor"
+          },
+          {
+            "name": "Replay",
+            "icon": "clock",
+            "view": "replay"
+          },
+          {
+            "name": "Lab",
+            "icon": "chart",
+            "view": "lab"
+          },
+          {
+            "name": "Rules",
+            "icon": "list",
+            "view": "rules"
+          },
+          {
+            "name": "Benchmark",
+            "icon": "gear",
+            "view": "benchmark"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scouting",
+    "name": "GoldScout",
+    "description": "Match data from the stands, even with bad Wi-Fi.",
+    "href": "/apps/scouting",
+    "status": "planned",
+    "access": "team",
+    "category": "Strategy",
+    "icon": "eye",
+    "sections": []
+  },
+  {
+    "id": "pit",
+    "name": "Pit display",
+    "description": "Match schedule and stats for the pit TV.",
+    "href": "/apps/pit",
+    "status": "planned",
+    "access": "public",
+    "category": "Strategy",
+    "icon": "tv",
+    "sections": []
   },
   {
     "id": "wingit",
@@ -75,22 +692,92 @@
     "href": "/apps/wingit/",
     "status": "live",
     "access": "public",
-    "symbol": "wing"
+    "category": "Fun",
+    "icon": "wi",
+    "sections": [
+      {
+        "label": null,
+        "items": [
+          {
+            "name": "Home",
+            "icon": "home",
+            "view": "home"
+          },
+          {
+            "name": "Season",
+            "icon": "play",
+            "view": "run"
+          },
+          {
+            "name": "Principles",
+            "icon": "star",
+            "view": "principles"
+          },
+          {
+            "name": "Team upgrades",
+            "icon": "grid",
+            "view": "upgrades"
+          }
+        ]
+      }
+    ]
   },
   {
-    "id": "scouting",
-    "name": "Scouting",
-    "description": "Match data from the stands, even with bad Wi-Fi.",
-    "status": "planned",
-    "access": "team",
-    "symbol": "search"
-  },
-  {
-    "id": "pit",
-    "name": "Pit display",
-    "description": "Match schedule and stats for the pit TV.",
-    "status": "planned",
-    "access": "public",
-    "symbol": "image"
+    "id": "site",
+    "name": "Site Management",
+    "description": "Change the public website's content with forms. Submitting opens a pull request.",
+    "href": "/apps/site",
+    "status": "live",
+    "access": "web-admin",
+    "note": "Web Admins only",
+    "category": "Admin",
+    "icon": "site",
+    "sections": [
+      {
+        "label": "Areas",
+        "items": [
+          {
+            "name": "Summer camp",
+            "icon": "cal",
+            "view": "camp"
+          },
+          {
+            "name": "Sponsors",
+            "icon": "people",
+            "view": "sponsors"
+          },
+          {
+            "name": "Merch",
+            "icon": "pack",
+            "view": "merch"
+          },
+          {
+            "name": "Resources and links",
+            "icon": "list",
+            "view": "resources"
+          },
+          {
+            "name": "People and roles",
+            "icon": "people",
+            "view": "people"
+          },
+          {
+            "name": "Media",
+            "icon": "grid",
+            "view": "media"
+          }
+        ]
+      },
+      {
+        "label": "Review",
+        "items": [
+          {
+            "name": "Pull requests",
+            "icon": "pr",
+            "view": "prs"
+          }
+        ]
+      }
+    ]
   }
 ]

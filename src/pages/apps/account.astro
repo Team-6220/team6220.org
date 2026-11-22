@@ -1,0 +1,13 @@
+---
+// /apps/account: Account, a screen of the Home app (apps/dashboard).
+import AppLayout from "../../layouts/AppLayout.astro";
+import { Dashboard } from "@team6220/dashboard";
+import "@team6220/dashboard/dashboard.css";
+---
+
+<AppLayout title="Account | Los Al Robotics" description="Your Los Al Robotics team apps account and settings.">
+  <Dashboard client:only="react" screen="account">
+    <div class="k-screen" slot="fallback"><p class="k-hint">Loading…</p></div>
+  </Dashboard>
+  <noscript><p class="k-screen">Team apps need JavaScript turned on.</p></noscript>
+</AppLayout>

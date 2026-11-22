@@ -10,6 +10,7 @@ import { failureStatus, guardSameSite, readJsonObject, reply } from "../../serve
 import { SiteError } from "../../site/types";
 import type { VerifyViewer } from "../../site/verify";
 import { actorFor, requireRole, type Who } from "./auth";
+import * as account from "./account";
 import * as bom from "./bom";
 import { withCallBudget } from "./budget";
 import { Ctx, sha256Hex, type Actor } from "./context";
@@ -28,6 +29,14 @@ type Action = (ctx: Ctx, body: Doc) => Promise<object>;
  */
 const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   whoAmI: { who: "viewer", run: shared.whoAmI },
+  // Your own account (account.ts)
+  getAccount: { who: "signedIn", run: account.getAccount },
+  saveMyProfile: { who: "signedIn", run: account.saveMyProfile },
+  savePrefs: { who: "signedIn", run: account.savePrefs },
+  finishProfile: { who: "signedIn", run: account.finishProfile },
+  setMyPhoto: { who: "signedIn", run: account.setMyPhoto },
+  deleteMyAccount: { who: "signedIn", run: account.deleteMyAccount },
+  importRoster: { who: "peopleAdmin", run: account.importRoster },
   nextNumber: { who: "team", agent: true, run: shared.nextNumber },
   logHistory: { who: "team", run: shared.logHistory },
   // Reads and simple writes the apps make through the server (records.ts)

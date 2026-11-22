@@ -4,13 +4,13 @@ Each app mounts at its own route under `team6220.org/apps`. Most are React packa
 
 | Folder | Route | Status |
 | --- | --- | --- |
-| `apps/dashboard` | `/apps` | **Live.** Sign-in, the member's name, a "Needs you" list (tasks assigned to you, BOM lines to sign, parts you claimed) and a card per app |
-| `apps/attendance` | `/apps/attendance` | **Built, waiting for its server.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; shows "Not connected yet" until that is deployed. Try it with `?demo=admin` |
+| `apps/dashboard` | `/apps`, `/apps/all`, `/apps/account` | **Live.** Home (Needs you, pins, today), All apps (reorder and hide), Account and settings (profile, layout, keybinds, pins), sign-in and "finish your profile" (students on the roster are approved straight away) |
+| `apps/attendance` | `/apps/attendance` | **Live.** Kiosk sign-in (Attendance Admins open it), today's list, history and "did I sign in?" for members. Saves through the new `backend/apps-script/attendance-api` into the same Sheet; . Try it with `?demo=admin` |
 | `apps/inventory` | `/apps/inventory` | **Built.** The original Apps Script UI (unchanged HTML/CSS/JS in `apps/inventory/ui`) on a `google.script.run` shim; data in the Wix CMS (mock data in dev). Not React. See [inventory/README.md](inventory/README.md) |
-| `apps/icarus` | `/apps/icarus` | **Built, waiting for its server.** Tasks (`t42`), subtasks, projects (`p10`) and the team Gantt chart with the sheet's countdown rows; seasons, target dates, events and templates for Leads; subteam badges. Try it with `?demo=lead` (or `member`, `supervisor`). See [icarus/README.md](icarus/README.md) |
-| `apps/bom` | `/apps/bom` | **Built, waiting for its server.** What the team is buying: orders with vendor sections, two signatures per line from Mentors or Boosters (tick, shift-click or drag to sign many), ordering, receiving, CSV export and import in the old sheet layout. Every change goes through the operations server (`/api/ops`, [Operations Server](https://github.com/Team-6220/team6220.org/wiki/Operations-Server)); on the static test build it only works in demo mode. Try it with `?demo=mentor` (or `member`, `lead`, `booster`, `supervisor`). See [bom/README.md](bom/README.md) |
-| `apps/production` | `/apps/production` | **Built, waiting for its server.** Design (request a part, from an STL too; my requests; print queue) and Manufacturing (tracker with claim / hand back / confirm cut, Shapeoko pending, cut planner on Inventory's stock, cut optimizer). Try it with `?demo=member`. See [production/README.md](production/README.md) |
-| `apps/site` | `/apps/site` | **Built (demo mode until Phase 2).** The Site Manager: Web Admins edit website content (summer camp first) with forms generated from the schemas in `packages/content`; Submit opens a GitHub pull request through `/api/site`. Without that endpoint it runs against an in-memory mock and says "demo: no pull request is opened". Try it with `?demo=admin`. See [Site Manager Plan](https://github.com/Team-6220/team6220.org/wiki/Site-Manager-Plan) |
+| `apps/icarus` | `/apps/icarus` | **Live.** Tasks (`t42`), subtasks, projects (`p10`) and the team Gantt chart with the sheet's countdown rows; seasons, target dates, events and templates for Leads; subteam badges. Try it with `?demo=lead` (or `member`, `supervisor`). See [icarus/README.md](icarus/README.md) |
+| `apps/bom` | `/apps/bom` | **Live.** What the team is buying: orders with vendor sections, two signatures per line from Mentors or Boosters (tick, shift-click or drag to sign many), ordering, receiving, CSV export and import in the old sheet layout. Every change goes through the operations server (`/api/ops`, [Operations Server](https://github.com/Team-6220/team6220.org/wiki/Operations-Server)); on the static test build it only works in demo mode. Try it with `?demo=mentor` (or `member`, `lead`, `booster`, `supervisor`). See [bom/README.md](bom/README.md) |
+| `apps/production` | `/apps/production` | **Live.** Design (request a part, from an STL too; my requests; print queue) and Manufacturing (tracker with claim / hand back / confirm cut, Shapeoko pending, cut planner on Inventory's stock, cut optimizer). Try it with `?demo=member`. See [production/README.md](production/README.md) |
+| `apps/site` | `/apps/site` | **Live.** The Site Manager: Web Admins edit website content (summer camp first) with forms generated from the schemas in `packages/content`; Submit opens a GitHub pull request through `/api/site`. Without that endpoint it runs against an in-memory mock and says "demo: no pull request is opened". Try it with `?demo=admin`. See [Site Manager Plan](https://github.com/Team-6220/team6220.org/wiki/Site-Manager-Plan) |
 | `apps/goldsim` | `/apps/goldsim` | **Live** on the site. Imported with history (Nov 2026); built with its own npm workspace. Local/guest mode only (Supabase is being dropped, #66) |
 | `apps/wingit` | `/apps/wingit` | **Live** on the site. Imported with history (Nov 2026). Static HTML/JS game |
 | `apps/scouting`, `apps/pit` | | Planned |
@@ -19,29 +19,31 @@ Rules (from the migration plan):
 
 - Apps never import the Wix SDK. They call functions from `@team6220/data`.
 - Each app owns its folder, with its own line in `.github/CODEOWNERS`.
-- Brand colors and fonts come from `@team6220/ui`.
+- Brand colors, fonts and the shared React kit (tables, status chips, cards, forms) come from `@team6220/ui`.
 - The Wix integration needs **React 18** (`@wix/astro` peers on `^18.3.1`), so don't use React 19 here.
 
-## Login and the dashboard
+## Login, Home and the frame
 
-- **The main nav's "Log In" link points to `/apps`.** Signed out, that page shows a **Sign in** button (and the
-  public apps); signed in, it shows the member's name, a **Sign out** button and every app card.
-- Sign-in uses the Wix login page ("Log in with Google"). New signups need a Web Admin to approve them under
-  **Wix → Site Members** and give them the `Team Member` badge; until then the dashboard says "Waiting for approval".
-- Routes: `/apps` (dashboard), `/apps/login/callback` (finishes sign-in; never put it under `/api/auth/*`, which
-  `@wix/astro` owns in Phase 2) and `/apps/logout` (link here to sign out from anywhere).
+- **The main nav's "Log In" link points to `/apps`.** Signed out, that page shows **Sign in with Google** (and the
+  public apps); signed in for the first time, it asks the person to **finish their profile**; approved, it shows Home.
+- A student whose student ID and last name match the roster is approved on the spot. Everyone else waits for a person
+  to approve them ([Wix Setup and Maintenance](https://github.com/Team-6220/team6220.org/wiki/Wix-Setup-and-Maintenance#site-members-and-approving-people)).
+- Routes: `/apps` (Home), `/apps/all`, `/apps/account`, `/apps/login/callback` (forwards old bookmarks; never put
+  anything under `/api/auth/*`, which `@wix/astro` owns) and `/apps/logout` (link here to sign out from anywhere).
 - In an app, use `auth` from `@team6220/data`: `auth.getMember()`, `auth.hasBadge(BADGES.attendanceAdmin)`,
   `auth.login("/apps/<name>")`. Mount components that call it with `client:only="react"`. Badge checks in the browser
-  only hide UI; see [`packages/data/README.md`](../packages/data/README.md) for how login works, its limits and
-  what Phase 2 changes.
+  only hide UI; the server checks for real.
+- Every app page gets the **frame** from `AppLayout`: the rail, the app's menu panel, pins, search (`Ctrl+K`), keybinds
+  and the account menu (`packages/assets/scripts/app-sidebar.js`). From React, talk to it with `frame()` and
+  `useFramePrefs()` from `@team6220/ui`.
 
-### Add an app card
+### Add an app
 
-Edit [`apps/dashboard/src/apps.ts`](dashboard/src/apps.ts), the one list of team apps (the main site's Resources
-menu can import it too, from `@team6220/dashboard/apps`). Add an entry with a unique `id`, `name`, `description`,
-`href` (its route under `/apps`), `status` (`"live"` or `"planned"`, which greys it out with no link) and `access`
-(`"public"` cards also show to signed-out visitors; `"team"` cards only to approved members; `"web-admin"` cards only to
-approved members with the Web Admin badge, and they stay out of the main site's Resources menu and page).
+Add an entry to [`packages/assets/data/apps.json`](../packages/assets/data/apps.json), the one list of team apps (typed
+in [`dashboard/src/apps.ts`](dashboard/src/apps.ts)): a unique `id`, `name`, `description`, `href`, `status` (`"live"`
+or `"planned"`, shown as "Coming soon"), `access` (`"public"`, `"team"` or `"web-admin"`), `category` (its section),
+`icon`, and its menu (`sections`). Set `ready: true` once the menu's screens exist. Full steps:
+[Add an App](https://github.com/Team-6220/team6220.org/wiki/Add-an-App).
 
 ### Page shell for an app
 

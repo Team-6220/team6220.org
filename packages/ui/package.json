@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./tokens.css": "./src/tokens.css",
     "./app.css": "./src/app.css",
+    "./kit.css": "./src/kit/kit.css",
     "./PageLoader.astro": "./src/PageLoader.astro"
   },
   "scripts": {

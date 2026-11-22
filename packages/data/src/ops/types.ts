@@ -43,6 +43,8 @@ export interface Roles {
   approver: boolean;
   /** May change anyone's subteams. */
   peopleAdmin: boolean;
+  /** May run the Business app's trackers and approvals: Operations (the subteam), Leads, Mentors and Boosters. */
+  business: boolean;
 }
 
 /** The signed-in person. */

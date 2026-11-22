@@ -136,7 +136,8 @@ async function changeSubteams(ctx: Ctx, memberIds: string[], wanted: string[]): 
 
 /** The row kept for a member, so pickers and @mentions can list people without asking Wix Members. */
 function personRow(existing: Doc | undefined, memberId: string, name: string, subteams: string[], username?: string): Doc {
-  return { ...existing, memberId, name, subteams, active: true, username: username || existing?.username || "" };
+  // A name the person typed on their Account page wins over the Google name.
+  return { ...existing, memberId, name: existing?.customName || name, subteams, active: true, username: username || existing?.username || "" };
 }
 
 /** Keeps one ops_people row per member. Saves only when something changed. */

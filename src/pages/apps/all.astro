@@ -1,0 +1,13 @@
+---
+// /apps/all: All apps, a screen of the Home app (apps/dashboard).
+import AppLayout from "../../layouts/AppLayout.astro";
+import { Dashboard } from "@team6220/dashboard";
+import "@team6220/dashboard/dashboard.css";
+---
+
+<AppLayout title="All apps | Los Al Robotics" description="Every Los Al Robotics team app.">
+  <Dashboard client:only="react" screen="all">
+    <div class="k-screen" slot="fallback"><p class="k-hint">Loading…</p></div>
+  </Dashboard>
+  <noscript><p class="k-screen">Team apps need JavaScript turned on.</p></noscript>
+</AppLayout>

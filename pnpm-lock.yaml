@@ -62,6 +62,9 @@ importers:
       '@wix/forms':
         specifier: ^1.0.545
         version: 1.0.545(@types/react@18.3.31)(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@6.0.3)(use-sync-external-store@1.7.0(react@18.3.1))
+      '@wix/media':
+        specifier: ^1.0.369
+        version: 1.0.369(@wix/services-manager@1.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(use-sync-external-store@1.7.0(react@18.3.1))
       '@wix/members':
         specifier: ^1.0.541
         version: 1.0.541
@@ -138,6 +141,9 @@ importers:
       '@team6220/data':
         specifier: workspace:*
         version: link:../../packages/data
+      '@team6220/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: ^18.3.1
         version: 18.3.1
