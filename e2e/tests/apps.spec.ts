@@ -148,6 +148,69 @@ test.describe("linking a student ID (demo)", () => {
   });
 });
 
+test.describe("rsvp ?demo= modes", () => {
+  test("a member sees the open forms and answers one: a Maybe saves but doesn't finish it", async ({ page, collected }) => {
+    await page.goto("apps/rsvp?demo=member");
+    await settle(page);
+    await expect(page.getByRole("heading", { level: 1, name: "Open forms" })).toBeVisible();
+    await expect(page.getByText("Answered: coming")).toBeVisible();
+    await page.getByRole("link", { name: "Beach Blitz" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Beach Blitz · RSVP" })).toBeVisible();
+    // Everything answered with a Yes (or the first choice), except one day that is a Maybe.
+    for (const group of await page.locator(".rsvp-q").all()) await group.locator('input[type="radio"]').first().check();
+    await page.locator(".rsvp-q").nth(1).getByLabel("Maybe").check();
+    await page.getByLabel("Anything you have to miss?").fill("N/A");
+    await page.getByRole("button", { name: "Send my answer" }).click();
+    await expect(page.getByText(/Saved, but the form isn't finished/)).toBeVisible();
+    await page.locator(".rsvp-q").nth(1).getByLabel("Yes, I'm coming").check();
+    await page.getByRole("button", { name: "Send my answer" }).click();
+    await expect(page.getByText("Saved. Thank you!")).toBeVisible();
+    await page.waitForURL(/\/apps\/rsvp\/?$/);
+    await expect(page.getByText("Answered: coming").first()).toBeVisible();
+    // A member can't open the lead screens.
+    await page.goto("apps/rsvp/manage?demo=member");
+    await settle(page);
+    await expect(page.getByText("Only leads can do this.")).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("everyone sees who's coming; only leads, mentors and boosters see what people have to miss", async ({ page, collected }) => {
+    await page.goto("apps/rsvp/results?demo=member");
+    await settle(page);
+    await expect(page.getByRole("heading", { level: 1, name: "Who's coming" })).toBeVisible();
+    await expect(page.getByText("What people have to miss")).toHaveCount(0);
+    await page.goto("apps/rsvp/results?demo=lead");
+    await settle(page);
+    await expect(page.getByText("What people have to miss (leads, mentors and boosters only)")).toBeVisible();
+    expect(collected.errors).toEqual([]);
+  });
+
+  test("a lead makes and publishes a form from a calendar event, and sets the reminders", async ({ page, collected }) => {
+    await page.goto("apps/rsvp/manage?demo=lead");
+    await settle(page);
+    await expect(page.getByRole("heading", { level: 1, name: "Manage forms" })).toBeVisible();
+    await page.getByRole("link", { name: "New form" }).first().click();
+    const lakewood = await page.getByLabel("Calendar event").locator("option", { hasText: "Lakewood scrimmage" }).getAttribute("value");
+    await page.getByLabel("Calendar event").selectOption(lakewood!);
+    await page.getByLabel("Answer by").fill(new Date(Date.now() + 4 * 86_400_000).toISOString().slice(0, 10));
+    await page.getByRole("button", { name: "+ Add a question" }).click();
+    await page.getByLabel("Question", { exact: true }).fill("Can you drive?");
+    await page.getByRole("button", { name: "Publish to the whole team" }).click();
+    await page.waitForURL(/\/apps\/rsvp\/manage/);
+    // Demo data lives in the page, so the saved form is gone after the reload; the server tests cover that it is kept.
+    await expect(page.getByRole("heading", { level: 1, name: "Manage forms" })).toBeVisible();
+    await page.goto("apps/rsvp/reminders?demo=lead");
+    await settle(page);
+    await expect(page.getByText("The morning it is due").first()).toBeVisible();
+    await page.getByLabel("Days before the answer-by date").fill("5");
+    await page.getByRole("button", { name: "+ Add a reminder" }).click();
+    await expect(page.getByText("5 days before").first()).toBeVisible();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByRole("status")).toHaveText("Saved");
+    expect(collected.errors).toEqual([]);
+  });
+});
+
 test.describe("inventory ?demo= modes (mock build)", () => {
   test("default: a demo team member sees the real inventory app with made-up data", async ({ page, collected }) => {
     await page.goto(`${MOCK_ORIGIN}apps/inventory`);

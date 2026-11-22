@@ -251,7 +251,7 @@
     "name": "RSVP",
     "description": "Say who is coming to competitions and events.",
     "href": "/apps/rsvp",
-    "status": "planned",
+    "status": "live",
     "access": "team",
     "hiddenByDefault": true,
     "category": "Operations",
@@ -263,7 +263,7 @@
           {
             "name": "Open forms",
             "icon": "list",
-            "view": "open"
+            "view": ""
           },
           {
             "name": "Who's coming",
@@ -292,7 +292,8 @@
           }
         ]
       }
-    ]
+    ],
+    "ready": true
   },
   {
     "id": "inventory",

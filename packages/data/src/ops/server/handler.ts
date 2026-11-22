@@ -23,9 +23,10 @@ import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
 import * as events from "./events";
 import * as github from "./github";
 import * as icarus from "./icarus";
+import * as rsvp from "./rsvp";
 import * as inbox from "./inbox";
 import * as notify from "./notify";
-import { runReminders } from "./notify/reminders";
+import { runReminders, runRsvpReminders } from "./notify/reminders";
 import * as records from "./records";
 import * as shared from "./shared";
 import * as supervision from "./supervision";
@@ -105,6 +106,15 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   attKioskRegister: { who: "anyone", run: attendance.attKioskRegister },
   attKioskToday: { who: "anyone", run: attendance.attKioskToday },
   attKioskQuick: { who: "anyone", run: attendance.attKioskQuick },
+  // RSVP (rsvp.ts)
+  rsvpOpen: { who: "team", run: rsvp.rsvpOpen },
+  rsvpAnswer: { who: "team", run: rsvp.rsvpAnswer },
+  rsvpResults: { who: "team", run: rsvp.rsvpResults },
+  rsvpManage: { who: "lead", run: rsvp.rsvpManage },
+  rsvpSaveForm: { who: "lead", run: rsvp.rsvpSaveForm },
+  rsvpRemind: { who: "lead", run: rsvp.rsvpRemind },
+  rsvpGetSettings: { who: "lead", run: rsvp.rsvpGetSettings },
+  rsvpSaveSettings: { who: "lead", run: rsvp.rsvpSaveSettings },
   // Icarus (icarus.ts)
   saveIcarusRecord: { who: "lead", run: icarus.saveIcarusRecord },
   removeIcarusRecord: { who: "lead", run: icarus.removeIcarusRecord },
@@ -126,6 +136,7 @@ const JOBS: Record<string, Action> = {
   refreshEvents: (ctx) => events.refreshEvents(ctx),
   sendDeliveries: (ctx) => notify.sendDeliveries(ctx),
   runReminders: (ctx) => runReminders(ctx),
+  runRsvpReminders: (ctx) => runRsvpReminders(ctx),
 };
 
 const MAX_BODY_BYTES = 2_000_000;

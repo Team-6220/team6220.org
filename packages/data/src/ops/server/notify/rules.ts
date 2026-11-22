@@ -116,6 +116,16 @@ export function shiftReminders(shifts: Doc[], events: Doc[], tomorrow: string): 
   });
 }
 
+/** A form still needs answers: sent to everyone on the team who hasn't finished it. */
+export function rsvpReminder(form: Doc, event: Doc, to: string[], includeLink = true, dedupeKey?: string): Outgoing {
+  return { kind: "rsvp.reminder", to, title: `Please answer the ${event.title} RSVP`, text: `Please answer by ${form.answerBy}. It takes about a minute.`, url: includeLink ? `/apps/rsvp/answer?id=${encodeURIComponent(String(form._id))}` : "/apps/rsvp", record: { kind: "rsvp", id: String(form._id) }, ...(dedupeKey ? { dedupeKey } : {}) };
+}
+
+/** The morning a form is due: the leads hear how many have finished. */
+export function rsvpSummary(form: Doc, event: Doc, to: string[], finished: number, asked: number, dedupeKey?: string): Outgoing {
+  return { kind: "rsvp.summary", to, title: `${event.title} RSVP is due today: ${finished} of ${asked} have answered`, text: `${asked - finished} still need to.`, url: `/apps/rsvp/results?id=${encodeURIComponent(String(form._id))}`, record: { kind: "rsvp", id: String(form._id) }, ...(dedupeKey ? { dedupeKey } : {}) };
+}
+
 /** Someone asked to become a supervisor. */
 export function supervisorRequest(name: string, to: string[]): Outgoing {
   return { kind: "supervisor.request", to, title: `${name} wants to become a supervisor`, text: "Help them through the paperwork, then mark them approved.", url: "/apps/calendar/supervisors" };

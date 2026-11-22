@@ -10,6 +10,7 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 | `refreshEvents` | once a day | Updates saved competition events' dates from The Blue Alliance |
 | `sendDeliveries` | every 5 minutes | Sends Discord notifications that are waiting (and, after quiet hours, each person's overnight ones as one message) |
 | `runReminders` | every 15 minutes | Tasks due tomorrow or overdue, BOM lines waiting for signatures (one summary a day), late orders |
+| `runRsvpReminders` | once a day, 8 am | RSVP forms: reminds the team members who have not finished a form on the days its schedule names, and tells the leads who has answered the morning a form is due (its own job: it reads more than `runReminders` can fit in one request) |
 
 ## Setup (once, with the team Google account)
 
@@ -32,8 +33,8 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 2. Make a long random secret (20 or more characters). Save it **twice**: as the Wix secret `OPS_TIMER_SECRET` (Wix
    dashboard → Developer Tools → Secrets Manager) and as the Script Property `OPS_TIMER_SECRET` here. Never put it in
    the repo.
-3. In the editor, pick `setupTriggers` and press Run (allow the permission it asks for). It makes the four triggers:
-   `syncGithub` and `sendDeliveries` every 5 minutes, `runReminders` every 15 minutes, and `refreshEvents` once a day.
+3. In the editor, pick `setupTriggers` and press Run (allow the permission it asks for). It makes the five triggers:
+   `syncGithub` and `sendDeliveries` every 5 minutes, `runReminders` every 15 minutes, and `refreshEvents` (4 am) and `runRsvpReminders` (8 am) once a day.
    Running it again replaces them, so it never makes doubles. Run it again after a push that adds a job.
 4. Run `syncGithub` once from the editor to give the permission, then open Executions: it should say
    `syncGithub: 200`.

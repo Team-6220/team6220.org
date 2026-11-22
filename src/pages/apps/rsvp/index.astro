@@ -1,0 +1,13 @@
+---
+// /apps/rsvp: who is coming to competitions and events (https://github.com/Team-6220/team6220.org/wiki/Operations-RSVP).
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { RSVP } from "@team6220/rsvp";
+import "@team6220/rsvp/rsvp.css";
+---
+
+<AppLayout title="RSVP | Los Al Robotics" description="Los Al Robotics (FRC Team 6220) RSVP forms for competitions and events.">
+  <RSVP client:only="react" screen="open">
+    <main class="t-page" slot="fallback"><p class="t-muted">Loading RSVP…</p></main>
+  </RSVP>
+  <noscript><p class="t-page">RSVP needs JavaScript turned on.</p></noscript>
+</AppLayout>

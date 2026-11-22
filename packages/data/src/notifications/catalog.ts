@@ -7,7 +7,7 @@
 //
 // To add a kind: add an entry here, then the rule that sends it in packages/data/src/ops/server/notify/rules.ts.
 
-export type NotificationApp = "Icarus" | "Production" | "BOM" | "Calendar" | "Account";
+export type NotificationApp = "Icarus" | "Production" | "BOM" | "Calendar" | "RSVP" | "Account";
 
 /** The Discord channels the server may post in. Their IDs are in DISCORD_CHANNELS (config.ts). */
 export type ChannelKey = "announcements" | "apolloUpdates";
@@ -44,6 +44,8 @@ export const NOTIFICATION_KINDS: NotificationKind[] = [
   { id: "shift.changed", app: "Calendar", label: "Your shift moved, was removed, or someone put you in one", who: "The supervisor", discord: true, push: true },
   { id: "shift.opened", app: "Calendar", label: "A supervisor withdrew, so a shift is open", who: "Leads, mentors, boosters, and approved supervisors", discord: true, push: false },
   { id: "supervisor.request", app: "Calendar", label: "Someone wants to become a supervisor", who: "Leads, mentors, and boosters", discord: true, push: false },
+  { id: "rsvp.reminder", app: "RSVP", label: "A form still needs your answer (a Maybe doesn't finish it)", who: "Team members who haven't finished the form", discord: true, push: true },
+  { id: "rsvp.summary", app: "RSVP", label: "Who has answered, the morning a form is due", who: "Leads", discord: true, push: false },
   { id: "account.newMember", app: "Account", label: "A new member is waiting for approval", who: "Web Admins", discord: true, push: false },
   { id: "account.changed", app: "Account", label: "You were approved, or Discord was linked", who: "You", discord: false, push: false, inboxOnly: true },
 ];
