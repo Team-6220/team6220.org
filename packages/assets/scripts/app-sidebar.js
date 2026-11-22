@@ -596,6 +596,8 @@
     root.dataset.frameRail = prefs.railHidden ? (state.railPeek ? "peek" : "hidden") : "shown";
     root.dataset.framePanel = !hasPanel ? "none" : prefs.panelHidden ? (state.panelPeek ? "peek" : "hidden") : "shown";
     root.dataset.frameList = prefs.listCollapsed ? "collapsed" : "open";
+    // A menu item's right-click menu lives inside the panel, so the panel has to sit above the clear scrim while it is open.
+    root.dataset.frameItemMenu = state.ctx ? "open" : "closed";
 
     var kids = [];
     if (phone) {

@@ -47,7 +47,7 @@ export type { CutPlan, Material, PartToPlan, Reserved, StockPiece } from "./inve
 export * as account from "./account";
 // The team calendar: meetings, shifts, competitions, breaks.
 export * as calendar from "./calendar";
-export type { CalEvent, CalEventType, CalendarData, PartDay, Shift } from "./calendar/types";
+export type { CalEvent, CalEventType, CalendarData, PartDay, Shift, StepStatus, Supervisor, SupervisorInfo } from "./calendar/types";
 export type { ShiftTimes } from "./calendar";
 // Your inbox, notification settings and Discord link.
 export * as notifications from "./notifications";

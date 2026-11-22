@@ -45,8 +45,12 @@ const LIST_LIMIT = 1000;
  */
 const PUBLIC_PERSON_FIELDS = ["_id", "memberId", "name", "username", "githubLogin", "subteams", "active"];
 
-function publicPerson(row: Doc): Doc {
-  return Object.fromEntries(PUBLIC_PERSON_FIELDS.filter((f) => f in row).map((f) => [f, row[f]]));
+/** A supervisor's paperwork (TB assessment, fingerprinting) is for leads, mentors and boosters (`scheduler`); everyone
+ *  else sees only whether they're a supervisor, which the Calendar needs. */
+function publicPerson(row: Doc, scheduler: boolean): Doc {
+  const out = Object.fromEntries(PUBLIC_PERSON_FIELDS.filter((f) => f in row).map((f) => [f, row[f]]));
+  if (row.supervisor) out.supervisor = scheduler ? row.supervisor : { status: row.supervisor.status, steps: [], approvedMonth: "" };
+  return out;
 }
 
 function collectionOf(body: Doc, allowed: string[]): string {
@@ -65,7 +69,7 @@ export async function listRecords(ctx: Ctx, body: Doc) {
   // The history mixes in the BOM and Production; a Guest only gets what happened to tasks.
   if (collection === COLLECTION_HISTORY && roles.guest) return { items: rows.filter((r) => r.recordKind === "task") };
   // Everyone sees the people list, but only their own row in full.
-  if (collection === COLLECTION_PEOPLE) return { items: rows.map((r) => (r.memberId === ctx.actor.id ? r : publicPerson(r))) };
+  if (collection === COLLECTION_PEOPLE) return { items: rows.map((r) => (r.memberId === ctx.actor.id ? r : publicPerson(r, roles.scheduler))) };
   return { items: rows };
 }
 

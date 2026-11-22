@@ -1,8 +1,9 @@
 // One thing on the calendar: a meeting with its supervision shifts, or a competition, event or break.
 import { calendar, type Shift } from "@team6220/data";
-import { DataTable, KeyValue, Note, PageHeader, Pill, Screen, Section, Split } from "@team6220/ui";
+import { Btn, DataTable, KeyValue, Note, PageHeader, Pill, Screen, Section, Split } from "@team6220/ui";
 import type { CalendarView } from "./Calendar";
-import { monthHref } from "./shared";
+import { editHref, monthHref } from "./shared";
+import { ShiftAction } from "./Supervision";
 
 export function EventPage({ view }: { view: CalendarView }) {
   const { data, me } = view;
@@ -23,10 +24,11 @@ export function EventPage({ view }: { view: CalendarView }) {
   details.push(["Who can see it", event.public ? "Anyone (shifts and supervisors are for the team only)" : "Team members, boosters, and approved supervisors"]);
 
   const info = <KeyValue items={details} />;
+  const edit = me.roles.scheduler && <Btn icon="edit" title="Edit" href={editHref(event)} />;
   if (event.type !== "meeting") {
     return (
       <Screen>
-        <PageHeader title={calendar.titleOf(event)} sub={sub} back={back} />
+        <PageHeader title={calendar.titleOf(event)} sub={sub} back={back} actions={edit} />
         {event.mandatory && <Note tone="warn">★ Mandatory for {calendar.audience(event).toLowerCase()}.</Note>}
         {info}
       </Screen>
@@ -34,7 +36,7 @@ export function EventPage({ view }: { view: CalendarView }) {
   }
   return (
     <Screen>
-      <PageHeader title={`${event.mandatory ? "★ " : ""}${calendar.titleOf(event)}`} sub={sub} back={back} />
+      <PageHeader title={`${event.mandatory ? "★ " : ""}${calendar.titleOf(event)}`} sub={sub} back={back} actions={edit} />
       <Split
         left={
           <Section title="Supervision shifts">
@@ -47,8 +49,10 @@ export function EventPage({ view }: { view: CalendarView }) {
               rows={shifts}
               rowKey={(s) => s._id}
               statusKey="status"
+              actions={event.startDate >= view.today ? (s) => <ShiftAction view={view} shift={s} /> : undefined}
               empty="No supervision shifts on this meeting."
             />
+            <Note>Only school-approved supervisors can sign up. Leads, mentors, and boosters can put any approved supervisor in a shift. If you can't make your shift, <strong>Withdraw</strong> takes you off the shift and reopens it; the leads and other supervisors are told so someone else can sign up.</Note>
           </Section>
         }
         right={info}

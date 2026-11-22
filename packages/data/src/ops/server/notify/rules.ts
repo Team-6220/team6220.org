@@ -76,3 +76,47 @@ export function newMember(name: string, role: string, webAdmins: string[]): Outg
 export function accountNews(memberId: string, title: string, text = ""): Outgoing {
   return { kind: "account.changed", to: [memberId], toSelf: true, title, text, url: "/apps/account" };
 }
+
+// ----- Calendar supervision -----
+
+const shiftWhen = (shift: Doc, event: Doc) => `${dayName(String(event.startDate))}, ${shortTime(String(shift.start))}–${shortTime(String(shift.end))}`;
+const eventUrl = (event: Doc) => `/apps/calendar/event?id=${encodeURIComponent(String(event._id))}`;
+const shortTime = (t: string) => `${Number(t.slice(0, 2)) % 12 || 12}:${t.slice(3, 5)}`;
+const dayName = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }).replace(",", "");
+
+/** Someone (a lead, mentor or booster) put a supervisor in a shift. */
+export function shiftAssigned(shift: Doc, event: Doc): Outgoing {
+  return { kind: "shift.changed", to: [String(shift.memberId)], title: `You're supervising ${shiftWhen(shift, event)}`, text: "A lead, mentor, or booster signed you up for this shift.", url: eventUrl(event), record: { kind: "shift", id: String(shift._id) } };
+}
+
+/** A supervisor was taken off a shift because its meeting moved, changed or was removed. */
+export function shiftsBumped(shifts: Doc[], events: Doc[]): Outgoing[] {
+  return shifts.filter((s) => s.memberId).map((s) => {
+    const event = events.find((e) => e._id === s.eventId) ?? { _id: s.eventId, startDate: "" };
+    return {
+      kind: "shift.changed", to: [String(s.memberId)],
+      title: event.startDate ? `Your shift on ${shiftWhen(s, event)} was removed` : "One of your shifts was removed",
+      text: "The meeting moved or changed, so you're no longer on that shift. Sign up again if the new time works.",
+      url: event.startDate ? eventUrl(event) : "/apps/calendar/open", record: { kind: "shift", id: String(s._id) },
+    };
+  });
+}
+
+/** A supervisor withdrew (or was taken off): the shift is open, so the leads and supervisors hear. */
+export function shiftOpened(shift: Doc, event: Doc, who: string, to: string[]): Outgoing {
+  return { kind: "shift.opened", to, title: `Open shift: ${shiftWhen(shift, event)}`, text: `${who} can't make it. Sign up if you can.`, url: eventUrl(event), record: { kind: "shift", id: String(shift._id) } };
+}
+
+/** Tomorrow's shifts, once each. */
+export function shiftReminders(shifts: Doc[], events: Doc[], tomorrow: string): Outgoing[] {
+  return shifts.filter((s) => s.memberId && !s.cancelled).flatMap((s): Outgoing[] => {
+    const event = events.find((e) => e._id === s.eventId && !e.cancelled);
+    if (!event || event.startDate !== tomorrow) return [];
+    return [{ kind: "shift.reminder", to: [String(s.memberId)], title: `You supervise tomorrow, ${shortTime(String(s.start))}–${shortTime(String(s.end))}`, text: String(event.location || ""), url: eventUrl(event), record: { kind: "shift", id: String(s._id) }, dedupeKey: `shift.reminder:${s._id}:${tomorrow}` }];
+  });
+}
+
+/** Someone asked to become a supervisor. */
+export function supervisorRequest(name: string, to: string[]): Outgoing {
+  return { kind: "supervisor.request", to, title: `${name} wants to become a supervisor`, text: "Help them through the paperwork, then mark them approved.", url: "/apps/calendar/supervisors" };
+}

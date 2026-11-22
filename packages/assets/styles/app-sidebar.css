@@ -119,6 +119,7 @@ svg.t-icon.tf-filled { fill: currentColor; stroke: none; }
 :root[data-frame="top"] .tf-panel { top: 56px; left: 0; }
 :root[data-frame-panel="hidden"] .tf-panel { display: none; }
 :root[data-frame-panel="peek"] .tf-panel { z-index: 95; box-shadow: 0 0 40px rgba(0, 0, 0, 0.7); }
+:root[data-frame-item-menu="open"] .tf-panel { z-index: 98; }
 :root[data-frame-panel="peek"][data-frame="rail"] .tf-panel { left: calc(var(--frame-panel-at) - 10px + 10px); }
 .tf-panel-head { padding: 18px 18px 12px; border-bottom: 1px solid var(--tf-line); }
 .tf-panel-title { display: flex; align-items: center; gap: 10px; }

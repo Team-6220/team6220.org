@@ -5,6 +5,7 @@ import type { Ctx } from "../context";
 import type { Doc } from "../env";
 import { membersWithBadge } from "./index";
 import { COLLECTION_NOTIFICATIONS, send, type Outgoing } from "./outbox";
+import { shiftReminders } from "./rules";
 
 const SIGNATURES_NEEDED = 2;
 
@@ -56,7 +57,7 @@ export function lateOrders(sections: Doc[], lines: Doc[], leads: string[], today
 /** The timer job. */
 export async function runReminders(ctx: Ctx) {
   const today = ctx.today();
-  const [tasks, lines, sections, signers, leads, dueKeys, signKeys, lateKeys] = await Promise.all([
+  const [tasks, lines, sections, signers, leads, dueKeys, signKeys, lateKeys, events, shifts, shiftKeys] = await Promise.all([
     ctx.data.query("icarus_tasks", {}),
     ctx.data.query("bom_lines", {}),
     ctx.data.query("bom_sections", {}),
@@ -65,11 +66,15 @@ export async function runReminders(ctx: Ctx) {
     usedKeys(ctx, "task.due"),
     usedKeys(ctx, "bom.toSign"),
     usedKeys(ctx, "bom.late"),
+    ctx.data.query("cal_events", { cancelled: false }),
+    ctx.data.query("cal_shifts", {}),
+    usedKeys(ctx, "shift.reminder"),
   ]);
   const list = [
     ...taskReminders(tasks, today).filter(fresh(dueKeys)),
     ...signatureReminders(lines, signers, today).filter(fresh(signKeys)),
     ...lateOrders(sections, lines, leads, today).filter(fresh(lateKeys)),
+    ...shiftReminders(shifts, events, nextDay(today)).filter(fresh(shiftKeys)),
   ];
   await send(ctx, list);
   return { reminders: list.length };

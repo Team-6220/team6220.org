@@ -8,11 +8,16 @@
 //   edit     (/apps/calendar/edit?id=...)      one day's meeting, or any event
 //   schedule (/apps/calendar/schedule)         Meeting schedule: season parts and breaks
 //   part     (/apps/calendar/part?from=&to=)   New season part, from the calendar
+// Supervision:
+//   myshifts    (/apps/calendar/myshifts)     your shifts, with Withdraw
+//   open        (/apps/calendar/open)         shifts with no supervisor in the next four weeks
+//   supervisors (/apps/calendar/supervisors)  the supervisor list (leads, mentors and boosters)
+//   become      (/apps/calendar/become)       Become a supervisor (anyone signed in, approved or not)
 // Leads:
 //   assign   (/apps/calendar/assign)           Assign meetings to subteams (#291)
 //   member   (/apps/calendar/member)           View as a member
 import { useEffect, useState, type ReactNode } from "react";
-import { auth, calendar, ops, type CalendarData, type Me } from "@team6220/data";
+import { auth, calendar, ops, type CalendarData, type Me, type Supervisor } from "@team6220/data";
 import { Btn, Note, PageHeader, Screen } from "@team6220/ui";
 import { Agenda } from "./Agenda";
 import { Assign, MemberPreview } from "./Assign";
@@ -20,9 +25,10 @@ import { EventForm } from "./EventForm";
 import { EventPage } from "./EventPage";
 import { Month } from "./Month";
 import { NewPart, Schedule } from "./Schedule";
+import { Become, MyShifts, OpenShifts, Supervisors } from "./Supervision";
 import { Year } from "./Year";
 
-export type CalendarScreen = "month" | "year" | "agenda" | "event" | "new" | "edit" | "schedule" | "part" | "assign" | "member";
+export type CalendarScreen = "month" | "year" | "agenda" | "event" | "new" | "edit" | "schedule" | "part" | "assign" | "member" | "myshifts" | "open" | "supervisors" | "become";
 
 /** What every screen gets. */
 export interface CalendarView {
@@ -35,7 +41,7 @@ export interface CalendarView {
   reload: () => Promise<void>;
 }
 
-type State = { kind: "loading" } | { kind: "signed-out" } | { kind: "pending" } | { kind: "error"; message: string } | { kind: "ready"; view: CalendarView };
+type State = { kind: "loading" } | { kind: "become"; row: Supervisor | null } | { kind: "signed-out" } | { kind: "pending" } | { kind: "error"; message: string } | { kind: "ready"; view: CalendarView };
 
 export default function Calendar({ screen = "month" }: { screen?: CalendarScreen }) {
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -45,6 +51,8 @@ export default function Calendar({ screen = "month" }: { screen?: CalendarScreen
     (async () => {
       const viewer = await ops.getViewer();
       if (viewer.kind === "signed-out") return setState({ kind: "signed-out" });
+      // Become a supervisor works before a web admin approves the account: a parent signs up there first.
+      if (viewer.kind !== "member" && screen === "become") return setState({ kind: "become", row: await calendar.mySupervisorRow() });
       if (viewer.kind !== "member") return setState({ kind: "pending" });
       const { me, subteams } = viewer;
       const reload = async () => setState({ kind: "ready", view: { data: await calendar.load(), me, subteams, today: calendar.today(), reload } });
@@ -62,6 +70,7 @@ export default function Calendar({ screen = "month" }: { screen?: CalendarScreen
       </Screen>
     );
   }
+  if (state.kind === "become") return <Become row={state.row} />;
   if (state.kind === "pending") return <Screen><PageHeader title="Calendar" /><Note tone="warn">The calendar opens once a web admin approves your account.</Note></Screen>;
   if (state.kind === "error") return <Screen><PageHeader title="Calendar" /><Note tone="bad">{state.message}</Note></Screen>;
 
@@ -82,6 +91,10 @@ function pageFor(screen: CalendarScreen, view: CalendarView): ReactNode {
     case "edit": return only(roles.scheduler, "leads, mentors, and boosters", <EventForm view={view} mode="edit" />);
     case "schedule": return only(roles.scheduler, "leads, mentors, and boosters", <Schedule view={view} />);
     case "part": return only(roles.scheduler, "leads, mentors, and boosters", <NewPart view={view} />);
+    case "myshifts": return <MyShifts view={view} />;
+    case "open": return <OpenShifts view={view} />;
+    case "supervisors": return only(roles.scheduler, "leads, mentors, and boosters", <Supervisors view={view} />);
+    case "become": return <Become row={calendar.supervisorFor(view.data.supervisors, view.me.id) ?? null} />;
     case "assign": return only(roles.lead, "leads", <Assign view={view} />);
     case "member": return only(roles.lead, "leads", <MemberPreview view={view} />);
     default: return <Month view={view} />;
