@@ -3,6 +3,7 @@
 // A tab with a dropdown is a real link to its page; the + button next to it (or hover / keyboard focus)
 // opens the dropdown. Menu behaviour is in sites/main/scripts/site-b.js.
 import { LOGIN, NAV } from "../data/nav";
+import { APPS } from "../data/apps";
 
 interface Props {
   /** id of the current tab (see nav.ts) */
@@ -11,6 +12,9 @@ interface Props {
 const { page } = Astro.props;
 const path = Astro.url.pathname.replace(/(\/index)?(\.html)?$/, "").replace(/\/$/, "") || "/";
 const ext = { target: "_blank", rel: "noopener" };
+// Which apps this visitor can open, for the Apps menu and the Resources page (account.js: canOpen). Only on the team server's build.
+const appAccess = APPS.map((a) => ({ href: a.href, access: a.access, guests: a.guests, publicView: a.publicView, status: "live" }));
+const server = String(import.meta.env.PUBLIC_WIX_BUILD ?? "") === "on";
 const here = (href: string) => (href === path ? { "aria-current": "page" as const } : {});
 ---
 
@@ -42,6 +46,22 @@ const here = (href: string) => (href === path ? { "aria-current": "page" as cons
 </header>
 <!-- Signed in: the Log In button becomes the member's picture, still linking to the team apps. -->
 <script is:inline src="/assets/shared/scripts/account.js"></script>
+<!-- Leave out the apps this visitor can't open (each app still checks for itself). -->
+<script is:inline define:vars={{ appAccess, server }}>
+  (function () {
+    if (!server) return;
+    function hideClosed() {
+      appAccess.forEach(function (app) {
+        if (window.team6220Account.canOpen(app)) return;
+        document.querySelectorAll('.sub2 a[href="' + app.href + '"], .res-dark a[href="' + app.href + '"]').forEach(function (link) {
+          (link.closest("li") || link).style.display = "none";
+        });
+      });
+    }
+    hideClosed();
+    window.addEventListener("team6220:access", hideClosed);
+  })();
+</script>
 <script is:inline>
   (function () {
     var member = window.team6220Account.member();

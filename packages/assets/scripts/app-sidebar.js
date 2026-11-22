@@ -112,6 +112,14 @@
 
   // ---------------------------------------------------------------- data
   var APPS = [];
+  /* Every app in apps.json. APPS is the ones this person can open (team6220Account.canOpen, from account.js), so the
+     rail, the top bar, search and the layout list leave out the rest. Cosmetic only: each app checks for itself. */
+  var ALL_APPS = [];
+  var FILTER = false; // only on the build with the team server: elsewhere (the static test build, demos) nobody signs in
+  function applyAccess() {
+    var who = window.team6220Account;
+    APPS = ALL_APPS.filter(function (a) { return !FILTER || a.id === "home" || !who || who.canOpen(a); });
+  }
   var LINKS = [];
   var state = { pinsOpen: false, pinsAt: null, menuOpen: false, searchOpen: false, ctx: null, sheet: null, railPeek: false, panelPeek: false, query: "", pick: 0 };
 
@@ -726,6 +734,8 @@
     render();
   });
   window.addEventListener("popstate", function () { render(); });
+  // An app page just found out what this person can open.
+  window.addEventListener("team6220:access", function () { applyAccess(); render(); });
   PHONE.addEventListener ? PHONE.addEventListener("change", render) : PHONE.addListener(render);
   window.addEventListener("storage", function (e) { if (e.key === STORE) { prefs = Object.assign(prefs, read()); render(); } });
 
@@ -733,7 +743,9 @@
   function start() {
     var given = window.team6220FrameData;
     if (given && given.apps) {
-      APPS = given.apps.filter(function (a) { return a.status !== "hidden"; });
+      ALL_APPS = given.apps.filter(function (a) { return a.status !== "hidden"; });
+      FILTER = given.server === true;
+      applyAccess();
       LINKS = given.links || [];
       render();
       return;
@@ -742,7 +754,9 @@
       fetch("/assets/shared/data/apps.json").then(function (r) { return r.json(); }).catch(function () { return []; }),
       fetch("/assets/shared/data/links.json").then(function (r) { return r.json(); }).then(function (d) { return (d && d.links) || []; }).catch(function () { return []; }),
     ]).then(function (res) {
-      APPS = (res[0] || []).filter(function (a) { return a.status !== "hidden"; });
+      ALL_APPS = (res[0] || []).filter(function (a) { return a.status !== "hidden"; });
+      FILTER = window.team6220Server === true;
+      applyAccess();
       LINKS = res[1];
       if (!APPS.length) APPS = [{ id: "home", name: "Home", href: "/apps", status: "live", icon: "home", sections: [] }];
       render();

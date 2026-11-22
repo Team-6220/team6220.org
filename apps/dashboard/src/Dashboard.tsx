@@ -50,10 +50,12 @@ export default function Dashboard({ screen = "home" }: { screen?: DashScreen }) 
         if (access === "approved") {
           const isWebAdmin = await auth.hasBadge(BADGES.webAdmin).catch(() => false);
           pullPrefs();
+          ops.saveAccessHint("member", isWebAdmin);
           return setView({ kind: "approved", member, isWebAdmin });
         }
         // Cosmetic: a guest has the Guest badge but not Team Member. The apps and servers check for real.
         const guest = await auth.hasBadge(BADGES.guest).catch(() => false);
+        ops.saveAccessHint(guest ? "guest" : "visitor", false);
         setView(guest ? { kind: "guest", member } : { kind: "pending", member });
       } catch (err) {
         console.warn("Couldn't load the signed-in member", err);

@@ -39,7 +39,7 @@
     "href": "/apps/calendar",
     "status": "live",
     "access": "team",
-    "alumni": true,
+    "publicView": true,
     "category": "Operations",
     "icon": "cal",
     "sections": [

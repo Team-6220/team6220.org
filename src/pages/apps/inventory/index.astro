@@ -52,6 +52,8 @@ const page = assembleIndex(files);
     </style>
     <!-- The sidebar every team app shares (the Inventory's own menu moved to the right; see Styles.html). -->
     <link rel="stylesheet" href="/assets/shared/styles/app-sidebar.css" />
+    <!-- The frame hides the apps this person can't open, but only on the build with the team server. -->
+    <script is:inline define:vars={{ server: String(import.meta.env.PUBLIC_WIX_BUILD ?? "") === "on" }}>window.team6220Server = server;</script>
     <script is:inline>
       try {
         document.documentElement.dataset.theme = localStorage.getItem("team6220.theme") === "light" ? "light" : "dark";

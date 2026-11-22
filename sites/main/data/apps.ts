@@ -9,6 +9,10 @@ export interface TeamApp {
   href: string;
   /** One short line shown on the Resources page. */
   blurb: string;
+  /** Who can open it, as account.js (canOpen) reads it. */
+  access: string;
+  guests: boolean;
+  publicView: boolean;
 }
 
 /** The apps dashboard (also where "Log In" goes). */
@@ -18,4 +22,7 @@ export const APPS: TeamApp[] = ALL_APPS.filter((a) => a.id !== "home" && a.statu
   name: a.name,
   href: a.href as string,
   blurb: a.description,
+  access: a.access,
+  guests: a.guests === true,
+  publicView: a.publicView === true,
 }));
