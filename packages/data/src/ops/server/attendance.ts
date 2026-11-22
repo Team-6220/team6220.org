@@ -257,7 +257,8 @@ function pickFive(list: string[]): string[] {
   const pool = [...list];
   const out: string[] = [];
   while (out.length < 5 && pool.length) {
-    const n = crypto.getRandomValues(new Uint32Array(1))[0] % pool.length;
+    // A random fraction of one (not a remainder, which favours the low numbers), times the pool's size.
+    const n = Math.floor((crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296) * pool.length);
     out.push(pool.splice(n, 1)[0]);
   }
   return out;
