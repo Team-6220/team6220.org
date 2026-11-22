@@ -62,9 +62,35 @@
             "view": "agenda"
           }
         ]
+      },
+      {
+        "label": "Manage",
+        "items": [
+          {
+            "name": "New event",
+            "icon": "plus",
+            "view": "new"
+          },
+          {
+            "name": "Meeting schedule",
+            "icon": "clock",
+            "view": "schedule"
+          },
+          {
+            "name": "Assign meetings",
+            "icon": "people",
+            "view": "assign"
+          },
+          {
+            "name": "View as a member",
+            "icon": "eye",
+            "view": "member"
+          }
+        ]
       }
     ],
-    "ready": true
+    "ready": true,
+    "note": "Leads, mentors, and boosters change the schedule"
   },
   {
     "id": "icarus",

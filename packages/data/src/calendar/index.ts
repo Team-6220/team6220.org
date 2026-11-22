@@ -6,16 +6,17 @@
 //
 // Reads go through the team server (listRecords), which only lets team members see the calendar's collections.
 import "./mock"; // the demo data (only used in demo mode)
-import { store } from "../ops";
+import { callOps, store } from "../ops";
 import type { Me } from "../ops/types";
 import { addDays } from "./dates";
+import { COLLECTION_EVENTS, COLLECTION_SHIFTS } from "./plan";
 import type { CalEvent, CalendarData, Shift } from "./types";
 
 export * from "./dates";
-export type { CalEvent, CalEventType, CalendarData, Shift } from "./types";
+export type { CalEvent, CalEventType, CalendarData, PartDay, Shift } from "./types";
 
-export const COLLECTION_EVENTS = "cal_events";
-export const COLLECTION_SHIFTS = "cal_shifts";
+export { COLLECTION_EVENTS, COLLECTION_SHIFTS };
+export { addShift, MAX_SHIFTS, parsePattern, patternText, PlanError, splitShifts, uncovered, WEEKDAYS } from "./plan";
 
 const byStart = (a: CalEvent, b: CalEvent) => a.startDate.localeCompare(b.startDate) || a.startTime.localeCompare(b.startTime);
 
@@ -23,7 +24,37 @@ const byStart = (a: CalEvent, b: CalEvent) => a.startDate.localeCompare(b.startD
 export async function load(): Promise<CalendarData> {
   const s = store();
   const [events, shifts] = await Promise.all([s.list<CalEvent>(COLLECTION_EVENTS), s.list<Shift>(COLLECTION_SHIFTS)]);
-  return { events: events.filter((e) => !e.cancelled).sort(byStart), shifts: shifts.sort((a, b) => a.start.localeCompare(b.start)) };
+  return { events: events.filter((e) => !e.cancelled).sort(byStart), shifts: shifts.filter((s) => !s.cancelled).sort((a, b) => a.start.localeCompare(b.start)) };
+}
+
+// ----- changes (Leads, Mentors and Boosters; assigning subteams is Leads only) -----
+
+export type ShiftTimes = { start: string; end: string };
+
+/** Adds or changes a meeting, event, competition or break, with a meeting's supervision shifts (left out: the meeting
+ *  keeps the shifts it has). */
+export async function saveEvent(event: Partial<CalEvent>, shifts?: ShiftTimes[]): Promise<CalEvent> {
+  return (await callOps<{ event: CalEvent }>("saveCalEvent", { event, shifts })).event;
+}
+
+/** Removes an event and its shifts. */
+export async function removeEvent(id: string): Promise<void> {
+  await callOps("removeCalEvent", { id });
+}
+
+/** Saves Meeting schedule (every season part and break, as they should be now) and makes its meetings. */
+export async function saveSchedule(parts: Partial<CalEvent>[], breaks: Partial<CalEvent>[]): Promise<{ added: number; moved: number; removed: number }> {
+  return callOps("saveSchedule", { parts, breaks });
+}
+
+/** Sets who each meeting is for and whether it is mandatory. */
+export async function assignMeetings(changes: { id: string; subteams: string[]; mandatory: boolean }[]): Promise<number> {
+  return (await callOps<{ saved: number }>("assignMeetings", { changes })).saved;
+}
+
+/** The season part a day falls in, if any (the latest-starting one where two overlap). */
+export function partOn(events: CalEvent[], day: string): CalEvent | undefined {
+  return events.filter((e) => e.type === "part" && e.startDate <= day && day <= e.endDate).sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
 }
 
 /** What happens on a day (things that span days included). */
