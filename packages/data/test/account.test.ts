@@ -52,7 +52,7 @@ describe("finishing your profile", () => {
     await s.post({ action: "importRoster", token: lead, rows: [{ studentId: "1234567", firstName: "Ada", lastName: "Byron", grade: "11th" }] });
   });
 
-  const form = (extra: Record<string, unknown> = {}) => ({ role: "student", firstName: "Ada", lastName: "byron", studentId: "1234567", discordName: "ada", subteams: ["Programming"], ...extra });
+  const form = (extra: Record<string, unknown> = {}) => ({ role: "student", firstName: "Ada", lastName: "byron", studentId: "1234567", subteams: ["Programming"], ...extra });
 
   it("approves a student on the roster and gives them Team Member and their subteams", async () => {
     const answer = await s.post({ action: "finishProfile", token: newbie, form: form() });
@@ -79,8 +79,10 @@ describe("finishing your profile", () => {
     expect((await s.post({ action: "finishProfile", token: member, form: form() })).approved).toBe(false);
   });
 
-  it("needs Discord from students, but not from others", async () => {
-    expect((await s.post({ action: "finishProfile", token: newbie, form: form({ discordName: "" }) })).error).toBe("bad-request");
+  it("needs no Discord username, and keeps a Discord account already linked", async () => {
+    s.rows("ops_people").push({ memberId: "m-new", name: "Ada", discordId: "123456789012345678", discordName: "ada", active: true });
+    expect((await s.post({ action: "finishProfile", token: newbie, form: form() })).approved).toBe(true);
+    expect(s.rows("ops_people").find((p) => p.memberId === "m-new")).toMatchObject({ discordId: "123456789012345678", discordName: "ada" });
     expect((await s.post({ action: "finishProfile", token: newbie, form: { role: "mentor", firstName: "Ada", lastName: "Byron" } })).approved).toBe(false);
   });
 
@@ -115,7 +117,7 @@ describe("profile picture and deleting your account", () => {
 
   it("deletes the member, their badges and settings, but keeps their name and the roster row", async () => {
     await s.post({ action: "importRoster", token: lead, rows: [{ studentId: "1234567", firstName: "Ada", lastName: "Byron" }] });
-    await s.post({ action: "finishProfile", token: newbie, form: { role: "student", firstName: "Ada", lastName: "Byron", studentId: "1234567", discordName: "ada", subteams: ["Design"] } });
+    await s.post({ action: "finishProfile", token: newbie, form: { role: "student", firstName: "Ada", lastName: "Byron", studentId: "1234567", subteams: ["Design"] } });
     await s.post({ action: "savePrefs", token: newbie, prefs: { layout: "top" } });
     expect((await s.post({ action: "deleteMyAccount", token: newbie })).ok).toBe(true);
     expect(s.members[newbie]).toMatchObject({ status: "DELETED", badges: [] });

@@ -36,7 +36,7 @@ export async function getAccount(ctx: Ctx) {
   };
 }
 
-/** { profile: { firstName, lastName, githubLogin, discordName } } -> { profile }. A name typed here wins over the Google name. */
+/** { profile: { firstName, lastName, githubLogin } } -> { profile }. A name typed here wins over the Google name. (Discord is linked, never typed: inbox.ts.) */
 export async function saveMyProfile(ctx: Ctx, body: Doc) {
   const p = (body.profile ?? {}) as Doc;
   const row = (await myRow(ctx)) ?? { memberId: ctx.actor.id, name: ctx.actor.name, subteams: [], active: true };
@@ -44,9 +44,8 @@ export async function saveMyProfile(ctx: Ctx, body: Doc) {
   const lastName = p.lastName === undefined ? String(row.lastName ?? "") : text(p.lastName, "last name", 60, true);
   const githubLogin = p.githubLogin === undefined ? String(row.githubLogin ?? "") : text(p.githubLogin, "GitHub username", 39, true);
   if (githubLogin && !/^[A-Za-z0-9-]+$/.test(githubLogin)) throw apiError("bad-request", "A GitHub username has only letters, numbers and dashes.");
-  const discordName = p.discordName === undefined ? String(row.discordName ?? "") : text(p.discordName, "Discord username", 40, true);
   const customName = `${firstName} ${lastName}`.trim();
-  const next = { ...row, firstName, lastName, githubLogin, discordName, customName, name: customName || row.name };
+  const next = { ...row, firstName, lastName, githubLogin, customName, name: customName || row.name };
   await ctx.data.save(COLLECTION_PEOPLE, next);
   // Students: the roster keeps the same name.
   const roster = (await ctx.data.query(COLLECTION_ROSTER, { memberId: ctx.actor.id }, 1).catch(() => []))[0];
@@ -66,7 +65,7 @@ export async function savePrefs(ctx: Ctx, body: Doc) {
 }
 
 /**
- * { form: { role, firstName, lastName, studentId?, subteams?, discordName?, githubLogin? } } -> { approved, message }.
+ * { form: { role, firstName, lastName, studentId?, subteams?, githubLogin? } } -> { approved, message }.
  * A student whose ID and last name match a roster row (not yet linked to someone else) gets the Team Member badge, the
  * roster's subteam and any they picked, their Wix account is approved, and the roster row is linked to them. Anyone else
  * is saved for a person to approve, and the Web Admins are told.
@@ -77,11 +76,10 @@ export async function finishProfile(ctx: Ctx, body: Doc) {
   if (!ROLES.includes(role)) throw apiError("bad-request", "Pick who you are.");
   const firstName = text(f.firstName, "first name", 60);
   const lastName = text(f.lastName, "last name", 60);
-  const discordName = text(f.discordName, "Discord username", 40, role !== "student");
   const githubLogin = text(f.githubLogin, "GitHub username", 39, true);
   const row = (await myRow(ctx)) ?? { memberId: ctx.actor.id, subteams: [], active: true };
   const customName = `${firstName} ${lastName}`.trim();
-  await ctx.data.save(COLLECTION_PEOPLE, { ...row, name: customName, customName, firstName, lastName, discordName, githubLogin, signupRole: role });
+  await ctx.data.save(COLLECTION_PEOPLE, { ...row, name: customName, customName, firstName, lastName, githubLogin, signupRole: role });
 
   if (role === "public") return { approved: false, message: "Done. You can use the apps that are open to everyone; nobody needs to approve you." };
   if (role !== "student") {
