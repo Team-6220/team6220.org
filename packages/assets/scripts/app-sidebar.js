@@ -583,6 +583,9 @@
 
   // ---------------------------------------------------------------- draw
   var mount = null;
+  /** The parts of the frame that scroll on their own. */
+  var SCROLLERS = [".tf-account", ".tf-sheet", ".tf-rail-apps", ".tf-list", ".tf-panel-body", ".tf-search-list"];
+
   function render() {
     if (!APPS.length) return;
     var app = currentApp();
@@ -639,8 +642,11 @@
     root.style.setProperty("--frame-bottom", bottom + "px");
     root.style.setProperty("--frame-panel-at", panelAt + "px");
     var next = el("div", { class: "tf", id: "team-frame" }, kids);
+    var scrolls = mount ? SCROLLERS.map(function (sel) { var n = mount.querySelector(sel); return n ? n.scrollTop : 0; }) : [];
     if (mount) mount.replaceWith(next); else document.body.appendChild(next);
     mount = next;
+    // The frame is rebuilt on every click, so put each scrolled part (the account menu, a sheet, ...) back where it was.
+    SCROLLERS.forEach(function (sel, i) { var n = scrolls[i] && mount.querySelector(sel); if (n) n.scrollTop = scrolls[i]; });
     if (state.searchOpen) refocus();
   }
 
