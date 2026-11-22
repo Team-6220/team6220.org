@@ -79,7 +79,7 @@ describe(".ics files", () => {
 
   it("escapes text and folds long lines", () => {
     const text = icsText(eventItems([event({ title: "Kickoff, with; pizza", notes: "x".repeat(200) })]), "Team 6220", now);
-    expect(text).toContain("SUMMARY:Kickoff\\, with\; pizza");
+    expect(text).toContain("SUMMARY:Kickoff\\, with\\; pizza");
     expect(text.split("\r\n").every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
   });
 
