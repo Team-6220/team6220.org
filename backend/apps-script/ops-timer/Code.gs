@@ -8,7 +8,7 @@
  *   OPS_TIMER_SECRET  required. The same value as the Wix secret OPS_TIMER_SECRET (20 or more random characters). SECRET.
  *   SITE_ADDRESS      optional. Defaults to https://www.team6220.org
  *
- * Triggers (Triggers > Add trigger), both time-driven:
+ * Triggers: run setupTriggers once from the editor (it makes all four; running it again replaces them, never doubles):
  *   syncGithub     every 5 minutes   (sends task changes to GitHub; GitHub's own changes arrive at once by webhook)
  *   refreshEvents  once a day        (updates saved competition events' dates from The Blue Alliance)
  *   sendDeliveries every 5 minutes   (sends the Discord notifications that are waiting, and the morning bundle after quiet hours)
@@ -29,6 +29,20 @@ function sendDeliveries() {
 
 function runReminders() {
   callJob_("runReminders");
+}
+
+/** Creates the four time triggers, replacing any this script already has for them. Run it once after each push. */
+function setupTriggers() {
+  const every = { syncGithub: 5, sendDeliveries: 5, runReminders: 15 };
+  const names = Object.keys(every).concat(["refreshEvents"]);
+  ScriptApp.getProjectTriggers()
+    .filter(function (t) { return names.indexOf(t.getHandlerFunction()) !== -1; })
+    .forEach(function (t) { ScriptApp.deleteTrigger(t); });
+  Object.keys(every).forEach(function (name) {
+    ScriptApp.newTrigger(name).timeBased().everyMinutes(every[name]).create();
+  });
+  ScriptApp.newTrigger("refreshEvents").timeBased().everyDays(1).atHour(4).create();
+  console.log("Triggers: " + ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); }).join(", "));
 }
 
 function callJob_(job) {

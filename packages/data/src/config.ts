@@ -48,6 +48,6 @@ export const SITE_URL = "https://www.team6220.org";
 // Channel IDs are not secret: in Discord, turn on Developer Mode, right-click the channel, Copy Channel ID. An empty ID
 // means that channel's posts are skipped.
 export const DISCORD_CHANNELS = {
-  announcements: "",
-  apolloUpdates: "",
+  announcements: "721890269917610105", // #team-announcements
+  apolloUpdates: "1569999823174635590", // #apollo-updates
 };

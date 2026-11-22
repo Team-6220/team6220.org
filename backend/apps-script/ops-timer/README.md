@@ -32,8 +32,9 @@ Wix hosting has no scheduler, so this tiny script is the team's clock. It does n
 2. Make a long random secret (20 or more characters). Save it **twice**: as the Wix secret `OPS_TIMER_SECRET` (Wix
    dashboard → Developer Tools → Secrets Manager) and as the Script Property `OPS_TIMER_SECRET` here. Never put it in
    the repo.
-3. Triggers → Add trigger: `syncGithub` and `sendDeliveries`, time-driven, minutes timer, every 5 minutes;
-   `runReminders`, minutes timer, every 15 minutes; and `refreshEvents`, time-driven, day timer.
+3. In the editor, pick `setupTriggers` and press Run (allow the permission it asks for). It makes the four triggers:
+   `syncGithub` and `sendDeliveries` every 5 minutes, `runReminders` every 15 minutes, and `refreshEvents` once a day.
+   Running it again replaces them, so it never makes doubles. Run it again after a push that adds a job.
 4. Run `syncGithub` once from the editor to give the permission, then open Executions: it should say
    `syncGithub: 200`.
 
