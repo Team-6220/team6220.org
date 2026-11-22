@@ -191,8 +191,9 @@
 
   // ---------------------------------------------------------------- pieces
   function homeButton(size) {
-    var b = el("a", { class: "tf-home tf-home--" + size, href: "/apps", title: "Home", "aria-label": "Home" }, ["6220"]);
-    return b;
+    // The team's gold 6220 circle logo.
+    return el("a", { class: "tf-home tf-home--" + size, href: "/apps", title: "Home", "aria-label": "Home" },
+      [el("img", { src: "/assets/shared/logos/6220LogoVectorGold.svg", alt: "" })]);
   }
   function avatar(cls) {
     var m = window.team6220Account && window.team6220Account.member();

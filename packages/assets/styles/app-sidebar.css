@@ -63,7 +63,8 @@ svg.t-icon.tf-filled { fill: currentColor; stroke: none; }
 .tf-label--icon svg { width: 14px; height: 14px; }
 
 /* the gold 6220 circle: Home */
-.tf-home { display: grid; place-items: center; flex: none; border-radius: 50%; background: var(--tf-gold); color: #000 !important; font-family: "Karnivore", "Orbitron", sans-serif; font-weight: 800; font-size: 11px; }
+.tf-home { display: grid; place-items: center; flex: none; border-radius: 50%; }
+.tf-home img { width: 100%; height: 100%; display: block; }
 .tf-home--rail { width: 40px; height: 40px; margin-bottom: 8px; }
 .tf-home--small { width: 32px; height: 32px; }
 .tf-brandword { font-family: "Karnivore", "Orbitron", sans-serif; font-weight: 800; letter-spacing: 0.08em; font-size: 13px; text-transform: uppercase; }
