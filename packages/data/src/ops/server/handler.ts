@@ -12,6 +12,7 @@ import type { VerifyViewer } from "../../site/verify";
 import { actorFor, requireRole, type Who } from "./auth";
 import * as account from "./account";
 import * as bom from "./bom";
+import * as calendar from "./calendar";
 import { withCallBudget } from "./budget";
 import { Ctx, sha256Hex, type Actor } from "./context";
 import { ApiError, apiError, type Doc, type OpsEnv } from "./env";
@@ -73,6 +74,11 @@ const ACTIONS: Record<string, { who: Who; agent?: boolean; run: Action }> = {
   receiveLines: { who: "team", agent: true, run: bom.receiveLines },
   linkLineToInventory: { who: "team", agent: true, run: bom.linkLineToInventory },
   importOrder: { who: "lead", run: bom.importOrder },
+  // Calendar (calendar.ts)
+  saveCalEvent: { who: "scheduler", run: calendar.saveCalEvent },
+  removeCalEvent: { who: "scheduler", run: calendar.removeCalEvent },
+  saveSchedule: { who: "scheduler", run: calendar.saveSchedule },
+  assignMeetings: { who: "lead", run: calendar.assignMeetings },
   // Icarus (icarus.ts)
   saveIcarusRecord: { who: "lead", run: icarus.saveIcarusRecord },
   removeIcarusRecord: { who: "lead", run: icarus.removeIcarusRecord },

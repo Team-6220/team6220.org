@@ -45,6 +45,8 @@ export interface Roles {
   peopleAdmin: boolean;
   /** May run the Business app's trackers and approvals: Operations (the subteam), Leads, Mentors and Boosters. */
   business: boolean;
+  /** May change the Calendar: events, breaks, Meeting schedule, one day's meeting (Leads, Mentors and Boosters). */
+  scheduler: boolean;
 }
 
 /** The signed-in person. */
