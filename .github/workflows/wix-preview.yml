@@ -82,7 +82,7 @@ jobs:
           WIX_API_KEY: ${{ secrets.WIX_API_KEY }}
       - name: Post the link on the pull request
         if: steps.secrets.outputs.ready == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PREVIEW_URL: ${{ steps.preview.outputs.url }}
         with:
