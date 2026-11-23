@@ -32,12 +32,12 @@
     "@types/react-dom": "^18.3.7",
     "@wix/astro-wix-hosting-adapter": "3.0.5",
     "@wix/cli": "1.2.13",
-    "astro": "^7.4.7",
+    "astro": "^7.4.13",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0"
   },
   "dependencies": {
-    "@astrojs/react": "^7.1.4",
+    "@astrojs/react": "^7.1.9",
     "@team6220/attendance": "workspace:*",
     "@team6220/bom": "workspace:*",
     "@team6220/calendar": "workspace:*",
